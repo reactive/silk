@@ -32,11 +32,16 @@ jobs:
       - name: Install
         run: yarn install --immutable
 
-      - name: Typecheck
-        run: yarn typecheck
-
+      # silk-core package exports resolve types/JS from dist/; Linaria also
+      # requires core dist before the web package builds.
       - name: Build
         run: yarn build
 
+      - name: Typecheck
+        run: yarn typecheck
+
       - name: Test
         run: yarn test
+
+      - name: Packed consumer check
+        run: yarn test:packed

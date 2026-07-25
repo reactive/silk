@@ -6,15 +6,16 @@ This is **not** another Tailwind/shadcn component dump. Silk owns its API, uses 
 
 ## Status
 
-Scaffold only. Package layout, build pipeline (Rslib / Rspack + Linaria), TypeScript 7, Changesets, and GitHub Actions CI are in place. Components and the full token system will land next.
+Foundation milestone: token/theme/variant architecture, layout/visual/interaction exemplars, Identity composite, and a shadcn-protocol registry scaffold.
 
 ## Packages
 
 | Package | Description |
 | --- | --- |
-| [`@reactive/silk`](packages/silk) | Published design system (web first) |
+| [`@reactive/silk-core`](packages/silk-core) | Platform-neutral tokens, `createTheme`, recipe contracts |
+| [`@reactive/silk`](packages/silk) | Web design system (Radix + Linaria) |
 
-The repo is a Yarn 4 workspaces monorepo so future packages (tokens, native) can be added without restructuring.
+The repo is a Yarn 4 workspaces monorepo so a future native package can be added without restructuring.
 
 ## Requirements
 
@@ -31,6 +32,8 @@ yarn typecheck
 yarn test
 ```
 
+`silk-core` must build before `silk` (package exports and Linaria both resolve core from `dist/`). Topological `yarn workspaces foreach -A -pt` handles this — run `yarn build` before `yarn typecheck` on a clean checkout.
+
 ### Scripts
 
 | Script | Description |
@@ -41,17 +44,40 @@ yarn test
 | `yarn changeset` | Add a changeset for the next release |
 | `yarn release` | Build and publish (used by CI) |
 
-## Publishing
+## Quick start
 
-Releases are managed with [Changesets](https://github.com/changesets/changesets).
+```tsx
+import {
+  Button,
+  Identity,
+  SilkProvider,
+  createTheme,
+} from '@reactive/silk';
+import '@reactive/silk/styles.css';
 
-1. Contributors add a changeset with `yarn changeset`.
-2. On push to `main`, the release workflow opens/updates a **Version Packages** PR.
-3. Merging that PR publishes to npm.
+const theme = createTheme({ colorScheme: 'light' });
 
-Configure the `NPM_TOKEN` repository secret before publishing.
+export function App() {
+  return (
+    <SilkProvider colorScheme="light" defaults={{ Button: { variant: 'soft' } }}>
+      <Button tone="accent">Save</Button>
+      <Identity name="Ada Lovelace" meta="@ada" fallback="AL" />
+    </SilkProvider>
+  );
+}
+```
 
-## Architecture (intended)
+Custom / tenant themes use the style-attribute path:
+
+```tsx
+<SilkProvider theme={createTheme({ semantic: { color: { surface: '#fafafa' } } })}>
+  …
+</SilkProvider>
+```
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```text
 design-tokens
@@ -60,10 +86,20 @@ semantic theme
       ↓
 component recipes/contracts
       ↓
-platform renderer (web: Radix + Linaria · native: React Native)
+platform renderer (web: Radix + Linaria · native: later)
 ```
 
 Hard constraints: no Tailwind, no CVA, CSS-first (Linaria), SSR-first (Anansi), accessibility via Radix.
+
+## Registry
+
+Composites can also be installed as source via the shadcn registry protocol. See root [`registry.json`](registry.json). Items pin `@reactive/silk` versions; zero Tailwind.
+
+Validate:
+
+```bash
+npx shadcn@latest registry validate
+```
 
 ## TypeScript 7
 

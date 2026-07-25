@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "silk",
+  "homepage": "https://github.com/reactive/silk",
+  "items": [
+    {
+      "name": "identity",
+      "type": "registry:component",
+      "title": "Identity",
+      "description": "Compound Identity composite (Avatar + Name + Meta) with a convenience form. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": ["@reactive/silk"],
+      "files": [
+        {
+          "path": "registry/identity/identity.tsx",
+          "type": "registry:component"
+        }
+      ]
+    }
+  ]
+}

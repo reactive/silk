@@ -33,7 +33,3 @@ coverage
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Changesets
-.changeset/*.md
-!.changeset/README.md

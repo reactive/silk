@@ -4,17 +4,20 @@ import { defineConfig } from '@rslib/core';
 export default defineConfig({
   lib: [
     {
+      // ESM-only: @reactive/silk-core is ESM and CJS require() cannot load it.
       format: 'esm',
       syntax: 'es2022',
-      dts: true,
-      bundle: true,
-    },
-    {
-      format: 'cjs',
-      syntax: 'es2022',
+      dts: {
+        bundle: false,
+      },
       bundle: true,
     },
   ],
+  source: {
+    entry: {
+      index: './src/index.ts',
+    },
+  },
   output: {
     target: 'web',
   },
