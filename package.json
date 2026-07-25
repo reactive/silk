@@ -3,13 +3,16 @@
   "private": true,
   "packageManager": "yarn@4.17.1",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "build": "yarn workspaces foreach -A -pt run build",
     "typecheck": "yarn workspaces foreach -A -pt run typecheck",
     "test": "yarn workspaces foreach -A -pt run test",
     "test:packed": "node scripts/packed-consumer-check.mjs",
+    "docs": "yarn workspace @reactive/silk-docs storybook",
+    "docs:build": "yarn workspace @reactive/silk-docs build:storybook",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "yarn build && node scripts/release-ci.mjs"

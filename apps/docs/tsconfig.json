@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // declarationMap/isolatedDeclarations from the base config require declaration.
+    "declaration": false,
+    "declarationMap": false,
+    "isolatedDeclarations": false
+  },
+  "include": [".storybook/**/*", "src/**/*"]
+}

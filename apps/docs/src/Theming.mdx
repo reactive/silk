@@ -1,0 +1,80 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Theming" />
+
+# Theming
+
+Silk themes through **semantic tokens** exposed as CSS variables. Components never reference the raw palette.
+
+## Named schemes
+
+`SilkProvider` / `ThemeProvider` accept `colorScheme`:
+
+| Value | Behavior |
+| --- | --- |
+| `light` / `dark` | Sets `data-theme` against static CSS |
+| `system` (default) | Omits `data-theme` so `prefers-color-scheme` applies |
+
+Use the **Color scheme** toolbar in this Storybook to flip the global decorator.
+
+## Custom / tenant themes
+
+Pass a theme object from `createTheme`. Variables are applied on the provider `style` attribute (no runtime `<style>` injection):
+
+```tsx
+import { SilkProvider, createTheme, Button } from '@reactive/silk';
+
+const theme = createTheme({
+  colorScheme: 'light',
+  semantic: {
+    color: {
+      surface: '#fafafa',
+    },
+  },
+});
+
+<SilkProvider theme={theme}>
+  <Button>Branded</Button>
+</SilkProvider>
+```
+
+Prefer **either** `theme` **or** `colorScheme`. If both are passed, `theme` wins for `data-theme` and inline variables.
+
+## Provider defaults (level 2)
+
+```tsx
+<SilkProvider
+  colorScheme="light"
+  defaults={{
+    Button: { variant: 'soft', tone: 'neutral' },
+    Text: { tone: 'secondary' },
+  }}
+>
+  <Button>Uses soft/neutral by default</Button>
+</SilkProvider>
+```
+
+Defaults are a typed map — not a runtime component registry.
+
+## Nesting and portals
+
+Nesting works via DOM CSS variable inheritance in normal flow.
+
+Portals (for example Dialog) still render under `document.body` by default, but Silk reconstitutes the **nearest** `ThemeProvider` / `SilkProvider` scope on the portaled tree: the same theme class, `data-theme` (when set), and custom `createTheme` CSS variables. Nested providers therefore theme their dialogs correctly without an explicit portal container.
+
+For cases where you need the portal DOM to live inside a particular subtree (stacking, clipping, or measuring against that subtree), pass Dialog `container`. Nested theming itself does **not** require `container` — see **Components/Dialog → NestedThemePortal**.
+
+## Component CSS variable hooks
+
+Public hooks like `--silk-button-bg` resolve through private vars:
+
+```css
+--_bg: var(--silk-button-bg, var(--_tone-solid));
+```
+
+Do **not** pre-declare `--silk-button-bg: var(--silk-accent)` on the component — that shadows consumer overrides. See **Components/Button → CssVariableOverrides**.
+
+## Further reading
+
+- Theme stories under **Theme**
+- Architecture: [docs/ARCHITECTURE.md](https://github.com/reactive/silk/blob/main/docs/ARCHITECTURE.md)

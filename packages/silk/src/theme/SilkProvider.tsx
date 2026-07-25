@@ -31,7 +31,10 @@ export interface SilkProviderProps extends ThemeProviderProps {
   readonly children: ReactNode;
 }
 
-const SilkDefaultsContext = createContext<SilkDefaults>({});
+const EMPTY_DEFAULTS: SilkDefaults = {};
+const EMPTY_COMPONENT_DEFAULTS = {};
+
+const SilkDefaultsContext = createContext<SilkDefaults>(EMPTY_DEFAULTS);
 
 export function useSilkDefaults(): SilkDefaults {
   return useContext(SilkDefaultsContext);
@@ -41,7 +44,9 @@ export function useComponentDefaults<K extends keyof SilkDefaults>(
   component: K,
 ): NonNullable<SilkDefaults[K]> {
   const defaults = useSilkDefaults();
-  return (defaults[component] ?? {}) as NonNullable<SilkDefaults[K]>;
+  return (defaults[component] ?? EMPTY_COMPONENT_DEFAULTS) as NonNullable<
+    SilkDefaults[K]
+  >;
 }
 
 /**
@@ -52,7 +57,7 @@ export function SilkProvider({
   children,
   ...themeProps
 }: SilkProviderProps): JSX.Element {
-  const value = useMemo(() => defaults ?? {}, [defaults]);
+  const value = useMemo(() => defaults ?? EMPTY_DEFAULTS, [defaults]);
 
   return (
     <ThemeProvider {...themeProps}>

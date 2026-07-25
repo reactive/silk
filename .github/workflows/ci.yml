@@ -45,3 +45,9 @@ jobs:
 
       - name: Packed consumer check
         run: yarn test:packed
+
+      # Validates CSF/MDX, source alias, docgen, and Linaria extraction.
+      # On main, docs.yml already builds and deploys the same output.
+      - name: Build Storybook
+        if: github.event_name == 'pull_request'
+        run: yarn docs:build

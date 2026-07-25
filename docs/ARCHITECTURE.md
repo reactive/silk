@@ -14,6 +14,8 @@ Silk is a long-lived design system foundation. It is **not** a Tailwind/shadcn c
 
 Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`.
 
+**Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs today; playgrounds / native examples later) live under `apps/`.
+
 **Build order:** `silk-core` must emit `dist/` before `silk` builds. Linaria evaluates core imports at build time; missing core dist fails the web build. `yarn workspaces foreach -A -pt run build` handles this topologically.
 
 ## Theme model
@@ -34,7 +36,7 @@ Do **not** declare `--silk-button-bg: var(--silk-accent)` on the component — t
 | --- | --- |
 | Named light/dark | Static CSS + `data-theme` / `color-scheme` (and `prefers-color-scheme` when unset) |
 | Dynamic / tenant | `themeToCssVars(theme)` on the ThemeProvider `style` attribute |
-| Nesting | Secondary. Works via DOM variable inheritance in normal flow. Portals inherit the root theme; pass Dialog `container` / `className` for nested-theme hatches. |
+| Nesting | Secondary. Works via DOM variable inheritance in normal flow. Portals reconstitute the nearest ThemeProvider scope (class + `data-theme` + custom CSS vars); pass Dialog `container` when the portal DOM must live inside a subtree. |
 
 Prefer either `theme` (custom object) or `colorScheme` (named/static). If both are passed, `theme` wins for `data-theme` and inline variables.
 

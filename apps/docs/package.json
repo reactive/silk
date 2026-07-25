@@ -1,0 +1,32 @@
+{
+  "name": "@reactive/silk-docs",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Storybook documentation site for Silk",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build:storybook": "storybook build -o storybook-static",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@reactive/silk": "workspace:*",
+    "@reactive/silk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "~2.1.8",
+    "@rsbuild/plugin-react": "^1.4.5",
+    "@storybook/addon-a11y": "10.5.4",
+    "@storybook/addon-docs": "10.5.4",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@wyw-in-js/webpack-loader": "^2.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "storybook": "10.5.4",
+    "storybook-react-rsbuild": "3.3.4",
+    "typescript": "^7.0.2",
+    "webpack": "^5"
+  }
+}

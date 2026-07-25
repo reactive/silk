@@ -4,6 +4,17 @@
 
 This is **not** another Tailwind/shadcn component dump. Silk owns its API, uses **Radix for behavior**, **Linaria for statically extracted CSS**, and themes through **semantic tokens + CSS variables**.
 
+## Documentation
+
+**Primary docs site:** [Storybook on GitHub Pages](https://reactive.github.io/silk/) (tracks `main`).
+
+Locally:
+
+```bash
+yarn build   # silk-core dist required for Linaria
+yarn docs    # http://localhost:6006
+```
+
 ## Status
 
 Foundation milestone: token/theme/variant architecture, layout/visual/interaction exemplars, Identity composite, and a shadcn-protocol registry scaffold.
@@ -15,7 +26,13 @@ Foundation milestone: token/theme/variant architecture, layout/visual/interactio
 | [`@reactive/silk-core`](packages/silk-core) | Platform-neutral tokens, `createTheme`, recipe contracts |
 | [`@reactive/silk`](packages/silk) | Web design system (Radix + Linaria) |
 
-The repo is a Yarn 4 workspaces monorepo so a future native package can be added without restructuring.
+## Apps
+
+| App | Description |
+| --- | --- |
+| [`@reactive/silk-docs`](apps/docs) | Private Storybook docs site (not published) |
+
+Libraries live under `packages/`; runnable consumers (docs, future playgrounds / native examples) live under `apps/`.
 
 ## Requirements
 
@@ -38,9 +55,11 @@ yarn test
 
 | Script | Description |
 | --- | --- |
-| `yarn build` | Build all workspaces |
+| `yarn build` | Build publishable workspaces |
 | `yarn typecheck` | Typecheck all workspaces |
 | `yarn test` | Run tests |
+| `yarn docs` | Start Storybook docs site |
+| `yarn docs:build` | Build static Storybook (`apps/docs/storybook-static`) |
 | `yarn changeset` | Add a changeset for the next release |
 | `yarn release` | Build and publish (used by CI) |
 
@@ -54,8 +73,6 @@ import {
   createTheme,
 } from '@reactive/silk';
 import '@reactive/silk/styles.css';
-
-const theme = createTheme({ colorScheme: 'light' });
 
 export function App() {
   return (
@@ -77,7 +94,7 @@ Custom / tenant themes use the style-attribute path:
 
 ## Architecture
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Component usage and theming live in [Storybook](https://reactive.github.io/silk/). The repository architecture write-up is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```text
 design-tokens

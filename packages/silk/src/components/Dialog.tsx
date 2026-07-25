@@ -8,6 +8,7 @@ import type {
   Ref,
 } from 'react';
 import { useComponentDefaults } from '../theme/SilkProvider';
+import { ThemeScopePortal } from '../theme/ThemeScope';
 
 export const DialogRoot: typeof RadixDialog.Root = RadixDialog.Root;
 export const DialogTrigger: typeof RadixDialog.Trigger = RadixDialog.Trigger;
@@ -96,8 +97,10 @@ export interface DialogContentProps
   readonly ref?: Ref<HTMLDivElement>;
   readonly children?: ReactNode;
   /**
-   * Portal container pass-through for nested-theme hatch.
-   * When set, content/overlay portal into this element instead of document.body.
+   * Portal target. When set, content/overlay portal into this element instead
+   * of `document.body` (stacking, clipping, or measuring against a subtree).
+   * Theme scope is reconstituted automatically for body portals; `container`
+   * is not required for nested theming.
    */
   readonly container?: HTMLElement | null;
   /** Optional className applied to the overlay. */
@@ -107,7 +110,8 @@ export interface DialogContentProps
 /**
  * Assembled dialog surface: Portal + Overlay + Content.
  * Radix owns focus/keyboard/portal behavior; Silk owns visuals.
- * Pass `container` / `className` for nested-theme hatches.
+ * Body portals reconstitute the nearest ThemeProvider scope; pass `container`
+ * only when the portal DOM must live in a specific subtree.
  */
 export function DialogContent({
   className,
@@ -122,16 +126,18 @@ export function DialogContent({
 
   return (
     <RadixDialog.Portal container={container ?? undefined}>
-      <RadixDialog.Overlay
-        className={cx(overlayClass, overlayClassName)}
-      />
-      <RadixDialog.Content
-        {...props}
-        className={cx(contentClass, className)}
-        data-size={resolvedSize}
-      >
-        {children}
-      </RadixDialog.Content>
+      <ThemeScopePortal>
+        <RadixDialog.Overlay
+          className={cx(overlayClass, overlayClassName)}
+        />
+        <RadixDialog.Content
+          {...props}
+          className={cx(contentClass, className)}
+          data-size={resolvedSize}
+        >
+          {children}
+        </RadixDialog.Content>
+      </ThemeScopePortal>
     </RadixDialog.Portal>
   );
 }

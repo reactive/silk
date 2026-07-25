@@ -1,14 +1,39 @@
-import { cx } from '@linaria/core';
 import type { ColorScheme, Theme } from '@reactive/silk-core';
 import {
   createElement,
+  useMemo,
   type CSSProperties,
   type JSX,
   type ReactNode,
 } from 'react';
 import { Slot } from 'radix-ui';
-import { themeScopeClass } from './namedThemes.css';
-import { themeToCssVars } from './themeToCssVars';
+import {
+  ThemeScopeContext,
+  themeScopeDomProps,
+  type ThemeScopeValue,
+} from './ThemeScope';
+import { themeToCssVars, type CssVarMap } from './themeToCssVars';
+
+function pickSilkCssVars(
+  style: CSSProperties | undefined,
+): CssVarMap | undefined {
+  if (!style) {
+    return undefined;
+  }
+  const vars: Record<`--silk-${string}`, string> = {};
+  let found = false;
+  for (const [key, value] of Object.entries(style)) {
+    if (
+      key.startsWith('--silk-') &&
+      typeof value === 'string' &&
+      value.length > 0
+    ) {
+      vars[key as `--silk-${string}`] = value;
+      found = true;
+    }
+  }
+  return found ? vars : undefined;
+}
 
 export interface ThemeProviderProps {
   /**
@@ -56,21 +81,27 @@ export function ThemeProvider({
   asChild = false,
 }: ThemeProviderProps): JSX.Element {
   const dataTheme = resolveDataTheme(theme, colorScheme);
-  const cssVars = theme ? themeToCssVars(theme) : undefined;
-  const mergedStyle: CSSProperties | undefined = cssVars
-    ? { ...cssVars, ...style }
-    : style;
+  const scopeValue = useMemo((): ThemeScopeValue => {
+    const themeVars = theme ? themeToCssVars(theme) : undefined;
+    const styleVars = pickSilkCssVars(style);
+    const cssVars =
+      themeVars || styleVars
+        ? { ...themeVars, ...styleVars }
+        : undefined;
+    return { dataTheme, cssVars };
+  }, [theme, style, dataTheme]);
 
   const props = {
-    className: cx(themeScopeClass, className),
-    style: mergedStyle,
-    ...(dataTheme !== undefined ? { 'data-theme': dataTheme } : {}),
+    ...themeScopeDomProps(scopeValue, {
+      ...(className !== undefined ? { className } : {}),
+      ...(style !== undefined ? { style } : {}),
+    }),
     children,
   };
 
-  if (asChild) {
-    return <Slot.Root {...props} />;
-  }
-
-  return createElement('div', props);
+  return (
+    <ThemeScopeContext.Provider value={scopeValue}>
+      {asChild ? <Slot.Root {...props} /> : createElement('div', props)}
+    </ThemeScopeContext.Provider>
+  );
 }

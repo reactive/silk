@@ -1,0 +1,79 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# Silk
+
+`@reactive/silk` is a long-lived design system foundation for React (web). Radix owns behavior; Silk owns visuals, APIs, and theming through **semantic tokens + CSS variables** and **Linaria static extraction**.
+
+This Storybook is the primary docs site for the library (tracks `main`).
+
+## Packages
+
+| Package | Description |
+| --- | --- |
+| `@reactive/silk-core` | Platform-neutral tokens, `createTheme`, recipe contracts |
+| `@reactive/silk` | Web design system (Radix + Linaria) |
+
+Composites can also ship as source via the [shadcn registry protocol](https://github.com/reactive/silk/blob/main/registry.json). Registry items pin compatible `@reactive/silk` versions. Zero Tailwind.
+
+## Install
+
+```bash
+yarn add @reactive/silk
+# peer: react / react-dom ^19
+```
+
+## Quick start
+
+Consumers must import the extracted stylesheet once:
+
+```tsx
+import {
+  Button,
+  Identity,
+  SilkProvider,
+  createTheme,
+} from '@reactive/silk';
+import '@reactive/silk/styles.css';
+
+export function App() {
+  return (
+    <SilkProvider colorScheme="light" defaults={{ Button: { variant: 'soft' } }}>
+      <Button tone="accent">Save</Button>
+      <Identity name="Ada Lovelace" meta="@ada" fallback="AL" />
+    </SilkProvider>
+  );
+}
+```
+
+Custom / tenant themes use the style-attribute path:
+
+```tsx
+<SilkProvider theme={createTheme({ semantic: { color: { surface: '#fafafa' } } })}>
+  …
+</SilkProvider>
+```
+
+## Customization levels
+
+1. `createTheme(...)` — semantic theme
+2. `SilkProvider` `defaults` — typed per-component defaults
+3. Component props — `variant` / `tone` / `size` / `density` / …
+4. Escape hatches — `className`, `style`, public component CSS variables, slots / `asChild`
+
+## Architecture
+
+The authoritative architecture write-up lives in the repository:
+
+[docs/ARCHITECTURE.md](https://github.com/reactive/silk/blob/main/docs/ARCHITECTURE.md)
+
+Hard constraints: no Tailwind, no CVA, Linaria static extraction only, SSR-first, accessibility behavior from Radix whenever possible.
+
+## Local docs development
+
+```bash
+yarn build          # silk-core dist is required for Linaria
+yarn docs           # Storybook on :6006
+yarn docs:build     # static site → apps/docs/storybook-static
+```
