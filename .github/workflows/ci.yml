@@ -32,8 +32,8 @@ jobs:
       - name: Install
         run: yarn install --immutable
 
-      # Package exports resolve types/JS from dist/; build before typecheck
-      # so clean checkouts (and git bisect) stay green.
+      # silk-core package exports resolve types/JS from dist/; Linaria also
+      # requires core dist before the web package builds.
       - name: Build
         run: yarn build
 
@@ -42,3 +42,6 @@ jobs:
 
       - name: Test
         run: yarn test
+
+      - name: Packed consumer check
+        run: yarn test:packed
