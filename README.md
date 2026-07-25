@@ -17,7 +17,7 @@ yarn docs    # http://localhost:6006
 
 ## Status
 
-Foundation milestone: token/theme/variant architecture, layout/visual/interaction exemplars, Identity composite, and a shadcn-protocol registry scaffold.
+Foundation milestone (Stage 0): token/theme/variant architecture, layout/visual/interaction exemplars, Identity composite, and a shadcn-protocol registry scaffold. The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
 
 ## Packages
 
@@ -94,7 +94,7 @@ Custom / tenant themes use the style-attribute path:
 
 ## Architecture
 
-Component usage and theming live in [Storybook](https://reactive.github.io/silk/). The repository architecture write-up is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Component usage and theming live in [Storybook](https://reactive.github.io/silk/). The repository architecture write-up is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), the guiding principles are [docs/PRINCIPLES.md](docs/PRINCIPLES.md), and the staged plan is [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ```text
 design-tokens

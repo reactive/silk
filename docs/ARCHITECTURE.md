@@ -2,6 +2,8 @@
 
 Silk is a long-lived design system foundation. It is **not** a Tailwind/shadcn component dump. Radix owns behavior; Silk owns visuals, APIs, and theming.
 
+This document describes how the system is built today. The *why* — goals, constraints, and drift guards — is [PRINCIPLES.md](PRINCIPLES.md); the staged build-out plan is [ROADMAP.md](ROADMAP.md).
+
 ## Package boundaries
 
 ```text
