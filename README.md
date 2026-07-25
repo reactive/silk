@@ -110,7 +110,7 @@ Hard constraints: no Tailwind, no CVA, CSS-first (Linaria), SSR-first (Anansi), 
 
 ## Registry
 
-Composites can also be installed as source via the shadcn registry protocol. See root [`registry.json`](registry.json). Items pin `@reactive/silk` versions; zero Tailwind.
+Composites can also be installed as source via the shadcn registry protocol. See root [`registry.json`](registry.json). Items will pin compatible `@reactive/silk` versions once published from release tags (the scaffold is unpinned pre-release); zero Tailwind.
 
 Validate:
 

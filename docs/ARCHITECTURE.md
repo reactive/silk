@@ -73,7 +73,7 @@ Escape hatches on every component: `className`, `style`, `ref` (React 19 prop), 
 ## Distribution
 
 - **Primitives & tokens:** npm packages (`@reactive/silk-core`, `@reactive/silk`)
-- **Composites:** also distributed as source via the shadcn registry protocol (`registry.json`). Items pin compatible `@reactive/silk` versions. Publish installable items from release tags, not `main`.
+- **Composites:** also distributed as source via the shadcn registry protocol (`registry.json`). Policy: installable items are published from release tags (not `main`) and pin compatible `@reactive/silk` versions. The current scaffold is unpinned because nothing is published yet — pinning lands with the first release.
 
 ## Hard constraints
 

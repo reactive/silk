@@ -13,6 +13,8 @@ These apply to every stage, not just at the end:
 - **Accessibility** — Silk owns end-to-end accessibility; primitive mechanics come from Radix (or platform equivalents). Wrappers are verified with keyboard/focus/accessible-name assertions plus axe-level checks — using Radix is necessary, not sufficient.
 - **Packaging** — `test:packed` consumer check passes; subpath exports stay coherent.
 - **Docs** — every shipped component gets a Storybook story covering variants, theming, and escape hatches.
+- **Fixtures** — each stage's exit demo is a committed fixture page in the docs app with an explicit state matrix (loading / empty / error / overflow / long content / reduced motion, as applicable), asserted in tests — not a hand-picked screenshot.
+- **Performance** — per-component JS size, extracted CSS size, and SSR render cost are tracked; budgets are defined in Stage 3 and enforced by CI comparison thereafter.
 - **Changesets** — every user-facing change ships with a changeset.
 
 ---
@@ -40,7 +42,7 @@ Complete the layout vocabulary so nothing downstream reaches for ad hoc flex/gri
 - **Native contract spike** (pulled forward from Stage 6): a throwaway Expo app under `apps/` consuming `silk-core` directly — theme delivery plus `Box`/`Stack`/`Text`/`Button` — to catch web-shaped assumptions in tokens and recipes while the contracts are still cheap to change. Findings fold back into core; nothing is published. Stage 6 graduates this into a real package.
 - **Pre-1.0 API policy**: define what counts as public API (component props, semantic token names, public CSS variables, recipe shapes, core utilities like `defineRecipe`/`createTheme`) and the breaking-change rules changesets enforce — *before* the component surface grows. Stage 7 matures this into deprecation and codemod policy.
 
-**Exit criteria:** a realistic page skeleton (header / content / sidebar / footer) can be built from layout primitives alone; responsive strategy documented in ARCHITECTURE.md; the native spike renders core-driven exemplars in Expo with divergences resolved or logged as justified; the pre-1.0 API policy is documented.
+**Exit criteria:** a committed fixture page skeleton (header / content / sidebar / footer, with overflow and long-content states) is built from layout primitives alone; responsive strategy documented in ARCHITECTURE.md; the native spike renders core-driven exemplars in Expo with divergences resolved or logged as justified; the pre-1.0 API policy is documented.
 
 ---
 
@@ -48,11 +50,13 @@ Complete the layout vocabulary so nothing downstream reaches for ad hoc flex/gri
 
 Establish the full visual language and the accessibility-critical form layer.
 
-- Components: `Surface`, `Card`, `Heading`, `Badge`, `Skeleton`, `Spinner`.
+- Components: `Surface`, `Card`, `Heading`, `Badge`, `Skeleton`, `Spinner`, `Progress`.
 - Forms: `Input`, `Textarea`, and `Field` (label / description / error wiring with correct `aria-*` associations — this is the a11y-sensitive piece; use Radix primitives where applicable).
+- Form controls (Radix-backed): `Checkbox`, `RadioGroup`, `Switch`, `Slider` — required by the settings-form exit criterion below.
 - Audit semantic tokens against real usage: interaction tones, focus rings, disabled states, elevation/`surfaceRaised`. Fix the semantic layer rather than adding component one-offs.
+- **Theming acceptance tests** (pulled forward from Stage 5): nested themes (including portal reconstitution), `createTheme` partial overrides, and contrast checks in both color schemes run as tests against the growing component set — validating the theme architecture while it is still cheap to change. Stage 5 keeps ergonomics and tooling.
 
-**Exit criteria:** a complete settings-style form can be composed accessibly from Silk primitives; token audit results folded back into core.
+**Exit criteria:** a committed settings-form fixture (including error, disabled, and loading states) composes accessibly from Silk primitives; token audit results folded back into core; theming acceptance tests pass under nesting, partial overrides, and both color schemes.
 
 ---
 
@@ -60,9 +64,10 @@ Establish the full visual language and the accessibility-critical form layer.
 
 Wrap the remaining Radix behaviors. `Dialog` is the template: Radix owns behavior, Silk owns visuals, portals reconstitute theme scope.
 
-- Components: `Popover`, `Tooltip`, `DropdownMenu`, `Tabs`, `Accordion`, `Select`, `ScrollArea`, `Toast`.
+- Components: `Popover`, `Tooltip`, `DropdownMenu`, `Tabs`, `Accordion`, `Select`, `ScrollArea`, `Toast`, `Toggle`/`ToggleGroup`.
 - Shared patterns extracted once, not per component: portal theming, overlay/motion tokens, positioning surfaces (popover-like components share visual treatment).
 - Motion: define motion tokens (durations, easings) in core; respect `prefers-reduced-motion` on web.
+- Performance budgets: define per-component JS size, extracted CSS size, and SSR render-cost budgets and wire CI comparison — overlays are where runtime cost first concentrates, and goal 3 ("excellent SSR performance") becomes measurable here.
 
 **Exit criteria:** all listed components shipped with stories and a11y tests; a shared "floating surface" style layer exists instead of per-component duplication.
 
@@ -70,14 +75,14 @@ Wrap the remaining Radix behaviors. `Dialog` is the template: Radix owns behavio
 
 ## Stage 4 — Composites (product components)
 
-Where product value lives. Built from Silk primitives, never raw DOM. `Identity` is the exemplar.
+Where product value lives. Styling and shared behavior come entirely from Silk primitives; semantic HTML is encouraged where it carries meaning (per the charter's output-semantics rule). `Identity` is the exemplar.
 
 - Building blocks: `MediaObject`, `ActionBar`, `StatGroup`.
 - Social: `PostCard`, `Comment`, `CommentThread`, `Notification`, `FeedItem`, `ProfileCard`, `SettingsPanel`.
-- Settle the **slot architecture** question (open design question from the brief): compound components + context, convenience props on top — document the chosen pattern as the standard for all composites.
+- Settle the **slot architecture** question (open design question from the brief): compound components + context, convenience props on top — document the chosen pattern as the standard for all composites. Until this lands, `Identity`'s compound pattern is **provisional** and subject to revision; don't treat it as the standard.
 - Composite models (the data-shape contracts composites accept) defined in core so native can share them.
 
-**Exit criteria:** a plausible social feed page can be assembled from composites alone; slot/composition pattern documented; composite models live in `silk-core`.
+**Exit criteria:** a committed social-feed fixture page (loading, empty, error, and long-thread states) is assembled from composites alone; slot/composition pattern documented; composite models live in `silk-core`.
 
 ---
 
@@ -85,7 +90,7 @@ Where product value lives. Built from Silk primitives, never raw DOM. `Identity`
 
 Harden theming from "works" to "product-grade multi-tenant".
 
-- Nested themes: exercise and document sub-tree theming (including portals) under real composition.
+- Nested themes: extend the Stage 2 acceptance tests to full-app composition and document the supported patterns.
 - Tenant branding: `createTheme` ergonomics for partial overrides, palette generation/contrast guidance, dark-mode derivation.
 - Component token audit: confirm the public CSS-variable surface is sparse, documented, and stable (it becomes API).
 - Theme preview/dev tooling in Storybook (live token editing against real components).
@@ -112,6 +117,7 @@ Prove the shared layer is actually shared. Meaningful sharing, not pixel parity 
 Make Silk consumable and evolvable over years.
 
 - Registry: publish composite sources from release tags (not `main`); verify installs are Tailwind-free; decide the final primitives-as-packages vs. composites-as-source split based on Stages 4–6 experience.
+- Registry update semantics: installed composite source is a consumer-owned copy, so define how changes reach it — per-item diffs/changelogs each release, compatible `@reactive/silk` version ranges per item, a documented re-add/reconcile workflow, and loud flagging of security-relevant fixes.
 - Versioning maturity: deprecation policy, codemod strategy for breaking changes, and the 1.0 stability commitment — building on the pre-1.0 API policy defined in Stage 1.
 - Docs completeness: theming guide, customization-ladder guide, contribution guide, per-component API docs.
 - Adoption: migration guidance for consuming apps (Anansi SSR integration recipe included).
@@ -129,6 +135,6 @@ Tracked from the founding brief; each has a home stage where it must be resolved
 | Recipes: shared model vs. per-renderer | Stage 0 | ✅ Shared contracts in core; renderers own styling |
 | Semantic vs. component tokens, how many | Stage 2/5 | Partially — sparse component tokens; audit pending |
 | Responsive strategy | Stage 1 | Open |
-| Slot architecture for composites | Stage 4 | Open (Identity prototype exists) |
+| Slot architecture for composites | Stage 4 | Open — `Identity`'s pattern is provisional, not yet the standard |
 | Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | Proven on web; native spike validates in Stage 1 |
 | Registry: packages vs. generated source | Stage 7 | Scaffolded; final split pending |
