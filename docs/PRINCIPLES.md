@@ -16,7 +16,8 @@ Silk optimizes for, in order:
 4. **A semantic, theme-driven architecture** — never component-specific one-off styling.
 5. **Shared concepts across web and native** — without forcing identical implementations where the platforms naturally differ.
 6. **First-class product components** (feeds, identity, comments, notifications) — not just low-level primitives.
-7. **Developer ergonomics** — a clean, consistent API that is easy to customize and evolve over many years.
+7. **Extensibility and flexibility** — the system grows by addition, and consumers can adapt or extend any layer without forking.
+8. **Ergonomics for humans and agents** — a small, predictable vocabulary that any consumer, human or AI, can learn once and apply everywhere.
 
 When two goals conflict, the lower number wins.
 
@@ -73,6 +74,15 @@ Four distinct layers, each with a clear job:
 - Strongly typed, tree-shakeable, Linaria-friendly and React Native-friendly variant definitions (recipes as contracts in core).
 - Avoid huge polymorphic APIs. Prefer composition (`asChild`, compound parts) over prop explosions.
 
+## Design heuristics
+
+How to choose between designs that all satisfy the constraints. These exist because Silk's consumers and maintainers include AI agents as much as humans — and what serves one serves the other: a system that a model can use correctly from its prior knowledge is also a system a person can learn in an afternoon.
+
+- **Spend concepts, not names.** The system has a concept budget. Every new concept — a prop axis, a token category, a naming pattern, a composition idiom — must be learned by everyone and everything that touches the system, and its cost multiplies across every component that adopts it. Prefer one powerful concept applied broadly (e.g. `tone` working identically on every component) over many narrow ones. Before introducing a new concept, prove an existing one can't be stretched to cover it. Cardinality, not code volume, is what makes systems unlearnable at scale.
+- **Convention over invention.** When two designs are similarly good and similarly complex, choose the one that matches de facto ecosystem standards — names, prop shapes, and patterns common across comparable libraries (`asChild`, `size`, `onOpenChange`, compound `Root`/`Trigger`/`Content` parts, …). Familiar shapes are pre-learned: agents produce correct code from training priors, and humans guess right on the first try. This is strictly a **tiebreaker** — it never overrides a hard constraint or a genuinely better design, and "Silk owns its API" means we choose deliberately, not that we invent for novelty's sake.
+- **Extension by addition.** Every layer must accept new members without rearchitecting: new semantic tokens, new recipes, new components, new themes, new platforms. The infrastructure Silk builds with — `defineRecipe`, `createTheme`, semantic tokens, the composition patterns — is public API, so downstream code can create components that are indistinguishable from first-party ones. If extending requires forking or patching, the boundary is drawn wrong.
+- **Predictable beats clever.** APIs should be guessable from the rest of the system: consistent naming, behavior discoverable from types, and patterns that transfer between components. If knowing one component doesn't help you use the next, the design has failed this heuristic.
+
 ## Customization ladder
 
 Every component participates in all four levels; consumers must never feel trapped:
@@ -100,6 +110,9 @@ Questions to ask before merging anything significant. A "no" means stop.
 - Do new props fit the existing axes (`variant`/`tone`/`size`/`density`/`appearance`) instead of inventing new ones?
 - Are composites built from Silk primitives rather than raw elements?
 - Are all four customization levels intact, including escape hatches?
+- Does this reuse an existing concept instead of adding a new one — and if it must be new, does it pay for itself across many components?
+- Would someone (or a model) familiar with the rest of Silk and with comparable libraries guess this API correctly?
+- Can downstream code extend this without forking or patching Silk?
 - Would this decision still make sense in five years, or is it a shortcut for this quarter?
 
 ## Amending this document
@@ -109,3 +122,4 @@ Principles can change — deliberately. An amendment requires: the change itself
 ### Amendment log
 
 - 2026-07 — Initial charter, distilled from the founding design brief.
+- 2026-07 — Added goals 7–8 (extensibility/flexibility, human-and-agent ergonomics) and the **Design heuristics** section: concept budget, convention-over-invention tiebreaker, extension by addition, predictability. Reason: Silk is consumed and maintained by AI agents as well as humans; concept cardinality and departure from ecosystem conventions are the main scaling costs for both.
