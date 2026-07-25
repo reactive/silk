@@ -57,6 +57,7 @@ The goal is **shared design language, not identical rendering**. Native should f
 
 - **Share:** design tokens, semantic tokens, variants, component APIs, types, state machines, business logic, interaction semantics, icons, composite models.
 - **Keep platform-specific:** Dialog, Select, Tooltip, Popover, Menu, Toast, navigation, responsive layout.
+- **Interfaces converge even where implementations diverge.** For any concept that exists on both platforms, the contract — prop names, types, variant axes, event semantics, composition shape — should be as close to identical as platform reality allows, ideally a single definition in `silk-core` that both renderers implement. Rendering may differ freely; the API is part of the shared design language, so knowledge (and code, and agent priors) transfers across platforms. Each interface divergence is a cost that must be justified by a real platform difference, never by implementation convenience.
 - Never contort the shared layer to force pixel parity, and never let a platform package redefine tokens or variants locally.
 
 ## Component philosophy
@@ -113,6 +114,7 @@ Questions to ask before merging anything significant. A "no" means stop.
 - Does this reuse an existing concept instead of adding a new one — and if it must be new, does it pay for itself across many components?
 - Would someone (or a model) familiar with the rest of Silk and with comparable libraries guess this API correctly?
 - Can downstream code extend this without forking or patching Silk?
+- If this concept exists (or will exist) on both platforms, is the interface shared — and is any divergence justified by a real platform difference?
 - Would this decision still make sense in five years, or is it a shortcut for this quarter?
 
 ## Amending this document
@@ -123,3 +125,4 @@ Principles can change — deliberately. An amendment requires: the change itself
 
 - 2026-07 — Initial charter, distilled from the founding design brief.
 - 2026-07 — Added goals 7–8 (extensibility/flexibility, human-and-agent ergonomics) and the **Design heuristics** section: concept budget, convention-over-invention tiebreaker, extension by addition, predictability. Reason: Silk is consumed and maintained by AI agents as well as humans; concept cardinality and departure from ecosystem conventions are the main scaling costs for both.
+- 2026-07 — Cross-platform: interfaces converge even where implementations diverge. Shared concepts get one contract (ideally defined in `silk-core`); API divergence between web and native requires a real platform justification.
