@@ -10,7 +10,7 @@ These apply to every stage, not just at the end:
 
 - **Recipe conformance** — every declared variant value appears in extracted CSS (existing conformance test pattern).
 - **SSR** — components render server-side with no hydration hacks; theming works via static CSS / CSS variables only.
-- **Accessibility** — behavior from Radix; axe-level checks in tests/Storybook for anything with interaction.
+- **Accessibility** — Silk owns end-to-end accessibility; primitive mechanics come from Radix (or platform equivalents). Wrappers are verified with keyboard/focus/accessible-name assertions plus axe-level checks — using Radix is necessary, not sufficient.
 - **Packaging** — `test:packed` consumer check passes; subpath exports stay coherent.
 - **Docs** — every shipped component gets a Storybook story covering variants, theming, and escape hatches.
 - **Changesets** — every user-facing change ships with a changeset.
@@ -37,8 +37,10 @@ Complete the layout vocabulary so nothing downstream reaches for ad hoc flex/gri
 - Components: `Inline`, `Grid`, `Center`, `Container`, `Separator`; extend `Box`/`Stack` as gaps appear.
 - Decide and document the **responsive strategy** (web-only concern; must not leak into core recipes). Container queries vs. viewport breakpoints; how responsive props are expressed without runtime style generation.
 - Density: wire the `density` axis through spacing tokens so it is a real system-level control, not per-component.
+- **Native contract spike** (pulled forward from Stage 6): a throwaway Expo app under `apps/` consuming `silk-core` directly — theme delivery plus `Box`/`Stack`/`Text`/`Button` — to catch web-shaped assumptions in tokens and recipes while the contracts are still cheap to change. Findings fold back into core; nothing is published. Stage 6 graduates this into a real package.
+- **Pre-1.0 API policy**: define what counts as public API (component props, semantic token names, public CSS variables, recipe shapes, core utilities like `defineRecipe`/`createTheme`) and the breaking-change rules changesets enforce — *before* the component surface grows. Stage 7 matures this into deprecation and codemod policy.
 
-**Exit criteria:** a realistic page skeleton (header / content / sidebar / footer) can be built from layout primitives alone; responsive strategy documented in ARCHITECTURE.md.
+**Exit criteria:** a realistic page skeleton (header / content / sidebar / footer) can be built from layout primitives alone; responsive strategy documented in ARCHITECTURE.md; the native spike renders core-driven exemplars in Expo with divergences resolved or logged as justified; the pre-1.0 API policy is documented.
 
 ---
 
@@ -97,7 +99,7 @@ Harden theming from "works" to "product-grade multi-tenant".
 Prove the shared layer is actually shared. Meaningful sharing, not pixel parity — native should feel native.
 
 - New package consuming `silk-core` tokens, themes, recipes, and composite models directly (no CSS variables).
-- Start narrow: theme delivery (provider + hook), `Box`/`Stack`/`Text`/`Button` — the same exemplar strategy as Stage 0.
+- Graduate the Stage 1 native contract spike into a real package: theme delivery (provider + hook), `Box`/`Stack`/`Text`/`Button` first — the same exemplar strategy as Stage 0.
 - Platform-specific by design: Dialog/Select/Tooltip/Toast/navigation get native-feeling implementations on their own schedule.
 - Example app under `apps/` (Expo).
 
@@ -110,7 +112,7 @@ Prove the shared layer is actually shared. Meaningful sharing, not pixel parity 
 Make Silk consumable and evolvable over years.
 
 - Registry: publish composite sources from release tags (not `main`); verify installs are Tailwind-free; decide the final primitives-as-packages vs. composites-as-source split based on Stages 4–6 experience.
-- Versioning policy: what is public API (props, tokens, public CSS variables, recipe shapes), deprecation policy, codemod strategy for breaking changes.
+- Versioning maturity: deprecation policy, codemod strategy for breaking changes, and the 1.0 stability commitment — building on the pre-1.0 API policy defined in Stage 1.
 - Docs completeness: theming guide, customization-ladder guide, contribution guide, per-component API docs.
 - Adoption: migration guidance for consuming apps (Anansi SSR integration recipe included).
 
@@ -128,5 +130,5 @@ Tracked from the founding brief; each has a home stage where it must be resolved
 | Semantic vs. component tokens, how many | Stage 2/5 | Partially — sparse component tokens; audit pending |
 | Responsive strategy | Stage 1 | Open |
 | Slot architecture for composites | Stage 4 | Open (Identity prototype exists) |
-| Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/6 | Proven on web; native validation pending |
+| Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | Proven on web; native spike validates in Stage 1 |
 | Registry: packages vs. generated source | Stage 7 | Scaffolded; final split pending |

@@ -11,7 +11,7 @@ A **long-lived design system foundation** for applications — not another compo
 Silk optimizes for, in order:
 
 1. **Long-term maintainability** over initial implementation speed.
-2. **Clear ownership boundaries** — Radix owns behavior; Silk owns visuals and APIs.
+2. **Clear ownership boundaries** — interaction behavior is delegated to proven primitives (Radix on web); Silk owns visuals, APIs, and end-to-end accessibility.
 3. **Excellent SSR performance** — statically extracted CSS, minimal runtime work.
 4. **A semantic, theme-driven architecture** — never component-specific one-off styling.
 5. **Shared concepts across web and native** — without forcing identical implementations where the platforms naturally differ.
@@ -21,22 +21,39 @@ Silk optimizes for, in order:
 
 When two goals conflict, the lower number wins.
 
-## Hard constraints (non-negotiable)
+## Invariants and bindings
 
-These are not preferences. Violating any of them is a bug regardless of how convenient the violation is.
+The non-negotiables are **outcomes** (invariants), not tools. Tools are **bindings** — the current best implementation of an invariant — and are replaceable when their health degrades. Confusing the two is how a "long-lived" system dies with its dependencies. Invariants outrank every numbered goal above.
 
-- **No Tailwind. No CVA. No utility-class styling.** No runtime class-composition system built around utility classes. Using the shadcn **registry protocol** for distribution is fine; shipping Tailwind-flavored components through it is not.
-- **CSS-first via Linaria.** CSS is statically extracted at build time. Runtime styling is limited to CSS variables. No runtime CSS-in-JS, no per-provider `<style>` injection.
-- **SSR-first.** Everything renders correctly on the server (Anansi, not Next.js). No client-only architectures, no hydration hacks, no runtime style generation.
-- **Radix owns behavior.** Never reinvent dialogs, menus, popovers, focus management, or keyboard interaction. Silk owns visuals and API shape on top.
+### Invariants (non-negotiable)
+
+Violating any of these is a bug regardless of how convenient the violation is.
+
+- **No utility-class styling.** No Tailwind, no CVA, no runtime class-composition systems. Distributing source via a registry *protocol* is fine; shipping utility-class-flavored content through it is not.
+- **All CSS is statically extracted at build time.** Runtime styling is limited to CSS variables. No runtime CSS-in-JS, no per-provider `<style>` injection.
+- **SSR-first.** Everything renders correctly on the server. No client-only architectures, no hydration hacks, no runtime style generation.
+- **Interaction mechanics are delegated, never reimplemented.** Focus management, keyboard interaction, overlay and dismissal semantics come from a proven, accessible behavior source. Silk owns visuals and API shape on top — and owns the end-to-end accessibility of the result (see ownership boundaries).
 - **Components never reference palette colors.** Only semantic tokens. The palette exists solely as raw material for themes.
 - **The shared layer (`silk-core`) knows nothing about CSS, the DOM, or React Native views.** Tokens, themes, recipes, and contracts are platform-neutral data and types.
+
+### Current bindings
+
+| Invariant | Current binding |
+| --- | --- |
+| Static CSS extraction | Linaria |
+| Interaction behavior source (web) | Radix Primitives |
+| Interaction behavior source (native) | OS behaviors + vetted native-backed libraries (Stage 6) |
+| SSR host | Anansi |
+| Source distribution | shadcn registry protocol |
+
+Bindings are commitments, not identity. Replacing one requires a charter amendment naming the trigger (maintenance stalled, security, platform incompatibility, or a strictly better implementation of the same invariant), the migration path, and its owner — and the invariants survive the replacement unchanged. Watch dependency health deliberately rather than discovering it in a crisis.
 
 ## Ownership boundaries
 
 | Concern | Owner |
 | --- | --- |
-| Accessibility & interaction behavior | Radix (web) / platform equivalents (native) |
+| Primitive interaction mechanics (focus, keyboard, overlays, dismissal) | Radix (web) / OS + vetted native-backed libraries (native) |
+| End-to-end accessibility (accessible names, labels, contrast, composite semantics, motion preferences) | Silk — delegating mechanics does not delegate responsibility |
 | Visual language, variants, theming | Silk |
 | Component API shape | Silk (never mirrored from another library) |
 | Tokens, recipes, contracts, types | `silk-core` (platform-neutral) |
@@ -44,7 +61,7 @@ These are not preferences. Violating any of them is a bug regardless of how conv
 
 ## Theming is architectural, not a feature
 
-Themeability is the most important requirement and must never become something bolted on.
+Themeability ranks where the goals list puts it — the claim is not that it outranks everything, but that it **cannot be retrofitted**: get the token/theme architecture wrong early and every later component inherits the mistake. So it must be built and validated first, never bolted on.
 
 - **Layering:** raw palette → semantic tokens (`surface`, `textPrimary`, `accent`, `danger`, `radius`, `spacing`, `motion`, `typography`, …) → sparse component tokens → platform delivery.
 - **Web delivery is CSS variables** — enabling nested themes, runtime switching, server rendering, tenant branding, and minimal rerendering.
@@ -80,7 +97,7 @@ Four distinct layers, each with a clear job:
 How to choose between designs that all satisfy the constraints. These exist because Silk's consumers and maintainers include AI agents as much as humans — and what serves one serves the other: a system that a model can use correctly from its prior knowledge is also a system a person can learn in an afternoon.
 
 - **Spend concepts, not names.** The system has a concept budget. Every new concept — a prop axis, a token category, a naming pattern, a composition idiom — must be learned by everyone and everything that touches the system, and its cost multiplies across every component that adopts it. Prefer one powerful concept applied broadly (e.g. `tone` working identically on every component) over many narrow ones. Before introducing a new concept, prove an existing one can't be stretched to cover it. Cardinality, not code volume, is what makes systems unlearnable at scale.
-- **Convention over invention.** When two designs are similarly good and similarly complex, choose the one that matches de facto ecosystem standards — names, prop shapes, and patterns common across comparable libraries (`asChild`, `size`, `onOpenChange`, compound `Root`/`Trigger`/`Content` parts, …). Familiar shapes are pre-learned: agents produce correct code from training priors, and humans guess right on the first try. This is strictly a **tiebreaker** — it never overrides a hard constraint or a genuinely better design, and "Silk owns its API" means we choose deliberately, not that we invent for novelty's sake.
+- **Convention over invention.** When two designs are similarly good and similarly complex, choose the one that matches de facto ecosystem standards — names, prop shapes, and patterns common across comparable libraries (`asChild`, `size`, `onOpenChange`, compound `Root`/`Trigger`/`Content` parts, …). Familiar shapes are pre-learned: agents produce correct code from training priors, and humans guess right on the first try. This is strictly a **tiebreaker** — it never overrides an invariant or a genuinely better design, and "Silk owns its API" means we choose deliberately, not that we invent for novelty's sake.
 - **Extension by addition.** Every layer must accept new members without rearchitecting: new semantic tokens, new recipes, new components, new themes, new platforms. The infrastructure Silk builds with — `defineRecipe`, `createTheme`, semantic tokens, the composition patterns — is public API, so downstream code can create components that are indistinguishable from first-party ones. If extending requires forking or patching, the boundary is drawn wrong.
 - **Predictable beats clever.** APIs should be guessable from the rest of the system: consistent naming, behavior discoverable from types, and patterns that transfer between components. If knowing one component doesn't help you use the next, the design has failed this heuristic.
 - **Intent at the surface, resolution underneath.** A usage site should expose every design decision made *there* — layout, spacing, color role, hierarchy — as semantic declarations, and nothing else. Concerns orthogonal to the usage site (exact palette values, light/dark mode, tenant theme, platform delivery) live behind layers of indirection and never leak into component code, so a reader reasons about what varies at this site without parsing what doesn't. The indirection must stay traversable: when the deeper layer *is* the concern, following it should be one well-named hop (token → theme entry), not an opaque lookup. Semantic color is the canonical case — `tone="danger"` states the complete design intent at the call site; which red that resolves to in dark mode is a theme-layer question, answered in the theme layer. This is also why identical inputs must yield identical visual semantics across themes and modes: the layers only stay separable if each one keeps its contract.
@@ -105,7 +122,7 @@ Shipping a component without the escape-hatch level is a regression, not a simpl
 
 Questions to ask before merging anything significant. A "no" means stop.
 
-- Does behavior still come from Radix (or a platform equivalent), with Silk only styling it?
+- Does interaction behavior still come from the platform's behavior binding (Radix on web), with Silk styling it and owning the accessibility of the result?
 - Is every color referenced through a semantic token?
 - Does `silk-core` remain free of CSS, DOM, and React Native imports?
 - Is all CSS statically extracted — would this render correctly on the server with JS disabled styles-wise?
@@ -129,3 +146,4 @@ Principles can change — deliberately. An amendment requires: the change itself
 - 2026-07 — Added goals 7–8 (extensibility/flexibility, human-and-agent ergonomics) and the **Design heuristics** section: concept budget, convention-over-invention tiebreaker, extension by addition, predictability. Reason: Silk is consumed and maintained by AI agents as well as humans; concept cardinality and departure from ecosystem conventions are the main scaling costs for both.
 - 2026-07 — Cross-platform: interfaces converge even where implementations diverge. Shared concepts get one contract (ideally defined in `silk-core`); API divergence between web and native requires a real platform justification.
 - 2026-07 — Design heuristics: intent at the surface, resolution underneath. Usage sites carry complete semantic design intent; orthogonal concerns (theme values, color scheme, platform delivery) stay behind traversable indirection. Reason: readers — especially agents — reason best when the signal they need is local and the concerns they don't need are separated but discoverable.
+- 2026-07 — Post adversarial review: (a) hard constraints split into **invariants** (outcomes) and **bindings** (current tools: Linaria, Radix, Anansi, shadcn registry protocol) with a replacement policy, so goal 1 (maintainability) survives dependency failure; (b) themeability wording corrected — the goals ordering is authoritative; theming's special status is that it cannot be retrofitted, not that it outranks all; (c) accessibility ownership corrected — Silk owns end-to-end accessibility and delegates only primitive interaction mechanics.
