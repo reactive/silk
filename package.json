@@ -1,0 +1,20 @@
+{
+  "name": "silk",
+  "private": true,
+  "packageManager": "yarn@4.17.1",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "yarn workspaces foreach -A -pt run build",
+    "typecheck": "yarn workspaces foreach -A -pt run typecheck",
+    "test": "yarn workspaces foreach -A -pt run test",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "yarn build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.1",
+    "typescript": "^7.0.2"
+  }
+}
