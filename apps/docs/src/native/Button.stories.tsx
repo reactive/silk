@@ -47,7 +47,8 @@ export const SoftDanger: Story = {
 
 export const StyleEscapeHatch: Story = {
   args: {
-    style: { opacity: 0.75 },
+    // Layout-only override — opacity would fail axe color-contrast against the canvas.
+    style: { minWidth: 160, alignSelf: 'stretch' },
     children: 'Styled',
   },
 };
