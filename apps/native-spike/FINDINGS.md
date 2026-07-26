@@ -27,6 +27,7 @@ Goal: catch web-shaped assumptions in tokens/recipes while contracts are cheap t
 | Theme delivery | CSS vars + `data-theme` / `data-density` | `ThemeProvider` context with `Theme` + `density` | Renderer-only; do not put CSS var names in core. |
 | Interaction states | `:hover` / `:focus-visible` / `transition` | `Pressable` pressed + disabled only | Web-only affordances; recipes stay visual (variant/tone/size/density). |
 | Layout extras | `asChild`, container queries, `collapseBelow`, `contain` | Omitted | Already web-scoped in `@reactive/silk`. |
+| Horizontal flow | `Inline` (wrapping, `collapseBelow`) | Omitted; spike `Stack` is vertical-only like core | Spike proves the shared `gap`/`align`/`justify` contract; `Inline` graduates in Stage 6. |
 | Button layout | `inline-flex` | `alignSelf: 'flex-start'` + row flex | RN has no inline formatting context; acceptable. |
 | Box model | `box-sizing: border-box`, `min-width: 0` | RN default box model; no minWidth reset in spike | Document if overflow bugs appear; not a core token issue. |
 | Density on Theme | Effective `--silk-space-*` via DOM | Context `density` + `compactSpace` / `theme.semantic.space` | Keep density off the Theme object unless a cross-platform API is designed later. |

@@ -10,20 +10,18 @@ export interface StackProps
 }
 
 export function Stack({
-  direction,
   gap,
   align,
-  wrap,
+  justify,
   style,
   children,
   ...rest
 }: StackProps): JSX.Element {
   const { theme, density } = useTheme();
   const resolved: StackVariantProps = {
-    direction: direction ?? stackRecipe.defaults.direction,
     gap: gap ?? stackRecipe.defaults.gap,
     align: align ?? stackRecipe.defaults.align,
-    wrap: wrap ?? stackRecipe.defaults.wrap,
+    justify: justify ?? stackRecipe.defaults.justify,
   };
   const mapped = mapStackStyle(theme, resolved, density);
   return (

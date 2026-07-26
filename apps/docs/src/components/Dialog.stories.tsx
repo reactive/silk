@@ -1,6 +1,7 @@
 import {
   Button,
   Dialog,
+  Inline,
   Popover,
   Select,
   SilkProvider,
@@ -61,7 +62,7 @@ function DialogBody({
 }
 
 const confirmActions = (
-  <Stack direction="row" gap="2" align="center">
+  <Inline gap="2" align="center" wrap="nowrap">
     <Dialog.Close asChild>
       <Button tone="neutral" variant="outline">
         Cancel
@@ -70,7 +71,7 @@ const confirmActions = (
     <Dialog.Close asChild>
       <Button>Confirm</Button>
     </Dialog.Close>
-  </Stack>
+  </Inline>
 );
 
 export const Basic: Story = {
@@ -102,7 +103,7 @@ export const Sizes: Story = {
   tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
-    <Stack direction="row" gap="2" wrap="wrap">
+    <Inline gap="2" wrap="wrap">
       {dialogRecipe.variants.size.map((size) => (
         <Dialog.Root key={size}>
           <Dialog.Trigger asChild>
@@ -123,7 +124,7 @@ export const Sizes: Story = {
           </Dialog.Content>
         </Dialog.Root>
       ))}
-    </Stack>
+    </Inline>
   ),
 };
 
@@ -152,7 +153,7 @@ function LayeringStory(): JSX.Element {
                       <Select.Item value="banana">Banana</Select.Item>
                     </Select.Content>
                   </Select.Root>
-                  <Stack direction="row" gap="2" align="center">
+                  <Inline gap="2" align="center" wrap="nowrap">
                     <Popover.Root>
                       <Popover.Trigger asChild>
                         <Button variant="outline" tone="neutral">
@@ -172,7 +173,7 @@ function LayeringStory(): JSX.Element {
                       <Tooltip.Content>Above the dialog panel</Tooltip.Content>
                     </Tooltip.Root>
                     <Button onClick={() => setToastOpen(true)}>Toast</Button>
-                  </Stack>
+                  </Inline>
                 </Stack>
               }
             />

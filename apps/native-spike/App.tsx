@@ -23,7 +23,7 @@ export function App(): JSX.Element {
               <Text tone="secondary">
                 Theme object from createTheme; styles from core recipes/tokens.
               </Text>
-              <Stack direction="row" gap="2" wrap="wrap">
+              <Stack gap="2" align="start">
                 <Button tone="accent">Accent</Button>
                 <Button variant="outline" tone="neutral">
                   Outline

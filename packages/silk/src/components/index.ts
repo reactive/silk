@@ -10,9 +10,6 @@ export type { InlineProps } from './Inline';
 export { Grid } from './Grid';
 export type { GridProps } from './Grid';
 
-export { Center } from './Center';
-export type { CenterProps } from './Center';
-
 export { Container } from './Container';
 export type { ContainerProps } from './Container';
 

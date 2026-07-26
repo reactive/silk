@@ -33,13 +33,14 @@ assert(
 );
 
 const stack = mapStackStyle(theme, {
-  direction: 'row',
   gap: '3',
   align: 'center',
+  justify: 'between',
 });
-assert(stack.flexDirection === 'row', 'stack direction');
+assert(stack.flexDirection === 'column', 'stack is vertical-only');
 assert(stack.gap === theme.semantic.space[3], 'stack gap');
 assert(stack.alignItems === 'center', 'stack align');
+assert(stack.justifyContent === 'space-between', 'stack justify');
 
 const text = mapTextStyle(theme, { role: 'heading', tone: 'accent' });
 const heading = theme.semantic.typography.heading;
@@ -90,7 +91,7 @@ assert(
 
 // Recipe defaults are the shared contract
 assert(boxRecipe.defaults.padding === '0', 'box recipe default');
-assert(stackRecipe.defaults.direction === 'column', 'stack recipe default');
+assert(stackRecipe.defaults.align === 'stretch', 'stack recipe default');
 assert(textRecipe.defaults.role === 'body', 'text recipe default');
 assert(buttonRecipe.defaults.tone === 'accent', 'button recipe default');
 

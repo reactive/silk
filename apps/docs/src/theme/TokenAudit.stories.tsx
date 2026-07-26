@@ -2,7 +2,7 @@ import { css } from '@linaria/core';
 import {
   Badge,
   Button,
-  Stack,
+  Inline,
   Surface,
   Text,
   badgeRecipe,
@@ -60,7 +60,7 @@ export const BadgeToneMatrix: Story = {
 export const ElevationSurfaces: Story = {
   tags: ['!test'],
   render: (): JSX.Element => (
-    <Stack gap="3" direction="row">
+    <Inline gap="3" align="stretch" wrap="nowrap">
       {(['sunken', 'flat', 'raised', 'overlay'] as const).map((elevation) => (
         <Surface
           key={elevation}
@@ -71,6 +71,6 @@ export const ElevationSurfaces: Story = {
           <Text>{elevation}</Text>
         </Surface>
       ))}
-    </Stack>
+    </Inline>
   ),
 };

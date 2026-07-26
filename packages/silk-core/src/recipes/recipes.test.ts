@@ -5,7 +5,6 @@ import {
   boxRecipe,
   buttonRecipe,
   cardRecipe,
-  centerRecipe,
   checkboxRecipe,
   containerRecipe,
   dialogRecipe,
@@ -61,7 +60,6 @@ test('all recipes provide every axis default', () => {
   assertRecipeDefaults(boxRecipe);
   assertRecipeDefaults(inlineRecipe);
   assertRecipeDefaults(gridRecipe);
-  assertRecipeDefaults(centerRecipe);
   assertRecipeDefaults(containerRecipe);
   assertRecipeDefaults(separatorRecipe);
   assertRecipeDefaults(surfaceRecipe);
@@ -107,9 +105,28 @@ test('layout recipes expose expected defaults', () => {
   expect(inlineRecipe.defaults.wrap).toBe('wrap');
   expect(gridRecipe.defaults.columns).toBe('auto');
   expect(containerRecipe.defaults.size).toBe('lg');
-  expect(centerRecipe.defaults.axis).toBe('both');
   expect(separatorRecipe.defaults.orientation).toBe('horizontal');
   expect(boxRecipe.defaults.padding).toBe('0');
+});
+
+/**
+ * Stack is vertical-only: a `direction` (or `wrap`) axis would reintroduce the
+ * flip that makes `align`/`justify` mean different visual axes per call site.
+ */
+test('stackRecipe exposes exactly the vertical-only axes', () => {
+  expect(Object.keys(stackRecipe.variants)).toEqual([
+    'gap',
+    'align',
+    'justify',
+    'rail',
+  ]);
+  expect(stackRecipe.defaults.align).toBe('stretch');
+  expect(stackRecipe.defaults.justify).toBe('start');
+});
+
+test('gridRecipe pairs align and justify as item placement axes', () => {
+  expect(gridRecipe.variants.justify).toEqual(gridRecipe.variants.align);
+  expect(gridRecipe.defaults.justify).toBe('stretch');
 });
 
 test('surface elevation pairs background and shadow coherently', () => {

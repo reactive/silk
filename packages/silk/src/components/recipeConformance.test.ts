@@ -4,7 +4,6 @@ import {
   boxRecipe,
   buttonRecipe,
   cardRecipe,
-  centerRecipe,
   checkboxRecipe,
   containerRecipe,
   dialogRecipe,
@@ -56,10 +55,9 @@ test('recipe conformance: every Button variant value has a CSS rule', () => {
 test('recipe conformance: Text, Stack, Avatar, Dialog axes are styled', () => {
   const css = loadCss();
   assertAxisSelectors(css, 'data-role', textRecipe.variants.role);
-  assertAxisSelectors(css, 'data-direction', stackRecipe.variants.direction);
   assertAxisSelectors(css, 'data-gap', stackRecipe.variants.gap);
   assertAxisSelectors(css, 'data-align', stackRecipe.variants.align);
-  assertAxisSelectors(css, 'data-wrap', stackRecipe.variants.wrap);
+  assertAxisSelectors(css, 'data-justify', stackRecipe.variants.justify);
   assertAxisSelectors(css, 'data-size', avatarRecipe.variants.size);
   assertAxisSelectors(css, 'data-shape', avatarRecipe.variants.shape);
   assertAxisSelectors(css, 'data-size', dialogRecipe.variants.size);
@@ -75,7 +73,8 @@ test('recipe conformance: layout component axes are styled', () => {
   assertAxisSelectors(css, 'data-direction', inlineRecipe.variants.direction);
   assertAxisSelectors(css, 'data-rail', stackRecipe.variants.rail);
   assertAxisSelectors(css, 'data-columns', gridRecipe.variants.columns);
-  assertAxisSelectors(css, 'data-axis', centerRecipe.variants.axis);
+  assertAxisSelectors(css, 'data-align', gridRecipe.variants.align);
+  assertAxisSelectors(css, 'data-justify', gridRecipe.variants.justify);
   assertAxisSelectors(css, 'data-size', containerRecipe.variants.size);
   assertAxisSelectors(css, 'data-padding', containerRecipe.variants.padding);
   assertAxisSelectors(
@@ -207,25 +206,94 @@ test('density remaps space vars and collapseBelow container queries exist', () =
   expect(css).toContain('@container');
 });
 
-/**
- * collapseBelow must share each component's Linaria class and appear after
- * direction/base and align rules so equal-specificity source order wins.
- * Stack guards stretch so already-column keeps align; Inline always stretches.
- */
-test('collapseBelow rules follow Stack/Inline direction and align in CSS', () => {
-  const css = loadCss();
-  const escape = (value: string): string =>
-    value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRe = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  function collapsePlainBlock(className: string): string {
-    const match = css.match(
+/**
+ * `data-rail` is Stack-only and `data-align="baseline"` is Inline-only, so both
+ * survive Grid gaining `data-justify`. Value axes shared across three
+ * components (`data-gap`, `data-align`, `data-justify`) cannot identify a class.
+ */
+function layoutClass(css: string, uniqueSelector: string): string {
+  const match = css.match(
+    new RegExp(`\\.([a-zA-Z0-9_-]+):where\\(${escapeRe(uniqueSelector)}\\)`),
+  );
+  expect(match).not.toBeNull();
+  return match![1];
+}
+
+/** Balanced-brace slice of every `@container` at-rule body. */
+function containerBlocks(css: string): readonly string[] {
+  const blocks: string[] = [];
+  const opener = /@container[^{]*\{/g;
+  let match: RegExpExecArray | null = opener.exec(css);
+  while (match !== null) {
+    let depth = 1;
+    let i = match.index + match[0].length;
+    while (i < css.length && depth > 0) {
+      if (css[i] === '{') depth += 1;
+      else if (css[i] === '}') depth -= 1;
+      i += 1;
+    }
+    blocks.push(css.slice(match.index, i));
+    opener.lastIndex = i;
+    match = opener.exec(css);
+  }
+  return blocks;
+}
+
+/**
+ * Stack is vertical by construction: the axis lives in the base rule, and no
+ * variant or container query may reintroduce a direction/wrap flip.
+ */
+test('Stack CSS is column-only with no direction, wrap, or container rules', () => {
+  const css = loadCss();
+  const stackClass = layoutClass(css, '[data-rail="start"]');
+
+  expect(css).toMatch(
+    new RegExp(`\\.${escapeRe(stackClass)}\\s*\\{[^}]*flex-direction:\\s*column`),
+  );
+  expect(css).toMatch(
+    new RegExp(
+      `\\.${escapeRe(stackClass)}:where\\(\\[data-justify="center"\\]\\)\\s*\\{[^}]*justify-content:\\s*center`,
+    ),
+  );
+
+  for (const attr of ['data-direction', 'data-wrap', 'data-collapse-below']) {
+    expect(css).not.toContain(`.${stackClass}:where([${attr}=`);
+  }
+  for (const block of containerBlocks(css)) {
+    expect(block).not.toContain(`.${stackClass}`);
+  }
+});
+
+test('Grid justify maps to justify-items, not justify-content', () => {
+  const css = loadCss();
+  const gridColumns = css.match(
+    /\.([a-zA-Z0-9_-]+):where\(\[data-columns="auto"\]\)/,
+  );
+  expect(gridColumns).not.toBeNull();
+  const gridClass = gridColumns![1];
+
+  for (const value of gridRecipe.variants.justify) {
+    expect(css).toMatch(
       new RegExp(
-        `\\.${escape(className)}:where\\(\\[data-collapse-below="md"\\]\\)\\s*\\{([^}]+)\\}`,
+        `\\.${escapeRe(gridClass)}:where\\(\\[data-justify="${value}"\\]\\)\\s*\\{[^}]*justify-items:\\s*${value}`,
       ),
     );
-    expect(match).not.toBeNull();
-    return match![1];
   }
+  expect(css).not.toContain(
+    `.${gridClass}:where([data-justify="stretch"]) { justify-content`,
+  );
+});
+
+/**
+ * collapseBelow must share Inline's Linaria class and appear after the base
+ * direction and the align rules so equal-specificity source order wins.
+ */
+test('collapseBelow rules follow Inline base direction and align in CSS', () => {
+  const css = loadCss();
+  const inlineClass = layoutClass(css, '[data-align="baseline"]');
 
   function assertAfter(earlierNeedle: string, laterNeedle: string): void {
     const earlierIdx = css.indexOf(earlierNeedle);
@@ -234,46 +302,8 @@ test('collapseBelow rules follow Stack/Inline direction and align in CSS', () =>
     expect(laterIdx).toBeGreaterThan(earlierIdx);
   }
 
-  // Stack: direction collapses; stretch only when not already column.
-  // Prefer `data-rail` to identify Stack — Inline also has `data-direction`.
-  const stackRail = css.match(
-    /\.([a-zA-Z0-9_-]+):where\(\[data-rail="start"\]\)/,
-  );
-  expect(stackRail).not.toBeNull();
-  const stackClass = stackRail![1];
-  const stackDirection = css.match(
-    new RegExp(
-      `\\.${stackClass.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:where\\(\\[data-direction="row"\\]\\)\\s*\\{[^}]*flex-direction:\\s*row`,
-    ),
-  );
-  expect(stackDirection).not.toBeNull();
-  const stackCollapseSel = `.${stackClass}:where([data-collapse-below="md"])`;
-  assertAfter(stackDirection![0], stackCollapseSel);
-  assertAfter(`.${stackClass}:where([data-align="center"])`, stackCollapseSel);
-
-  const stackDirectionBody = collapsePlainBlock(stackClass);
-  expect(stackDirectionBody).toContain('flex-direction: column');
-  expect(stackDirectionBody).not.toContain('align-items');
-
-  const stackStretchGuard = `.${stackClass}:where([data-collapse-below="md"]:not([data-direction="column"]))`;
-  expect(css).toContain(stackStretchGuard);
-  assertAfter(`.${stackClass}:where([data-align="center"])`, stackStretchGuard);
-  expect(css).toMatch(
-    new RegExp(
-      `${escape(stackStretchGuard)}\\s*\\{[^}]*align-items:\\s*stretch`,
-    ),
-  );
-
-  // Inline: always direction + stretch together (no data-direction guard).
-  const inlineJustify = css.match(
-    /\.([a-zA-Z0-9_-]+):where\(\[data-justify="start"\]\)/,
-  );
-  expect(inlineJustify).not.toBeNull();
-  const inlineClass = inlineJustify![1];
   const inlineBase = css.match(
-    new RegExp(
-      `\\.${escape(inlineClass)}\\s*\\{[^}]*flex-direction:\\s*row`,
-    ),
+    new RegExp(`\\.${escapeRe(inlineClass)}\\s*\\{[^}]*flex-direction:\\s*row`),
   );
   expect(inlineBase).not.toBeNull();
   const inlineCollapseSel = `.${inlineClass}:where([data-collapse-below="md"])`;
@@ -283,9 +313,16 @@ test('collapseBelow rules follow Stack/Inline direction and align in CSS', () =>
     inlineCollapseSel,
   );
 
-  const inlineBody = collapsePlainBlock(inlineClass);
+  const bodyMatch = css.match(
+    new RegExp(`${escapeRe(inlineCollapseSel)}\\s*\\{([^}]+)\\}`),
+  );
+  expect(bodyMatch).not.toBeNull();
+  const inlineBody = bodyMatch![1];
   expect(inlineBody).toContain('flex-direction: column');
   expect(inlineBody).toContain('align-items: stretch');
+  // Collapsing does not neutralize the axis flip: `justify` still drives
+  // `justify-content`, which is the vertical axis once collapsed.
+  expect(inlineBody).not.toContain('justify-content');
   expect(css).not.toContain(
     `.${inlineClass}:where([data-collapse-below="md"]:not(`,
   );

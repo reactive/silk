@@ -2,7 +2,6 @@ import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
 import { SilkProvider } from '../theme/SilkProvider';
 import { Box } from './Box';
-import { Center } from './Center';
 import { Container } from './Container';
 import { Grid } from './Grid';
 import { Inline } from './Inline';
@@ -31,21 +30,46 @@ test('Box contain sets data-contain', () => {
   expect(screen.getByTestId('box').getAttribute('data-contain')).toBe('true');
 });
 
-test('Stack accepts collapseBelow and className escape hatch', () => {
+test('Stack renders vertical-only defaults and the className escape hatch', () => {
   render(
-    <Stack
-      direction="row"
-      collapseBelow="md"
-      className="consumer-stack"
-      data-testid="stack"
-    >
+    <Stack className="consumer-stack" data-testid="stack">
       <span>a</span>
       <span>b</span>
     </Stack>,
   );
   const el = screen.getByTestId('stack');
-  expect(el.getAttribute('data-collapse-below')).toBe('md');
+  expect(el.getAttribute('data-gap')).toBe('2');
+  expect(el.getAttribute('data-align')).toBe('stretch');
+  expect(el.getAttribute('data-justify')).toBe('start');
+  expect(el.getAttribute('data-rail')).toBe('none');
+  expect(el.hasAttribute('data-direction')).toBe(false);
+  expect(el.hasAttribute('data-wrap')).toBe(false);
   expect(el.className).toContain('consumer-stack');
+});
+
+test('Stack emits both alignment axes as data attributes', () => {
+  render(
+    <Stack align="center" justify="center" data-testid="stack">
+      <span>a</span>
+    </Stack>,
+  );
+  const el = screen.getByTestId('stack');
+  expect(el.getAttribute('data-align')).toBe('center');
+  expect(el.getAttribute('data-justify')).toBe('center');
+});
+
+test('Inline accepts collapseBelow and keeps wrapping defaults', () => {
+  render(
+    <Inline collapseBelow="md" className="consumer-inline" data-testid="inline">
+      <span>a</span>
+      <span>b</span>
+    </Inline>,
+  );
+  const el = screen.getByTestId('inline');
+  expect(el.getAttribute('data-collapse-below')).toBe('md');
+  expect(el.getAttribute('data-direction')).toBe('row');
+  expect(el.getAttribute('data-wrap')).toBe('wrap');
+  expect(el.className).toContain('consumer-inline');
 });
 
 test('Inline renders recipe defaults', () => {
@@ -70,17 +94,24 @@ test('Grid renders auto columns and minColumnWidth public var', () => {
   );
   const el = screen.getByTestId('grid');
   expect(el.getAttribute('data-columns')).toBe('auto');
+  expect(el.getAttribute('data-align')).toBe('stretch');
+  expect(el.getAttribute('data-justify')).toBe('stretch');
   expect(el.style.getPropertyValue('--silk-grid-min')).toBe('12rem');
 });
 
-test('Center and Container render defaults', () => {
+test('Grid places items on both axes', () => {
   render(
-    <>
-      <Center data-testid="center">C</Center>
-      <Container data-testid="container">D</Container>
-    </>,
+    <Grid columns="3" align="center" justify="center" data-testid="grid">
+      <span>a</span>
+    </Grid>,
   );
-  expect(screen.getByTestId('center').getAttribute('data-axis')).toBe('both');
+  const el = screen.getByTestId('grid');
+  expect(el.getAttribute('data-align')).toBe('center');
+  expect(el.getAttribute('data-justify')).toBe('center');
+});
+
+test('Container renders defaults', () => {
+  render(<Container data-testid="container">D</Container>);
   expect(screen.getByTestId('container').getAttribute('data-size')).toBe('lg');
   expect(screen.getByTestId('container').getAttribute('data-padding')).toBe(
     '4',
@@ -97,4 +128,22 @@ test('Separator is decorative by default and exposes orientation', () => {
   rerender(<Separator decorative={false} orientation="vertical" />);
   const roleSep = screen.getByRole('separator');
   expect(roleSep.getAttribute('aria-orientation')).toBe('vertical');
+});
+
+/**
+ * Type-level guard: the removed axes must stay compile errors, otherwise a
+ * migrated call site can silently reintroduce a horizontal Stack.
+ */
+test('Stack rejects the removed horizontal-flow props', () => {
+  const rejected = (
+    <>
+      {/* @ts-expect-error Stack is vertical-only — use Inline */}
+      <Stack direction="row" />
+      {/* @ts-expect-error wrap moved to Inline */}
+      <Stack wrap="wrap" />
+      {/* @ts-expect-error collapseBelow moved to Inline */}
+      <Stack collapseBelow="md" />
+    </>
+  );
+  expect(rejected).toBeTruthy();
 });

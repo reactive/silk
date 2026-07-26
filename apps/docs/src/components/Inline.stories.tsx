@@ -1,10 +1,19 @@
 import { css } from '@linaria/core';
 import { Box, Button, Inline, Text, inlineRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import type { JSX } from 'react';
 
 const meta = {
   title: 'Components/Layout/Inline',
   component: Inline,
+  parameters: {
+    docs: {
+      description: {
+        component:
+          'Horizontal flow, wrapping by default. `align` is the vertical axis and `justify` the horizontal one. `collapseBelow` turns the row into a stretched column below the breakpoint, but it does not touch `justify-content` — a `justify` set for the row still applies to the vertical axis once collapsed.',
+      },
+    },
+  },
   args: {
     ...inlineRecipe.defaults,
   },
@@ -24,6 +33,10 @@ const meta = {
     wrap: {
       control: 'select',
       options: [...inlineRecipe.variants.wrap],
+    },
+    direction: {
+      control: 'select',
+      options: [...inlineRecipe.variants.direction],
     },
     collapseBelow: {
       control: 'select',
@@ -50,6 +63,13 @@ const fullWidthClass: string = css`
 
 const narrowClass: string = css`
   max-width: 14rem;
+`;
+
+const collapseFrameClass: string = css`
+  max-width: 20rem;
+  padding: var(--silk-space-3);
+  border: 1px dashed var(--silk-color-border-subtle);
+  border-radius: var(--silk-radius-md);
 `;
 
 export const Default: Story = {
@@ -101,4 +121,21 @@ export const Wrap: Story = {
       </>
     ),
   },
+};
+
+export const CollapseBelow: Story = {
+  parameters: { controls: { disable: true } },
+  render: (): JSX.Element => (
+    <Box contain className={collapseFrameClass}>
+      <Inline gap="3" align="center" wrap="nowrap" collapseBelow="md">
+        <Box className={chipClass}>One</Box>
+        <Box className={chipClass}>Two</Box>
+        <Box className={chipClass}>Three</Box>
+      </Inline>
+      <Text tone="secondary" role="caption">
+        Resize the container — row collapses to a stretched column below md
+        (768px).
+      </Text>
+    </Box>
+  ),
 };

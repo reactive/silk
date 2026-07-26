@@ -6,6 +6,14 @@ import type { JSX } from 'react';
 const meta = {
   title: 'Components/Layout/Grid',
   component: Grid,
+  parameters: {
+    docs: {
+      description: {
+        component:
+          'Both `align` and `justify` place an item inside its own track (`align-items` / `justify-items`). Tracks are always `1fr`, so there is no free space to distribute — this is the one place `justify` means item placement rather than content distribution.',
+      },
+    },
+  },
   args: {
     ...gridRecipe.defaults,
   },
@@ -21,6 +29,10 @@ const meta = {
     align: {
       control: 'select',
       options: [...gridRecipe.variants.align],
+    },
+    justify: {
+      control: 'select',
+      options: [...gridRecipe.variants.justify],
     },
   },
 } satisfies Meta<typeof Grid>;
@@ -65,5 +77,15 @@ export const AutoFill: Story = {
     gap: '3',
     minColumnWidth: '10rem',
     children: <Cells count={8} />,
+  },
+};
+
+export const ItemPlacement: Story = {
+  args: {
+    columns: '3',
+    gap: '3',
+    align: 'center',
+    justify: 'center',
+    children: <Cells count={6} />,
   },
 };

@@ -23,7 +23,12 @@ export interface GridProps
   readonly children?: ReactNode;
 }
 
-const alignMap = {
+/**
+ * Both Grid axes place an item within its own track, so they share one map.
+ * `justify` is `justify-items` here — unlike Stack/Inline, where `justify`
+ * distributes content along the main axis.
+ */
+const placementMap = {
   start: 'start',
   center: 'center',
   end: 'end',
@@ -58,7 +63,17 @@ const alignRules: string = gridRecipe.variants.align
   .map(
     (align) => `
     &:where([data-align='${align}']) {
-      align-items: ${alignMap[align]};
+      align-items: ${placementMap[align]};
+    }
+  `,
+  )
+  .join('\n');
+
+const justifyRules: string = gridRecipe.variants.justify
+  .map(
+    (justify) => `
+    &:where([data-justify='${justify}']) {
+      justify-items: ${placementMap[justify]};
     }
   `,
   )
@@ -71,6 +86,7 @@ const gridClass: string = css`
   ${columnsRules}
   ${gapRules}
   ${alignRules}
+  ${justifyRules}
 `;
 
 /**
@@ -83,6 +99,7 @@ export function Grid({
   columns,
   gap,
   align,
+  justify,
   minColumnWidth,
   ...props
 }: GridProps): JSX.Element {
@@ -91,6 +108,8 @@ export function Grid({
     columns ?? defaults.columns ?? gridRecipe.defaults.columns;
   const resolvedGap = gap ?? defaults.gap ?? gridRecipe.defaults.gap;
   const resolvedAlign = align ?? defaults.align ?? gridRecipe.defaults.align;
+  const resolvedJustify =
+    justify ?? defaults.justify ?? gridRecipe.defaults.justify;
 
   const mergedStyle: CSSProperties | undefined =
     minColumnWidth !== undefined
@@ -106,6 +125,7 @@ export function Grid({
       data-columns={resolvedColumns}
       data-gap={resolvedGap}
       data-align={resolvedAlign}
+      data-justify={resolvedJustify}
     />
   );
 }

@@ -5,7 +5,6 @@ import type {
   BoxVariantProps,
   ButtonVariantProps,
   CardVariantProps,
-  CenterVariantProps,
   CheckboxVariantProps,
   CommentVariantProps,
   ContainerVariantProps,
@@ -56,7 +55,6 @@ export interface SilkDefaults {
   readonly Box?: Partial<BoxVariantProps>;
   readonly Inline?: Partial<InlineVariantProps>;
   readonly Grid?: Partial<GridVariantProps>;
-  readonly Center?: Partial<CenterVariantProps>;
   readonly Container?: Partial<ContainerVariantProps>;
   readonly Separator?: Partial<SeparatorVariantProps>;
   readonly Dialog?: Partial<DialogVariantProps>;

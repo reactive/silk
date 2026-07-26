@@ -15,7 +15,6 @@ import {
   type Ref,
 } from 'react';
 import { useComponentDefaults } from '@reactive/silk';
-import { Center } from '@reactive/silk';
 import { Heading } from '@reactive/silk';
 import { Stack } from '@reactive/silk';
 import { Text } from '@reactive/silk';
@@ -58,18 +57,17 @@ function EmptyStateRoot({
 
   return (
     <EmptyStateContext.Provider value={{ size: resolvedSize }}>
-      <Center axis="both">
-        <Stack
-          {...props}
-          asChild={asChild}
-          gap={gapBySize[resolvedSize]}
-          align="center"
-          className={className}
-          data-size={resolvedSize}
-        >
-          {children}
-        </Stack>
-      </Center>
+      <Stack
+        {...props}
+        asChild={asChild}
+        gap={gapBySize[resolvedSize]}
+        align="center"
+        justify="center"
+        className={className}
+        data-size={resolvedSize}
+      >
+        {children}
+      </Stack>
     </EmptyStateContext.Provider>
   );
 }

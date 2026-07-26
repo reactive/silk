@@ -113,7 +113,6 @@ try {
   for (const name of [
     'Inline',
     'Grid',
-    'Center',
     'Container',
     'Separator',
     'containerBreakpoints',

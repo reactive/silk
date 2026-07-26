@@ -25,9 +25,6 @@ export type { InlineVariantProps } from './inline.js';
 export { gridRecipe } from './grid.js';
 export type { GridVariantProps } from './grid.js';
 
-export { centerRecipe } from './center.js';
-export type { CenterVariantProps } from './center.js';
-
 export { containerRecipe } from './container.js';
 export type { ContainerVariantProps } from './container.js';
 

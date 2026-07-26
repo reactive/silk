@@ -11,7 +11,6 @@ import {
   type Ref,
 } from 'react';
 import { useComponentDefaults } from '../theme/SilkProvider';
-import { Center } from './Center';
 import { Heading } from './Heading';
 import { Stack } from './Stack';
 import { Text } from './Text';
@@ -54,18 +53,17 @@ function EmptyStateRoot({
 
   return (
     <EmptyStateContext.Provider value={{ size: resolvedSize }}>
-      <Center axis="both">
-        <Stack
-          {...props}
-          asChild={asChild}
-          gap={gapBySize[resolvedSize]}
-          align="center"
-          className={className}
-          data-size={resolvedSize}
-        >
-          {children}
-        </Stack>
-      </Center>
+      <Stack
+        {...props}
+        asChild={asChild}
+        gap={gapBySize[resolvedSize]}
+        align="center"
+        justify="center"
+        className={className}
+        data-size={resolvedSize}
+      >
+        {children}
+      </Stack>
     </EmptyStateContext.Provider>
   );
 }

@@ -131,9 +131,10 @@ export function AppSkeleton({
           </Inline>
         </Box>
 
-        <Stack
-          direction="row"
+        <Inline
           gap="0"
+          align="stretch"
+          wrap="nowrap"
           collapseBelow="md"
           className={bodyClass}
           data-region="body"
@@ -210,7 +211,7 @@ export function AppSkeleton({
               </Stack>
             </Container>
           </Box>
-        </Stack>
+        </Inline>
 
         <Box padding="3" className={footerClass} data-region="footer">
           <Inline justify="between" align="center">

@@ -36,7 +36,7 @@ The architecture spike, proven end to end.
 
 Complete the layout vocabulary so nothing downstream reaches for ad hoc flex/grid CSS.
 
-- Components: `Inline`, `Grid`, `Center`, `Container`, `Separator`; extend `Box`/`Stack` as gaps appear.
+- Components: `Inline`, `Grid`, `Container`, `Separator`; extend `Box`/`Stack` as gaps appear.
 - Decide and document the **responsive strategy** (web-only concern; must not leak into core recipes). Container queries vs. viewport breakpoints; how responsive props are expressed without runtime style generation.
 - Density: wire the `density` axis through spacing tokens so it is a real system-level control, not per-component.
 - **Native contract spike** (pulled forward from Stage 6): a throwaway Expo app under `apps/` consuming `silk-core` directly — theme delivery plus `Box`/`Stack`/`Text`/`Button` — to catch web-shaped assumptions in tokens and recipes while the contracts are still cheap to change. Findings fold back into core; nothing is published. Stage 6 graduates this into a real package.
