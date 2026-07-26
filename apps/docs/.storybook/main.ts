@@ -1,5 +1,6 @@
 import { mergeRsbuildConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
+import remarkGfm from 'remark-gfm';
 import type { StorybookConfig } from 'storybook-react-rsbuild';
 
 const config: StorybookConfig = {
@@ -8,7 +9,20 @@ const config: StorybookConfig = {
     options: {},
   },
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(ts|tsx)'],
-  addons: ['@storybook/addon-docs', '@storybook/addon-a11y'],
+  addons: [
+    {
+      name: '@storybook/addon-docs',
+      options: {
+        mdxPluginOptions: {
+          mdxCompileOptions: {
+            // CommonMark only by default — GFM needed for pipe tables in MDX.
+            remarkPlugins: [remarkGfm],
+          },
+        },
+      },
+    },
+    '@storybook/addon-a11y',
+  ],
   typescript: {
     // Babel-based docgen — react-docgen-typescript does not support TypeScript 7.
     reactDocgen: 'react-docgen',

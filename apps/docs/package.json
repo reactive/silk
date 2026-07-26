@@ -24,6 +24,7 @@
     "@wyw-in-js/webpack-loader": "^2.3.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "remark-gfm": "^4.0.1",
     "storybook": "10.5.4",
     "storybook-react-rsbuild": "3.3.4",
     "typescript": "^7.0.2",
