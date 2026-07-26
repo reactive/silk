@@ -40,7 +40,6 @@ function useEmptyStateContext(): EmptyStateContextValue {
 const gapBySize = { sm: '4', md: '5', lg: '6' } as const;
 /** Inside the copy block, so the title and description read as one unit. */
 const copyGapBySize = { sm: '1', md: '2', lg: '2' } as const;
-const headingBySize = { sm: 'sm', md: 'md', lg: 'lg' } as const;
 
 export interface EmptyStateRootProps
   extends ComponentPropsWithoutRef<'div'>, EmptyStateVariantProps {
@@ -98,12 +97,7 @@ function EmptyStateTitle({
 }: EmptyStateTitleProps): JSX.Element {
   const { size } = useEmptyStateContext();
   return (
-    <Heading
-      level="2"
-      size={headingBySize[size]}
-      className={className}
-      {...props}
-    >
+    <Heading level="2" size={size} className={className} {...props}>
       {children}
     </Heading>
   );

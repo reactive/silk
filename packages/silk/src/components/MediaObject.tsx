@@ -2,7 +2,6 @@ import {
   mediaObjectRecipe,
   mediaScale,
   type MediaObjectVariantProps,
-  type MediaScaleSize,
 } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import {
@@ -17,23 +16,15 @@ import { useComponentDefaults } from '../theme/SilkProvider';
 import { Inline } from './Inline';
 import { Stack } from './Stack';
 
-interface MediaObjectContextValue {
-  readonly align: NonNullable<MediaObjectVariantProps['align']>;
-  readonly gap: NonNullable<MediaObjectVariantProps['gap']>;
-  readonly mediaPosition: NonNullable<MediaObjectVariantProps['mediaPosition']>;
-  readonly size: MediaScaleSize;
-}
+/** Presence-only — compound parts consume layout from the Root, not context. */
+const MediaObjectContext = createContext(false);
 
-const MediaObjectContext = createContext<MediaObjectContextValue | null>(null);
-
-function useMediaObjectContext(): MediaObjectContextValue {
-  const ctx = useContext(MediaObjectContext);
-  if (!ctx) {
+function useMediaObjectContext(): void {
+  if (!useContext(MediaObjectContext)) {
     throw new Error(
       'MediaObject compound parts must be used within MediaObject.Root',
     );
   }
-  return ctx;
 }
 
 export interface MediaObjectRootProps
@@ -66,14 +57,7 @@ function MediaObjectRoot({
     mediaObjectRecipe.defaults.mediaPosition;
 
   return (
-    <MediaObjectContext.Provider
-      value={{
-        align: resolvedAlign,
-        gap: resolvedGap,
-        mediaPosition: resolvedMediaPosition,
-        size: resolvedSize,
-      }}
-    >
+    <MediaObjectContext.Provider value={true}>
       <Inline
         {...props}
         asChild={asChild}

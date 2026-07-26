@@ -22,12 +22,6 @@ export interface AvatarProps
  * Off the space scale on purpose: `density` rescales whitespace, and a face is
  * content — compacting a layout should not shrink the person in it.
  */
-const sizeMap = {
-  sm: `${mediaScale.sm.media}px`,
-  md: `${mediaScale.md.media}px`,
-  lg: `${mediaScale.lg.media}px`,
-} as const;
-
 const radiusMap = {
   circle: 'var(--silk-radius-full)',
   rounded: 'var(--silk-radius-md)',
@@ -38,7 +32,7 @@ const sizeRules: string = avatarRecipe.variants.size
   .map(
     (size) => `
     &:where([data-size='${size}']) {
-      --_size: ${sizeMap[size]};
+      --_size: ${mediaScale[size].media}px;
     }
   `,
   )
@@ -55,7 +49,7 @@ const shapeRules: string = avatarRecipe.variants.shape
   .join('\n');
 
 const avatarClass: string = css`
-  --_size: ${sizeMap.md};
+  --_size: ${mediaScale.md.media}px;
   --_resolved-size: var(--silk-avatar-size, var(--_size));
   display: inline-flex;
   align-items: center;

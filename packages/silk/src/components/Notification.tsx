@@ -1,6 +1,6 @@
 import {
+  mediaObjectRecipe,
   mediaScale,
-  type MediaScaleSize,
   type NotificationModel,
 } from '@reactive/silk-core';
 import type {
@@ -14,12 +14,11 @@ import { Card } from './Card';
 import { formatTimestamp } from './formatTimestamp';
 import { Inline } from './Inline';
 import { MediaObject } from './MediaObject';
-import { Stack } from './Stack';
 import { StatusDot } from './StatusDot';
 import { Text } from './Text';
 
 /** Notifications sit alongside posts in a feed, so they share the post scale. */
-const NOTIFICATION_SIZE: MediaScaleSize = 'md';
+const NOTIFICATION_SIZE = mediaObjectRecipe.defaults.size;
 
 export interface NotificationRootProps
   extends ComponentPropsWithoutRef<'article'> {
@@ -105,33 +104,31 @@ function NotificationConvenience({
           />
         }
       >
-        <Stack gap="1" align="start">
-          <Inline gap="2" align="center" wrap="wrap">
-            {!model.read ? (
-              <StatusDot
-                tone="accent"
-                size="sm"
-                role="img"
-                aria-label="Unread"
-                aria-hidden={false}
-              />
-            ) : null}
-            {model.actor !== undefined ? (
-              <Text
-                role={mediaScale[NOTIFICATION_SIZE].primaryRole}
-                tone="primary"
-              >
-                {model.actor.name}
-              </Text>
-            ) : null}
-            <Text role="body" tone="secondary">
-              {model.text}
+        <Inline gap="2" align="center" wrap="wrap">
+          {!model.read ? (
+            <StatusDot
+              tone="accent"
+              size="sm"
+              role="img"
+              aria-label="Unread"
+              aria-hidden={false}
+            />
+          ) : null}
+          {model.actor !== undefined ? (
+            <Text
+              role={mediaScale[NOTIFICATION_SIZE].primaryRole}
+              tone="primary"
+            >
+              {model.actor.name}
             </Text>
-          </Inline>
-          <Text asChild role="caption" tone="secondary">
-            <time dateTime={model.createdAt}>{timeLabel}</time>
+          ) : null}
+          <Text role="body" tone="secondary">
+            {model.text}
           </Text>
-        </Stack>
+        </Inline>
+        <Text asChild role="caption" tone="secondary">
+          <time dateTime={model.createdAt}>{timeLabel}</time>
+        </Text>
       </MediaObject>
     </NotificationRoot>
   );

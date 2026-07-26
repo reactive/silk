@@ -14,10 +14,6 @@ const listClass: string = css`
   list-style: none;
 `;
 
-const listItemClass: string = css`
-  list-style: none;
-`;
-
 const continueButtonClass: string = css`
   align-self: flex-start;
 `;
@@ -99,7 +95,7 @@ function CommentThreadItem({
     ) : undefined;
 
   return (
-    <li className={listItemClass}>
+    <li>
       <Comment
         model={comment}
         onAction={(actionId) => {

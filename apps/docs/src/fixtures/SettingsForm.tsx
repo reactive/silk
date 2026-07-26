@@ -133,11 +133,13 @@ export function SettingsForm({
                   </RadioGroup.Root>
                 </Field.Root>
 
-                <Field.Root disabled={disabled} controlId="marketing">
-                  <Inline gap="2" align="center">
-                    <Checkbox defaultChecked />
-                    <Field.Label>Email me product updates</Field.Label>
-                  </Inline>
+                <Field.Root
+                  disabled={disabled}
+                  controlId="marketing"
+                  orientation="horizontal"
+                >
+                  <Checkbox defaultChecked />
+                  <Field.Label>Email me product updates</Field.Label>
                 </Field.Root>
 
                 <Field.Root disabled={disabled}>

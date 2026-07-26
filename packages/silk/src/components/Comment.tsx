@@ -228,7 +228,6 @@ export interface CommentComponent {
   Header: typeof CommentHeader;
   Body: typeof CommentBody;
   Actions: typeof CommentActions;
-  Replies: typeof CommentReplies;
 }
 
 export const Comment: CommentComponent = Object.assign(CommentConvenience, {
@@ -236,5 +235,4 @@ export const Comment: CommentComponent = Object.assign(CommentConvenience, {
   Header: CommentHeader,
   Body: CommentBody,
   Actions: CommentActions,
-  Replies: CommentReplies,
 });

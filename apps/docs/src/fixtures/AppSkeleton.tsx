@@ -145,19 +145,17 @@ export function AppSkeleton({
             data-narrow={narrow || undefined}
             data-region="sidebar"
           >
-            <Stack gap="4">
-              <Stack gap="2">
-                <Stack gap="1">
-                  <Text role="label">Navigation</Text>
-                  <Separator />
-                </Stack>
-                <Stack gap="1">
-                  {['Overview', 'Projects', 'Settings'].map((item) => (
-                    <Box key={item} className={navItemClass}>
-                      <Text role="caption">{item}</Text>
-                    </Box>
-                  ))}
-                </Stack>
+            <Stack gap="2">
+              <Stack gap="1">
+                <Text role="label">Navigation</Text>
+                <Separator />
+              </Stack>
+              <Stack gap="1">
+                {['Overview', 'Projects', 'Settings'].map((item) => (
+                  <Box key={item} className={navItemClass}>
+                    <Text role="caption">{item}</Text>
+                  </Box>
+                ))}
               </Stack>
             </Stack>
           </Box>

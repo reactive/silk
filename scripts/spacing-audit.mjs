@@ -1,16 +1,5 @@
-/**
- * Renders Storybook stories headlessly and dumps computed spacing/sizing
- * geometry plus screenshots, so layout review is based on actual rendering
- * rather than on reading the source.
- *
- * Requires a running Storybook (`yarn docs`).
- *
- *   node scripts/spacing-audit.mjs                       # the default set
- *   node scripts/spacing-audit.mjs 'story-id,story-id'   # specific stories
- *
- * Env: SB_URL (origin), W (viewport width), OUT_NAME (json basename — give
- * concurrent runs different names so they do not clobber each other).
- */
+// Renders Storybook stories headlessly and dumps computed spacing/sizing geometry
+// plus screenshots, so layout review is based on actual rendering.
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 
@@ -48,12 +37,19 @@ const WIDTH = Number(process.env.W ?? 900);
 const probe = () => {
   const root = document.getElementById('storybook-root') ?? document.body;
   const px = (v) => (v && v !== '0px' ? v : null);
-  const rows = [];
-  const walk = (el, depth, path) => {
+  const els = [];
+  const collect = (el, depth, path) => {
     if (depth > 14) return;
-    const cs = getComputedStyle(el);
     const r = el.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) return;
+    els.push({ el, depth, path, r });
+    let i = 0;
+    for (const c of el.children) collect(c, depth + 1, `${path}/${i++}`);
+  };
+  collect(root, 0, '');
+
+  return els.map(({ el, depth, path, r }) => {
+    const cs = getComputedStyle(el);
     const tag = el.tagName.toLowerCase();
     const dataAttrs = {};
     for (const a of el.attributes) {
@@ -67,7 +63,7 @@ const probe = () => {
       cs.paddingLeft,
     ];
     const mar = [cs.marginTop, cs.marginRight, cs.marginBottom, cs.marginLeft];
-    rows.push({
+    return {
       depth,
       path,
       tag,
@@ -87,49 +83,41 @@ const probe = () => {
         el.children.length === 0
           ? (el.textContent ?? '').trim().slice(0, 40)
           : null,
-    });
-    let i = 0;
-    for (const c of el.children) walk(c, depth + 1, `${path}/${i++}`);
-  };
-  walk(root, 0, '');
-  return rows;
+    };
+  });
 };
 
 const browser = await chromium.launch();
-await mkdir(OUT, { recursive: true });
-const report = {};
-
-for (const id of TARGETS) {
+try {
+  await mkdir(OUT, { recursive: true });
+  const report = {};
   const page = await browser.newPage({
     viewport: { width: WIDTH, height: 900 },
     deviceScaleFactor: 2,
   });
-  await page.goto(`${BASE}/iframe.html?id=${id}&viewMode=story`, {
-    waitUntil: 'networkidle',
-  });
-  await page.waitForTimeout(400);
-
-  // Storybook renders its own error page for an unknown id, which otherwise
-  // gets captured as a perfectly valid-looking screenshot of nothing.
-  if (await page.locator('text=/Couldn.t find story matching/').count()) {
-    throw new Error(
-      `No story matching '${id}'. Check the id in the story file.`,
-    );
+  try {
+    for (const id of TARGETS) {
+      await page.goto(`${BASE}/iframe.html?id=${id}&viewMode=story`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await page.waitForSelector('#storybook-root *', { state: 'attached' });
+      report[id] = await page.evaluate(probe);
+      await page.screenshot({
+        path: `${OUT}${id}.png`,
+        fullPage: true,
+        animations: 'disabled',
+      });
+      console.log('captured', id);
+    }
+  } finally {
+    await page.close();
   }
 
-  report[id] = await page.evaluate(probe);
-  await page.screenshot({
-    path: `${OUT}${id}.png`,
-    fullPage: true,
-    animations: 'disabled',
-  });
-  await page.close();
-  console.log('captured', id);
+  await writeFile(
+    `${OUT}${process.env.OUT_NAME ?? 'geometry'}.json`,
+    JSON.stringify(report, null, 1),
+  );
+  console.log('->', OUT);
+} finally {
+  await browser.close();
 }
-
-await writeFile(
-  `${OUT}${process.env.OUT_NAME ?? 'geometry'}.json`,
-  JSON.stringify(report, null, 1),
-);
-await browser.close();
-console.log('->', OUT);

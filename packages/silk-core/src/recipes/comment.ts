@@ -3,9 +3,12 @@ import {
   type Recipe,
   type VariantProps,
 } from './defineRecipe.js';
+import { mediaScaleSizes } from './mediaScale.js';
 
-const commentVariants = {
-  size: ['sm', 'md', 'lg'] as const,
+const commentVariants: {
+  readonly size: typeof mediaScaleSizes;
+} = {
+  size: mediaScaleSizes,
 };
 
 export const commentRecipe: Recipe<typeof commentVariants> = defineRecipe({

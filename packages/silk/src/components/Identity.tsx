@@ -1,4 +1,5 @@
 import {
+  mediaObjectRecipe,
   mediaScale,
   type IdentityModel,
   type MediaScaleSize,
@@ -46,7 +47,7 @@ function IdentityRoot({
   ...props
 }: IdentityRootProps): JSX.Element {
   const defaults = useComponentDefaults('Identity');
-  const resolvedSize = size ?? defaults.size ?? 'md';
+  const resolvedSize = size ?? defaults.size ?? mediaObjectRecipe.defaults.size;
 
   return (
     <IdentityContext.Provider value={{ size: resolvedSize }}>
