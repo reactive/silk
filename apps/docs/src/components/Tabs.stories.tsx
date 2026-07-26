@@ -1,11 +1,11 @@
 import { Tabs, Text, tabsRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/Tabs',
   component: Tabs.Root,
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',
@@ -35,4 +35,9 @@ export const Basic: Story = {
       </Tabs.Content>
     </Tabs.Root>
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Account settings')).toBeInTheDocument();
+    await userEvent.click(canvas.getByRole('tab', { name: 'Password' }));
+    await expect(canvas.getByText('Password settings')).toBeInTheDocument();
+  },
 };

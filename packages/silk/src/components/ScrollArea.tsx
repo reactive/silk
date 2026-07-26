@@ -85,6 +85,7 @@ export function ScrollAreaRoot({
 
 export function ScrollAreaViewport({
   className,
+  tabIndex = 0,
   ...props
 }: ComponentPropsWithoutRef<typeof RadixScrollArea.Viewport> & {
   readonly ref?: Ref<HTMLDivElement>;
@@ -92,6 +93,7 @@ export function ScrollAreaViewport({
   return (
     <RadixScrollArea.Viewport
       {...props}
+      tabIndex={tabIndex}
       className={cx(viewportClass, className)}
     />
   );

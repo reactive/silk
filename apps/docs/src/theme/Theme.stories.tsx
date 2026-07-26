@@ -11,7 +11,6 @@ import { SurfacePanel } from '../surfacePanel';
 
 const meta = {
   title: 'Theme/ThemeProvider',
-  tags: ['autodocs'],
   parameters: {
     docs: {
       description: {

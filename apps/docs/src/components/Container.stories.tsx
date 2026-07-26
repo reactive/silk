@@ -6,7 +6,6 @@ import type { JSX } from 'react';
 const meta = {
   title: 'Components/Layout/Container',
   component: Container,
-  tags: ['autodocs'],
   args: {
     ...containerRecipe.defaults,
   },

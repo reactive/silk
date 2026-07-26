@@ -8,11 +8,11 @@ import {
   Textarea,
 } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { expect } from 'storybook/test';
 
 const meta = {
   title: 'Components/Forms/Field',
   component: Field.Root,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Field.Root>;
 
 export default meta;
@@ -38,6 +38,14 @@ export const Invalid: Story = {
       <Field.Error>Enter a valid email address.</Field.Error>
     </Field.Root>
   ),
+  play: async ({ canvas }) => {
+    const input = canvas.getByLabelText(/Email/);
+    await expect(input).toHaveAttribute('aria-invalid', 'true');
+    await expect(input).toHaveAttribute('aria-describedby');
+    await expect(canvas.getByRole('alert')).toHaveTextContent(
+      /valid email address/i,
+    );
+  },
 };
 
 export const GroupRadio: Story = {

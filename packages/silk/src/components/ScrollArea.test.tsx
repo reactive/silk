@@ -15,6 +15,18 @@ test('scroll area renders children', () => {
   expect(screen.getByText('Long content')).toBeTruthy();
 });
 
+test('assembled viewport is keyboard-focusable for scrollable-region a11y', () => {
+  const { container } = render(
+    <ScrollArea style={{ height: 80 }}>
+      <div>Long content</div>
+    </ScrollArea>,
+  );
+  const viewport = container.querySelector(
+    '[data-radix-scroll-area-viewport]',
+  );
+  expect(viewport?.getAttribute('tabindex')).toBe('0');
+});
+
 test('ssr emits only the known constant viewport style', () => {
   const html = renderToString(
     <ScrollArea>

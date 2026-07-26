@@ -1,11 +1,11 @@
 import { Button, Popover, Stack, Text, popoverRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/Popover',
   component: Popover.Content,
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',
@@ -24,9 +24,11 @@ export const Basic: Story = {
       <Popover.Trigger asChild>
         <Button>Open popover</Button>
       </Popover.Trigger>
-      <Popover.Content size={size}>
+      <Popover.Content size={size} aria-labelledby="popover-details-title">
         <Stack gap="2">
-          <Text role="heading">Details</Text>
+          <Text role="heading" id="popover-details-title">
+            Details
+          </Text>
           <Text tone="secondary">Floating surface with size axis.</Text>
           <Popover.Close asChild>
             <Button size="sm" variant="outline">
@@ -37,4 +39,8 @@ export const Basic: Story = {
       </Popover.Content>
     </Popover.Root>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open popover' }));
+    await expect(await screen.findByText('Details')).toBeInTheDocument();
+  },
 };

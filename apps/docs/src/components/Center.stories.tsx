@@ -5,7 +5,6 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 const meta = {
   title: 'Components/Layout/Center',
   component: Center,
-  tags: ['autodocs'],
   args: {
     ...centerRecipe.defaults,
   },

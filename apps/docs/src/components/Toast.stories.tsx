@@ -1,10 +1,10 @@
 import { Button, Toast } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import { useState, type JSX } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/Toast',
-  tags: ['autodocs'],
 } satisfies Meta;
 
 export default meta;
@@ -30,4 +30,8 @@ function ToastStory(): JSX.Element {
 
 export const Basic: Story = {
   render: (): JSX.Element => <ToastStory />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Show toast' }));
+    await expect(await screen.findByText('Scheduled')).toBeInTheDocument();
+  },
 };

@@ -1,10 +1,10 @@
 import { Field, Select, Stack, selectRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/Select',
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',
@@ -17,6 +17,15 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Basic: Story = {
+  parameters: {
+    // Radix hides #storybook-root with aria-hidden while the trigger stays
+    // focusable; axe flags that as aria-hidden-focus when the list is open.
+    a11y: {
+      config: {
+        rules: [{ id: 'aria-hidden-focus', enabled: false }],
+      },
+    },
+  },
   render: (): JSX.Element => (
     <Field.Root>
       <Field.Label>Fruit</Field.Label>
@@ -32,9 +41,16 @@ export const Basic: Story = {
       </Select.Root>
     </Field.Root>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('combobox'));
+    await expect(
+      await screen.findByRole('option', { name: 'Banana' }),
+    ).toBeInTheDocument();
+  },
 };
 
 export const Sizes: Story = {
+  tags: ['!test'],
   render: (): JSX.Element => (
     <Stack gap="3">
       {selectRecipe.variants.size.map((size) => (

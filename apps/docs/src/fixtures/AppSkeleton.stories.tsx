@@ -12,7 +12,6 @@ const states: AppSkeletonState[] = [
 const meta = {
   title: 'Fixtures/AppSkeleton',
   component: AppSkeleton,
-  tags: ['autodocs'],
   argTypes: {
     state: {
       control: 'select',

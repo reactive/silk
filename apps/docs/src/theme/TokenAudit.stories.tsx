@@ -19,7 +19,6 @@ const auditSurfaceClass: string = css`
 
 const meta = {
   title: 'Theme/TokenAudit',
-  tags: ['autodocs'],
 } satisfies Meta;
 
 export default meta;
@@ -27,6 +26,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ButtonToneMatrix: Story = {
+  tags: ['!test'],
   render: (): JSX.Element => (
     <VariantMatrix
       rows={buttonRecipe.variants.variant}
@@ -42,6 +42,7 @@ export const ButtonToneMatrix: Story = {
 };
 
 export const BadgeToneMatrix: Story = {
+  tags: ['!test'],
   render: (): JSX.Element => (
     <VariantMatrix
       rows={badgeRecipe.variants.variant}
@@ -57,6 +58,7 @@ export const BadgeToneMatrix: Story = {
 };
 
 export const ElevationSurfaces: Story = {
+  tags: ['!test'],
   render: (): JSX.Element => (
     <Stack gap="3" direction="row">
       {(['sunken', 'flat', 'raised', 'overlay'] as const).map((elevation) => (

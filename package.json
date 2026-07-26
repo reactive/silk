@@ -14,6 +14,7 @@
     "test:perf": "node scripts/perf-budgets.mjs",
     "docs": "yarn workspace @reactive/silk-docs storybook",
     "docs:build": "yarn workspace @reactive/silk-docs build:storybook",
+    "test:storybook": "yarn workspace @reactive/silk-docs test:storybook:ci",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "yarn build && node scripts/release-ci.mjs"

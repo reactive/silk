@@ -1,10 +1,10 @@
 import { Accordion, Text } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/Accordion',
-  tags: ['autodocs'],
 } satisfies Meta;
 
 export default meta;
@@ -31,4 +31,15 @@ export const Basic: Story = {
       </Accordion.Item>
     </Accordion.Root>
   ),
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.getByText(/WAI-ARIA design pattern/),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      canvas.getByRole('button', { name: 'Is it animated?' }),
+    );
+    await expect(
+      canvas.getByText(/height animation/),
+    ).toBeInTheDocument();
+  },
 };

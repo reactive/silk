@@ -5,7 +5,6 @@ import type { JSX } from 'react';
 
 const meta = {
   title: 'Components/Interaction/ScrollArea',
-  tags: ['autodocs'],
 } satisfies Meta;
 
 export default meta;

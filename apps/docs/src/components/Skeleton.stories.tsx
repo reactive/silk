@@ -4,7 +4,6 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 const meta = {
   title: 'Components/Visual/Skeleton',
   component: Skeleton,
-  tags: ['autodocs'],
   args: { ...skeletonRecipe.defaults },
 } satisfies Meta<typeof Skeleton>;
 

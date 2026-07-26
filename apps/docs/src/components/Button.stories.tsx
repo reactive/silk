@@ -7,7 +7,6 @@ import { VariantMatrix } from '../VariantMatrix';
 const meta = {
   title: 'Components/Visual/Button',
   component: Button,
-  tags: ['autodocs'],
   args: {
     children: 'Save',
     ...buttonRecipe.defaults,
@@ -102,6 +101,7 @@ export const RuntimeCssVariables: Story = {
 };
 
 export const VariantToneMatrix: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <VariantMatrix
@@ -118,6 +118,7 @@ export const VariantToneMatrix: Story = {
 };
 
 export const SizeDensityMatrix: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <VariantMatrix

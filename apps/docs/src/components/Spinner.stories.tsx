@@ -4,7 +4,6 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 const meta = {
   title: 'Components/Visual/Spinner',
   component: Spinner,
-  tags: ['autodocs'],
   args: { ...spinnerRecipe.defaults },
 } satisfies Meta<typeof Spinner>;
 

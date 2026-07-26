@@ -188,6 +188,9 @@ export function AppSkeleton({
                 {longContent ? (
                   <Box
                     padding="3"
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Long unbroken content"
                     className={longContentClass}
                     data-region="long-content"
                   >

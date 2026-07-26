@@ -7,7 +7,6 @@ import { VariantMatrix } from '../VariantMatrix';
 const meta = {
   title: 'Components/Visual/Surface',
   component: Surface,
-  tags: ['autodocs'],
   args: {
     ...surfaceRecipe.defaults,
     children: <Text>Surface content</Text>,
@@ -47,6 +46,7 @@ export const Primary: Story = {
 };
 
 export const ElevationMatrix: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <VariantMatrix

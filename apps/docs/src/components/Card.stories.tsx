@@ -5,7 +5,6 @@ import type { JSX } from 'react';
 const meta = {
   title: 'Components/Visual/Card',
   component: Card,
-  tags: ['autodocs'],
   args: {
     ...cardRecipe.defaults,
     children: (

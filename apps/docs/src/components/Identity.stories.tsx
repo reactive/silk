@@ -5,7 +5,6 @@ import type { JSX } from 'react';
 const meta = {
   title: 'Components/Composite/Identity',
   component: Identity,
-  tags: ['autodocs'],
   args: {
     name: 'Ada Lovelace',
     meta: '@ada',

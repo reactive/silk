@@ -1,16 +1,25 @@
 import { Button, DropdownMenu } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/DropdownMenu',
-  tags: ['autodocs'],
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Basic: Story = {
+  parameters: {
+    // Radix hides #storybook-root with aria-hidden while the trigger stays
+    // focusable; axe flags that as aria-hidden-focus when the menu is open.
+    a11y: {
+      config: {
+        rules: [{ id: 'aria-hidden-focus', enabled: false }],
+      },
+    },
+  },
   render: (): JSX.Element => (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -27,6 +36,12 @@ export const Basic: Story = {
       </DropdownMenu.Content>
     </DropdownMenu.Root>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Actions' }));
+    await expect(
+      await screen.findByRole('menuitem', { name: /New/ }),
+    ).toBeInTheDocument();
+  },
 };
 
 export const CheckboxAndRadio: Story = {

@@ -12,12 +12,12 @@ import {
 } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import { useState, type JSX, type ReactNode } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 import { SurfacePanel } from '../surfacePanel';
 
 const meta = {
   title: 'Components/Interaction/Dialog',
   component: Dialog.Content,
-  tags: ['autodocs'],
   parameters: {
     docs: {
       description: {
@@ -89,9 +89,17 @@ export const Basic: Story = {
       </Dialog.Content>
     </Dialog.Root>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Open dialog' }));
+    // Prefer findByRole over toBeVisible — enter animation can fail visibility.
+    await expect(
+      await screen.findByRole('dialog', { name: 'Confirm action' }),
+    ).toBeInTheDocument();
+  },
 };
 
 export const Sizes: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <Stack direction="row" gap="2" wrap="wrap">
@@ -225,4 +233,12 @@ export const NestedThemePortal: Story = {
       </SilkProvider>
     </Stack>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.click(
+      canvas.getByRole('button', { name: 'Open in nested theme' }),
+    );
+    await expect(
+      await screen.findByRole('dialog', { name: 'Nested theme dialog' }),
+    ).toBeInTheDocument();
+  },
 };

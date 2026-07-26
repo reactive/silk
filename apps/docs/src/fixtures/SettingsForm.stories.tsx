@@ -13,7 +13,6 @@ const states: SettingsFormState[] = [
 const meta = {
   title: 'Fixtures/SettingsForm',
   component: SettingsForm,
-  tags: ['autodocs'],
   argTypes: {
     state: {
       control: 'select',
@@ -39,6 +38,11 @@ export const Error: Story = {
 
 export const Disabled: Story = {
   args: { state: 'disabled' },
+  parameters: {
+    // Field.Root applies opacity when disabled, which drops label/description
+    // contrast below WCAG AA. Tracked as a token/style burn-down item.
+    a11y: { test: 'todo' },
+  },
 };
 
 export const Loading: Story = {

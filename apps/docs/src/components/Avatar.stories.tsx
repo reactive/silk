@@ -6,7 +6,6 @@ import { VariantMatrix } from '../VariantMatrix';
 const meta = {
   title: 'Components/Visual/Avatar',
   component: Avatar,
-  tags: ['autodocs'],
   args: {
     fallback: 'AL',
     ...avatarRecipe.defaults,
@@ -38,6 +37,7 @@ export const WithImage: Story = {
 };
 
 export const SizeShapeMatrix: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <VariantMatrix

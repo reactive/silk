@@ -49,8 +49,35 @@ jobs:
       - name: Performance budgets
         run: yarn test:perf
 
-      # Validates CSF/MDX, source alias, docgen, and Linaria extraction.
-      # On main, docs.yml already builds and deploys the same output.
+  storybook-test:
+    name: Storybook Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Build packages
+        run: yarn build
+
       - name: Build Storybook
-        if: github.event_name == 'pull_request'
         run: yarn docs:build
+
+      - name: Install Playwright Chromium
+        run: yarn workspace @reactive/silk-docs exec playwright install --with-deps chromium
+
+      - name: Run Storybook test-runner
+        run: yarn test:storybook
