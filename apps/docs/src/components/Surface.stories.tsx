@@ -1,3 +1,4 @@
+import { css } from '@linaria/core';
 import { Surface, surfaceRecipe, Text } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
@@ -10,7 +11,6 @@ const meta = {
   args: {
     ...surfaceRecipe.defaults,
     children: <Text>Surface content</Text>,
-    style: { padding: 'var(--silk-space-4)' },
   },
   argTypes: {
     elevation: {
@@ -32,7 +32,20 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Primary: Story = {};
+const paddedClass: string = css`
+  padding: var(--silk-space-4);
+`;
+
+const matrixClass: string = css`
+  padding: var(--silk-space-4);
+  min-width: 8rem;
+`;
+
+export const Primary: Story = {
+  args: {
+    className: paddedClass,
+  },
+};
 
 export const ElevationMatrix: Story = {
   parameters: { controls: { disable: true } },
@@ -45,7 +58,7 @@ export const ElevationMatrix: Story = {
         <Surface
           elevation={elevation}
           border="subtle"
-          style={{ padding: 'var(--silk-space-4)', minWidth: '8rem' }}
+          className={matrixClass}
         >
           <Text>{elevation}</Text>
         </Surface>

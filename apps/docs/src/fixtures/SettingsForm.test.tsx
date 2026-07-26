@@ -94,7 +94,7 @@ test('narrowLongContent constrains width and keeps long copy', () => {
   const root = container.querySelector(
     '[data-fixture="settings-form"]',
   ) as HTMLElement;
-  expect(root.style.maxWidth).toBe('18rem');
+  expect(root.getAttribute('data-narrow')).toBe('true');
   expect(root.textContent ?? '').toContain('Extremely long helper copy');
 });
 

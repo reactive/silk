@@ -12,7 +12,7 @@ import {
 } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import { useState, type JSX, type ReactNode } from 'react';
-import { surfacePanelStyle } from '../surfacePanelStyle';
+import { SurfacePanel } from '../surfacePanel';
 
 const meta = {
   title: 'Components/Interaction/Dialog',
@@ -202,8 +202,8 @@ export const NestedThemePortal: Story = {
         Body-portaled Dialog reconstitutes the nearest (inner dark)
         ThemeProvider scope — no `container` hatch required for nesting.
       </Text>
-      <SilkProvider colorScheme="dark" style={surfacePanelStyle}>
-        <Stack gap="3">
+      <SilkProvider colorScheme="dark">
+        <SurfacePanel gap="3">
           <Text>Nested dark scope</Text>
           <Dialog.Root>
             <Dialog.Trigger asChild>
@@ -221,7 +221,7 @@ export const NestedThemePortal: Story = {
               />
             </Dialog.Content>
           </Dialog.Root>
-        </Stack>
+        </SurfacePanel>
       </SilkProvider>
     </Stack>
   ),

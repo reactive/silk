@@ -1,6 +1,7 @@
+import { css } from '@linaria/core';
 import { Box, Button, Inline, Text, inlineRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
 const meta = {
   title: 'Components/Layout/Inline',
@@ -37,21 +38,29 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const chipStyle: CSSProperties = {
-  padding: 'var(--silk-space-1) var(--silk-space-2)',
-  borderRadius: 'var(--silk-radius-full)',
-  backgroundColor: 'var(--silk-color-tone-accent-subtle)',
-  color: 'var(--silk-color-tone-accent-solid)',
-};
+const chipClass: string = css`
+  padding: var(--silk-space-1) var(--silk-space-2);
+  border-radius: var(--silk-radius-full);
+  background-color: var(--silk-color-tone-accent-subtle);
+  color: var(--silk-color-tone-accent-solid);
+`;
+
+const fullWidthClass: string = css`
+  width: 100%;
+`;
+
+const narrowClass: string = css`
+  max-width: 14rem;
+`;
 
 export const Default: Story = {
   args: {
     children: (
       <>
-        <Box style={chipStyle}>Alpha</Box>
-        <Box style={chipStyle}>Beta</Box>
-        <Box style={chipStyle}>Gamma</Box>
-        <Box style={chipStyle}>Delta</Box>
+        <Box className={chipClass}>Alpha</Box>
+        <Box className={chipClass}>Beta</Box>
+        <Box className={chipClass}>Gamma</Box>
+        <Box className={chipClass}>Delta</Box>
       </>
     ),
   },
@@ -61,7 +70,7 @@ export const JustifyBetween: Story = {
   args: {
     justify: 'between',
     wrap: 'nowrap',
-    style: { width: '100%' },
+    className: fullWidthClass,
     children: (
       <>
         <Text role="label">Filters</Text>
@@ -80,12 +89,12 @@ export const JustifyBetween: Story = {
 
 export const Wrap: Story = {
   args: {
-    style: { maxWidth: '14rem' },
+    className: narrowClass,
     children: (
       <>
         {['Design', 'Systems', 'Tokens', 'Recipes', 'Layout', 'Density'].map(
           (label) => (
-            <Box key={label} style={chipStyle}>
+            <Box key={label} className={chipClass}>
               {label}
             </Box>
           ),

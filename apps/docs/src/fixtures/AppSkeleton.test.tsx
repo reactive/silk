@@ -41,7 +41,7 @@ test('sidebarCollapse establishes a size container and collapseBelow', () => {
   expect(root.getAttribute('data-contain')).toBe('true');
   const body = root.querySelector('[data-region="body"]');
   expect(body?.getAttribute('data-collapse-below')).toBe('md');
-  expect(root.style.maxWidth).toBe('22rem');
+  expect(root.getAttribute('data-narrow')).toBe('true');
 });
 
 test('overflow state constrains shell height for scroll', () => {
@@ -49,8 +49,7 @@ test('overflow state constrains shell height for scroll', () => {
   const root = container.querySelector(
     '[data-fixture="app-skeleton"]',
   ) as HTMLElement;
-  expect(root.style.maxHeight).toBe('22rem');
-  expect(root.style.overflow).toBe('auto');
+  expect(root.getAttribute('data-overflow')).toBe('true');
 });
 
 test('longContent state includes unbroken content region', () => {

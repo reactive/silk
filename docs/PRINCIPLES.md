@@ -58,7 +58,7 @@ Bindings are commitments, not identity. Replacing one requires a charter amendme
 
 Per render, a `styled` component clones its props (`Object.keys` + filter + a new object), runs `cx`, and mounts one extra `forwardRef` fiber. Dynamic interpolations also allocate a style object and call each interpolation. What it never does is generate, serialize, hash, or inject CSS — the costly part of runtime CSS-in-JS, and the part Linaria does not have.
 
-Consumers are free to use `styled(Button)`. Every Silk component forwards `className`, wrapping a component skips the DOM-tag prop filter, and for a reusable named component or typed dynamic props compiled to CSS variables it is _more_ capable than `css` + `className`. Prefer `css` + `className` for one-off classes where the wrapper fiber buys nothing. Silk neither ships `@linaria/react` nor requires it.
+Consumers should prefer **`styled(Component)`** when they want a reusable named component or typed dynamic props that compile to CSS variables. Prefer **`css` + `className`** (and `cx` to compose) when the style is a mixin applied to several hosts, when you are stacking independent classes, or when a one-off class does not justify a wrapper fiber. Every Silk component forwards `className`; wrapping a component with `styled` skips the DOM-tag prop filter. Silk neither ships `@linaria/react` nor requires it.
 
 ## Ownership boundaries
 
@@ -125,7 +125,7 @@ Every component participates in all four levels; consumers must never feel trapp
 
 Shipping a component without the escape-hatch level is a regression, not a simplification.
 
-The escape hatches are ranked, and the ranking is part of the design: **public CSS variables** first (order-independent, and the only hatch the component actively cooperates with), then a **`className` carrying a statically extracted class** (build-time, expressive enough for state and media selectors), then **`style`** (runtime values only). A system whose documented override path is inline `style` has quietly conceded that its cascade contract does not hold — so the escape hatch a consumer reaches for first is a measure of whether levels 1–3 are doing their job. See ARCHITECTURE for the cascade-order guarantees behind the ranking.
+The escape hatches are ranked, and the ranking is part of the design: **public CSS variables** first (order-independent, and the only hatch the component actively cooperates with), then a **statically extracted class** applied via `styled(Component)` or `css` + `className` (build-time, expressive enough for state and media selectors), then **`style`** (runtime values only). Prefer `styled` for reusable named components; prefer `css` + `cx` when composing mixins across hosts. A system whose documented override path is inline `style` has quietly conceded that its cascade contract does not hold — so the escape hatch a consumer reaches for first is a measure of whether levels 1–3 are doing their job. See ARCHITECTURE for the cascade-order guarantees behind the ranking.
 
 ## Distribution
 

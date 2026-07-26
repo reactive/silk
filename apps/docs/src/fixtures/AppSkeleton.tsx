@@ -1,3 +1,4 @@
+import { css } from '@linaria/core';
 import {
   Box,
   Button,
@@ -10,7 +11,7 @@ import {
   ThemeProvider,
   type DensityName,
 } from '@reactive/silk';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
 export type AppSkeletonState =
   | 'normal'
@@ -23,35 +24,80 @@ export interface AppSkeletonProps {
   readonly state?: AppSkeletonState;
 }
 
-const shellStyle: CSSProperties = {
-  minHeight: '28rem',
-  border: '1px solid var(--silk-color-border-subtle)',
-  borderRadius: 'var(--silk-radius-lg)',
-  backgroundColor: 'var(--silk-color-surface)',
-  overflow: 'hidden',
-};
+const shellClass: string = css`
+  min-height: 28rem;
+  border: 1px solid var(--silk-color-border-subtle);
+  border-radius: var(--silk-radius-lg);
+  background-color: var(--silk-color-surface);
+  overflow: hidden;
 
-const headerStyle: CSSProperties = {
-  backgroundColor: 'var(--silk-color-surface-raised)',
-  borderBottom: '1px solid var(--silk-color-border-subtle)',
-};
+  &[data-narrow='true'] {
+    max-width: 22rem;
+  }
 
-const sidebarStyle: CSSProperties = {
-  backgroundColor: 'var(--silk-color-surface-raised)',
-  borderInlineEnd: '1px solid var(--silk-color-border-subtle)',
-  minWidth: 0,
-};
+  &[data-overflow='true'] {
+    max-height: 22rem;
+    overflow: auto;
+  }
+`;
 
-const footerStyle: CSSProperties = {
-  backgroundColor: 'var(--silk-color-surface-raised)',
-  borderTop: '1px solid var(--silk-color-border-subtle)',
-};
+const shellStackClass: string = css`
+  min-height: 28rem;
+`;
 
-const navItemStyle: CSSProperties = {
-  padding: 'var(--silk-space-2) var(--silk-space-3)',
-  borderRadius: 'var(--silk-radius-sm)',
-  backgroundColor: 'var(--silk-color-tone-neutral-subtle)',
-};
+const headerClass: string = css`
+  background-color: var(--silk-color-surface-raised);
+  border-bottom: 1px solid var(--silk-color-border-subtle);
+`;
+
+const bodyClass: string = css`
+  flex: 1;
+  min-height: 0;
+`;
+
+const sidebarClass: string = css`
+  background-color: var(--silk-color-surface-raised);
+  border-inline-end: 1px solid var(--silk-color-border-subtle);
+  min-width: 0;
+  flex: 0 0 12rem;
+
+  &[data-narrow='true'] {
+    flex: 1 1 auto;
+  }
+`;
+
+const contentClass: string = css`
+  flex: 1;
+  min-width: 0;
+
+  &[data-overflow='true'] {
+    overflow: auto;
+    max-height: 100%;
+  }
+`;
+
+const navItemClass: string = css`
+  padding: var(--silk-space-2) var(--silk-space-3);
+  border-radius: var(--silk-radius-sm);
+  background-color: var(--silk-color-tone-neutral-subtle);
+`;
+
+const cardTileClass: string = css`
+  border-radius: var(--silk-radius-md);
+  border: 1px solid var(--silk-color-border-subtle);
+  background-color: var(--silk-color-surface-raised);
+`;
+
+const longContentClass: string = css`
+  overflow: auto;
+  border-radius: var(--silk-radius-md);
+  border: 1px solid var(--silk-color-border-subtle);
+`;
+
+const footerClass: string = css`
+  background-color: var(--silk-color-surface-raised);
+  border-top: 1px solid var(--silk-color-border-subtle);
+`;
 
 /**
  * Committed Stage 1 exit fixture — app chrome built from layout primitives only.
@@ -69,15 +115,13 @@ export function AppSkeleton({
     <Box
       data-fixture="app-skeleton"
       data-fixture-state={state}
-      style={{
-        ...shellStyle,
-        ...(narrow ? { maxWidth: '22rem' } : {}),
-        ...(overflow ? { maxHeight: '22rem', overflow: 'auto' } : {}),
-      }}
+      data-narrow={narrow ? 'true' : undefined}
+      data-overflow={overflow ? 'true' : undefined}
+      className={shellClass}
       contain
     >
-      <Stack gap="0" style={{ minHeight: '28rem' }}>
-        <Box padding="3" style={headerStyle} data-region="header">
+      <Stack gap="0" className={shellStackClass}>
+        <Box padding="3" className={headerClass} data-region="header">
           <Inline justify="between" align="center" wrap="nowrap">
             <Text role="heading">Silk App</Text>
             <Inline gap="2" wrap="nowrap">
@@ -93,22 +137,20 @@ export function AppSkeleton({
           direction="row"
           gap="0"
           collapseBelow="md"
-          style={{ flex: 1, minHeight: 0 }}
+          className={bodyClass}
           data-region="body"
         >
           <Box
             padding="3"
-            style={{
-              ...sidebarStyle,
-              ...(narrow ? { flex: '1 1 auto' } : { flex: '0 0 12rem' }),
-            }}
+            className={sidebarClass}
+            data-narrow={narrow ? 'true' : undefined}
             data-region="sidebar"
           >
             <Stack gap="2">
               <Text role="label">Navigation</Text>
               <Separator />
               {['Overview', 'Projects', 'Settings'].map((item) => (
-                <Box key={item} style={navItemStyle}>
+                <Box key={item} className={navItemClass}>
                   <Text role="caption">{item}</Text>
                 </Box>
               ))}
@@ -117,11 +159,8 @@ export function AppSkeleton({
 
           <Box
             padding="4"
-            style={{
-              flex: 1,
-              minWidth: 0,
-              ...(overflow ? { overflow: 'auto', maxHeight: '100%' } : {}),
-            }}
+            className={contentClass}
+            data-overflow={overflow ? 'true' : undefined}
             data-region="content"
           >
             <Container size="md" padding="0">
@@ -140,15 +179,7 @@ export function AppSkeleton({
                   minColumnWidth="9rem"
                 >
                   {['Alpha', 'Beta', 'Gamma', 'Delta'].map((name) => (
-                    <Box
-                      key={name}
-                      padding="3"
-                      style={{
-                        borderRadius: 'var(--silk-radius-md)',
-                        border: '1px solid var(--silk-color-border-subtle)',
-                        backgroundColor: 'var(--silk-color-surface-raised)',
-                      }}
-                    >
+                    <Box key={name} padding="3" className={cardTileClass}>
                       <Text role="label">{name}</Text>
                       <Text tone="secondary" role="caption">
                         Card body
@@ -159,11 +190,7 @@ export function AppSkeleton({
                 {longContent ? (
                   <Box
                     padding="3"
-                    style={{
-                      overflow: 'auto',
-                      borderRadius: 'var(--silk-radius-md)',
-                      border: '1px solid var(--silk-color-border-subtle)',
-                    }}
+                    className={longContentClass}
                     data-region="long-content"
                   >
                     <Text role="caption">
@@ -184,7 +211,7 @@ export function AppSkeleton({
           </Box>
         </Stack>
 
-        <Box padding="3" style={footerStyle} data-region="footer">
+        <Box padding="3" className={footerClass} data-region="footer">
           <Inline justify="between" align="center">
             <Text tone="secondary" role="caption">
               Built with Silk layout primitives

@@ -1,3 +1,4 @@
+import { css } from '@linaria/core';
 import {
   Accordion,
   Button,
@@ -14,7 +15,7 @@ import {
   Tooltip,
   SilkProvider,
 } from '@reactive/silk';
-import { useState, type CSSProperties, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 
 export type InspectorPanelState =
   | 'normal'
@@ -28,7 +29,23 @@ export interface InspectorPanelProps {
   readonly state?: InspectorPanelState;
 }
 
-const shellStyle: CSSProperties = { maxWidth: '42rem' };
+const shellClass: string = css`
+  max-width: 42rem;
+`;
+
+const scrollAreaClass: string = css`
+  height: 80px;
+  border: 1px solid var(--silk-color-border-subtle);
+  border-radius: var(--silk-radius-md);
+
+  &[data-long='true'] {
+    height: 120px;
+  }
+`;
+
+const scrollPadClass: string = css`
+  padding: 12px;
+`;
 
 const SHORT_ROWS = ['Short list item 1', 'Short list item 2'] as const;
 const LONG_ROWS = Array.from(
@@ -138,7 +155,7 @@ export function InspectorPanel({
       <div
         data-fixture="inspector-panel"
         data-fixture-state={state}
-        style={shellStyle}
+        className={shellClass}
       >
         <Card elevation="raised" padding="5" radius="lg">
           <Stack gap="4">
@@ -188,13 +205,10 @@ export function InspectorPanel({
 
             <div data-region="scroll">
               <ScrollArea
-                style={{
-                  height: longContent ? 120 : 80,
-                  border: '1px solid var(--silk-color-border-subtle)',
-                  borderRadius: 'var(--silk-radius-md)',
-                }}
+                className={scrollAreaClass}
+                data-long={longContent ? 'true' : undefined}
               >
-                <div style={{ padding: 12 }}>
+                <div className={scrollPadClass}>
                   {rows.map((line) => (
                     <Text key={line}>{line}</Text>
                   ))}

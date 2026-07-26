@@ -1,13 +1,27 @@
+import { styled } from '@linaria/react';
 import { Box, Text } from '@reactive/silk';
-import { Fragment, type CSSProperties, type JSX, type ReactNode } from 'react';
+import { Fragment, type JSX, type ReactNode } from 'react';
 
 interface VariantMatrixProps<Row extends string, Column extends string> {
   readonly rows: readonly Row[];
   readonly columns: readonly Column[];
-  readonly align?: CSSProperties['alignItems'];
+  readonly align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
   readonly columnWidth?: string;
   readonly children: (row: Row, column: Column) => ReactNode;
 }
+
+const Matrix = styled(Box)`
+  display: grid;
+  gap: var(--silk-space-3) var(--silk-space-5);
+  grid-template-columns: max-content repeat(
+    ${(props) =>
+      (props as { readonly 'data-column-count': number })['data-column-count']},
+    ${(props) =>
+      (props as { readonly 'data-column-width': string })['data-column-width']}
+  );
+  align-items: ${(props) =>
+    (props as { readonly 'data-align': string })['data-align']};
+`;
 
 /**
  * Labelled grid for cross-product variant stories. Not a Silk API — docs
@@ -21,13 +35,10 @@ export function VariantMatrix<Row extends string, Column extends string>({
   children,
 }: VariantMatrixProps<Row, Column>): JSX.Element {
   return (
-    <Box
-      style={{
-        display: 'grid',
-        gap: 'var(--silk-space-3) var(--silk-space-5)',
-        gridTemplateColumns: `max-content repeat(${columns.length}, ${columnWidth})`,
-        alignItems: align,
-      }}
+    <Matrix
+      data-column-count={columns.length}
+      data-column-width={columnWidth}
+      data-align={align}
     >
       <span />
       {columns.map((column) => (
@@ -43,6 +54,6 @@ export function VariantMatrix<Row extends string, Column extends string>({
           ))}
         </Fragment>
       ))}
-    </Box>
+    </Matrix>
   );
 }

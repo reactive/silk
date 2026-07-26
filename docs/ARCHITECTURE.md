@@ -110,13 +110,14 @@ Dialog deliberately sits below the anchored surfaces: a Select, menu, popover, o
 3. Component props — `variant` / `tone` / `size` / `density` / …
 4. Escape hatches — public component CSS variables, `className`, `style`, slots/`asChild`
 
-The escape hatches are **ranked, not interchangeable**:
+The escape hatches are **ranked, not interchangeable**. Split _what you target_ from _how you author it_:
 
-| Reach for                                 | When                                                            | Why                                                                                                                                                      |
-| ----------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public CSS variables (`--silk-button-bg`) | The component exposes a hook for what you want to change        | Order-independent by construction: the component only ever _reads_ the variable, so nothing competes with the consumer's declaration                     |
-| `className` with a Linaria `css` class    | Anything static the hooks don't cover                           | Build-time extraction, no per-render object, and reaches pseudo-classes, `data-*` state, media and container queries — none of which `style` can express |
-| `style`                                   | Values only known at runtime (tenant color, computed dimension) | Highest precedence, but the smallest expressive surface and a new object every render                                                                    |
+| Reach for                                 | When                                                              | Why                                                                                                                                  |
+| ----------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Public CSS variables (`--silk-button-bg`) | The component exposes a hook for what you want to change          | Order-independent by construction: the component only ever _reads_ the variable, so nothing competes with the consumer's declaration |
+| `styled(Component)`                       | A reusable named component, or typed dynamic props → CSS vars     | Same build-time extraction as `css`; yields a component type consumers can import and compose                                        |
+| `css` + `className` (compose with `cx`)   | Mixins shared across hosts, stacked independent classes, one-offs | No wrapper fiber; the right tool when the style is a class, not a new component                                                      |
+| `style`                                   | Values only known at runtime (tenant color, computed dimension)   | Highest precedence, but the smallest expressive surface and a new object every render                                                |
 
 `cssVars()` types the hooks for the `style` prop; React's `CSSProperties` cannot express custom properties, and an `as CSSProperties` cast also silences misspelled variable names. The hook list lives in `theme/componentVars.ts` with a conformance test that fails if it and the extracted CSS disagree in either direction.
 

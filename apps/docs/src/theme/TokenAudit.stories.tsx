@@ -1,3 +1,4 @@
+import { css } from '@linaria/core';
 import {
   Badge,
   Button,
@@ -10,6 +11,11 @@ import {
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
 import { VariantMatrix } from '../VariantMatrix';
+
+const auditSurfaceClass: string = css`
+  padding: var(--silk-space-4);
+  min-width: 7rem;
+`;
 
 const meta = {
   title: 'Theme/TokenAudit',
@@ -58,7 +64,7 @@ export const ElevationSurfaces: Story = {
           key={elevation}
           elevation={elevation}
           border="subtle"
-          style={{ padding: 'var(--silk-space-4)', minWidth: '7rem' }}
+          className={auditSurfaceClass}
         >
           <Text>{elevation}</Text>
         </Surface>

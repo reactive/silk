@@ -1,3 +1,4 @@
+import { css } from '@linaria/core';
 import {
   Box,
   Inline,
@@ -29,10 +30,22 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const narrowClass: string = css`
+  max-width: 24rem;
+`;
+
+const tallClass: string = css`
+  height: 3rem;
+`;
+
+const fullHeightClass: string = css`
+  height: 100%;
+`;
+
 export const Horizontal: Story = {
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
-    <Stack gap="3" style={{ maxWidth: '24rem' }}>
+    <Stack gap="3" className={narrowClass}>
       <Text role="heading">Section A</Text>
       <Text tone="secondary">Content above the separator.</Text>
       <Separator />
@@ -45,11 +58,11 @@ export const Horizontal: Story = {
 export const Vertical: Story = {
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
-    <Inline gap="3" align="center" wrap="nowrap" style={{ height: '3rem' }}>
+    <Inline gap="3" align="center" wrap="nowrap" className={tallClass}>
       <Text role="label">Left</Text>
       <Separator orientation="vertical" />
       <Text role="label">Right</Text>
-      <Box style={{ height: '100%' }}>
+      <Box className={fullHeightClass}>
         <Separator orientation="vertical" />
       </Box>
       <Text tone="secondary" role="caption">

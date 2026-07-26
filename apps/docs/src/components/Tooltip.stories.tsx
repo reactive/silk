@@ -1,4 +1,4 @@
-import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import { Button, Tooltip } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
@@ -35,10 +35,10 @@ export const Basic: Story = {
 
 /**
  * Tooltip has no public CSS variables — the surface is shared with Popover and
- * Menu. Slot-level `className` is the override path, and a Linaria class can
- * reach the `data-side` attribute Radix sets on the content.
+ * Menu. `styled(Tooltip.Content)` is the override path, and can reach the
+ * `data-side` attribute Radix sets on the content.
  */
-const invertedTipClass: string = css`
+const InvertedTip = styled(Tooltip.Content)`
   background-color: var(--silk-color-text-primary);
   color: var(--silk-color-surface);
   border-color: transparent;
@@ -48,12 +48,12 @@ const invertedTipClass: string = css`
   }
 `;
 
-export const EscapeHatchClassName: Story = {
+export const StyledContent: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'A Linaria class on the content slot. Silk styles variants through `:where([data-…])`, so a plain consumer class outranks them — and can key off the same `data-*` state.',
+          '`styled(Tooltip.Content)` — Silk styles variants through `:where([data-…])`, so a consumer class outranks them and can key off the same `data-*` state.',
       },
     },
   },
@@ -63,9 +63,7 @@ export const EscapeHatchClassName: Story = {
         <Tooltip.Trigger asChild>
           <Button variant="outline">Styled tip</Button>
         </Tooltip.Trigger>
-        <Tooltip.Content className={invertedTipClass}>
-          className escape hatch
-        </Tooltip.Content>
+        <InvertedTip>styled escape hatch</InvertedTip>
       </Tooltip.Root>
     </Tooltip.Provider>
   ),

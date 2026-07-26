@@ -32,6 +32,13 @@ const narrowClass: string = css`
   max-width: 20rem;
 `;
 
+const escapeOutlineClass: string = css`
+  display: grid;
+  gap: var(--silk-space-2);
+  outline: 2px dashed var(--silk-color-tone-accent-solid);
+  outline-offset: 2px;
+`;
+
 export const Basic: Story = {
   args: {
     padding: '4',
@@ -74,24 +81,25 @@ export const Contain: Story = {
   ),
 };
 
-const escapeOutlineClass: string = css`
-  display: grid;
-  gap: var(--silk-space-2);
-  outline: 2px dashed var(--silk-color-tone-accent-solid);
-  outline-offset: 2px;
-`;
-
-export const EscapeHatches: Story = {
-  parameters: { controls: { disable: true } },
+export const ClassComposition: Story = {
+  parameters: {
+    controls: { disable: true },
+    docs: {
+      description: {
+        story:
+          'Prefer `css` + `cx` when styles are mixins to stack — not a new component type. See Button → StyledOverrides for the `styled(Component)` path.',
+      },
+    },
+  },
   render: (): JSX.Element => (
     <Box
       className={cx(surfaceClass, narrowClass, escapeOutlineClass)}
       padding="4"
       data-testid="box-escape"
     >
-      <Text role="label">className + data-*</Text>
+      <Text role="label">css + cx</Text>
       <Text tone="secondary" role="caption">
-        Layout primitive — compose with Stack / Inline / Grid.
+        Independent classes composed onto one host.
       </Text>
     </Box>
   ),

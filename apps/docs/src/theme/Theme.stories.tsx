@@ -7,7 +7,7 @@ import {
 } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
-import { surfacePanelStyle } from '../surfacePanelStyle';
+import { SurfacePanel } from '../surfacePanel';
 
 const meta = {
   title: 'Theme/ThemeProvider',
@@ -46,7 +46,7 @@ const providerDefaults = {
 
 function ThemeDemo({ label }: { readonly label: string }): JSX.Element {
   return (
-    <Stack gap="3" style={surfacePanelStyle}>
+    <SurfacePanel gap="3">
       <Text role="heading">{label}</Text>
       <Text tone="secondary">
         Surface, text, and accent tokens resolve from the active theme scope.
@@ -60,7 +60,7 @@ function ThemeDemo({ label }: { readonly label: string }): JSX.Element {
           Danger
         </Button>
       </Stack>
-    </Stack>
+    </SurfacePanel>
   );
 }
 
@@ -99,13 +99,13 @@ export const CustomCreateTheme: Story = {
 export const NestedProviders: Story = {
   render: (): JSX.Element => (
     <SilkProvider colorScheme="light">
-      <Stack gap="4" style={surfacePanelStyle}>
+      <SurfacePanel gap="4">
         <Text role="heading">Outer light</Text>
         <Button variant="soft">Outer action</Button>
         <SilkProvider colorScheme="dark">
           <ThemeDemo label="Inner dark (DOM inheritance)" />
         </SilkProvider>
-      </Stack>
+      </SurfacePanel>
     </SilkProvider>
   ),
 };
@@ -113,7 +113,7 @@ export const NestedProviders: Story = {
 export const ProviderDefaults: Story = {
   render: (): JSX.Element => (
     <SilkProvider colorScheme="light" defaults={providerDefaults}>
-      <Stack gap="3" style={surfacePanelStyle}>
+      <SurfacePanel gap="3">
         <Text role="heading" tone="primary">
           Heading overrides default Text tone
         </Text>
@@ -124,7 +124,7 @@ export const ProviderDefaults: Story = {
             Explicit accent solid
           </Button>
         </Stack>
-      </Stack>
+      </SurfacePanel>
     </SilkProvider>
   ),
 };
