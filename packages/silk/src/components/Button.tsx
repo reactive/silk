@@ -3,8 +3,11 @@ import { buttonRecipe, type ButtonVariantProps } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import { densityClass } from '../theme/density.css';
+import { focusRingCss } from '../theme/focusRing';
 import { useComponentDefaults } from '../theme/SilkProvider';
 import { useThemeDensity } from '../theme/ThemeScope';
+import { tonePrivateVarsCss } from '../theme/tonePrivateVars';
+import { controlSizePadding } from './controlStyles';
 
 export interface ButtonProps
   extends Omit<ComponentPropsWithoutRef<'button'>, 'color'>,
@@ -14,41 +17,32 @@ export interface ButtonProps
   readonly children?: ReactNode;
 }
 
-const sizePadding = {
-  sm: 'var(--silk-space-1) var(--silk-space-2)',
-  md: 'var(--silk-space-2) var(--silk-space-3)',
-  lg: 'var(--silk-space-3) var(--silk-space-4)',
-} as const;
-
 const sizeFont = {
   sm: 'var(--silk-typography-label-size)',
   md: 'var(--silk-typography-label-size)',
   lg: 'var(--silk-typography-body-size)',
 } as const;
 
-const toneRules: string = buttonRecipe.variants.tone
-  .map(
-    (tone) => `
-    &:where([data-tone='${tone}']) {
-      --_tone-solid: var(--silk-color-tone-${tone}-solid);
-      --_tone-on-solid: var(--silk-color-tone-${tone}-on-solid);
-      --_tone-subtle: var(--silk-color-tone-${tone}-subtle);
-      --_tone-border: var(--silk-color-tone-${tone}-border);
-      --_tone-hover: var(--silk-color-tone-${tone}-hover);
-      --_tone-active: var(--silk-color-tone-${tone}-active);
-      --_tone-focus-ring: var(--silk-color-tone-${tone}-focus-ring);
-      --_tone-disabled-fg: var(--silk-color-tone-${tone}-disabled-fg);
-      --_tone-disabled-bg: var(--silk-color-tone-${tone}-disabled-bg);
-    }
-  `,
-  )
-  .join('\n');
+const toneRules: string = tonePrivateVarsCss(buttonRecipe.variants.tone, [
+  'solid',
+  'on-solid',
+  'text',
+  'subtle',
+  'subtle-hover',
+  'subtle-active',
+  'border',
+  'hover',
+  'active',
+  'focus-ring',
+  'disabled-fg',
+  'disabled-bg',
+]);
 
 const sizeRules: string = buttonRecipe.variants.size
   .map(
     (size) => `
     &:where([data-size='${size}']) {
-      padding: ${sizePadding[size]};
+      padding: ${controlSizePadding[size]};
       font-size: ${sizeFont[size]};
     }
   `,
@@ -84,8 +78,7 @@ const buttonClass: string = css`
     box-shadow var(--silk-motion-fast-duration-ms) var(--silk-motion-fast-easing);
 
   &:where(:focus-visible) {
-    outline: 2px solid var(--_tone-focus-ring);
-    outline-offset: 2px;
+    ${focusRingCss('var(--_tone-focus-ring)')}
   }
 
   &:where(:disabled),
@@ -112,33 +105,46 @@ const buttonClass: string = css`
     }
   }
 
+  /* Soft/outline/ghost use tone text for FG so contrast holds on subtle fills. */
   &:where([data-variant='soft']) {
     background-color: var(--silk-button-bg, var(--_tone-subtle));
-    color: var(--silk-button-fg, var(--_tone-solid));
+    color: var(--silk-button-fg, var(--_tone-text));
     border-color: var(--silk-button-border, transparent);
 
     &:where(:hover:not(:disabled):not([aria-disabled='true'])) {
-      background-color: var(--silk-button-bg, var(--_tone-border));
+      background-color: var(--silk-button-bg, var(--_tone-subtle-hover));
+    }
+
+    &:where(:active:not(:disabled):not([aria-disabled='true'])) {
+      background-color: var(--silk-button-bg, var(--_tone-subtle-active));
     }
   }
 
   &:where([data-variant='outline']) {
     background-color: var(--silk-button-bg, transparent);
-    color: var(--silk-button-fg, var(--_tone-solid));
+    color: var(--silk-button-fg, var(--_tone-text));
     border-color: var(--silk-button-border, var(--_tone-border));
 
     &:where(:hover:not(:disabled):not([aria-disabled='true'])) {
-      background-color: var(--silk-button-bg, var(--_tone-subtle));
+      background-color: var(--silk-button-bg, var(--_tone-subtle-hover));
+    }
+
+    &:where(:active:not(:disabled):not([aria-disabled='true'])) {
+      background-color: var(--silk-button-bg, var(--_tone-subtle-active));
     }
   }
 
   &:where([data-variant='ghost']) {
     background-color: var(--silk-button-bg, transparent);
-    color: var(--silk-button-fg, var(--_tone-solid));
+    color: var(--silk-button-fg, var(--_tone-text));
     border-color: var(--silk-button-border, transparent);
 
     &:where(:hover:not(:disabled):not([aria-disabled='true'])) {
-      background-color: var(--silk-button-bg, var(--_tone-subtle));
+      background-color: var(--silk-button-bg, var(--_tone-subtle-hover));
+    }
+
+    &:where(:active:not(:disabled):not([aria-disabled='true'])) {
+      background-color: var(--silk-button-bg, var(--_tone-subtle-active));
     }
   }
 

@@ -1,13 +1,9 @@
-import { afterEach, expect, test } from '@rstest/core';
-import { cleanup, render, screen } from '@testing-library/react';
+import { expect, test } from '@rstest/core';
+import { render, screen } from '@testing-library/react';
 import { Button } from '../components/Button';
 import { Stack } from '../components/Stack';
 import { SilkProvider } from './SilkProvider';
 import { ThemeProvider } from './ThemeProvider';
-
-afterEach(() => {
-  cleanup();
-});
 
 test('ThemeProvider sets data-density', () => {
   const { container } = render(

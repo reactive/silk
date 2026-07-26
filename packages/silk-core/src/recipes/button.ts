@@ -6,7 +6,7 @@ import {
 
 const buttonVariants = {
   variant: ['solid', 'soft', 'outline', 'ghost'] as const,
-  tone: ['neutral', 'accent', 'danger'] as const,
+  tone: ['neutral', 'accent', 'danger', 'success'] as const,
   size: ['sm', 'md', 'lg'] as const,
   density: ['comfortable', 'compact'] as const,
 };

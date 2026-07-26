@@ -17,22 +17,36 @@ export interface Palette {
   readonly green: PaletteScale;
 }
 
-export type ToneName = 'neutral' | 'accent' | 'danger';
+export type ToneName = 'neutral' | 'accent' | 'danger' | 'success';
 
 /**
  * Interaction color contract for a single tone.
  * Components consume these via semantic tokens — never palette steps.
+ *
+ * Solid variants use `hover` / `active`. Soft / outline / ghost use
+ * `subtle` + `subtleHover` / `subtleActive` so fill states stay honest
+ * (never reuse `border` as a background).
  */
 export interface InteractionToneColors {
   readonly solid: string;
   readonly onSolid: string;
+  /** Colored text on surfaces (WCAG body text); distinct from solid fill in dark. */
+  readonly text: string;
   readonly subtle: string;
+  readonly subtleHover: string;
+  readonly subtleActive: string;
   readonly border: string;
   readonly hover: string;
   readonly active: string;
   readonly focusRing: string;
   readonly disabledFg: string;
   readonly disabledBg: string;
+}
+
+/** Platform-neutral focus-ring geometry (px-equivalent). */
+export interface FocusRingGeometry {
+  readonly width: number;
+  readonly offset: number;
 }
 
 export type SpaceStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
@@ -45,8 +59,10 @@ export type RadiusName = 'none' | 'sm' | 'md' | 'lg' | 'full';
 export type TypographyRole =
   | 'body'
   | 'bodySm'
+  | 'headingSm'
   | 'heading'
   | 'headingLg'
+  | 'headingXl'
   | 'label'
   | 'caption';
 
@@ -57,26 +73,54 @@ export interface TypographyRecord {
   readonly weight: number;
 }
 
-export type MotionName = 'fast' | 'normal' | 'slow';
+/**
+ * `fast` / `normal` / `slow` are one-shot transition durations.
+ * `loop` is one cycle of continuous indeterminate feedback (shimmer, spin) —
+ * an order of magnitude longer, and linear so cycles join seamlessly.
+ */
+export type MotionName = 'fast' | 'normal' | 'slow' | 'loop';
 
 export interface MotionRecord {
   readonly durationMs: number;
   readonly easing: string;
 }
 
+/**
+ * Complete shadow layer — platform-neutral geometry + opacity.
+ * Renderers map to CSS box-shadow or native elevation; color is typically black
+ * modulated by opacity (dark schemes rely on surface/border for separation).
+ */
+export interface ShadowLayer {
+  readonly offsetX: number;
+  readonly offsetY: number;
+  readonly blur: number;
+  readonly spread: number;
+  /** 0–1 opacity of the shadow ink. */
+  readonly opacity: number;
+}
+
+export type ElevationName = 'raised' | 'overlay';
+
 export interface SemanticTokens {
   readonly color: {
     readonly surface: string;
     readonly surfaceRaised: string;
+    /** Sunken wells (form controls, inset panels). */
+    readonly surfaceSunken: string;
     readonly textPrimary: string;
     readonly textSecondary: string;
     readonly borderSubtle: string;
+    /** Modal/popover scrim color (may include alpha). */
+    readonly overlay: string;
     readonly tones: Readonly<Record<ToneName, InteractionToneColors>>;
   };
   readonly space: Readonly<Record<SpaceStep, number>>;
   readonly radius: Readonly<Record<RadiusName, number>>;
   readonly typography: Readonly<Record<TypographyRole, TypographyRecord>>;
   readonly motion: Readonly<Record<MotionName, MotionRecord>>;
+  readonly shadow: Readonly<Record<ElevationName, ShadowLayer>>;
+  /** Shared focus-ring width/offset — color remains per-tone (`tones.*.focusRing`). */
+  readonly focusRing: FocusRingGeometry;
 }
 
 export interface Theme {

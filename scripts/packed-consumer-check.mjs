@@ -60,10 +60,15 @@ try {
   const css = readFileSync(cssPath, 'utf8');
   for (const needle of [
     '--silk-color-surface',
+    '--silk-color-surface-sunken',
+    '--silk-color-overlay',
+    '--silk-shadow-raised',
+    '--silk-color-tone-success-solid',
     '--silk-space-compact-2',
     '--silk-space-comfortable-2',
     'data-variant',
     'data-density',
+    'data-elevation',
     'data-collapse-below',
     '@container',
     'prefers-reduced-motion',
@@ -95,10 +100,43 @@ try {
     'Container',
     'Separator',
     'containerBreakpoints',
+    'Surface',
+    'Card',
+    'Heading',
+    'Badge',
+    'Skeleton',
+    'Spinner',
+    'Progress',
+    'Field',
+    'Input',
+    'Textarea',
+    'Checkbox',
+    'RadioGroup',
+    'Switch',
+    'Slider',
   ]) {
     if (mod[name] === undefined) {
-      throw new Error(`Packed ESM missing Stage 1 export: ${name}`);
+      throw new Error(`Packed ESM missing Stage export: ${name}`);
     }
+  }
+
+  const coreEntryUrl = pathToFileURL(
+    join(fixture, 'node_modules/@reactive/silk-core/dist/index.js'),
+  ).href;
+  const coreMod = await import(coreEntryUrl);
+  for (const name of [
+    'createTheme',
+    'surfaceRecipe',
+    'inputRecipe',
+    'defaultShadow',
+  ]) {
+    if (coreMod[name] === undefined) {
+      throw new Error(`Packed core missing export: ${name}`);
+    }
+  }
+  const theme = coreMod.createTheme();
+  if (!theme.semantic.color.tones.success || !theme.semantic.shadow.raised) {
+    throw new Error('Packed createTheme missing Stage 2 semantic tokens');
   }
 
   const js = readFileSync(

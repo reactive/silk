@@ -1,8 +1,13 @@
 import type {
+  ElevationName,
+  FocusRingGeometry,
+  MotionName,
   MotionRecord,
   RadiusName,
   SemanticTokens,
+  ShadowLayer,
   SpaceStep,
+  ToneName,
   TypographyRecord,
   TypographyRole,
 } from './types.js';
@@ -78,29 +83,75 @@ export const defaultTypography: Readonly<
 > = {
   body: { family: sans, size: 16, lineHeight: 1.5, weight: 400 },
   bodySm: { family: sans, size: 14, lineHeight: 1.45, weight: 400 },
+  headingSm: { family: sans, size: 16, lineHeight: 1.35, weight: 600 },
   heading: { family: sans, size: 20, lineHeight: 1.3, weight: 600 },
   headingLg: { family: sans, size: 28, lineHeight: 1.25, weight: 700 },
+  headingXl: { family: sans, size: 36, lineHeight: 1.2, weight: 700 },
   label: { family: sans, size: 14, lineHeight: 1.3, weight: 500 },
   caption: { family: sans, size: 12, lineHeight: 1.35, weight: 400 },
 };
 
-export const defaultMotion: Readonly<
-  Record<'fast' | 'normal' | 'slow', MotionRecord>
-> = {
+/**
+ * Elevation shadow layers. Renderers serialize geometry + opacity;
+ * dark schemes pair with surfaceRaised + border (shadow alone is weak).
+ */
+export const defaultShadow: Readonly<Record<ElevationName, ShadowLayer>> = {
+  raised: {
+    offsetX: 0,
+    offsetY: 4,
+    blur: 12,
+    spread: 0,
+    opacity: 0.08,
+  },
+  overlay: {
+    offsetX: 0,
+    offsetY: 8,
+    blur: 32,
+    spread: 0,
+    opacity: 0.18,
+  },
+};
+
+export const defaultMotion: Readonly<Record<MotionName, MotionRecord>> = {
   fast: { durationMs: 120, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
   normal: { durationMs: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
   slow: { durationMs: 320, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+  loop: { durationMs: 1200, easing: 'linear' },
+};
+
+/** Every motion name — renderers iterate this instead of restating the keys. */
+export const motionNames: readonly MotionName[] = Object.keys(
+  defaultMotion,
+) as MotionName[];
+
+// Exhaustive by construction: adding a ToneName fails to compile until listed.
+const toneNameSet: Readonly<Record<ToneName, true>> = {
+  neutral: true,
+  accent: true,
+  danger: true,
+  success: true,
+};
+
+/** Every tone name — renderers iterate this instead of restating the keys. */
+export const toneNames: readonly ToneName[] = Object.keys(
+  toneNameSet,
+) as ToneName[];
+
+/** Shared focus-ring geometry — renderers map to outline / native equivalents. */
+export const defaultFocusRing: FocusRingGeometry = {
+  width: 2,
+  offset: 2,
 };
 
 /** Non-color semantic defaults shared by light and dark schemes. */
-export function createSharedSemanticScales(): Pick<
+export const sharedSemanticScales: Pick<
   SemanticTokens,
-  'space' | 'radius' | 'typography' | 'motion'
-> {
-  return {
-    space: defaultSpace,
-    radius: defaultRadius,
-    typography: defaultTypography,
-    motion: defaultMotion,
-  };
-}
+  'space' | 'radius' | 'typography' | 'motion' | 'shadow' | 'focusRing'
+> = {
+  space: defaultSpace,
+  radius: defaultRadius,
+  typography: defaultTypography,
+  motion: defaultMotion,
+  shadow: defaultShadow,
+  focusRing: defaultFocusRing,
+};

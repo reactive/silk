@@ -81,8 +81,9 @@ Recipes are **contracts** (variant unions + defaults). Web CSS interpolates reci
 | Layer | Examples | Notes |
 | --- | --- | --- |
 | Layout | `Box`, `Stack`, `Inline`, `Grid`, `Center`, `Container`, `Separator` | Spacing via CSS variables; responsive via container queries (web) |
-| Visual | `Text`, `Button`, `Avatar` | `Button` is the reference variant engine |
-| Interaction | `Dialog` | Radix behavior, Silk visuals |
+| Visual | `Text`, `Button`, `Avatar`, `Surface`, `Card`, `Heading`, `Badge`, `Skeleton`, `Spinner`, `Progress` | `Button` is the reference variant engine; `Surface` owns elevation |
+| Interaction | `Dialog`, form controls (`Checkbox`, `RadioGroup`, `Switch`, `Slider`) | Radix behavior, Silk visuals |
+| Forms | `Field`, `Input`, `Textarea` | Field owns id/`aria-*` wiring (single vs group modes) |
 | Composite | `Identity` | Compound parts + convenience props |
 
 Escape hatches on every component: `className`, `style`, `ref` (React 19 prop), data attributes, `asChild` where sensible.

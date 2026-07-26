@@ -1,0 +1,41 @@
+import { Heading, headingRecipe } from '@reactive/silk';
+import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import type { JSX } from 'react';
+import { VariantMatrix } from '../VariantMatrix';
+
+const meta = {
+  title: 'Components/Heading',
+  component: Heading,
+  tags: ['autodocs'],
+  args: {
+    children: 'Section title',
+    ...headingRecipe.defaults,
+  },
+  argTypes: {
+    level: { control: 'select', options: [...headingRecipe.variants.level] },
+    size: { control: 'select', options: [...headingRecipe.variants.size] },
+    tone: { control: 'select', options: [...headingRecipe.variants.tone] },
+  },
+} satisfies Meta<typeof Heading>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = {};
+
+export const SizeMatrix: Story = {
+  parameters: { controls: { disable: true } },
+  render: (): JSX.Element => (
+    <VariantMatrix
+      rows={headingRecipe.variants.size}
+      columns={['demo'] as const}
+    >
+      {(size): JSX.Element => (
+        <Heading level="2" size={size}>
+          Size {size}
+        </Heading>
+      )}
+    </VariantMatrix>
+  ),
+};

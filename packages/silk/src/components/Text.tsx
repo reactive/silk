@@ -3,6 +3,8 @@ import { textRecipe, type TextVariantProps } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import { useComponentDefaults } from '../theme/SilkProvider';
+import { textToneRulesCss } from '../theme/textToneCss';
+import { typographyRoleCss } from '../theme/typographyCss';
 
 export interface TextProps
   extends Omit<ComponentPropsWithoutRef<'p'>, 'role'>, TextVariantProps {
@@ -11,45 +13,17 @@ export interface TextProps
   readonly children?: ReactNode;
 }
 
-const roleToCssKey = {
-  body: 'body',
-  bodySm: 'body-sm',
-  heading: 'heading',
-  headingLg: 'heading-lg',
-  label: 'label',
-  caption: 'caption',
-} as const;
-
-const toneColor = {
-  primary: 'var(--silk-color-text-primary)',
-  secondary: 'var(--silk-color-text-secondary)',
-  accent: 'var(--silk-color-tone-accent-solid)',
-  danger: 'var(--silk-color-tone-danger-solid)',
-} as const;
-
 const roleRules: string = textRecipe.variants.role
-  .map((roleName) => {
-    const key = roleToCssKey[roleName];
-    return `
-    &:where([data-role='${roleName}']) {
-      font-family: var(--silk-typography-${key}-family);
-      font-size: var(--silk-typography-${key}-size);
-      line-height: var(--silk-typography-${key}-line-height);
-      font-weight: var(--silk-typography-${key}-weight);
-    }
-  `;
-  })
-  .join('\n');
-
-const toneRules: string = textRecipe.variants.tone
   .map(
-    (toneName) => `
-    &:where([data-tone='${toneName}']) {
-      color: ${toneColor[toneName]};
+    (roleName) => `
+    &:where([data-role='${roleName}']) {
+      ${typographyRoleCss(roleName)}
     }
   `,
   )
   .join('\n');
+
+const toneRules: string = textToneRulesCss(textRecipe.variants.tone);
 
 const textClass: string = css`
   margin: 0;
@@ -58,8 +32,8 @@ const textClass: string = css`
 `;
 
 /**
- * Typography primitive — proves typography semantic tokens.
- * `role` is the typography role (not the ARIA role); use `asChild` for custom elements/ARIA.
+ * Typography primitive. `role` is the typography role (not ARIA);
+ * use `asChild` for custom elements/ARIA.
  */
 export function Text({
   className,

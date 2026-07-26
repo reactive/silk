@@ -20,11 +20,7 @@ export const DialogDescription: typeof RadixDialog.Description =
 const overlayClass: string = css`
   position: fixed;
   inset: 0;
-  background-color: color-mix(
-    in srgb,
-    var(--silk-color-text-primary) 45%,
-    transparent
-  );
+  background-color: var(--silk-color-overlay);
   animation: silk-dialog-overlay-in var(--silk-motion-normal-duration-ms)
     var(--silk-motion-normal-easing);
 
@@ -55,8 +51,7 @@ const contentClass: string = css`
   color: var(--silk-color-text-primary);
   border: 1px solid var(--silk-color-border-subtle);
   border-radius: var(--silk-radius-lg);
-  box-shadow: 0 var(--silk-space-2) var(--silk-space-6)
-    color-mix(in srgb, var(--silk-color-text-primary) 18%, transparent);
+  box-shadow: var(--silk-shadow-overlay);
   padding: var(--silk-space-5);
   animation: silk-dialog-content-in var(--silk-motion-normal-duration-ms)
     var(--silk-motion-normal-easing);
@@ -102,8 +97,7 @@ export interface DialogContentProps
    * Theme scope is reconstituted automatically for body portals; `container`
    * is not required for nested theming.
    */
-  readonly container?: HTMLElement | null;
-  /** Optional className applied to the overlay. */
+  readonly container?: HTMLElement;
   readonly overlayClassName?: string;
 }
 
@@ -125,7 +119,7 @@ export function DialogContent({
   const resolvedSize = size ?? defaults.size ?? dialogRecipe.defaults.size;
 
   return (
-    <RadixDialog.Portal container={container ?? undefined}>
+    <RadixDialog.Portal container={container}>
       <ThemeScopePortal>
         <RadixDialog.Overlay
           className={cx(overlayClass, overlayClassName)}

@@ -17,7 +17,7 @@ yarn docs    # http://localhost:6006
 
 ## Status
 
-Stage 1 (layout system): layout vocabulary (`Inline`, `Grid`, `Center`, `Container`, `Separator`), system density through space tokens, intrinsic-first + container-query responsive strategy, AppSkeleton fixture, native contract spike, and [pre-1.0 API policy](docs/API_POLICY.md). The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
+Stage 2 (visual primitives & forms): `Surface`, `Card`, `Heading`, `Badge`, status primitives, `Field`/`Input`/`Textarea`, Radix-backed form controls, token audit (`success`, elevation shadows, contrast), SettingsForm fixture, and [pre-1.0 API policy](docs/API_POLICY.md). Stage 1 layout vocabulary remains. The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
 
 ## Packages
 

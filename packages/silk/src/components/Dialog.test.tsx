@@ -1,13 +1,9 @@
 import { createTheme } from '@reactive/silk-core';
-import { afterEach, expect, test } from '@rstest/core';
-import { cleanup, render, screen } from '@testing-library/react';
+import { expect, test } from '@rstest/core';
+import { render, screen } from '@testing-library/react';
 import type { CSSProperties, JSX } from 'react';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { Dialog } from './Dialog';
-
-afterEach(() => {
-  cleanup();
-});
 
 function OpenDialog({
   size = 'md',

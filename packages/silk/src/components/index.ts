@@ -47,3 +47,60 @@ export type {
   IdentityProps,
   IdentityRootProps,
 } from './Identity';
+
+export { Surface } from './Surface';
+export type { SurfaceProps } from './Surface';
+
+export { Card } from './Card';
+export type { CardProps } from './Card';
+
+export { Heading } from './Heading';
+export type { HeadingProps } from './Heading';
+
+export { Badge } from './Badge';
+export type { BadgeProps } from './Badge';
+
+export { Skeleton } from './Skeleton';
+export type { SkeletonProps } from './Skeleton';
+
+export { Spinner } from './Spinner';
+export type { SpinnerProps } from './Spinner';
+
+export { Progress } from './Progress';
+export type { ProgressProps } from './Progress';
+
+export {
+  Field,
+  fieldLabelAssociation,
+  useFieldContext,
+  useFieldControlProps,
+} from './Field';
+export type {
+  AriaInvalid,
+  FieldContextValue,
+  FieldControlProps,
+  FieldDescriptionProps,
+  FieldErrorProps,
+  FieldLabelAssociation,
+  FieldLabelProps,
+  FieldMode,
+  FieldRootProps,
+} from './Field';
+
+export { Input } from './Input';
+export type { InputProps } from './Input';
+
+export { Textarea } from './Textarea';
+export type { TextareaProps } from './Textarea';
+
+export { Checkbox } from './Checkbox';
+export type { CheckboxProps } from './Checkbox';
+
+export { RadioGroup } from './RadioGroup';
+export type { RadioGroupItemProps, RadioGroupRootProps } from './RadioGroup';
+
+export { Switch } from './Switch';
+export type { SwitchProps } from './Switch';
+
+export { Slider } from './Slider';
+export type { SliderProps } from './Slider';
