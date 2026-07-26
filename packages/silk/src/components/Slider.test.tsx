@@ -30,3 +30,17 @@ test('Slider Field wiring lands on the thumb', () => {
   expect(describedBy).toBeTruthy();
   expect(document.getElementById(describedBy!)?.textContent).toBe('Loudness');
 });
+
+test('Slider in a label-less Field keeps its aria-label', () => {
+  render(
+    <SilkProvider>
+      <Field.Root>
+        <Slider defaultValue={[50]} aria-label="Volume" />
+        <Field.Description>Loudness</Field.Description>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const thumb = screen.getByRole('slider', { name: 'Volume' });
+  expect(thumb.getAttribute('aria-label')).toBe('Volume');
+  expect(thumb.getAttribute('aria-labelledby')).toBeNull();
+});

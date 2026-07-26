@@ -90,6 +90,35 @@ test('Field group mode uses aria-labelledby on RadioGroup', () => {
   expect(label?.getAttribute('for')).toBeNull();
 });
 
+test('group mode without a Label omits aria-labelledby', () => {
+  render(
+    <SilkProvider>
+      <Field.Root mode="group">
+        <RadioGroup.Root aria-label="Plan">
+          <RadioGroup.Item value="free">Free</RadioGroup.Item>
+        </RadioGroup.Root>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const group = screen.getByRole('radiogroup', { name: 'Plan' });
+  expect(group.getAttribute('aria-labelledby')).toBeNull();
+});
+
+test('custom Field.Label id is what aria-labelledby points at', () => {
+  render(
+    <SilkProvider>
+      <Field.Root mode="group">
+        <Field.Label id="plan-label">Plan</Field.Label>
+        <RadioGroup.Root>
+          <RadioGroup.Item value="free">Free</RadioGroup.Item>
+        </RadioGroup.Root>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const group = screen.getByRole('radiogroup');
+  expect(group.getAttribute('aria-labelledby')).toBe('plan-label');
+});
+
 test('custom Description/Error ids appear in aria-describedby', () => {
   render(
     <SilkProvider>

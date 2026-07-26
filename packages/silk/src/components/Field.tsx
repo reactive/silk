@@ -25,6 +25,8 @@ export interface FieldContextValue {
   readonly mode: FieldMode;
   readonly inputId: string;
   readonly labelId: string;
+  /** Id of the rendered Field.Label, or undefined when the Field has none. */
+  readonly labelledBy: string | undefined;
   readonly descriptionId: string;
   readonly errorId: string;
   readonly describedBy: string | undefined;
@@ -75,10 +77,14 @@ const rootClass: string = css`
   }
 `;
 
+type FieldSlot = typeof FieldLabel | typeof FieldDescription | typeof FieldError;
+
 function isElementOfType(
   child: ReactNode,
-  type: typeof FieldDescription | typeof FieldError,
-): child is ReactElement<FieldDescriptionProps | FieldErrorProps> {
+  type: FieldSlot,
+): child is ReactElement<
+  FieldLabelProps | FieldDescriptionProps | FieldErrorProps
+> {
   return isValidElement(child) && child.type === type;
 }
 
@@ -98,6 +104,23 @@ function describedByFromChildren(
     }
   });
   return parts.length > 0 ? parts.join(' ') : undefined;
+}
+
+/**
+ * SSR-safe: id of a direct Label child. Controls must not point
+ * `aria-labelledby` at an id no element carries.
+ */
+function labelledByFromChildren(
+  children: ReactNode,
+  labelId: string,
+): string | undefined {
+  let found: string | undefined;
+  Children.forEach(children, (child) => {
+    if (found === undefined && isElementOfType(child, FieldLabel)) {
+      found = child.props.id ?? labelId;
+    }
+  });
+  return found;
 }
 
 function FieldRoot({
@@ -120,12 +143,17 @@ function FieldRoot({
     () => describedByFromChildren(children, descriptionId, errorId),
     [children, descriptionId, errorId],
   );
+  const labelledBy = useMemo(
+    () => labelledByFromChildren(children, labelId),
+    [children, labelId],
+  );
 
   const value = useMemo<FieldContextValue>(
     () => ({
       mode,
       inputId,
       labelId,
+      labelledBy,
       descriptionId,
       errorId,
       describedBy,
@@ -137,6 +165,7 @@ function FieldRoot({
       mode,
       inputId,
       labelId,
+      labelledBy,
       descriptionId,
       errorId,
       describedBy,
@@ -341,8 +370,8 @@ export function useFieldControlProps(options?: {
   }
 
   if (field.mode === 'group' || options?.labelledBy === true) {
-    result['aria-labelledby'] =
-      options?.['aria-labelledby'] ?? field.labelId;
+    const labelledBy = options?.['aria-labelledby'] ?? field.labelledBy;
+    if (labelledBy !== undefined) result['aria-labelledby'] = labelledBy;
   }
 
   const describedBy = options?.['aria-describedby'] ?? field.describedBy;
