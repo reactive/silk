@@ -101,16 +101,16 @@ Harden theming from "works" to "product-grade multi-tenant".
 
 ---
 
-## Stage 6 — Native (`@reactive/silk-native`)
+## Stage 6 — Native (`@reactive/silk-native`) ✅ (done)
 
 Prove the shared layer is actually shared. Meaningful sharing, not pixel parity — native should feel native.
 
-- New package consuming `silk-core` tokens, themes, recipes, and composite models directly (no CSS variables).
-- Graduate the Stage 1 native contract spike into a real package: theme delivery (provider + hook), `Box`/`Stack`/`Text`/`Button` first — the same exemplar strategy as Stage 0.
-- Platform-specific by design: Dialog/Select/Tooltip/Toast/navigation get native-feeling implementations on their own schedule.
-- Example app under `apps/` (Expo).
+- New package consuming `silk-core` tokens, themes, recipes directly (no CSS variables): `ThemeProvider` / `SilkProvider`, `Box` / `Stack` / `Inline` / `Text` / `Button`.
+- Graduated the Stage 1 native contract spike; spike replaced by `apps/native-example` (Expo).
+- Docs: RNW Storybook stories + Native guide + NativeShell fixture (state matrix + tests).
+- Packaging: packed-consumer-check + hard JS perf budgets for the five native exports. Metro consumability verified locally via `yarn workspace @reactive/silk-native-example export:web` (not a CI gate — Expo export is slow/flaky in headless CI).
 
-**Exit criteria:** a native screen renders using the same semantic theme object and recipe contracts as web; any core changes needed for native are made without core learning about React Native views.
+**Exit criteria (met):** a native screen (Expo example + docs NativeShell fixture) renders using the same semantic theme object and recipe contracts as web; core stayed free of React Native views (control geometry remains renderer-local on both platforms).
 
 ---
 
@@ -139,5 +139,5 @@ Tracked from the founding brief; each has a home stage where it must be resolved
 | Semantic vs. component tokens, how many | Stage 2/5 | ✅ Stage 2 audit + Stage 5 freeze (`silkComponentVarMeta` / Theming.mdx) |
 | Responsive strategy | Stage 1 | ✅ Intrinsic-first + container queries; `collapseBelow` web-only |
 | Slot architecture for composites | Stage 4 | ✅ Dual API, compound-first — [COMPOSITES.md](COMPOSITES.md) |
-| Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | ✅ Proven on web; native spike validates in Stage 1 |
+| Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1/6 | ✅ Proven on web; `@reactive/silk-native` ships the same contracts |
 | Registry: packages vs. generated source | Stage 7 | Scaffolded; final split pending |

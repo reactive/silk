@@ -1,7 +1,12 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { mergeRsbuildConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import remarkGfm from 'remark-gfm';
 import type { StorybookConfig } from 'storybook-react-rsbuild';
+
+const docsRoot = path.dirname(fileURLToPath(import.meta.url));
+const monorepoRoot = path.resolve(docsRoot, '../../..');
 
 const config: StorybookConfig = {
   framework: {
@@ -41,6 +46,12 @@ const config: StorybookConfig = {
           // `yarn docs` watch-builds core; preview applies createTheme() inline
           // so token edits do not wait on namedThemes re-extraction.
           '@reactive/silk$': '../../packages/silk/src/index.ts',
+          '@reactive/silk-native$':
+            '../../packages/silk-native/src/index.ts',
+          'react-native': path.resolve(
+            monorepoRoot,
+            'node_modules/react-native-web',
+          ),
         },
       },
       output: {

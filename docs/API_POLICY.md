@@ -11,13 +11,13 @@ Silk is pre-1.0. This document defines what counts as **public API** and how bre
 | Public CSS variables | `--silk-color-surface`, `--silk-color-surface-sunken`, `--silk-color-overlay`, `--silk-shadow-raised`, `--silk-shadow-overlay`, `--silk-color-tone-*-text`, `--silk-space-2`, `--silk-button-bg`, `--silk-grid-min` | Removing or changing the meaning of a documented `--silk-*` variable is breaking |
 | Recipe shapes | `buttonRecipe.variants`, `stackRecipe.defaults` | Removing an axis or declared value is breaking |
 | Core utilities | `defineRecipe`, `createTheme`, `generateScale`, `generatePairedPalette`, `checkThemeContrast`, `contrastRatio`, `relativeLuminance`, `compactSpace`, `DensityName` | Signature or behavioral changes that affect consumers are breaking |
-| Package exports / subpaths | `@reactive/silk`, `@reactive/silk-core/tokens`, `@reactive/silk/styles.css` | Removing an export path is breaking |
+| Package exports / subpaths | `@reactive/silk`, `@reactive/silk-core/tokens`, `@reactive/silk/styles.css`, `@reactive/silk-native` | Removing an export path is breaking |
 
 **Not public API** (may change without a major bump pre-1.0, but still prefer a changeset note):
 
 - Private CSS variables (`--_tone-solid`, `--_bg`, …)
 - Internal file paths under `src/`
-- Throwaway apps (`apps/native-spike`)
+- Example apps (`apps/native-example`, `apps/docs`)
 - Storybook docs helpers (`VariantMatrix`, fixture chrome styles)
 
 ## Pre-1.0 versioning
@@ -57,6 +57,14 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **`contrastRatio` / `relativeLuminance` / `parseCanonicalHex`** — platform-neutral hex contrast helpers.
 - **Theme scope channels** — `semanticVars` vs `customVars` on web theme scope (behavior change for named-inside-tenant portals: component hooks now inherit; semantic vars still drop).
 - **Public component CSS-var list frozen** in `silkComponentVarMeta` (documented in Theming.mdx). Removals/renames/meaning changes are breaking.
+
+## Stage 6 public additions
+
+- **`@reactive/silk-native`** — React Native renderer package. Root export only. Peers: `react` ^19, `react-native` >=0.83.
+- **Theme delivery:** `ThemeProvider` / `SilkProvider` / `useTheme` / `useThemeDensity` — context `{ theme, density }` (no CSS variables). Nesting: omitted theme/scheme reuses parent Theme; explicit `colorScheme` creates a fresh default theme; explicit `theme` wins; density inherits independently; `'system'` via Appearance.
+- **Native `SilkDefaults`:** keyed only by `Box` / `Stack` / `Inline` / `Text` / `Button` (core `*VariantProps` partials). Nested defaults replace the map.
+- **Components:** `Box`, `Stack`, `Inline` (no web-only `collapseBelow`), `Text`, `Button` — same recipe prop axes as web. Escape hatches: `style` (last; Button composes Pressable style callbacks), typed `ref`, RN host props.
+- **Public mapper helpers:** `mapBoxStyle` / `mapStackStyle` / `mapInlineStyle` / `mapTextStyle` / `mapButtonStyle`, `resolveNativeFontFamily` (RN-import-free style objects for Node tests / advanced consumers). Control geometry constants stay package-internal.
 
 ## Stage 3 public additions
 

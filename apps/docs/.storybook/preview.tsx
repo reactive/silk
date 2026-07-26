@@ -57,6 +57,7 @@ const preview: Preview = {
           'Introduction',
           'Theming',
           'Theme',
+          'Native',
           'Fixtures',
           [
             'Components',
@@ -69,6 +70,7 @@ const preview: Preview = {
               '*',
             ],
           ],
+          'Native Components',
           '*',
         ],
       },

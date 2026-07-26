@@ -10,15 +10,15 @@ This document describes how the system is built today. The _why_ — goals, cons
 @reactive/silk-core     platform-neutral tokens, createTheme, recipe contracts
         ↓
 @reactive/silk          web renderer (Radix + Linaria + CSS variables)
-        ↓ (later)
-@reactive/silk-native   React Native renderer consuming the same core
+@reactive/silk-native   React Native renderer (context Theme + style mappers)
 ```
 
 Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/models`.
+Native exports only `.` (root).
 
-**Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs today; playgrounds / native examples later) live under `apps/`.
+**Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs, Expo native example) live under `apps/`.
 
-**Build order:** `silk-core` must emit `dist/` before `silk` builds. Linaria evaluates core imports at build time; missing core dist fails the web build. `yarn workspaces foreach -A -pt run build` handles this topologically. For Storybook, `yarn docs` watch-builds core, and the preview decorator applies `createTheme()` inline for light/dark so token edits do not depend on re-extracting `namedThemes.css.ts`.
+**Build order:** `silk-core` must emit `dist/` before `silk` and `silk-native` build. Linaria evaluates core imports at build time; missing core dist fails the web build. `yarn workspaces foreach -A -pt run build` handles this topologically. For Storybook, `yarn docs` watch-builds core, and the preview decorator applies `createTheme()` inline for light/dark so token edits do not depend on re-extracting `namedThemes.css.ts`.
 
 ## Theme model
 
@@ -49,6 +49,26 @@ Prefer either `theme` (custom object) or `colorScheme` (named/static). If both a
 No runtime CSS-in-JS. No ad hoc `<style>` injection per provider. Constant SSR-rendered `<style>` from behavior bindings (Radix ScrollArea Viewport) is allowed when static and nonce-compatible — see PRINCIPLES amendment 2026-07-26.
 
 Public component CSS variables are listed in `silkComponentVarMeta` / Theming.mdx — sparse by design; removals/renames are breaking.
+
+### Native theme delivery
+
+Native has no CSS variables. `ThemeProvider` / `SilkProvider` from `@reactive/silk-native` put `{ theme, density }` in React context; components call `useTheme()` and resolve recipe props into style objects (`mapStyles.ts` — RN-import-free so Node tests can run it).
+
+Nesting (native analog of web semantic-var replacement):
+
+| Props | Result |
+| --- | --- |
+| omitted `theme` + `colorScheme` | Reuse parent `Theme` identity; density inherits independently |
+| explicit `colorScheme` | Fresh default theme for that scheme (replaces a parent tenant theme) |
+| explicit `theme` | Used as-is; wins over `colorScheme` |
+| root defaults | light / comfortable |
+| `'system'` | Resolves via React Native `Appearance` / `useColorScheme` |
+
+Density selects `compactSpace` vs `theme.semantic.space` in the mapper — still off the Theme object. Interaction states use `Pressable` pressed + disabled (no hover/focus-visible). Button control padding and `lineHeight: 1.2` are renderer-local, intentionally parallel to web `controlGeometry.ts`. Text `measure="prose"` approximates CSS `ch` as `fontSize × measure.prose × 0.6`.
+
+Native `SilkDefaults` is keyed only by the shipped exemplars (`Box` / `Stack` / `Inline` / `Text` / `Button`). Nested defaults replace the entire map.
+
+Escape hatches (native ladder): recipe props → `style` applied **last** (Button composes object/array/function `Pressable` styles) → typed `ref` → remaining RN host props. No `className` or public CSS variables.
 
 ### Density
 
@@ -128,16 +148,16 @@ Dialog deliberately sits below the anchored surfaces: a Select, menu, popover, o
 1. `createTheme(...)` — semantic theme
 2. `SilkProvider` `defaults` — typed per-component defaults (no runtime component registry)
 3. Component props — `variant` / `tone` / `size` / `density` / …
-4. Escape hatches — public component CSS variables, `className`, `style`, slots/`asChild`
+4. Escape hatches — web: public CSS variables, `className`, `style`, slots/`asChild`; native: `style` (last), `ref`, RN props
 
 The escape hatches are **ranked, not interchangeable**. Split _what you target_ from _how you author it_:
 
-| Reach for                                 | When                                                              | Why                                                                                                                                  |
-| ----------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Public CSS variables (`--silk-button-bg`) | The component exposes a hook for what you want to change          | Order-independent by construction: the component only ever _reads_ the variable, so nothing competes with the consumer's declaration |
-| `styled(Component)`                       | A reusable named component, or typed dynamic props → CSS vars     | Same build-time extraction as `css`; yields a component type consumers can import and compose                                        |
-| `css` + `className` (compose with `cx`)   | Mixins shared across hosts, stacked independent classes, one-offs | No wrapper fiber; the right tool when the style is a class, not a new component                                                      |
-| `style`                                   | Values only known at runtime (tenant color, computed dimension)   | Highest precedence, but the smallest expressive surface and a new object every render                                                |
+| Reach for                                 | Platform | When                                                              | Why                                                                                                                                  |
+| ----------------------------------------- | -------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Public CSS variables (`--silk-button-bg`) | web      | The component exposes a hook for what you want to change          | Order-independent by construction: the component only ever _reads_ the variable, so nothing competes with the consumer's declaration |
+| `styled(Component)`                       | web      | A reusable named component, or typed dynamic props → CSS vars     | Same build-time extraction as `css`; yields a component type consumers can import and compose                                        |
+| `css` + `className` (compose with `cx`)   | web      | Mixins shared across hosts, stacked independent classes, one-offs | No wrapper fiber; the right tool when the style is a class, not a new component                                                      |
+| `style`                                   | web + native | Values only known at runtime, or the native primary escape hatch | Highest precedence; on native, consumer style is composed **after** Silk styles (Button supports Pressable style callbacks)          |
 
 `cssVars()` types the hooks for the `style` prop; React's `CSSProperties` cannot express custom properties, and an `as CSSProperties` cast also silences misspelled variable names. The hook list lives in `theme/componentVars.ts` with a conformance test that fails if it and the extracted CSS disagree in either direction.
 
@@ -168,7 +188,7 @@ Generated by the `silk:layered-css` plugin in `packages/silk/rslib.config.ts`, s
 
 ## Distribution
 
-- **Primitives & tokens:** npm packages (`@reactive/silk-core`, `@reactive/silk`)
+- **Primitives & tokens:** npm packages (`@reactive/silk-core`, `@reactive/silk`, `@reactive/silk-native`)
 - **Composites:** also distributed as source via the shadcn registry protocol (`registry.json`). Policy: installable items are published from release tags (not `main`) and pin compatible `@reactive/silk` versions. The current scaffold is unpinned because nothing is published yet — pinning lands with the first release.
 
 ## Hard constraints

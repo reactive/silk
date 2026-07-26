@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Silk Native Spike",
-    "slug": "silk-native-spike",
+    "name": "Silk Native Example",
+    "slug": "silk-native-example",
     "version": "0.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Packed-consumer check: pack both packages, install into a temp fixture,
+ * Packed-consumer check: pack packages, install into a temp fixture,
  * verify CSS lands, ESM import works, and no runtime style-generation markers ship.
+ * Also packs @reactive/silk-native and verifies an RNW-aliased esbuild consumer.
  */
 import { execSync } from 'node:child_process';
 import {
@@ -15,6 +16,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import * as esbuild from 'esbuild';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const fixture = mkdtempSync(join(tmpdir(), 'silk-packed-'));
@@ -74,9 +76,11 @@ function assertClassNameParity(distDir, css) {
 try {
   run('yarn workspace @reactive/silk-core build');
   run('yarn workspace @reactive/silk build');
+  run('yarn workspace @reactive/silk-native build');
 
   run('yarn workspace @reactive/silk-core pack --out ../../silk-core.tgz');
   run('yarn workspace @reactive/silk pack --out ../../silk.tgz');
+  run('yarn workspace @reactive/silk-native pack --out ../../silk-native.tgz');
 
   writeFileSync(
     join(fixture, 'package.json'),
@@ -88,8 +92,10 @@ try {
         dependencies: {
           '@reactive/silk-core': `file:${join(root, 'silk-core.tgz')}`,
           '@reactive/silk': `file:${join(root, 'silk.tgz')}`,
+          '@reactive/silk-native': `file:${join(root, 'silk-native.tgz')}`,
           react: '^19.0.0',
           'react-dom': '^19.0.0',
+          'react-native-web': '~0.21.0',
           typescript: '~5.9.0',
           '@types/react': '^19.0.0',
           '@types/react-dom': '^19.0.0',
@@ -101,6 +107,19 @@ try {
   );
 
   run('npm install --ignore-scripts', fixture);
+
+  const nativePkg = JSON.parse(
+    readFileSync(
+      join(fixture, 'node_modules/@reactive/silk-native/package.json'),
+      'utf8',
+    ),
+  );
+  const nativeDeps = JSON.stringify(nativePkg.dependencies ?? {});
+  if (nativeDeps.includes('workspace:')) {
+    throw new Error(
+      'Packed @reactive/silk-native still contains workspace: protocol dependencies',
+    );
+  }
 
   const cssPath = join(
     fixture,
@@ -383,10 +402,132 @@ export function Consumer(): JSX.Element {
   );
   run(`npx tsc -p ${join(fixture, 'tsconfig.json')}`, fixture);
 
+  // Native package: declarations + RNW-aliased executed bundle (Node cannot
+  // load react-native directly).
+  const nativeDist = join(fixture, 'node_modules/@reactive/silk-native/dist');
+  if (!existsSync(join(nativeDist, 'index.js'))) {
+    throw new Error('Packed silk-native missing dist/index.js');
+  }
+  const nativeTests = execSync(`find "${nativeDist}" -name '*.test.*'`, {
+    encoding: 'utf8',
+  }).trim();
+  if (nativeTests) {
+    throw new Error(`Native test artifacts shipped:\n${nativeTests}`);
+  }
+
+  writeFileSync(
+    join(fixture, 'tsconfig.native.json'),
+    JSON.stringify(
+      {
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          jsx: 'react-jsx',
+          strict: true,
+          skipLibCheck: true,
+          noEmit: true,
+          types: ['react'],
+          paths: {
+            'react-native': ['./node_modules/react-native-web'],
+          },
+        },
+        include: ['consumer.native.tsx'],
+      },
+      null,
+      2,
+    ),
+  );
+  writeFileSync(
+    join(fixture, 'consumer.native.tsx'),
+    `
+import {
+  Box,
+  Button,
+  Inline,
+  SilkProvider,
+  Stack,
+  Text,
+} from '@reactive/silk-native';
+import type { JSX } from 'react';
+
+export function NativeConsumer(): JSX.Element {
+  return (
+    <SilkProvider colorScheme="light" density="comfortable">
+      <Box padding="2">
+        <Stack gap="2" rail="start">
+          <Text role="heading">Native</Text>
+          <Inline gap="1" direction="row-reverse">
+            <Button tone="accent">Go</Button>
+          </Inline>
+        </Stack>
+      </Box>
+    </SilkProvider>
+  );
+}
+`,
+  );
+  run(`npx tsc -p ${join(fixture, 'tsconfig.native.json')}`, fixture);
+
+  const nativeBundleEntry = join(fixture, 'native-bundle-entry.mjs');
+  const nativeBundleOut = join(fixture, 'native-bundle.mjs');
+  writeFileSync(
+    nativeBundleEntry,
+    `
+import { createTheme } from '@reactive/silk-core';
+import {
+  Box,
+  Button,
+  Inline,
+  SilkProvider,
+  Stack,
+  Text,
+  mapButtonStyle,
+} from '@reactive/silk-native';
+
+const theme = createTheme({ colorScheme: 'light' });
+const styles = mapButtonStyle(theme, { variant: 'solid', tone: 'accent' });
+if (!styles.view.backgroundColor) {
+  throw new Error('mapButtonStyle failed in packed native bundle');
+}
+if (
+  typeof Box !== 'function' ||
+  typeof Stack !== 'function' ||
+  typeof Inline !== 'function' ||
+  typeof Text !== 'function' ||
+  typeof Button !== 'function' ||
+  typeof SilkProvider !== 'function'
+) {
+  throw new Error('Packed native missing component exports');
+}
+console.log('packed-native-bundle: OK');
+`,
+  );
+  const rnwEntry = join(
+    fixture,
+    'node_modules/react-native-web/dist/index.js',
+  );
+  if (!existsSync(rnwEntry)) {
+    throw new Error(`react-native-web entry missing at ${rnwEntry}`);
+  }
+  await esbuild.build({
+    entryPoints: [nativeBundleEntry],
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    outfile: nativeBundleOut,
+    external: ['react', 'react-dom', 'react/jsx-runtime'],
+    alias: {
+      'react-native': rnwEntry,
+    },
+    logLevel: 'silent',
+  });
+  run(`node ${nativeBundleOut}`, fixture);
+
   console.log('packed-consumer-check: OK');
 } finally {
   rmSync(fixture, { recursive: true, force: true });
-  for (const f of ['silk-core.tgz', 'silk.tgz']) {
+  for (const f of ['silk-core.tgz', 'silk.tgz', 'silk-native.tgz']) {
     rmSync(join(root, f), { force: true });
   }
 }

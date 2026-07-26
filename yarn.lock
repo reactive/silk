@@ -5374,6 +5374,7 @@ __metadata:
     "@linaria/react": "npm:^8.1.1"
     "@reactive/silk": "workspace:*"
     "@reactive/silk-core": "workspace:*"
+    "@reactive/silk-native": "workspace:*"
     "@rsbuild/core": "npm:~2.1.8"
     "@rsbuild/plugin-react": "npm:^2.1.0"
     "@rspack/plugin-react-refresh": "npm:^2.0.2"
@@ -5393,6 +5394,7 @@ __metadata:
     playwright: "npm:^1.62.0"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
+    react-native-web: "npm:~0.21.0"
     react-refresh: "npm:^0.18.0"
     remark-gfm: "npm:^4.0.1"
     storybook: "npm:10.5.4"
@@ -5403,11 +5405,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@reactive/silk-native-spike@workspace:apps/native-spike":
+"@reactive/silk-native-example@workspace:apps/native-example":
   version: 0.0.0-use.local
-  resolution: "@reactive/silk-native-spike@workspace:apps/native-spike"
+  resolution: "@reactive/silk-native-example@workspace:apps/native-example"
   dependencies:
     "@reactive/silk-core": "workspace:*"
+    "@reactive/silk-native": "workspace:*"
     "@types/react": "npm:~19.2.2"
     expo: "npm:~55.0.28"
     expo-status-bar: "npm:~55.0.6"
@@ -5416,6 +5419,30 @@ __metadata:
     react-native: "npm:0.83.10"
     react-native-web: "npm:~0.21.0"
     typescript: "npm:~5.9.2"
+  languageName: unknown
+  linkType: soft
+
+"@reactive/silk-native@workspace:*, @reactive/silk-native@workspace:packages/silk-native":
+  version: 0.0.0-use.local
+  resolution: "@reactive/silk-native@workspace:packages/silk-native"
+  dependencies:
+    "@reactive/silk-core": "workspace:*"
+    "@rsbuild/plugin-react": "npm:^2.1.0"
+    "@rstest/core": "npm:^0.11.4"
+    "@testing-library/dom": "npm:^10.4.1"
+    "@testing-library/react": "npm:^16.3.2"
+    "@testing-library/user-event": "npm:^14.6.1"
+    "@types/react": "npm:^19.2.7"
+    axe-core: "npm:^4.12.1"
+    jsdom: "npm:^29.1.1"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    react-native: "npm:0.83.10"
+    react-native-web: "npm:~0.21.0"
+    typescript: "npm:^7.0.2"
+  peerDependencies:
+    react: ^19.0.0
+    react-native: ">=0.83.0"
   languageName: unknown
   linkType: soft
 
