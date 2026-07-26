@@ -1,5 +1,5 @@
 import { css, cx } from '@linaria/core';
-import { DropdownMenu as RadixDropdownMenu } from 'radix-ui';
+import { DropdownMenu as RadixDropdownMenu, Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import { ThemeScopePortal } from '../theme/ThemeScope';
 import {
@@ -139,7 +139,9 @@ export function DropdownMenuItem({
       className={cx(menuItemClass, dangerItemClass, className)}
       data-tone={tone}
     >
-      {children}
+      {/* Unconditional even when `shortcut` is unset: the `null` branch still
+          counts as a child. See ARCHITECTURE.md#aschild-with-decorations */}
+      <Slot.Slottable>{children}</Slot.Slottable>
       {shortcut != null ? (
         <span className={shortcutClass}>{shortcut}</span>
       ) : null}
@@ -230,7 +232,8 @@ export function DropdownMenuSubTrigger({
       {...props}
       className={cx(menuItemClass, className)}
     >
-      {children}
+      {/* See ARCHITECTURE.md#aschild-with-decorations */}
+      <Slot.Slottable>{children}</Slot.Slottable>
       <span className={shortcutClass}>›</span>
     </RadixDropdownMenu.SubTrigger>
   );

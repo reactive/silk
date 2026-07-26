@@ -121,6 +121,14 @@ The escape hatches are **ranked, not interchangeable**. Split _what you target_ 
 
 `cssVars()` types the hooks for the `style` prop; React's `CSSProperties` cannot express custom properties, and an `as CSSProperties` cast also silences misspelled variable names. The hook list lives in `theme/componentVars.ts` with a conformance test that fails if it and the extracted CSS disagree in either direction.
 
+### `asChild` with decorations
+
+Many parts render a Silk-owned decoration next to `{children}` — a chevron, a caret, a shortcut, a required indicator. Radix's `Slot` needs exactly one child to slot onto, so those parts must wrap children in `Slot.Slottable`; the decoration is then appended inside the consumer's element instead of leaving `Slot` with no single target.
+
+The wrap is **unconditional**, even where the decoration is conditional. Radix gates its single-child fallback on `Children.count(children) === 1`, and `Children.count` counts a `null` child, so `{children}{cond ? <span /> : null}` is two children and fails to slot whether or not the decoration renders. Do not "simplify" a `Slottable` to only apply when the decoration is present.
+
+Where the decoration cannot be reordered — `Select.Item` wraps children in Radix's `ItemText`, so the consumer's element can never be both the item and the text source — `asChild` is omitted from the part's props (`Omit<…, 'asChild'>`) and the unsupported case becomes a compile error. `Checkbox`, `Switch`, `Slider`, `Progress`, and `RadioGroup` omit it for the same reason.
+
 Public API surface and pre-1.0 breaking-change rules: [API_POLICY.md](API_POLICY.md).
 
 ## Cascade order

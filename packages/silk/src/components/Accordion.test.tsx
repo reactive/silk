@@ -28,3 +28,46 @@ test('single accordion expands and collapses', async () => {
   await user.click(screen.getByRole('button', { name: /Section A/ }));
   expect(screen.queryByText('Body A')).toBeNull();
 });
+
+test('accordion trigger renders children and chevron', () => {
+  render(
+    <Accordion.Root type="single" collapsible>
+      <Accordion.Item value="a">
+        <Accordion.Header>
+          <Accordion.Trigger>Section A</Accordion.Trigger>
+        </Accordion.Header>
+        <Accordion.Content>Body A</Accordion.Content>
+      </Accordion.Item>
+    </Accordion.Root>,
+  );
+
+  const trigger = screen.getByRole('button', { name: /Section A/ });
+  expect(trigger.textContent).toContain('Section A');
+  expect(trigger.textContent).toContain('▾');
+});
+
+test('accordion trigger composes with asChild without dropping the chevron', async () => {
+  const user = userEvent.setup();
+  render(
+    <Accordion.Root type="single" collapsible>
+      <Accordion.Item value="a">
+        <Accordion.Header>
+          <Accordion.Trigger asChild>
+            <button type="button" data-testid="custom-trigger">
+              Section A
+            </button>
+          </Accordion.Trigger>
+        </Accordion.Header>
+        <Accordion.Content>Body A</Accordion.Content>
+      </Accordion.Item>
+    </Accordion.Root>,
+  );
+
+  const trigger = screen.getByTestId('custom-trigger');
+  expect(trigger).toBe(screen.getByRole('button', { name: /Section A/ }));
+  expect(trigger.textContent).toContain('Section A');
+  expect(trigger.textContent).toContain('▾');
+
+  await user.click(trigger);
+  expect(screen.getByText('Body A')).toBeTruthy();
+});

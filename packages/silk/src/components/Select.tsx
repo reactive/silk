@@ -8,7 +8,7 @@ import {
   type Ref,
 } from 'react';
 import { selectRecipe, type SelectVariantProps } from '@reactive/silk-core';
-import { Select as RadixSelect } from 'radix-ui';
+import { Select as RadixSelect, Slot } from 'radix-ui';
 import { densityClass } from '../theme/density.css';
 import { useComponentDefaults } from '../theme/SilkProvider';
 import { ThemeScopePortal, useThemeDensity } from '../theme/ThemeScope';
@@ -131,7 +131,8 @@ export function SelectTrigger({
       data-size={size}
       data-density={density}
     >
-      {children}
+      {/* See ARCHITECTURE.md#aschild-with-decorations */}
+      <Slot.Slottable>{children}</Slot.Slottable>
       <RadixSelect.Icon className={cx(chevronOpenClass, iconClass)}>
         ▾
       </RadixSelect.Icon>
@@ -139,8 +140,16 @@ export function SelectTrigger({
   );
 }
 
+/**
+ * `asChild` is omitted: content assembles a Viewport plus both scroll buttons,
+ * so there is no single slot target.
+ * See ARCHITECTURE.md#aschild-with-decorations.
+ */
 export interface SelectContentProps
-  extends ComponentPropsWithoutRef<typeof RadixSelect.Content> {
+  extends Omit<
+    ComponentPropsWithoutRef<typeof RadixSelect.Content>,
+    'asChild'
+  > {
   readonly ref?: Ref<HTMLDivElement>;
   readonly children?: ReactNode;
   readonly container?: HTMLElement | DocumentFragment | null;
@@ -188,8 +197,13 @@ export function SelectContent({
   );
 }
 
+/**
+ * `asChild` is omitted: the item wraps children in `ItemText`, so the consumer's
+ * element cannot be both the option and the text source.
+ * See ARCHITECTURE.md#aschild-with-decorations.
+ */
 export interface SelectItemProps
-  extends ComponentPropsWithoutRef<typeof RadixSelect.Item> {
+  extends Omit<ComponentPropsWithoutRef<typeof RadixSelect.Item>, 'asChild'> {
   readonly ref?: Ref<HTMLDivElement>;
   readonly children?: ReactNode;
 }

@@ -1,5 +1,5 @@
 import { css, cx } from '@linaria/core';
-import { Accordion as RadixAccordion } from 'radix-ui';
+import { Accordion as RadixAccordion, Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import { focusRingCss } from '../theme/focusRing';
 import { chevronOpenClass } from './menuListStyles';
@@ -159,7 +159,8 @@ export function AccordionTrigger({
       {...props}
       className={cx(triggerClass, className)}
     >
-      {children}
+      {/* See ARCHITECTURE.md#aschild-with-decorations */}
+      <Slot.Slottable>{children}</Slot.Slottable>
       <span className={cx(chevronOpenClass, chevronToneClass)} aria-hidden>
         ▾
       </span>
