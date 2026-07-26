@@ -66,7 +66,27 @@ test('loading state shows skeleton and status spinner', () => {
     '[data-fixture="settings-form"]',
   ) as HTMLElement;
   expect(root.querySelector('[data-region="loading"]')).not.toBeNull();
+  expect(root.querySelector('[data-region="reduced-motion-preview"]')).toBeNull();
   expect(within(root).getByRole('status')).toBeTruthy();
+});
+
+test('reducedMotion keeps the form and adds a motion preview region', () => {
+  const { container } = renderFixture('reducedMotion');
+  const root = container.querySelector(
+    '[data-fixture="settings-form"]',
+  ) as HTMLElement;
+  expect(root.querySelector('[data-region="form"]')).not.toBeNull();
+  expect(root.querySelector('[data-region="loading"]')).toBeNull();
+  const preview = root.querySelector(
+    '[data-region="reduced-motion-preview"]',
+  ) as HTMLElement;
+  expect(preview).not.toBeNull();
+  expect(within(preview).getByRole('status')).toBeTruthy();
+  expect(preview.querySelector('[data-shape="text"]')).not.toBeNull();
+  expect(preview.querySelector('[data-shape="rect"]')).not.toBeNull();
+  expect(
+    preview.querySelector('[data-progress="indeterminate"]'),
+  ).not.toBeNull();
 });
 
 test('narrowLongContent constrains width and keeps long copy', () => {

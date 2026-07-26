@@ -47,6 +47,17 @@ export const Loading: Story = {
 
 export const ReducedMotion: Story = {
   args: { state: 'reducedMotion' },
+  parameters: {
+    // Emulate the UA preference when capturing with Chromatic; Silk motion
+    // primitives respond only to prefers-reduced-motion (no override prop).
+    chromatic: { prefersReducedMotion: 'reduce' },
+    docs: {
+      description: {
+        story:
+          'Keeps the settings form and adds a motion-preview region (Skeleton, Spinner, indeterminate Progress). Silk disables those animations under `prefers-reduced-motion: reduce` — enable that OS preference or capture with Chromatic to verify the reduced presentation.',
+      },
+    },
+  },
 };
 
 export const NarrowLongContent: Story = {

@@ -18,7 +18,7 @@ import {
   Text,
   Textarea,
 } from '@reactive/silk';
-import type { CSSProperties, JSX } from 'react';
+import { useState, type CSSProperties, type JSX } from 'react';
 
 export type SettingsFormState =
   | 'normal'
@@ -45,7 +45,9 @@ export function SettingsForm({
   const invalid = state === 'error';
   const disabled = state === 'disabled';
   const loading = state === 'loading';
+  const reducedMotion = state === 'reducedMotion';
   const narrowLongContent = state === 'narrowLongContent';
+  const [digestDays, setDigestDays] = useState(3);
 
   return (
     <div
@@ -138,11 +140,14 @@ export function SettingsForm({
               <Field.Root disabled={disabled}>
                 <Field.Label>Digest frequency</Field.Label>
                 <Slider
-                  defaultValue={[3]}
+                  value={[digestDays]}
+                  onValueChange={([days]) => {
+                    if (days !== undefined) setDigestDays(days);
+                  }}
                   min={1}
                   max={7}
                   aria-label="Digest frequency"
-                  aria-valuetext="3 days"
+                  aria-valuetext={`${digestDays} days`}
                 />
                 <Field.Description>Days between email digests.</Field.Description>
               </Field.Root>
@@ -159,6 +164,22 @@ export function SettingsForm({
               </Inline>
             </Stack>
           )}
+
+          {reducedMotion ? (
+            <Stack gap="3" data-region="reduced-motion-preview">
+              <Text tone="secondary">
+                Motion preview for prefers-reduced-motion (Skeleton, Spinner,
+                indeterminate Progress).
+              </Text>
+              <Skeleton shape="text" />
+              <Skeleton shape="rect" />
+              <Inline gap="2" align="center">
+                <Spinner label="Reduced-motion spinner preview" />
+                <Text tone="secondary">Indeterminate motion</Text>
+              </Inline>
+              <Progress label="Reduced-motion progress preview" />
+            </Stack>
+          ) : null}
         </Stack>
       </Card>
     </div>
