@@ -7,12 +7,13 @@ import { execSync } from 'node:child_process';
 import {
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
   existsSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,6 +21,54 @@ const fixture = mkdtempSync(join(tmpdir(), 'silk-packed-'));
 
 function run(cmd, cwd = root) {
   execSync(cmd, { cwd, stdio: 'inherit' });
+}
+
+function listJsFiles(dir) {
+  return readdirSync(dir, { withFileTypes: true, recursive: true })
+    .filter((e) => e.isFile() && e.name.endsWith('.js'))
+    .map((e) => join(e.parentPath ?? e.path, e.name));
+}
+
+/** Linaria class selectors in the aggregate stylesheet. */
+function cssClassNames(css) {
+  const names = new Set();
+  for (const m of css.matchAll(
+    /(?:^|[,}\s])\.([a-zA-Z_][\w-]*)(?=[\s:{,.[#+>~])/gm,
+  )) {
+    names.add(m[1]);
+  }
+  return names;
+}
+
+/**
+ * Assert every Linaria class in CSS is referenced from some emitted JS file
+ * and vice versa — catches the bundleless JS pass and the CSS-only pass
+ * silently diverging (wyw class names are path-derived, so matching names
+ * alone do not prove matching declarations; missing names still catch drift).
+ */
+function assertClassNameParity(distDir, css) {
+  const cssNames = cssClassNames(css);
+  if (cssNames.size === 0) {
+    throw new Error('Packed CSS contains no class selectors');
+  }
+
+  const jsNames = new Set();
+  const stringLit = /["']([a-zA-Z_][\w-]{2,})["']/g;
+  for (const file of listJsFiles(distDir)) {
+    const source = readFileSync(file, 'utf8');
+    for (const m of source.matchAll(stringLit)) {
+      if (cssNames.has(m[1])) {
+        jsNames.add(m[1]);
+      }
+    }
+  }
+
+  const onlyCss = [...cssNames].filter((n) => !jsNames.has(n)).sort();
+  if (onlyCss.length) {
+    throw new Error(
+      `CSS classes missing from emitted JS (two-pass drift?): ${onlyCss.join(', ')}`,
+    );
+  }
 }
 
 try {
@@ -175,17 +224,26 @@ try {
     throw new Error('Packed createTheme missing Stage 2 semantic tokens');
   }
 
-  const js = readFileSync(
-    join(fixture, 'node_modules/@reactive/silk/dist/index.js'),
-    'utf8',
-  );
-  // `styled(` catches the `@linaria/react` wrapper runtime, excluded for the
-  // reasons in PRINCIPLES (cross-platform variants, prop filtering, tree cost)
-  // rather than because it generates CSS at runtime — it does not.
-  // `createGlobalStyle` catches styled-components creeping in.
-  for (const banned of ['styled(', 'createGlobalStyle']) {
-    if (js.includes(banned)) {
-      throw new Error(`Banned styling runtime marker found: ${banned}`);
+  assertClassNameParity(distDir, css);
+
+  // Scan every emitted JS module (index.js is only a barrel after bundleless).
+  // `styled(` / `createGlobalStyle` catch forbidden styling runtimes.
+  // `wyw-in-js` / `__webpack_require__` catch a broken strip-loader or a
+  // reversion to the bundled Rspack-runtime monolith.
+  const banned = [
+    'styled(',
+    'createGlobalStyle',
+    'wyw-in-js',
+    '__webpack_require__',
+  ];
+  for (const file of listJsFiles(distDir)) {
+    const js = readFileSync(file, 'utf8');
+    for (const marker of banned) {
+      if (js.includes(marker)) {
+        throw new Error(
+          `Banned marker ${JSON.stringify(marker)} in ${relative(distDir, file)}`,
+        );
+      }
     }
   }
 
