@@ -1,4 +1,4 @@
-import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import { Box, Container, Stack, Text, containerRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
@@ -25,7 +25,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const panelClass: string = css`
+const Panel = styled(Box)`
   padding: var(--silk-space-4);
   border-radius: var(--silk-radius-md);
   border: 1px solid var(--silk-color-border-subtle);
@@ -38,12 +38,12 @@ export const Sizes: Story = {
     <Stack gap="4">
       {containerRecipe.variants.size.map((size) => (
         <Container key={size} size={size} padding="3">
-          <Box className={panelClass}>
+          <Panel>
             <Text role="label">size="{size}"</Text>
             <Text tone="secondary" role="caption">
               Centered max-width column with container-type for collapseBelow.
             </Text>
-          </Box>
+          </Panel>
         </Container>
       ))}
     </Stack>
@@ -53,12 +53,12 @@ export const Sizes: Story = {
 export const Default: Story = {
   args: {
     children: (
-      <Box className={panelClass}>
+      <Panel>
         <Text role="heading">Container</Text>
         <Text tone="secondary">
           Default size is lg with horizontal padding from space tokens.
         </Text>
-      </Box>
+      </Panel>
     ),
   },
 };

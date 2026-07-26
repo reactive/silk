@@ -3,11 +3,18 @@ import {
   Inline,
   SilkProvider,
   Text,
-  createTheme,
 } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { withSource } from '../docsSource';
 import { SurfacePanel } from '../surfacePanel';
+import surfacePanelSource from '../surfacePanel.tsx?raw';
+import {
+  ThemeDemo,
+  providerDefaults,
+  tenantTheme,
+} from './Theme.demo';
+import themeDemoSource from './Theme.demo.tsx?raw';
 
 const meta = {
   title: 'Theme/ThemeProvider',
@@ -17,6 +24,7 @@ const meta = {
         component:
           'Named schemes flip `data-theme` against static CSS. Custom themes set CSS variables on the provider style attribute. Prefer one of `theme` or `colorScheme`.',
       },
+      ...withSource(themeDemoSource, surfacePanelSource).docs,
     },
   },
 } satisfies Meta;
@@ -24,44 +32,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<typeof meta>;
-
-const tenantTheme = createTheme({
-  colorScheme: 'light',
-  semantic: {
-    color: {
-      surface: '#fff7ed',
-      surfaceRaised: '#ffedd5',
-      textPrimary: '#7c2d12',
-      textSecondary: '#9a3412',
-      borderSubtle: '#fdba74',
-    },
-  },
-});
-
-const providerDefaults = {
-  Button: { variant: 'soft', tone: 'neutral' },
-  Text: { tone: 'secondary' },
-} as const;
-
-function ThemeDemo({ label }: { readonly label: string }): JSX.Element {
-  return (
-    <SurfacePanel gap="3">
-      <Text role="heading">{label}</Text>
-      <Text tone="secondary">
-        Surface, text, and accent tokens resolve from the active theme scope.
-      </Text>
-      <Inline gap="2">
-        <Button>Accent</Button>
-        <Button tone="neutral" variant="outline">
-          Neutral
-        </Button>
-        <Button tone="danger" variant="soft">
-          Danger
-        </Button>
-      </Inline>
-    </SurfacePanel>
-  );
-}
 
 export const NamedLight: Story = {
   render: (): JSX.Element => (

@@ -1,6 +1,7 @@
 import { Heading, headingRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { matrixSource } from '../docsSource';
 import { VariantMatrix } from '../VariantMatrix';
 
 const meta = {
@@ -25,7 +26,7 @@ export const Primary: Story = {};
 
 export const SizeMatrix: Story = {
   tags: ['!test'],
-  parameters: { controls: { disable: true } },
+  parameters: { controls: { disable: true }, ...matrixSource },
   render: (): JSX.Element => (
     <VariantMatrix
       rows={headingRecipe.variants.size}

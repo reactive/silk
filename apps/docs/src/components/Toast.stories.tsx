@@ -10,26 +10,24 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-function ToastStory(): JSX.Element {
-  const [open, setOpen] = useState(false);
-  return (
-    <Toast.Provider swipeDirection="right">
-      <Button onClick={() => setOpen(true)}>Show toast</Button>
-      <Toast.Root open={open} onOpenChange={setOpen} tone="success">
-        <Toast.Title>Scheduled</Toast.Title>
-        <Toast.Description>Friday at 10:00 AM</Toast.Description>
-        <Toast.Action altText="Undo schedule" onClick={() => setOpen(false)}>
-          Undo
-        </Toast.Action>
-        <Toast.Close aria-label="Close" />
-      </Toast.Root>
-      <Toast.Viewport />
-    </Toast.Provider>
-  );
-}
-
 export const Basic: Story = {
-  render: (): JSX.Element => <ToastStory />,
+  render: function BasicToast(): JSX.Element {
+    const [open, setOpen] = useState(false);
+    return (
+      <Toast.Provider swipeDirection="right">
+        <Button onClick={() => setOpen(true)}>Show toast</Button>
+        <Toast.Root open={open} onOpenChange={setOpen} tone="success">
+          <Toast.Title>Scheduled</Toast.Title>
+          <Toast.Description>Friday at 10:00 AM</Toast.Description>
+          <Toast.Action altText="Undo schedule" onClick={() => setOpen(false)}>
+            Undo
+          </Toast.Action>
+          <Toast.Close aria-label="Close" />
+        </Toast.Root>
+        <Toast.Viewport />
+      </Toast.Provider>
+    );
+  },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Show toast' }));
     await expect(await screen.findByText('Scheduled')).toBeInTheDocument();

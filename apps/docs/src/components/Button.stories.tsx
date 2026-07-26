@@ -2,6 +2,7 @@ import { styled } from '@linaria/react';
 import { Button, buttonRecipe, cssVars } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { matrixSource } from '../docsSource';
 import { VariantMatrix } from '../VariantMatrix';
 
 const meta = {
@@ -102,7 +103,7 @@ export const RuntimeCssVariables: Story = {
 
 export const VariantToneMatrix: Story = {
   tags: ['!test'],
-  parameters: { controls: { disable: true } },
+  parameters: { controls: { disable: true }, ...matrixSource },
   render: (): JSX.Element => (
     <VariantMatrix
       rows={buttonRecipe.variants.variant}
@@ -119,7 +120,7 @@ export const VariantToneMatrix: Story = {
 
 export const SizeDensityMatrix: Story = {
   tags: ['!test'],
-  parameters: { controls: { disable: true } },
+  parameters: { controls: { disable: true }, ...matrixSource },
   render: (): JSX.Element => (
     <VariantMatrix
       rows={buttonRecipe.variants.size}

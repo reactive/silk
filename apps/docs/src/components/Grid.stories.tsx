@@ -1,4 +1,4 @@
-import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import { Box, Grid, Text, gridRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
@@ -41,23 +41,23 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const cellClass: string = css`
+const Cell = styled(Box)`
   padding: var(--silk-space-3);
   border-radius: var(--silk-radius-md);
   border: 1px solid var(--silk-color-border-subtle);
   background-color: var(--silk-color-surface-raised);
 `;
 
-function Cells({ count }: { readonly count: number }): JSX.Element {
+function cells(count: number): JSX.Element {
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
-        <Box key={i} className={cellClass}>
+        <Cell key={i}>
           <Text role="label">Cell {i + 1}</Text>
           <Text tone="secondary" role="caption">
             Grid track
           </Text>
-        </Box>
+        </Cell>
       ))}
     </>
   );
@@ -67,7 +67,7 @@ export const FixedColumns: Story = {
   args: {
     columns: '3',
     gap: '3',
-    children: <Cells count={6} />,
+    children: cells(6),
   },
 };
 
@@ -76,7 +76,7 @@ export const AutoFill: Story = {
     columns: 'auto',
     gap: '3',
     minColumnWidth: '10rem',
-    children: <Cells count={8} />,
+    children: cells(8),
   },
 };
 
@@ -86,6 +86,6 @@ export const ItemPlacement: Story = {
     gap: '3',
     align: 'center',
     justify: 'center',
-    children: <Cells count={6} />,
+    children: cells(6),
   },
 };

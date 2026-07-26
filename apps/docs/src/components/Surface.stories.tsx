@@ -2,6 +2,7 @@ import { css, cx } from '@linaria/core';
 import { Surface, surfaceRecipe, Text } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { matrixSource } from '../docsSource';
 import { VariantMatrix } from '../VariantMatrix';
 
 const meta = {
@@ -47,7 +48,7 @@ export const Primary: Story = {
 
 export const ElevationMatrix: Story = {
   tags: ['!test'],
-  parameters: { controls: { disable: true } },
+  parameters: { controls: { disable: true }, ...matrixSource },
   render: (): JSX.Element => (
     <VariantMatrix
       rows={surfaceRecipe.variants.elevation}

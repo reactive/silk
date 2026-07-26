@@ -48,7 +48,31 @@ const config: StorybookConfig = {
         assetPrefix: isProduction ? '/silk/' : '/',
       },
       tools: {
+        rspack: (rspackConfig) => {
+          // storybook-react-rsbuild installs react-docgen as enforce:'pre'. That
+          // mutates TSX before `?raw` / asset/source can read it — exclude raw.
+          for (const rule of rspackConfig.module?.rules ?? []) {
+            if (
+              rule &&
+              typeof rule === 'object' &&
+              'loader' in rule &&
+              typeof rule.loader === 'string' &&
+              rule.loader.includes('react-docgen-loader')
+            ) {
+              rule.resourceQuery = { not: [/raw/] };
+            }
+          }
+          return rspackConfig;
+        },
         bundlerChain: (chain, { CHAIN_ID }) => {
+          // Keep `?raw` on asset/source so wyw/SWC never transform imported sources
+          // used by the code panel (`docs.source` attachments).
+          chain.module
+            .rule('silk-raw-source')
+            .resourceQuery(/raw/)
+            .type('asset/source');
+          chain.module.rule(CHAIN_ID.RULE.JS).resourceQuery({ not: /raw/ });
+
           chain.module
             .rule(CHAIN_ID.RULE.JS)
             .use('@wyw-in-js/webpack-loader')

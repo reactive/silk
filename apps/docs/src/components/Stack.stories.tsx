@@ -1,4 +1,5 @@
 import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import { Box, Button, Inline, Stack, Text, stackRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
@@ -41,7 +42,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const itemClass: string = css`
+const DemoItem = styled(Box)`
   padding: var(--silk-space-2) var(--silk-space-3);
   border-radius: var(--silk-radius-sm);
   /* solid/on-solid — subtle+solid fails WCAG AA at 16px */
@@ -56,20 +57,18 @@ const tallFrameClass: string = css`
   border-radius: var(--silk-radius-md);
 `;
 
-function DemoItems(): JSX.Element {
-  return (
-    <>
-      <Box className={itemClass}>One</Box>
-      <Box className={itemClass}>Two</Box>
-      <Box className={itemClass}>Three</Box>
-    </>
-  );
-}
+const demoItems = (
+  <>
+    <DemoItem>One</DemoItem>
+    <DemoItem>Two</DemoItem>
+    <DemoItem>Three</DemoItem>
+  </>
+);
 
 export const Column: Story = {
   args: {
     gap: '3',
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 
@@ -77,7 +76,7 @@ export const Align: Story = {
   args: {
     gap: '3',
     align: 'center',
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 
@@ -87,7 +86,7 @@ export const Justify: Story = {
     align: 'start',
     justify: 'between',
     className: tallFrameClass,
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 
@@ -95,7 +94,7 @@ export const Rail: Story = {
   args: {
     gap: '2',
     rail: 'start',
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 

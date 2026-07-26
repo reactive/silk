@@ -1,4 +1,5 @@
 import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import {
   Box,
   Button,
@@ -76,19 +77,19 @@ const contentClass: string = css`
   }
 `;
 
-const navItemClass: string = css`
+const NavItem = styled(Box)`
   padding: var(--silk-space-2) var(--silk-space-3);
   border-radius: var(--silk-radius-sm);
   background-color: var(--silk-color-tone-neutral-subtle);
 `;
 
-const cardTileClass: string = css`
+const CardTile = styled(Box)`
   border-radius: var(--silk-radius-md);
   border: 1px solid var(--silk-color-border-subtle);
   background-color: var(--silk-color-surface-raised);
 `;
 
-const longContentClass: string = css`
+const LongContent = styled(Box)`
   overflow: auto;
   border-radius: var(--silk-radius-md);
   border: 1px solid var(--silk-color-border-subtle);
@@ -152,9 +153,9 @@ export function AppSkeleton({
               </Stack>
               <Stack gap="1">
                 {['Overview', 'Projects', 'Settings'].map((item) => (
-                  <Box key={item} className={navItemClass}>
+                  <NavItem key={item}>
                     <Text role="caption">{item}</Text>
-                  </Box>
+                  </NavItem>
                 ))}
               </Stack>
             </Stack>
@@ -182,29 +183,28 @@ export function AppSkeleton({
                   minColumnWidth="9rem"
                 >
                   {['Alpha', 'Beta', 'Gamma', 'Delta'].map((name) => (
-                    <Box key={name} padding="3" className={cardTileClass}>
+                    <CardTile key={name} padding="3">
                       <Stack gap="2">
                         <Text role="label">{name}</Text>
                         <Text tone="secondary" role="caption">
                           Card body
                         </Text>
                       </Stack>
-                    </Box>
+                    </CardTile>
                   ))}
                 </Grid>
                 {longContent ? (
-                  <Box
+                  <LongContent
                     padding="3"
                     tabIndex={0}
                     role="region"
                     aria-label="Long unbroken content"
-                    className={longContentClass}
                     data-region="long-content"
                   >
                     <Text role="caption">
                       {`${'supercalifragilisticexpialidocious_'.repeat(8)}end`}
                     </Text>
-                  </Box>
+                  </LongContent>
                 ) : null}
                 {overflow
                   ? Array.from({ length: 12 }, (_, i) => (
