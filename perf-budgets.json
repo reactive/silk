@@ -1,149 +1,149 @@
 {
-  "notes": "Package ships a single bundled dist/index.js, so named-export virtual consumers largely measure monolith cost. Budgets enforce regression of that package surface (JS gzip per consumer entry, CSS totals). SSR median is informational only.",
+  "notes": "Bundleless per-file ESM: isolatedGzip is the real consumer cost of importing one named export (esbuild minify+gzip, react external). sharedBaselineGzip is createTheme alone. CSS is still the package-wide aggregate (styles.css). SSR median is informational only. A reversion to the bundled monolith fails these budgets loudly.",
   "budgets": {
     "cssRaw": 130000,
     "cssGzip": 15000,
-    "sharedBaselineGzip": 75000,
+    "sharedBaselineGzip": 3300,
     "ssrMedianMsSoft": 5,
     "isolatedGzip": {
-      "Button": 70000,
-      "Dialog": 70000,
-      "Tooltip": 70000,
-      "Popover": 70000,
-      "DropdownMenu": 70000,
-      "Select": 70000,
-      "Tabs": 70000,
-      "Accordion": 70000,
-      "Toggle": 70000,
-      "ToggleGroup": 70000,
-      "ScrollArea": 70000,
-      "Toast": 70000,
-      "Identity": 70000,
-      "MediaObject": 70000,
-      "ActionBar": 70000,
-      "StatGroup": 70000,
-      "EmptyState": 70000,
-      "PostCard": 70000,
-      "Comment": 70000,
-      "CommentThread": 70000,
-      "Notification": 70000,
-      "FeedItem": 70000,
-      "ProfileCard": 70000,
-      "SettingsPanel": 70000,
-      "StatusDot": 70000
+      "Button": 3200,
+      "Dialog": 19300,
+      "Tooltip": 25500,
+      "Popover": 32300,
+      "DropdownMenu": 41800,
+      "Select": 42900,
+      "Tabs": 12900,
+      "Accordion": 12300,
+      "Toggle": 4800,
+      "ToggleGroup": 11700,
+      "ScrollArea": 10800,
+      "Toast": 17200,
+      "Identity": 6400,
+      "MediaObject": 5200,
+      "ActionBar": 15300,
+      "StatGroup": 6100,
+      "EmptyState": 5400,
+      "PostCard": 19800,
+      "Comment": 18900,
+      "CommentThread": 19700,
+      "Notification": 7800,
+      "FeedItem": 22700,
+      "ProfileCard": 10000,
+      "SettingsPanel": 7200,
+      "StatusDot": 1000
     }
   },
   "measured": {
-    "generatedAt": "2026-07-26T14:50:07.502Z",
-    "sharedBaselineGzip": 67060,
+    "generatedAt": "2026-07-26T20:07:57.945Z",
+    "sharedBaselineGzip": 2601,
     "css": {
-      "raw": 106695,
-      "gzip": 11096
+      "raw": 107123,
+      "gzip": 11663
     },
     "isolated": {
       "Button": {
-        "raw": 209281,
-        "gzip": 64745
+        "raw": 5802,
+        "gzip": 2554
       },
       "Dialog": {
-        "raw": 210129,
-        "gzip": 65082
+        "raw": 44492,
+        "gzip": 15378
       },
       "Tooltip": {
-        "raw": 209998,
-        "gzip": 65041
+        "raw": 56890,
+        "gzip": 20333
       },
       "Popover": {
-        "raw": 210076,
-        "gzip": 65050
+        "raw": 72923,
+        "gzip": 25815
       },
       "DropdownMenu": {
-        "raw": 211201,
-        "gzip": 65341
+        "raw": 99947,
+        "gzip": 33370
       },
       "Select": {
-        "raw": 211291,
-        "gzip": 65429
+        "raw": 99472,
+        "gzip": 34293
       },
       "Tabs": {
-        "raw": 212467,
-        "gzip": 65555
+        "raw": 29173,
+        "gzip": 10255
       },
       "Accordion": {
-        "raw": 209926,
-        "gzip": 64987
+        "raw": 28502,
+        "gzip": 9833
       },
       "Toggle": {
-        "raw": 209512,
-        "gzip": 64818
+        "raw": 9433,
+        "gzip": 3794
       },
       "ToggleGroup": {
-        "raw": 209843,
-        "gzip": 64910
+        "raw": 26300,
+        "gzip": 9345
       },
       "ScrollArea": {
-        "raw": 209285,
-        "gzip": 64745
+        "raw": 26255,
+        "gzip": 8611
       },
       "Toast": {
-        "raw": 210636,
-        "gzip": 65203
+        "raw": 41080,
+        "gzip": 13694
       },
       "Identity": {
-        "raw": 209283,
-        "gzip": 64743
+        "raw": 13119,
+        "gzip": 5084
       },
       "MediaObject": {
-        "raw": 209286,
-        "gzip": 64748
+        "raw": 10276,
+        "gzip": 4107
       },
       "ActionBar": {
-        "raw": 209284,
-        "gzip": 64744
+        "raw": 34741,
+        "gzip": 12167
       },
       "StatGroup": {
-        "raw": 209284,
-        "gzip": 64749
+        "raw": 12274,
+        "gzip": 4819
       },
       "EmptyState": {
-        "raw": 209285,
-        "gzip": 64744
+        "raw": 10959,
+        "gzip": 4280
       },
       "PostCard": {
-        "raw": 209283,
-        "gzip": 64743
+        "raw": 47808,
+        "gzip": 15780
       },
       "Comment": {
-        "raw": 209282,
-        "gzip": 64743
+        "raw": 44755,
+        "gzip": 15085
       },
       "CommentThread": {
-        "raw": 210321,
-        "gzip": 65046
+        "raw": 46904,
+        "gzip": 15750
       },
       "Notification": {
-        "raw": 209287,
-        "gzip": 64748
+        "raw": 17138,
+        "gzip": 6200
       },
       "FeedItem": {
-        "raw": 210242,
-        "gzip": 65038
+        "raw": 56819,
+        "gzip": 18125
       },
       "ProfileCard": {
-        "raw": 209286,
-        "gzip": 64743
+        "raw": 23268,
+        "gzip": 7956
       },
       "SettingsPanel": {
-        "raw": 210348,
-        "gzip": 64999
+        "raw": 15301,
+        "gzip": 5736
       },
       "StatusDot": {
-        "raw": 209284,
-        "gzip": 64745
+        "raw": 1296,
+        "gzip": 736
       }
     },
     "ssr": {
-      "medianMs": 0.649
+      "medianMs": 0.848
     }
   }
 }

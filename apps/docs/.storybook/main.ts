@@ -31,7 +31,9 @@ const config: StorybookConfig = {
     const isProduction = configType === 'PRODUCTION';
 
     return mergeRsbuildConfig(rsbuildConfig, {
-      plugins: [pluginReact()],
+      plugins: [
+        pluginReact(isProduction ? { reactCompiler: true } : undefined),
+      ],
       resolve: {
         alias: {
           // Source for HMR, Linaria extraction, and prop tables.
