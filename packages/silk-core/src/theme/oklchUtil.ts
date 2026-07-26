@@ -1,5 +1,5 @@
 import { clampChroma, formatHex, oklch, type Oklch } from 'culori';
-import { contrastRatio, relativeLuminance } from './colorMath.js';
+import { contrastRatio } from './colorMath.js';
 
 export function oklchAt(l: number, c: number, h: number): Oklch {
   return { mode: 'oklch', l, c, h };
@@ -19,7 +19,6 @@ export function oklchChannelsToHex(l: number, c: number, h: number): string {
 
 /**
  * Walk lightness until contrast vs `against` clears `threshold`.
- * Caches the against-side luminance so each step only measures the candidate.
  */
 export function nudgeLUntil(
   hex: string,
@@ -37,7 +36,6 @@ export function nudgeLUntil(
   if (!current) {
     return hex;
   }
-  const againstL = relativeLuminance(against);
   const delta = options.delta ?? 0.015;
   const minL = options.minL ?? 0.15;
   const maxL = options.maxL ?? 0.92;
@@ -45,24 +43,19 @@ export function nudgeLUntil(
 
   for (let i = 0; i < maxIters; i += 1) {
     const candidate = oklchToHex(current);
-    const candidateL = relativeLuminance(candidate);
-    if (candidateL != null && againstL != null) {
-      const lighter = Math.max(candidateL, againstL);
-      const darker = Math.min(candidateL, againstL);
-      if ((lighter + 0.05) / (darker + 0.05) >= threshold) {
-        return candidate;
-      }
-    } else {
-      const ratio = contrastRatio(candidate, against);
-      if (ratio != null && ratio >= threshold) {
-        return candidate;
-      }
+    const ratio = contrastRatio(candidate, against);
+    if (ratio != null && ratio >= threshold) {
+      return candidate;
     }
-    current = oklchAt(
-      Math.min(maxL, Math.max(minL, (current.l ?? 0.5) + options.direction * delta)),
-      current.c ?? 0,
-      current.h ?? 0,
+    const currentL = current.l ?? 0.5;
+    const nextL = Math.min(
+      maxL,
+      Math.max(minL, currentL + options.direction * delta),
     );
+    if (nextL === currentL) {
+      return candidate;
+    }
+    current = oklchAt(nextL, current.c ?? 0, current.h ?? 0);
   }
   return oklchToHex(current);
 }

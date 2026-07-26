@@ -9,7 +9,6 @@ import {
   checkThemeContrast,
   createTheme,
   generatePairedPalette,
-  type PairedPalette,
   type Theme,
 } from '@reactive/silk';
 import { parseCanonicalHex } from '@reactive/silk-core';
@@ -32,32 +31,17 @@ export interface ThemePlaygroundControls {
 const DEFAULT_BRAND = '#0ea5e9';
 const DEFAULT_SCHEME = 'light' as const;
 
-const pairedCache = new Map<string, PairedPalette>();
-
-function pairedFor(brandSeed: string): PairedPalette | null {
-  const seed = parseCanonicalHex(brandSeed);
-  if (!seed) {
-    return null;
-  }
-  const cached = pairedCache.get(seed);
-  if (cached) {
-    return cached;
-  }
-  const paired = generatePairedPalette(seed);
-  pairedCache.set(seed, paired);
-  return paired;
-}
-
 function buildTheme(
   brandSeed: string,
   colorScheme: 'light' | 'dark',
   surface: string | undefined,
   radiusMd: number | undefined,
 ): Theme | null {
-  const paired = pairedFor(brandSeed);
-  if (!paired) {
+  const seed = parseCanonicalHex(brandSeed);
+  if (!seed) {
     return null;
   }
+  const paired = generatePairedPalette(seed);
   const surfaceHex =
     surface !== undefined ? parseCanonicalHex(surface) : undefined;
   return createTheme({
@@ -71,8 +55,8 @@ function buildTheme(
 }
 
 /**
- * Live theme playground — debounces control changes, caches paired palettes by
- * brand seed, and holds the last valid theme while the seed is mid-edit.
+ * Live theme playground — debounces control changes and holds the last valid
+ * theme while the seed is mid-edit.
  */
 export function ThemePlayground({
   brandSeed = DEFAULT_BRAND,
@@ -100,7 +84,7 @@ export function ThemePlayground({
     return () => window.clearTimeout(id);
   }, [brandSeed, colorScheme, surface, radiusMd]);
 
-  const holding = pairedFor(brandSeed) === null;
+  const holding = parseCanonicalHex(brandSeed) === null;
   const contrast = useMemo(() => checkThemeContrast(theme), [theme]);
 
   return (

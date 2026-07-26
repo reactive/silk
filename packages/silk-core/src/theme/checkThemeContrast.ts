@@ -256,33 +256,26 @@ export function checkThemeContrast(theme: Theme): ThemeContrastResult {
       );
     }
 
-    assertContrast(
-      violations,
-      seenUnsupported,
-      `${base}.text`,
-      t.text,
-      'color.surface',
-      color.surface,
-      4.5,
-      'Tone text on page surface must meet WCAG AA 4.5:1',
-    );
-
-    if (tone !== 'neutral') {
-      for (const [path, surface] of [
-        ['color.surface', color.surface],
-        ['color.surfaceRaised', color.surfaceRaised],
-      ] as const) {
-        assertContrast(
-          violations,
-          seenUnsupported,
-          `${base}.text`,
-          t.text,
-          path,
-          surface,
-          4.5,
-          'Chromatic tone text on raised/flat surfaces must meet WCAG AA 4.5:1',
-        );
-      }
+    const toneTextSurfaces =
+      tone === 'neutral'
+        ? ([['color.surface', color.surface]] as const)
+        : ([
+            ['color.surface', color.surface],
+            ['color.surfaceRaised', color.surfaceRaised],
+          ] as const);
+    for (const [path, surface] of toneTextSurfaces) {
+      assertContrast(
+        violations,
+        seenUnsupported,
+        `${base}.text`,
+        t.text,
+        path,
+        surface,
+        4.5,
+        tone === 'neutral'
+          ? 'Tone text on page surface must meet WCAG AA 4.5:1'
+          : 'Chromatic tone text on raised/flat surfaces must meet WCAG AA 4.5:1',
+      );
     }
 
     for (const [path, surface] of surfaces) {

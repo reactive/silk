@@ -67,6 +67,25 @@ test('identical primary/secondary text fails distinctness', () => {
   ).toBe(true);
 });
 
+test('chromatic text reports each surface contrast failure once', () => {
+  const theme = createTheme({
+    semantic: {
+      color: {
+        surface: '#ffffff',
+        tones: { accent: { text: '#ffffff' } },
+      },
+    },
+  });
+  const result = checkThemeContrast(theme);
+  const pageSurfaceFailures = result.violations.filter(
+    (violation) =>
+      violation.kind === 'contrast' &&
+      violation.pathFg === 'color.tones.accent.text' &&
+      violation.pathBg === 'color.surface',
+  );
+  expect(pageSurfaceFailures).toHaveLength(1);
+});
+
 test('contrastRatio and relativeLuminance are hex-only', () => {
   expect(relativeLuminance('#ffffff')).toBeCloseTo(1, 5);
   expect(relativeLuminance('rgb(255,255,255)')).toBeNull();

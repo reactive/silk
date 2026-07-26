@@ -54,7 +54,7 @@ export function mergeCssVarMaps(
     if (!map) {
       continue;
     }
-    merged = { ...merged, ...map };
+    merged = merged === undefined ? map : { ...merged, ...map };
   }
   return merged;
 }
