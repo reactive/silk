@@ -17,30 +17,133 @@
       "Toggle": 70000,
       "ToggleGroup": 70000,
       "ScrollArea": 70000,
-      "Toast": 70000
+      "Toast": 70000,
+      "Identity": 70000,
+      "MediaObject": 70000,
+      "ActionBar": 70000,
+      "StatGroup": 70000,
+      "EmptyState": 70000,
+      "PostCard": 70000,
+      "Comment": 70000,
+      "CommentThread": 70000,
+      "Notification": 70000,
+      "FeedItem": 70000,
+      "ProfileCard": 70000,
+      "SettingsPanel": 70000,
+      "StatusDot": 70000
     }
   },
   "measured": {
-    "generatedAt": "2026-07-26T05:59:33.491Z",
-    "sharedBaselineGzip": 62747,
+    "generatedAt": "2026-07-26T14:50:07.502Z",
+    "sharedBaselineGzip": 67060,
     "css": {
-      "raw": 106092,
-      "gzip": 10884
+      "raw": 106695,
+      "gzip": 11096
     },
     "isolated": {
-      "Button": { "raw": 191941, "gzip": 60583 },
-      "Dialog": { "raw": 191954, "gzip": 60622 },
-      "Tooltip": { "raw": 191805, "gzip": 60540 },
-      "Popover": { "raw": 191874, "gzip": 60548 },
-      "DropdownMenu": { "raw": 193072, "gzip": 60813 },
-      "Select": { "raw": 191527, "gzip": 60469 },
-      "Tabs": { "raw": 194714, "gzip": 61347 },
-      "Accordion": { "raw": 192124, "gzip": 60648 },
-      "Toggle": { "raw": 192246, "gzip": 60653 },
-      "ToggleGroup": { "raw": 194940, "gzip": 61388 },
-      "ScrollArea": { "raw": 191531, "gzip": 60471 },
-      "Toast": { "raw": 192870, "gzip": 60878 }
+      "Button": {
+        "raw": 209281,
+        "gzip": 64745
+      },
+      "Dialog": {
+        "raw": 210129,
+        "gzip": 65082
+      },
+      "Tooltip": {
+        "raw": 209998,
+        "gzip": 65041
+      },
+      "Popover": {
+        "raw": 210076,
+        "gzip": 65050
+      },
+      "DropdownMenu": {
+        "raw": 211201,
+        "gzip": 65341
+      },
+      "Select": {
+        "raw": 211291,
+        "gzip": 65429
+      },
+      "Tabs": {
+        "raw": 212467,
+        "gzip": 65555
+      },
+      "Accordion": {
+        "raw": 209926,
+        "gzip": 64987
+      },
+      "Toggle": {
+        "raw": 209512,
+        "gzip": 64818
+      },
+      "ToggleGroup": {
+        "raw": 209843,
+        "gzip": 64910
+      },
+      "ScrollArea": {
+        "raw": 209285,
+        "gzip": 64745
+      },
+      "Toast": {
+        "raw": 210636,
+        "gzip": 65203
+      },
+      "Identity": {
+        "raw": 209283,
+        "gzip": 64743
+      },
+      "MediaObject": {
+        "raw": 209286,
+        "gzip": 64748
+      },
+      "ActionBar": {
+        "raw": 209284,
+        "gzip": 64744
+      },
+      "StatGroup": {
+        "raw": 209284,
+        "gzip": 64749
+      },
+      "EmptyState": {
+        "raw": 209285,
+        "gzip": 64744
+      },
+      "PostCard": {
+        "raw": 209283,
+        "gzip": 64743
+      },
+      "Comment": {
+        "raw": 209282,
+        "gzip": 64743
+      },
+      "CommentThread": {
+        "raw": 210321,
+        "gzip": 65046
+      },
+      "Notification": {
+        "raw": 209287,
+        "gzip": 64748
+      },
+      "FeedItem": {
+        "raw": 210242,
+        "gzip": 65038
+      },
+      "ProfileCard": {
+        "raw": 209286,
+        "gzip": 64743
+      },
+      "SettingsPanel": {
+        "raw": 210348,
+        "gzip": 64999
+      },
+      "StatusDot": {
+        "raw": 209284,
+        "gzip": 64745
+      }
     },
-    "ssr": { "medianMs": 0.685 }
+    "ssr": {
+      "medianMs": 0.649
+    }
   }
 }

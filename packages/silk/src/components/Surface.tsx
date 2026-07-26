@@ -36,20 +36,53 @@ const borderRules: string = `
   }
 `;
 
+const interactiveHoverRules: string = `
+  /* Conformance: both axis values must appear in extracted CSS. */
+  &:where([data-interactive='false']) {
+    cursor: inherit;
+  }
+  &:where([data-interactive='true'][data-elevation='sunken']):where(a:hover),
+  &:where([data-interactive='true'][data-elevation='sunken']):where(button:hover),
+  &:where([data-interactive='true'][data-elevation='flat']):where(a:hover),
+  &:where([data-interactive='true'][data-elevation='flat']):where(button:hover) {
+    box-shadow: var(--silk-surface-shadow, var(--silk-shadow-raised));
+  }
+  &:where([data-interactive='true'][data-elevation='raised']):where(a:hover),
+  &:where([data-interactive='true'][data-elevation='raised']):where(button:hover),
+  &:where([data-interactive='true'][data-elevation='overlay']):where(a:hover),
+  &:where([data-interactive='true'][data-elevation='overlay']):where(button:hover) {
+    box-shadow: var(--silk-surface-shadow, var(--silk-shadow-overlay));
+  }
+`;
+
 const surfaceClass: string = css`
   box-sizing: border-box;
   margin: 0;
   min-width: 0;
   color: var(--silk-color-text-primary);
+  text-decoration: none;
+  transition: box-shadow var(--silk-motion-fast-duration-ms)
+    var(--silk-motion-fast-easing);
 
   ${elevationRules}
   ${radiusRules}
   ${borderRules}
+  ${interactiveHoverRules}
+
+  &:where(a),
+  &:where(button) {
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 /**
  * Themed background container. `elevation` pairs surface fill + shadow
  * (sunken | flat | raised | overlay) — no separate tone axis.
+ * `interactive` only elevates hover on real anchors/buttons.
  */
 export function Surface({
   className,
@@ -57,6 +90,7 @@ export function Surface({
   elevation,
   radius,
   border,
+  interactive,
   ...props
 }: SurfaceProps): JSX.Element {
   const defaults = useComponentDefaults('Surface');
@@ -66,6 +100,10 @@ export function Surface({
     radius ?? defaults.radius ?? surfaceRecipe.defaults.radius;
   const resolvedBorder =
     border ?? defaults.border ?? surfaceRecipe.defaults.border;
+  const resolvedInteractive =
+    interactive ??
+    defaults.interactive ??
+    surfaceRecipe.defaults.interactive;
 
   const Comp = asChild ? Slot.Root : 'div';
   return (
@@ -75,6 +113,7 @@ export function Surface({
       data-elevation={resolvedElevation}
       data-radius={resolvedRadius}
       data-border={resolvedBorder}
+      data-interactive={resolvedInteractive}
     />
   );
 }

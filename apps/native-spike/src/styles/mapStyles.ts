@@ -26,6 +26,13 @@ export type RnViewStyle = {
   backgroundColor?: string;
   flexDirection?: 'row' | 'column';
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch';
+  justifyContent?:
+    | 'flex-start'
+    | 'center'
+    | 'flex-end'
+    | 'space-between'
+    | 'space-around'
+    | 'space-evenly';
   flexWrap?: 'nowrap' | 'wrap';
   gap?: number;
   borderRadius?: number;
@@ -61,6 +68,15 @@ const alignMap = {
   center: 'center',
   end: 'flex-end',
   stretch: 'stretch',
+} as const;
+
+const justifyMap = {
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
+  between: 'space-between',
+  around: 'space-around',
+  evenly: 'space-evenly',
 } as const;
 
 function spaceScale(
@@ -106,16 +122,15 @@ export function mapStackStyle(
   props: StackVariantProps = {},
   density: DensityName = 'comfortable',
 ): RnViewStyle {
-  const direction = props.direction ?? stackRecipe.defaults.direction;
   const gap = resolveSpaceStep(props.gap, stackRecipe.defaults.gap);
   const align = props.align ?? stackRecipe.defaults.align;
-  const wrap = props.wrap ?? stackRecipe.defaults.wrap;
+  const justify = props.justify ?? stackRecipe.defaults.justify;
   const space = spaceScale(theme, density);
 
   return {
-    flexDirection: direction,
+    flexDirection: 'column',
     alignItems: alignMap[align],
-    flexWrap: wrap,
+    justifyContent: justifyMap[justify],
     gap: space[gap],
   };
 }

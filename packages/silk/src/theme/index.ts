@@ -17,7 +17,11 @@ export type { SilkComponentVarName, SilkComponentVars } from './componentVars';
 export { ThemeProvider } from './ThemeProvider';
 export type { ThemeProviderProps } from './ThemeProvider';
 
-export { SilkProvider } from './SilkProvider';
+export {
+  SilkProvider,
+  useComponentDefaults,
+  useSilkDefaults,
+} from './SilkProvider';
 export type { SilkDefaults, SilkProviderProps } from './SilkProvider';
 
 export { densityClass } from './density.css';

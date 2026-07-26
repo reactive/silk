@@ -1,4 +1,4 @@
-import { Avatar, Stack, avatarRecipe } from '@reactive/silk';
+import { Avatar, Inline, avatarRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
 import { VariantMatrix } from '../VariantMatrix';
@@ -54,7 +54,7 @@ export const SizeShapeMatrix: Story = {
 export const AccessibleLabeling: Story = {
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
-    <Stack direction="row" gap="3" align="center">
+    <Inline gap="3" align="center">
       <Avatar
         src="https://avatars.githubusercontent.com/u/810438?v=4"
         alt="Example user"
@@ -62,6 +62,6 @@ export const AccessibleLabeling: Story = {
       {/* Without `src` there is no img to carry `alt` — label the span instead. */}
       <Avatar fallback="JD" aria-label="Jane Doe" />
       <Avatar fallback="?" role="img" aria-label="Unknown user" />
-    </Stack>
+    </Inline>
   ),
 };

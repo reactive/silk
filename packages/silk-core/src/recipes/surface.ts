@@ -8,6 +8,7 @@ const surfaceVariants = {
   elevation: ['sunken', 'flat', 'raised', 'overlay'] as const,
   radius: ['none', 'sm', 'md', 'lg'] as const,
   border: ['none', 'subtle'] as const,
+  interactive: ['false', 'true'] as const,
 };
 
 export const surfaceRecipe: Recipe<typeof surfaceVariants> = defineRecipe({
@@ -16,6 +17,7 @@ export const surfaceRecipe: Recipe<typeof surfaceVariants> = defineRecipe({
     elevation: 'flat',
     radius: 'md',
     border: 'none',
+    interactive: 'false',
   },
 });
 

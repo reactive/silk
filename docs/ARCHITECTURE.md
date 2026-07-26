@@ -14,7 +14,7 @@ This document describes how the system is built today. The _why_ — goals, cons
 @reactive/silk-native   React Native renderer consuming the same core
 ```
 
-Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`.
+Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/models`.
 
 **Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs today; playgrounds / native examples later) live under `apps/`.
 
@@ -63,7 +63,7 @@ Effective `--silk-space-*` aliases are owned by `densityClass` (not `themeToCssV
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Fluid defaults                              | Layout components                                                                               |
 | Container breakpoints (`xs`/`sm`/`md`/`lg`) | `@reactive/silk` only (`containerBreakpoints`)                                                  |
-| Adaptive switch                             | Web-only `collapseBelow` on `Stack` / `Inline` → pre-generated `@container (width < Npx)` rules |
+| Adaptive switch                             | Web-only `collapseBelow` on `Inline` → pre-generated `@container (width < Npx)` rules           |
 | Size containment                            | `Container` always; `Box contain` opt-in                                                        |
 
 Core recipes stay platform-neutral. Native does not implement container queries.
@@ -80,13 +80,27 @@ Recipes are **contracts** (variant unions + defaults). Web CSS interpolates reci
 
 | Layer       | Examples                                                                                                                                    | Notes                                                                                                              |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Layout      | `Box`, `Stack`, `Inline`, `Grid`, `Center`, `Container`, `Separator`                                                                        | Spacing via CSS variables; responsive via container queries (web)                                                  |
+| Layout      | `Box`, `Stack` (vertical), `Inline` (horizontal), `Grid`, `Container`, `Separator`                                                          | Spacing via CSS variables; responsive via container queries (web)                                                  |
 | Visual      | `Text`, `Button`, `Avatar`, `Surface`, `Card`, `Heading`, `Badge`, `Skeleton`, `Spinner`, `Progress`                                        | `Button` is the reference variant engine; `Surface` owns elevation                                                 |
 | Interaction | `Dialog`, `Popover`, `Tooltip`, `DropdownMenu`, `Select`, `Tabs`, `Accordion`, `ScrollArea`, `Toast`, `Toggle`/`ToggleGroup`, form controls | Radix behavior, Silk visuals; floating surfaces share `floatingSurface` + Presence-compatible enter/exit keyframes |
 | Forms       | `Field`, `Input`, `Textarea`                                                                                                                | Field owns id/`aria-*` wiring (single vs group modes)                                                              |
-| Composite   | `Identity`                                                                                                                                  | Compound parts + convenience props                                                                                 |
+| Composite   | `Identity`, `MediaObject`, `ActionBar`, `StatGroup`, `EmptyState`, `PostCard`, `Comment`/`CommentThread`, `Notification`, `FeedItem`, `ProfileCard`, `SettingsPanel` | Dual API (compound-first + convenience); see [COMPOSITES.md](COMPOSITES.md)                                        |
 
 Escape hatches on every component: `className`, `style`, `ref` (React 19 prop), data attributes, `asChild` where sensible.
+
+### Layout axes
+
+Flow direction is a property of the component, never a prop, so `align` and `justify` never change meaning at a call site:
+
+| Component | Flow       | `align`                      | `justify`                        |
+| --------- | ---------- | ---------------------------- | -------------------------------- |
+| `Stack`   | vertical   | `align-items` (horizontal)   | `justify-content` (vertical)     |
+| `Inline`  | horizontal | `align-items` (vertical)     | `justify-content` (horizontal)   |
+| `Grid`    | tracks     | `align-items` (within track) | `justify-items` (within track)   |
+
+`Grid` is the one exception to "`justify` distributes content": `columns` always emits `1fr` tracks, which consume the inline axis, so `justify-content` would have no free space to distribute. Pairing `justify` with the existing `align` as item placement is what a `columns`-based grid can actually act on.
+
+`Inline collapseBelow` turns the row into a stretched column below the breakpoint. It overrides `align-items` but deliberately leaves `justify-content` alone, so a `justify` chosen for the row applies to the vertical axis once collapsed.
 
 ### Stacking
 

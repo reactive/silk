@@ -39,6 +39,19 @@ const COMPONENTS = [
   'ToggleGroup',
   'ScrollArea',
   'Toast',
+  'Identity',
+  'MediaObject',
+  'ActionBar',
+  'StatGroup',
+  'EmptyState',
+  'PostCard',
+  'Comment',
+  'CommentThread',
+  'Notification',
+  'FeedItem',
+  'ProfileCard',
+  'SettingsPanel',
+  'StatusDot',
 ];
 
 function gzipBytes(buf) {

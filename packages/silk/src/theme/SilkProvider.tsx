@@ -1,18 +1,23 @@
 import type {
+  ActionBarVariantProps,
   AvatarVariantProps,
   BadgeVariantProps,
   BoxVariantProps,
   ButtonVariantProps,
   CardVariantProps,
-  CenterVariantProps,
   CheckboxVariantProps,
+  CommentVariantProps,
   ContainerVariantProps,
   DialogVariantProps,
+  EmptyStateVariantProps,
   GridVariantProps,
   HeadingVariantProps,
   InlineVariantProps,
   InputVariantProps,
+  MediaObjectVariantProps,
   PopoverVariantProps,
+  PostCardVariantProps,
+  ProfileCardVariantProps,
   ProgressVariantProps,
   RadioGroupVariantProps,
   SelectVariantProps,
@@ -21,6 +26,8 @@ import type {
   SliderVariantProps,
   SpinnerVariantProps,
   StackVariantProps,
+  StatGroupVariantProps,
+  StatusDotVariantProps,
   SurfaceVariantProps,
   SwitchVariantProps,
   TabsVariantProps,
@@ -48,16 +55,25 @@ export interface SilkDefaults {
   readonly Box?: Partial<BoxVariantProps>;
   readonly Inline?: Partial<InlineVariantProps>;
   readonly Grid?: Partial<GridVariantProps>;
-  readonly Center?: Partial<CenterVariantProps>;
   readonly Container?: Partial<ContainerVariantProps>;
   readonly Separator?: Partial<SeparatorVariantProps>;
   readonly Dialog?: Partial<DialogVariantProps>;
   readonly Avatar?: Partial<AvatarVariantProps>;
-  readonly Identity?: Partial<AvatarVariantProps>;
+  readonly Identity?: Readonly<{
+    readonly size?: AvatarVariantProps['size'];
+  }>;
   readonly Surface?: Partial<SurfaceVariantProps>;
   readonly Card?: Partial<CardVariantProps>;
   readonly Heading?: Partial<HeadingVariantProps>;
   readonly Badge?: Partial<BadgeVariantProps>;
+  readonly StatusDot?: Partial<StatusDotVariantProps>;
+  readonly MediaObject?: Partial<MediaObjectVariantProps>;
+  readonly ActionBar?: Partial<ActionBarVariantProps>;
+  readonly StatGroup?: Partial<StatGroupVariantProps>;
+  readonly EmptyState?: Partial<EmptyStateVariantProps>;
+  readonly PostCard?: Partial<PostCardVariantProps>;
+  readonly Comment?: Partial<CommentVariantProps>;
+  readonly ProfileCard?: Partial<ProfileCardVariantProps>;
   readonly Skeleton?: Partial<SkeletonVariantProps>;
   readonly Spinner?: Partial<SpinnerVariantProps>;
   readonly Progress?: Partial<ProgressVariantProps>;

@@ -31,6 +31,11 @@
       "import": "./dist/recipes/index.js",
       "default": "./dist/recipes/index.js"
     },
+    "./models": {
+      "types": "./dist/models/index.d.ts",
+      "import": "./dist/models/index.js",
+      "default": "./dist/models/index.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

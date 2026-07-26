@@ -1,5 +1,6 @@
 import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
+import { expectNoAxeViolations } from '../test/a11y';
 import { Identity } from './Identity';
 
 test('Identity convenience form renders name and meta', () => {
@@ -22,4 +23,35 @@ test('Identity compound parts share size context', () => {
   const root = screen.getByText('Ada').closest('[data-size]');
   expect(root?.getAttribute('data-size')).toBe('lg');
   expect(screen.getByText('AL').getAttribute('data-size')).toBe('lg');
+});
+
+test('Identity model supplies defaults; explicit props override', () => {
+  render(
+    <Identity
+      model={{
+        id: 'u1',
+        name: 'From Model',
+        meta: '@model',
+        fallback: 'FM',
+      }}
+      name="Override"
+      meta={null}
+    />,
+  );
+  expect(screen.getByText('Override')).toBeTruthy();
+  expect(screen.queryByText('@model')).toBeNull();
+  expect(screen.getByText('FM')).toBeTruthy();
+});
+
+test('Identity parts throw outside Root', () => {
+  expect(() => render(<Identity.Name>X</Identity.Name>)).toThrow(
+    /within Identity\.Root/,
+  );
+});
+
+test('Identity has no axe violations', async () => {
+  const { container } = render(
+    <Identity name="Ada Lovelace" meta="@ada" fallback="AL" />,
+  );
+  await expectNoAxeViolations(container);
 });

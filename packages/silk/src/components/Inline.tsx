@@ -7,6 +7,7 @@ import {
   collapseBelowRulesInline,
   type CollapseBelowProp,
 } from '../layout/collapseBelow';
+import { flexAlignMap, flexJustifyMap } from '../layout/flexMaps';
 import { useComponentDefaults } from '../theme/SilkProvider';
 
 export interface InlineProps
@@ -20,23 +21,6 @@ export interface InlineProps
   readonly ref?: Ref<HTMLDivElement>;
   readonly children?: ReactNode;
 }
-
-const alignMap = {
-  start: 'flex-start',
-  center: 'center',
-  end: 'flex-end',
-  stretch: 'stretch',
-  baseline: 'baseline',
-} as const;
-
-const justifyMap = {
-  start: 'flex-start',
-  center: 'center',
-  end: 'flex-end',
-  between: 'space-between',
-  around: 'space-around',
-  evenly: 'space-evenly',
-} as const;
 
 const gapRules: string = inlineRecipe.variants.gap
   .map(
@@ -52,7 +36,7 @@ const alignRules: string = inlineRecipe.variants.align
   .map(
     (align) => `
     &:where([data-align='${align}']) {
-      align-items: ${alignMap[align]};
+      align-items: ${flexAlignMap[align]};
     }
   `,
   )
@@ -62,7 +46,7 @@ const justifyRules: string = inlineRecipe.variants.justify
   .map(
     (justify) => `
     &:where([data-justify='${justify}']) {
-      justify-content: ${justifyMap[justify]};
+      justify-content: ${flexJustifyMap[justify]};
     }
   `,
   )
@@ -78,6 +62,16 @@ const wrapRules: string = inlineRecipe.variants.wrap
   )
   .join('\n');
 
+const directionRules: string = inlineRecipe.variants.direction
+  .map(
+    (direction) => `
+    &:where([data-direction='${direction}']) {
+      flex-direction: ${direction};
+    }
+  `,
+  )
+  .join('\n');
+
 const inlineClass: string = css`
   display: flex;
   flex-direction: row;
@@ -87,13 +81,14 @@ const inlineClass: string = css`
   ${alignRules}
   ${justifyRules}
   ${wrapRules}
+  ${directionRules}
   /* Adaptive rules must stay last — equal specificity, source order wins. */
   ${collapseBelowRulesInline}
 `;
 
 /**
- * Horizontal flow layout. Defaults to wrapping — the intrinsic-first cousin of
- * `Stack direction="row"`.
+ * Horizontal flow layout. Defaults to wrapping — the intrinsic-first counterpart
+ * of vertical `Stack`.
  */
 export function Inline({
   className,
@@ -102,6 +97,7 @@ export function Inline({
   align,
   justify,
   wrap,
+  direction,
   collapseBelow,
   ...props
 }: InlineProps): JSX.Element {
@@ -111,6 +107,8 @@ export function Inline({
   const resolvedJustify =
     justify ?? defaults.justify ?? inlineRecipe.defaults.justify;
   const resolvedWrap = wrap ?? defaults.wrap ?? inlineRecipe.defaults.wrap;
+  const resolvedDirection =
+    direction ?? defaults.direction ?? inlineRecipe.defaults.direction;
 
   const Comp = asChild ? Slot.Root : 'div';
   return (
@@ -121,6 +119,7 @@ export function Inline({
       data-align={resolvedAlign}
       data-justify={resolvedJustify}
       data-wrap={resolvedWrap}
+      data-direction={resolvedDirection}
       {...collapseBelowDomProps(collapseBelow)}
     />
   );

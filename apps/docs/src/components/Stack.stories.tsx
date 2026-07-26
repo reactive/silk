@@ -1,19 +1,23 @@
 import { css } from '@linaria/core';
-import { Box, Button, Stack, Text, stackRecipe } from '@reactive/silk';
+import { Box, Button, Inline, Stack, Text, stackRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
 
 const meta = {
   title: 'Components/Layout/Stack',
   component: Stack,
+  parameters: {
+    docs: {
+      description: {
+        component:
+          'Stack is vertical-only, so `align` is always the horizontal axis and `justify` always the vertical one. For horizontal flow reach for `Inline`.',
+      },
+    },
+  },
   args: {
     ...stackRecipe.defaults,
   },
   argTypes: {
-    direction: {
-      control: 'select',
-      options: [...stackRecipe.variants.direction],
-    },
     gap: {
       control: 'select',
       options: [...stackRecipe.variants.gap],
@@ -22,13 +26,13 @@ const meta = {
       control: 'select',
       options: [...stackRecipe.variants.align],
     },
-    wrap: {
+    justify: {
       control: 'select',
-      options: [...stackRecipe.variants.wrap],
+      options: [...stackRecipe.variants.justify],
     },
-    collapseBelow: {
+    rail: {
       control: 'select',
-      options: [false, 'xs', 'sm', 'md', 'lg'],
+      options: [...stackRecipe.variants.rail],
     },
   },
 } satisfies Meta<typeof Stack>;
@@ -45,12 +49,8 @@ const itemClass: string = css`
   color: var(--silk-color-tone-accent-on-solid);
 `;
 
-const narrowClass: string = css`
-  max-width: 12rem;
-`;
-
-const collapseFrameClass: string = css`
-  max-width: 20rem;
+const tallFrameClass: string = css`
+  height: 14rem;
   padding: var(--silk-space-3);
   border: 1px dashed var(--silk-color-border-subtle);
   border-radius: var(--silk-radius-md);
@@ -73,27 +73,29 @@ export const Column: Story = {
   },
 };
 
-export const Row: Story = {
+export const Align: Story = {
   args: {
-    direction: 'row',
-    gap: '2',
+    gap: '3',
     align: 'center',
     children: <DemoItems />,
   },
 };
 
-export const Wrap: Story = {
+export const Justify: Story = {
   args: {
-    direction: 'row',
+    gap: '3',
+    align: 'start',
+    justify: 'between',
+    className: tallFrameClass,
+    children: <DemoItems />,
+  },
+};
+
+export const Rail: Story = {
+  args: {
     gap: '2',
-    wrap: 'wrap',
-    className: narrowClass,
-    children: (
-      <>
-        <DemoItems />
-        <DemoItems />
-      </>
-    ),
+    rail: 'start',
+    children: <DemoItems />,
   },
 };
 
@@ -102,29 +104,15 @@ export const Composition: Story = {
   render: (): JSX.Element => (
     <Stack gap="4">
       <Text role="heading">Stack composition</Text>
-      <Stack direction="row" gap="2" align="center">
+      <Inline gap="2" align="center">
         <Button size="sm">Primary</Button>
         <Button size="sm" variant="outline" tone="neutral">
           Secondary
         </Button>
-      </Stack>
+      </Inline>
       <Text tone="secondary" role="caption">
         Gap and align resolve through space tokens and recipe defaults.
       </Text>
     </Stack>
-  ),
-};
-
-export const CollapseBelow: Story = {
-  parameters: { controls: { disable: true } },
-  render: (): JSX.Element => (
-    <Box contain className={collapseFrameClass}>
-      <Stack direction="row" gap="3" collapseBelow="md" align="center">
-        <DemoItems />
-      </Stack>
-      <Text tone="secondary" role="caption">
-        Resize the container — row collapses to column below md (768px).
-      </Text>
-    </Box>
   ),
 };

@@ -5,25 +5,37 @@ import {
   type VariantProps,
 } from './defineRecipe.js';
 
+/**
+ * Vertical-only. `align` is always the horizontal (cross) axis and `justify`
+ * always the vertical (main) axis, so the standard flexbox reading of both
+ * names holds at every call site.
+ */
 const stackVariants: {
-  readonly direction: readonly ['row', 'column'];
   readonly gap: typeof spaceVariantSteps;
   readonly align: readonly ['start', 'center', 'end', 'stretch'];
-  readonly wrap: readonly ['nowrap', 'wrap'];
+  readonly justify: readonly [
+    'start',
+    'center',
+    'end',
+    'between',
+    'around',
+    'evenly',
+  ];
+  readonly rail: readonly ['none', 'start'];
 } = {
-  direction: ['row', 'column'],
   gap: spaceVariantSteps,
   align: ['start', 'center', 'end', 'stretch'],
-  wrap: ['nowrap', 'wrap'],
+  justify: ['start', 'center', 'end', 'between', 'around', 'evenly'],
+  rail: ['none', 'start'],
 };
 
 export const stackRecipe: Recipe<typeof stackVariants> = defineRecipe({
   variants: stackVariants,
   defaults: {
-    direction: 'column',
     gap: '2',
     align: 'stretch',
-    wrap: 'nowrap',
+    justify: 'start',
+    rail: 'none',
   },
 });
 

@@ -1,7 +1,7 @@
 import {
   Button,
+  Inline,
   SilkProvider,
-  Stack,
   Text,
   createTheme,
 } from '@reactive/silk';
@@ -50,7 +50,7 @@ function ThemeDemo({ label }: { readonly label: string }): JSX.Element {
       <Text tone="secondary">
         Surface, text, and accent tokens resolve from the active theme scope.
       </Text>
-      <Stack direction="row" gap="2">
+      <Inline gap="2">
         <Button>Accent</Button>
         <Button tone="neutral" variant="outline">
           Neutral
@@ -58,7 +58,7 @@ function ThemeDemo({ label }: { readonly label: string }): JSX.Element {
         <Button tone="danger" variant="soft">
           Danger
         </Button>
-      </Stack>
+      </Inline>
     </SurfacePanel>
   );
 }
@@ -117,12 +117,12 @@ export const ProviderDefaults: Story = {
           Heading overrides default Text tone
         </Text>
         <Text>Body uses provider Text defaults (secondary).</Text>
-        <Stack direction="row" gap="2">
+        <Inline gap="2">
           <Button>Default soft/neutral</Button>
           <Button tone="accent" variant="solid">
             Explicit accent solid
           </Button>
-        </Stack>
+        </Inline>
       </SurfacePanel>
     </SilkProvider>
   ),

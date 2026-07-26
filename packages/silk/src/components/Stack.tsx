@@ -5,41 +5,15 @@ import {
 } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
-import {
-  collapseBelowDomProps,
-  collapseBelowRulesStack,
-  type CollapseBelowProp,
-} from '../layout/collapseBelow';
+import { flexAlignMap, flexJustifyMap } from '../layout/flexMaps';
 import { useComponentDefaults } from '../theme/SilkProvider';
 
 export interface StackProps
-  extends Omit<ComponentPropsWithoutRef<'div'>, 'wrap'>, StackVariantProps {
-  /**
-   * Switch to column direction when the nearest size container is narrower
-   * than this breakpoint (web-only; container queries).
-   */
-  readonly collapseBelow?: CollapseBelowProp;
+  extends ComponentPropsWithoutRef<'div'>, StackVariantProps {
   readonly asChild?: boolean;
   readonly ref?: Ref<HTMLDivElement>;
   readonly children?: ReactNode;
 }
-
-const alignMap = {
-  start: 'flex-start',
-  center: 'center',
-  end: 'flex-end',
-  stretch: 'stretch',
-} as const;
-
-const directionRules: string = stackRecipe.variants.direction
-  .map(
-    (direction) => `
-    &:where([data-direction='${direction}']) {
-      flex-direction: ${direction};
-    }
-  `,
-  )
-  .join('\n');
 
 const gapRules: string = stackRecipe.variants.gap
   .map(
@@ -55,64 +29,73 @@ const alignRules: string = stackRecipe.variants.align
   .map(
     (align) => `
     &:where([data-align='${align}']) {
-      align-items: ${alignMap[align]};
+      align-items: ${flexAlignMap[align]};
     }
   `,
   )
   .join('\n');
 
-const wrapRules: string = stackRecipe.variants.wrap
+const justifyRules: string = stackRecipe.variants.justify
   .map(
-    (wrap) => `
-    &:where([data-wrap='${wrap}']) {
-      flex-wrap: ${wrap};
+    (justify) => `
+    &:where([data-justify='${justify}']) {
+      justify-content: ${flexJustifyMap[justify]};
     }
   `,
   )
   .join('\n');
+
+const railRules: string = `
+  &:where([data-rail='none']) {
+    border-inline-start: none;
+    padding-inline-start: 0;
+  }
+  &:where([data-rail='start']) {
+    border-inline-start: 1px solid var(--silk-color-border-subtle);
+    padding-inline-start: var(--silk-space-3);
+  }
+`;
 
 const stackClass: string = css`
   display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   min-width: 0;
-  ${directionRules}
   ${gapRules}
   ${alignRules}
-  ${wrapRules}
-  /* Adaptive rules must stay last — equal specificity, source order wins. */
-  ${collapseBelowRulesStack}
+  ${justifyRules}
+  ${railRules}
 `;
 
 /**
- * Flex layout primitive driven by spacing tokens and data-attribute variants.
+ * Vertical layout primitive driven by spacing tokens and data-attribute
+ * variants. For horizontal flow use `Inline`.
  */
 export function Stack({
   className,
   asChild = false,
-  direction,
   gap,
   align,
-  wrap,
-  collapseBelow,
+  justify,
+  rail,
   ...props
 }: StackProps): JSX.Element {
   const defaults = useComponentDefaults('Stack');
-  const resolvedDirection =
-    direction ?? defaults.direction ?? stackRecipe.defaults.direction;
   const resolvedGap = gap ?? defaults.gap ?? stackRecipe.defaults.gap;
   const resolvedAlign = align ?? defaults.align ?? stackRecipe.defaults.align;
-  const resolvedWrap = wrap ?? defaults.wrap ?? stackRecipe.defaults.wrap;
+  const resolvedJustify =
+    justify ?? defaults.justify ?? stackRecipe.defaults.justify;
+  const resolvedRail = rail ?? defaults.rail ?? stackRecipe.defaults.rail;
 
   const Comp = asChild ? Slot.Root : 'div';
   return (
     <Comp
       {...props}
       className={cx(stackClass, className)}
-      data-direction={resolvedDirection}
       data-gap={resolvedGap}
       data-align={resolvedAlign}
-      data-wrap={resolvedWrap}
-      {...collapseBelowDomProps(collapseBelow)}
+      data-justify={resolvedJustify}
+      data-rail={resolvedRail}
     />
   );
 }

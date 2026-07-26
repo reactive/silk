@@ -9,10 +9,12 @@ const cardVariants: {
   readonly elevation: readonly ['flat', 'raised', 'overlay'];
   readonly padding: typeof spaceVariantSteps;
   readonly radius: readonly ['sm', 'md', 'lg'];
+  readonly interactive: readonly ['false', 'true'];
 } = {
   elevation: ['flat', 'raised', 'overlay'] as const,
   padding: spaceVariantSteps,
   radius: ['sm', 'md', 'lg'] as const,
+  interactive: ['false', 'true'] as const,
 };
 
 export const cardRecipe: Recipe<typeof cardVariants> = defineRecipe({
@@ -21,6 +23,7 @@ export const cardRecipe: Recipe<typeof cardVariants> = defineRecipe({
     elevation: 'raised',
     padding: '4',
     radius: 'lg',
+    interactive: 'false',
   },
 });
 

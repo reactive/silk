@@ -30,6 +30,7 @@ export const silkComponentVarNames = [
   '--silk-select-bg',
   '--silk-select-border',
   '--silk-select-radius',
+  '--silk-status-dot-bg',
   '--silk-surface-bg',
   '--silk-surface-border',
   '--silk-surface-radius',
