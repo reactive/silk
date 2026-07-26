@@ -26,11 +26,16 @@
       "description": "StatusDot composite. Built on @reactive/silk primitives — zero Tailwind.",
       "dependencies": [
         "@reactive/silk",
+        "@linaria/core",
         "@reactive/silk-core"
       ],
       "files": [
         {
           "path": "registry/status-dot/status-dot.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/status-dot/tonePrivateVars.ts",
           "type": "registry:component"
         }
       ]
@@ -108,11 +113,16 @@
       "description": "PostCard composite. Built on @reactive/silk primitives — zero Tailwind.",
       "dependencies": [
         "@reactive/silk",
-        "@reactive/silk-core"
+        "@reactive/silk-core",
+        "radix-ui"
       ],
       "files": [
         {
           "path": "registry/post-card/post-card.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/post-card/formatTimestamp.ts",
           "type": "registry:component"
         }
       ]
@@ -129,6 +139,10 @@
       "files": [
         {
           "path": "registry/comment/comment.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/comment/formatTimestamp.ts",
           "type": "registry:component"
         }
       ]
@@ -162,6 +176,10 @@
         {
           "path": "registry/notification/notification.tsx",
           "type": "registry:component"
+        },
+        {
+          "path": "registry/notification/formatTimestamp.ts",
+          "type": "registry:component"
         }
       ]
     },
@@ -177,6 +195,10 @@
       "files": [
         {
           "path": "registry/profile-card/profile-card.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/profile-card/ActionDescriptorButton.tsx",
           "type": "registry:component"
         }
       ]

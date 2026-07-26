@@ -18,7 +18,7 @@ function registrySources(): readonly string[] {
     .filter((entry) => entry.isDirectory())
     .flatMap((entry) =>
       readdirSync(join(registryDir, entry.name))
-        .filter((file) => file.endsWith('.tsx'))
+        .filter((file) => /\.(tsx?|css\.ts)$/.test(file))
         .map((file) => join(registryDir, entry.name, file)),
     );
 }

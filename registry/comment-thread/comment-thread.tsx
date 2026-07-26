@@ -49,7 +49,7 @@ function CommentThreadItem({
   const canNest = depth < maxDepth;
   const loadedReplies = comment.replies ?? [];
   const hasInlineReplies = canNest && loadedReplies.length > 0;
-  const showContinue =
+  const needsContinue =
     comment.hasMoreReplies ||
     (!canNest && (comment.replyCount > 0 || loadedReplies.length > 0));
 
@@ -89,14 +89,14 @@ function CommentThreadItem({
             />
           </Stack>
         ) : null}
-        {showContinue ? (
+        {needsContinue && onContinue ? (
           <Button
             variant="ghost"
             tone="accent"
             size="sm"
             density="compact"
             onClick={() => {
-              onContinue?.(comment);
+              onContinue(comment);
             }}
             style={{ alignSelf: 'flex-start' }}
           >

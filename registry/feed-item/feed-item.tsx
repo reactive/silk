@@ -73,8 +73,10 @@ export function FeedItem({
   ...props
 }: FeedItemProps): JSX.Element {
   let content: ReactNode;
-  if (loading || entry === undefined) {
+  if (loading) {
     content = <FeedItemLoading />;
+  } else if (entry === undefined) {
+    content = null;
   } else if (isFeedEntryPost(entry)) {
     content = (
       <PostCard

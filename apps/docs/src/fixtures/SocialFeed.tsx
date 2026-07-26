@@ -206,14 +206,15 @@ export function SocialFeed({
   } else {
     body = (
       <Stack gap="4" align="stretch" data-region="feed">
-        {entries.map((entry) => (
-          <FeedItem key={entry.value.id} entry={entry} />
-        ))}
-        {state === 'reducedMotion' ? (
-          <div data-region="reduced-motion">
-            <FeedItem entry={sampleEntries[0]!} />
-          </div>
-        ) : null}
+        {entries.map((entry, index) =>
+          state === 'reducedMotion' && index === 0 ? (
+            <div key={entry.value.id} data-region="reduced-motion">
+              <FeedItem entry={entry} />
+            </div>
+          ) : (
+            <FeedItem key={entry.value.id} entry={entry} />
+          ),
+        )}
       </Stack>
     );
   }

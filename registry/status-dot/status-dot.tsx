@@ -9,7 +9,7 @@ import {
 } from '@reactive/silk-core';
 import type { ComponentPropsWithoutRef, JSX, Ref } from 'react';
 import { useComponentDefaults } from '@reactive/silk';
-import { tonePrivateVarsCss } from '@reactive/silk';
+import { tonePrivateVarsCss } from './tonePrivateVars';
 
 export interface StatusDotProps
   extends Omit<ComponentPropsWithoutRef<'span'>, 'children' | 'color'>,

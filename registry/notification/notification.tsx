@@ -11,7 +11,7 @@ import type {
 } from 'react';
 import { Avatar } from '@reactive/silk';
 import { Box } from '@reactive/silk';
-import { formatTimestamp } from '@reactive/silk';
+import { formatTimestamp } from './formatTimestamp';
 import { Inline } from '@reactive/silk';
 import { MediaObject } from '@reactive/silk';
 import { Stack } from '@reactive/silk';

@@ -14,7 +14,7 @@ import type {
   Ref,
 } from 'react';
 import { useComponentDefaults } from '@reactive/silk';
-import { ActionDescriptorButton } from '@reactive/silk';
+import { ActionDescriptorButton } from './ActionDescriptorButton';
 import { Card } from '@reactive/silk';
 import { Identity } from '@reactive/silk';
 import { Inline } from '@reactive/silk';

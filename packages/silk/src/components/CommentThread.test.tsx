@@ -78,10 +78,41 @@ test('CommentThread shows continue when hasMoreReplies with loaded replies', () 
         },
       ]}
       maxDepth={3}
+      onContinue={() => {}}
     />,
   );
   expect(screen.getByText('Loaded reply')).toBeTruthy();
   expect(screen.getByRole('button', { name: /Continue thread/i })).toBeTruthy();
+});
+
+test('CommentThread hides continue without onContinue', () => {
+  render(
+    <CommentThread
+      comments={[
+        {
+          id: 'c1',
+          author: { id: 'u1', name: 'Ada', fallback: 'A' },
+          body: 'Root',
+          createdAt: '2026-07-26T10:00:00.000Z',
+          replyCount: 5,
+          hasMoreReplies: true,
+          replies: [
+            {
+              id: 'c2',
+              author: { id: 'u2', name: 'Charles', fallback: 'C' },
+              body: 'Loaded reply',
+              createdAt: '2026-07-26T11:00:00.000Z',
+              replyCount: 0,
+              hasMoreReplies: false,
+            },
+          ],
+        },
+      ]}
+      maxDepth={1}
+    />,
+  );
+  expect(screen.getByText('Loaded reply')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /Continue thread/i })).toBeNull();
 });
 
 test('CommentThread has no axe violations', async () => {
