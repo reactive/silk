@@ -259,6 +259,7 @@ function mergeSemantic(
       label: { ...base.typography.label, ...override.typography?.label },
       caption: { ...base.typography.caption, ...override.typography?.caption },
     },
+    measure: { prose: override.measure?.prose ?? base.measure.prose },
     motion: {
       fast: { ...base.motion.fast, ...override.motion?.fast },
       normal: { ...base.motion.normal, ...override.motion?.normal },

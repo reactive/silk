@@ -1,5 +1,9 @@
 import { css, cx } from '@linaria/core';
-import { avatarRecipe, type AvatarVariantProps } from '@reactive/silk-core';
+import {
+  avatarRecipe,
+  mediaScale,
+  type AvatarVariantProps,
+} from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import { useComponentDefaults } from '../theme/SilkProvider';
@@ -14,12 +18,10 @@ export interface AvatarProps
   readonly fallback?: ReactNode;
 }
 
-const sizeMap = {
-  sm: 'var(--silk-space-6)',
-  md: 'var(--silk-space-8)',
-  lg: 'var(--silk-space-10)',
-} as const;
-
+/**
+ * Off the space scale on purpose: `density` rescales whitespace, and a face is
+ * content — compacting a layout should not shrink the person in it.
+ */
 const radiusMap = {
   circle: 'var(--silk-radius-full)',
   rounded: 'var(--silk-radius-md)',
@@ -30,8 +32,7 @@ const sizeRules: string = avatarRecipe.variants.size
   .map(
     (size) => `
     &:where([data-size='${size}']) {
-      width: ${sizeMap[size]};
-      height: ${sizeMap[size]};
+      --_size: ${mediaScale[size].media}px;
     }
   `,
   )
@@ -48,17 +49,22 @@ const shapeRules: string = avatarRecipe.variants.shape
   .join('\n');
 
 const avatarClass: string = css`
+  --_size: ${mediaScale.md.media}px;
+  --_resolved-size: var(--silk-avatar-size, var(--_size));
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
   box-sizing: border-box;
+  width: var(--_resolved-size);
+  height: var(--_resolved-size);
   background-color: var(--silk-color-tone-neutral-subtle);
   color: var(--silk-color-text-secondary);
   font-family: var(--silk-typography-label-family);
   font-weight: var(--silk-typography-label-weight);
-  font-size: var(--silk-typography-label-size);
+  /* Fallback initials track the circle instead of sitting at one fixed size. */
+  font-size: calc(var(--_resolved-size) * 0.4);
   line-height: 1;
   ${sizeRules}
   ${shapeRules}

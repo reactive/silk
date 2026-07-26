@@ -165,6 +165,7 @@ export type {
   FieldLabelAssociation,
   FieldLabelProps,
   FieldMode,
+  FieldOrientation,
   FieldRootProps,
 } from './Field';
 

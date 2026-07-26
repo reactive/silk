@@ -90,80 +90,91 @@ export function SettingsForm({
               <Progress label="Saving progress" />
             </Stack>
           ) : (
-            <Stack gap="4" data-region="form">
-              <Field.Root invalid={invalid} disabled={disabled} required>
-                <Field.Label>Display name</Field.Label>
-                <Input
-                  defaultValue={invalid ? '' : 'Ada Lovelace'}
-                  placeholder="Your name"
-                />
-                <Field.Description>
-                  {narrowLongContent
-                    ? 'This name appears on your public profile, in notifications, and anywhere teammates mention you across the workspace.'
-                    : 'Shown on your public profile.'}
-                </Field.Description>
-                {invalid ? (
-                  <Field.Error>
+            <Stack gap="6" data-region="form">
+              <Stack gap="4">
+                <Field.Root invalid={invalid} disabled={disabled} required>
+                  <Field.Label>Display name</Field.Label>
+                  <Input
+                    defaultValue={invalid ? '' : 'Ada Lovelace'}
+                    placeholder="Your name"
+                  />
+                  <Field.Description>
                     {narrowLongContent
-                      ? 'Display name is required and must be at least two characters after trimming whitespace from both ends.'
-                      : 'Display name is required.'}
-                  </Field.Error>
-                ) : null}
-              </Field.Root>
+                      ? 'This name appears on your public profile, in notifications, and anywhere teammates mention you across the workspace.'
+                      : 'Shown on your public profile.'}
+                  </Field.Description>
+                  {invalid ? (
+                    <Field.Error>
+                      {narrowLongContent
+                        ? 'Display name is required and must be at least two characters after trimming whitespace from both ends.'
+                        : 'Display name is required.'}
+                    </Field.Error>
+                  ) : null}
+                </Field.Root>
 
-              <Field.Root disabled={disabled}>
-                <Field.Label>Bio</Field.Label>
-                <Textarea
-                  defaultValue="Mathematician and writer."
-                  rows={3}
-                />
-              </Field.Root>
+                <Field.Root disabled={disabled}>
+                  <Field.Label>Bio</Field.Label>
+                  <Textarea
+                    defaultValue="Mathematician and writer."
+                    rows={3}
+                  />
+                </Field.Root>
+              </Stack>
 
               <Separator />
 
-              <Field.Root mode="group" disabled={disabled}>
-                <Field.Label>Plan</Field.Label>
-                <RadioGroup.Root defaultValue="pro">
-                  <RadioGroup.Item value="free">Free</RadioGroup.Item>
-                  <RadioGroup.Item value="pro">Pro</RadioGroup.Item>
-                  <RadioGroup.Item value="team">Team</RadioGroup.Item>
-                </RadioGroup.Root>
-              </Field.Root>
+              <Stack gap="4">
+                <Field.Root mode="group" disabled={disabled}>
+                  <Field.Label>Plan</Field.Label>
+                  <RadioGroup.Root defaultValue="pro">
+                    <RadioGroup.Item value="free">Free</RadioGroup.Item>
+                    <RadioGroup.Item value="pro">Pro</RadioGroup.Item>
+                    <RadioGroup.Item value="team">Team</RadioGroup.Item>
+                  </RadioGroup.Root>
+                </Field.Root>
 
-              <Field.Root disabled={disabled} controlId="marketing">
-                <Inline gap="2" align="center">
+                <Field.Root
+                  disabled={disabled}
+                  controlId="marketing"
+                  orientation="horizontal"
+                >
                   <Checkbox defaultChecked />
                   <Field.Label>Email me product updates</Field.Label>
-                </Inline>
-              </Field.Root>
+                </Field.Root>
 
-              <Field.Root disabled={disabled}>
-                <Inline gap="2" align="center" justify="between">
-                  <Field.Label>Dark mode</Field.Label>
-                  <Switch aria-label="Dark mode" />
-                </Inline>
-              </Field.Root>
+                <Field.Root disabled={disabled}>
+                  <Inline gap="2" align="center" justify="between">
+                    <Field.Label>Dark mode</Field.Label>
+                    <Switch aria-label="Dark mode" />
+                  </Inline>
+                </Field.Root>
 
-              <Field.Root disabled={disabled}>
-                <Field.Label>Digest frequency</Field.Label>
-                <Slider
-                  value={[digestDays]}
-                  onValueChange={([days]) => {
-                    if (days !== undefined) setDigestDays(days);
-                  }}
-                  min={1}
-                  max={7}
-                  aria-label="Digest frequency"
-                  aria-valuetext={`${digestDays} days`}
-                />
-                <Field.Description>Days between email digests.</Field.Description>
-              </Field.Root>
+                <Field.Root disabled={disabled}>
+                  <Field.Label>Digest frequency</Field.Label>
+                  <Slider
+                    value={[digestDays]}
+                    onValueChange={([days]) => {
+                      if (days !== undefined) setDigestDays(days);
+                    }}
+                    min={1}
+                    max={7}
+                    aria-label="Digest frequency"
+                    aria-valuetext={`${digestDays} days`}
+                  />
+                  <Field.Description>
+                    Days between email digests.
+                  </Field.Description>
+                </Field.Root>
 
-              <Progress
-                value={invalid ? 35 : 80}
-                tone="success"
-                label="Profile completion"
-              />
+                <Stack gap="2">
+                  <Text role="label">Profile completion</Text>
+                  <Progress
+                    value={invalid ? 35 : 80}
+                    tone="success"
+                    label="Profile completion"
+                  />
+                </Stack>
+              </Stack>
 
               <Inline gap="2" justify="end">
                 <Button variant="ghost" tone="neutral" disabled={disabled}>

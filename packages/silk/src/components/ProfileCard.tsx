@@ -39,7 +39,6 @@ function ProfileCardRoot({
       asChild
       elevation="raised"
       radius="lg"
-      padding="5"
       className={className}
       data-layout={resolvedLayout}
     >

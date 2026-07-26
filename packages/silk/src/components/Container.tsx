@@ -46,6 +46,8 @@ const paddingRules: string = containerRecipe.variants.padding
 const containerClass: string = css`
   box-sizing: border-box;
   width: 100%;
+  /* asChild targets like <dl>/<ul>/<p> carry UA margins the layout owns. */
+  margin-block: 0;
   margin-inline: auto;
   min-width: 0;
   container-type: inline-size;

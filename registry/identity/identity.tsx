@@ -2,7 +2,12 @@
  * Identity composite — synced from packages/silk/src/components/Identity.tsx
  * via scripts/sync-registry.mjs. Consumer-owned source; depends on @reactive/silk.
  */
-import type { AvatarVariantProps, IdentityModel } from '@reactive/silk-core';
+import {
+  mediaObjectRecipe,
+  mediaScale,
+  type IdentityModel,
+  type MediaScaleSize,
+} from '@reactive/silk-core';
 import {
   createContext,
   useContext,
@@ -18,7 +23,7 @@ import { Stack } from '@reactive/silk';
 import { Text, type TextProps } from '@reactive/silk';
 
 interface IdentityContextValue {
-  readonly size: NonNullable<AvatarVariantProps['size']>;
+  readonly size: MediaScaleSize;
 }
 
 const IdentityContext = createContext<IdentityContextValue | null>(null);
@@ -32,7 +37,8 @@ function useIdentityContext(): IdentityContextValue {
 }
 
 export interface IdentityRootProps extends ComponentPropsWithoutRef<'div'> {
-  readonly size?: AvatarVariantProps['size'];
+  /** Scales the avatar, the avatar-to-text gap, and the name/meta type roles. */
+  readonly size?: MediaScaleSize;
   readonly asChild?: boolean;
   readonly ref?: Ref<HTMLDivElement>;
 }
@@ -45,14 +51,14 @@ function IdentityRoot({
   ...props
 }: IdentityRootProps): JSX.Element {
   const defaults = useComponentDefaults('Identity');
-  const resolvedSize = size ?? defaults.size ?? 'md';
+  const resolvedSize = size ?? defaults.size ?? mediaObjectRecipe.defaults.size;
 
   return (
     <IdentityContext.Provider value={{ size: resolvedSize }}>
       <Inline
         {...props}
         asChild={asChild}
-        gap="2"
+        gap={mediaScale[resolvedSize].gap}
         align="center"
         wrap="nowrap"
         className={className}
@@ -74,15 +80,17 @@ function IdentityAvatar(props: IdentityAvatarProps): JSX.Element {
 export type IdentityNameProps = Omit<TextProps, 'role' | 'tone'>;
 
 function IdentityName(props: IdentityNameProps): JSX.Element {
-  useIdentityContext();
-  return <Text {...props} role="label" tone="primary" />;
+  const { size } = useIdentityContext();
+  return (
+    <Text {...props} role={mediaScale[size].primaryRole} tone="primary" />
+  );
 }
 
 export type IdentityMetaProps = Omit<TextProps, 'role' | 'tone'>;
 
 function IdentityMeta(props: IdentityMetaProps): JSX.Element {
-  useIdentityContext();
-  return <Text {...props} role="caption" tone="secondary" />;
+  const { size } = useIdentityContext();
+  return <Text {...props} role={mediaScale[size].metaRole} tone="secondary" />;
 }
 
 interface IdentityConvenienceBase
@@ -91,7 +99,7 @@ interface IdentityConvenienceBase
   readonly avatarAlt?: string;
   readonly fallback?: ReactNode;
   readonly meta?: ReactNode | null;
-  readonly size?: AvatarVariantProps['size'];
+  readonly size?: MediaScaleSize;
   readonly ref?: Ref<HTMLDivElement>;
 }
 

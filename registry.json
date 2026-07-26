@@ -97,6 +97,7 @@
       "description": "EmptyState composite. Built on @reactive/silk primitives — zero Tailwind.",
       "dependencies": [
         "@reactive/silk",
+        "@linaria/core",
         "@reactive/silk-core"
       ],
       "files": [
@@ -134,6 +135,7 @@
       "description": "Comment composite. Built on @reactive/silk primitives — zero Tailwind.",
       "dependencies": [
         "@reactive/silk",
+        "@linaria/core",
         "@reactive/silk-core"
       ],
       "files": [
@@ -154,6 +156,7 @@
       "description": "CommentThread composite. Built on @reactive/silk primitives — zero Tailwind.",
       "dependencies": [
         "@reactive/silk",
+        "@linaria/core",
         "@reactive/silk-core"
       ],
       "files": [

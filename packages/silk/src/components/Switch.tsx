@@ -22,11 +22,13 @@ const toneRules: string = tonePrivateVarsCss(switchRecipe.variants.tone, [
 
 const sizeRules: string = `
   &:where([data-size='sm']) {
-    width: calc(var(--silk-space-7) + var(--silk-space-1));
+    --_track-width: calc(var(--silk-space-7) + var(--silk-space-1));
+    width: var(--_track-width);
     height: var(--silk-space-4);
   }
   &:where([data-size='md']) {
-    width: var(--silk-space-8);
+    --_track-width: var(--silk-space-8);
+    width: var(--_track-width);
     height: var(--silk-space-5);
   }
 `;
@@ -77,8 +79,9 @@ const rootClass: string = css`
 
 const thumbClass: string = css`
   display: block;
-  width: calc(50% - 2px);
+  /* Circular at any track size; travel is track width minus track height. */
   height: calc(100% - 4px);
+  aspect-ratio: 1;
   margin: 2px;
   border-radius: var(--silk-radius-full);
   background-color: var(--silk-color-surface);
@@ -88,7 +91,7 @@ const thumbClass: string = css`
   transform: translateX(0);
 
   &:where([data-state='checked']) {
-    transform: translateX(100%);
+    transform: translateX(calc(var(--_track-width) - 100% - 4px));
   }
 
   @media (prefers-reduced-motion: reduce) {

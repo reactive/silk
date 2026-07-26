@@ -16,6 +16,8 @@ const textVariants = {
     'caption',
   ] as const,
   tone: ['primary', 'secondary', 'accent', 'danger', 'success'] as const,
+  /** `prose` caps the line length at a comfortable measure. */
+  measure: ['none', 'prose'] as const,
 };
 
 export const textRecipe: Recipe<typeof textVariants> = defineRecipe({
@@ -23,6 +25,7 @@ export const textRecipe: Recipe<typeof textVariants> = defineRecipe({
   defaults: {
     role: 'body',
     tone: 'primary',
+    measure: 'none',
   },
 });
 

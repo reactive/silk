@@ -91,6 +91,9 @@ export type { StatusDotVariantProps } from './statusDot.js';
 export { mediaObjectRecipe } from './mediaObject.js';
 export type { MediaObjectVariantProps } from './mediaObject.js';
 
+export { mediaScale, mediaScaleSizes } from './mediaScale.js';
+export type { MediaScaleSize, MediaScaleStep } from './mediaScale.js';
+
 export { actionBarRecipe } from './actionBar.js';
 export type { ActionBarVariantProps } from './actionBar.js';
 

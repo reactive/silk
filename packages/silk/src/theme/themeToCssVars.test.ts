@@ -1,4 +1,4 @@
-import { createTheme } from '@reactive/silk-core';
+import { createTheme, defaultMeasure } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { themeToCssVars } from './themeToCssVars';
 
@@ -36,6 +36,21 @@ test('themeToCssVars emits exhaustive canonical keys as strings', () => {
   expect(
     Object.keys(vars).some((key) => key.includes('palette')),
   ).toBe(false);
+});
+
+/**
+ * The token is a character count so it stays platform-neutral; the web renderer
+ * is what turns it into `ch`, which is what makes the cap track the font.
+ */
+test('measure tokens serialize as ch, and honor overrides', () => {
+  const vars = themeToCssVars(createTheme());
+  expect(vars['--silk-measure-prose']).toBe(`${defaultMeasure.prose}ch`);
+  expect(defaultMeasure.prose).toBe(65);
+
+  const tight = themeToCssVars(
+    createTheme({ semantic: { measure: { prose: 50 } } }),
+  );
+  expect(tight['--silk-measure-prose']).toBe('50ch');
 });
 
 test('dark theme serializes dark surfaces', () => {

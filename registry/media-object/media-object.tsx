@@ -4,6 +4,7 @@
  */
 import {
   mediaObjectRecipe,
+  mediaScale,
   type MediaObjectVariantProps,
 } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
@@ -19,22 +20,15 @@ import { useComponentDefaults } from '@reactive/silk';
 import { Inline } from '@reactive/silk';
 import { Stack } from '@reactive/silk';
 
-interface MediaObjectContextValue {
-  readonly align: NonNullable<MediaObjectVariantProps['align']>;
-  readonly gap: NonNullable<MediaObjectVariantProps['gap']>;
-  readonly mediaPosition: NonNullable<MediaObjectVariantProps['mediaPosition']>;
-}
+/** Presence-only — compound parts consume layout from the Root, not context. */
+const MediaObjectContext = createContext(false);
 
-const MediaObjectContext = createContext<MediaObjectContextValue | null>(null);
-
-function useMediaObjectContext(): MediaObjectContextValue {
-  const ctx = useContext(MediaObjectContext);
-  if (!ctx) {
+function useMediaObjectContext(): void {
+  if (!useContext(MediaObjectContext)) {
     throw new Error(
       'MediaObject compound parts must be used within MediaObject.Root',
     );
   }
-  return ctx;
 }
 
 export interface MediaObjectRootProps
@@ -48,6 +42,7 @@ function MediaObjectRoot({
   align,
   gap,
   mediaPosition,
+  size,
   asChild = false,
   className,
   children,
@@ -56,20 +51,17 @@ function MediaObjectRoot({
   const defaults = useComponentDefaults('MediaObject');
   const resolvedAlign =
     align ?? defaults.align ?? mediaObjectRecipe.defaults.align;
-  const resolvedGap = gap ?? defaults.gap ?? mediaObjectRecipe.defaults.gap;
+  const resolvedSize = size ?? defaults.size ?? mediaObjectRecipe.defaults.size;
+  // `size` supplies the gap so the distance follows the media it separates;
+  // an explicit `gap` is the opt-out.
+  const resolvedGap = gap ?? defaults.gap ?? mediaScale[resolvedSize].gap;
   const resolvedMediaPosition =
     mediaPosition ??
     defaults.mediaPosition ??
     mediaObjectRecipe.defaults.mediaPosition;
 
   return (
-    <MediaObjectContext.Provider
-      value={{
-        align: resolvedAlign,
-        gap: resolvedGap,
-        mediaPosition: resolvedMediaPosition,
-      }}
-    >
+    <MediaObjectContext.Provider value={true}>
       <Inline
         {...props}
         asChild={asChild}
@@ -79,6 +71,7 @@ function MediaObjectRoot({
         direction={resolvedMediaPosition === 'end' ? 'row-reverse' : 'row'}
         className={className}
         data-media-position={resolvedMediaPosition}
+        data-size={resolvedSize}
       >
         {children}
       </Inline>

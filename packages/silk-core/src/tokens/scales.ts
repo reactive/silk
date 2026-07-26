@@ -1,6 +1,7 @@
 import type {
   ElevationName,
   FocusRingGeometry,
+  MeasureName,
   MotionName,
   MotionRecord,
   RadiusName,
@@ -137,6 +138,19 @@ export const toneNames: readonly ToneName[] = Object.keys(
   toneNameSet,
 ) as ToneName[];
 
+/**
+ * 65 characters sits mid-range of the 45–75 band typography practice treats as
+ * comfortable, so a column capped here reads well at any of the body roles.
+ */
+export const defaultMeasure: Readonly<Record<MeasureName, number>> = {
+  prose: 65,
+};
+
+/** Every measure name — renderers iterate this instead of restating the keys. */
+export const measureNames: readonly MeasureName[] = Object.keys(
+  defaultMeasure,
+) as MeasureName[];
+
 /** Shared focus-ring geometry — renderers map to outline / native equivalents. */
 export const defaultFocusRing: FocusRingGeometry = {
   width: 2,
@@ -146,11 +160,18 @@ export const defaultFocusRing: FocusRingGeometry = {
 /** Non-color semantic defaults shared by light and dark schemes. */
 export const sharedSemanticScales: Pick<
   SemanticTokens,
-  'space' | 'radius' | 'typography' | 'motion' | 'shadow' | 'focusRing'
+  | 'space'
+  | 'radius'
+  | 'typography'
+  | 'measure'
+  | 'motion'
+  | 'shadow'
+  | 'focusRing'
 > = {
   space: defaultSpace,
   radius: defaultRadius,
   typography: defaultTypography,
+  measure: defaultMeasure,
   motion: defaultMotion,
   shadow: defaultShadow,
   focusRing: defaultFocusRing,

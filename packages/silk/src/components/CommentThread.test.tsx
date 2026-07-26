@@ -82,7 +82,9 @@ test('CommentThread shows continue when hasMoreReplies with loaded replies', () 
     />,
   );
   expect(screen.getByText('Loaded reply')).toBeTruthy();
-  expect(screen.getByRole('button', { name: /Continue thread/i })).toBeTruthy();
+  const button = screen.getByRole('button', { name: /Continue thread/i });
+  // The rail carries replies; continuing the thread is the parent's affordance.
+  expect(button.closest('[data-rail="start"]')).toBeNull();
 });
 
 test('CommentThread hides continue without onContinue', () => {
@@ -115,9 +117,70 @@ test('CommentThread hides continue without onContinue', () => {
   expect(screen.queryByRole('button', { name: /Continue thread/i })).toBeNull();
 });
 
+test('CommentThread keeps the continue button outside the reply rail', () => {
+  const { container } = render(
+    <CommentThread
+      comments={[
+        {
+          id: 'c1',
+          author: { id: 'u1', name: 'Ada', fallback: 'A' },
+          body: 'Root',
+          createdAt: '2026-07-26T10:00:00.000Z',
+          replyCount: 3,
+          hasMoreReplies: true,
+        },
+      ]}
+      onContinue={() => {}}
+    />,
+  );
+
+  // Nothing is nested inline, so the lone continue affordance must not
+  // manufacture a reply rail of its own.
+  expect(container.querySelectorAll('[data-rail="start"]')).toHaveLength(0);
+
+  // It still lives in the comment's content column, under the byline.
+  const contentColumn = screen.getByText('Root').closest('[data-gap="1"]');
+  const button = screen.getByRole('button', { name: /Continue thread/i });
+  expect(contentColumn!.contains(button)).toBe(true);
+});
+
 test('CommentThread has no axe violations', async () => {
   const { container } = render(
     <CommentThread comments={comments} maxDepth={2} />,
   );
+  await expectNoAxeViolations(container);
+});
+
+test('CommentThread nests replies in the content column without inline indent', async () => {
+  const { container } = render(
+    <CommentThread comments={comments} maxDepth={2} />,
+  );
+
+  // Depth arithmetic used to set paddingInlineStart; nesting is structural now.
+  expect(container.querySelector('[style]')).toBeNull();
+
+  const replyRails = container.querySelectorAll('[data-rail="start"]');
+  // One rail per reply level: Root→Child and Child→Grandchild.
+  expect(replyRails).toHaveLength(2);
+
+  const rootArticle = screen.getByText('Root').closest('article');
+  expect(rootArticle).not.toBeNull();
+  const contentColumn = screen.getByText('Root').closest('[data-gap="1"]');
+  expect(contentColumn).not.toBeNull();
+  expect(rootArticle!.contains(contentColumn!)).toBe(true);
+
+  const replies = contentColumn!.querySelector('[data-rail="start"]');
+  expect(replies).not.toBeNull();
+  const nestedList = replies!.querySelector(':scope > ul');
+  expect(nestedList).not.toBeNull();
+  expect(nestedList!.contains(screen.getByText('Child'))).toBe(true);
+
+  // Replies must not sit as a sibling of the comment under the list item.
+  const listItem = rootArticle!.parentElement;
+  expect(listItem?.tagName).toBe('LI');
+  expect(listItem!.querySelector(':scope > ul')).toBeNull();
+
+  expect(container.querySelectorAll('ul').length).toBeGreaterThanOrEqual(2);
+  expect(container.querySelectorAll('li')).toHaveLength(3);
   await expectNoAxeViolations(container);
 });

@@ -35,9 +35,15 @@ function useStatGroupContext(): StatGroupContextValue {
 
 const valueRoleBySize = {
   sm: 'headingSm',
-  md: 'headingSm',
-  lg: 'heading',
+  md: 'heading',
+  lg: 'headingLg',
 } as const;
+
+/**
+ * Label and value sit flush (line-height only), so the gap between stats has
+ * to carry the grouping on its own — and it grows with the value it separates.
+ */
+const gapBySize = { sm: '4', md: '6', lg: '7' } as const;
 
 export interface StatGroupRootProps
   extends ComponentPropsWithoutRef<'dl'>, StatGroupVariantProps {
@@ -67,7 +73,7 @@ function StatGroupRoot({
     >
       <Layout
         asChild
-        gap="4"
+        gap={gapBySize[resolvedSize]}
         align={resolvedOrientation === 'vertical' ? 'stretch' : 'start'}
         {...(resolvedOrientation === 'horizontal'
           ? { wrap: 'wrap' as const }

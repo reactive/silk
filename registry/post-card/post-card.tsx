@@ -67,7 +67,6 @@ function PostCardRoot({
         asChild
         elevation="raised"
         radius="lg"
-        padding="4"
         className={className}
         data-density={resolvedDensity}
       >

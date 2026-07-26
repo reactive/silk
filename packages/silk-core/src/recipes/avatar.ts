@@ -3,10 +3,14 @@ import {
   type Recipe,
   type VariantProps,
 } from './defineRecipe.js';
+import { mediaScaleSizes } from './mediaScale.js';
 
-const avatarVariants = {
-  size: ['sm', 'md', 'lg'] as const,
-  shape: ['circle', 'rounded', 'square'] as const,
+const avatarVariants: {
+  readonly size: typeof mediaScaleSizes;
+  readonly shape: readonly ['circle', 'rounded', 'square'];
+} = {
+  size: mediaScaleSizes,
+  shape: ['circle', 'rounded', 'square'],
 };
 
 export const avatarRecipe: Recipe<typeof avatarVariants> = defineRecipe({

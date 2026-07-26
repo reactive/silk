@@ -16,6 +16,7 @@ apps/docs/.storybook-serve
 
 # Test / coverage
 coverage
+.audit
 
 # Environment
 .env

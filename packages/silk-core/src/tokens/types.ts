@@ -101,6 +101,8 @@ export interface ShadowLayer {
 
 export type ElevationName = 'raised' | 'overlay';
 
+export type MeasureName = 'prose';
+
 export interface SemanticTokens {
   readonly color: {
     readonly surface: string;
@@ -117,6 +119,11 @@ export interface SemanticTokens {
   readonly space: Readonly<Record<SpaceStep, number>>;
   readonly radius: Readonly<Record<RadiusName, number>>;
   readonly typography: Readonly<Record<TypographyRole, TypographyRecord>>;
+  /**
+   * Comfortable line lengths in characters. A count rather than a length so it
+   * stays platform-neutral and tracks the font a renderer actually resolves.
+   */
+  readonly measure: Readonly<Record<MeasureName, number>>;
   readonly motion: Readonly<Record<MotionName, MotionRecord>>;
   readonly shadow: Readonly<Record<ElevationName, ShadowLayer>>;
   /** Shared focus-ring width/offset — color remains per-tone (`tones.*.focusRing`). */

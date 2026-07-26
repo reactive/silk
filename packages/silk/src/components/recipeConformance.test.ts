@@ -55,6 +55,8 @@ test('recipe conformance: every Button variant value has a CSS rule', () => {
 test('recipe conformance: Text, Stack, Avatar, Dialog axes are styled', () => {
   const css = loadCss();
   assertAxisSelectors(css, 'data-role', textRecipe.variants.role);
+  // `none` is the absence of a cap, so only `prose` earns a rule.
+  expect(css).toContain('data-measure="prose"');
   assertAxisSelectors(css, 'data-gap', stackRecipe.variants.gap);
   assertAxisSelectors(css, 'data-align', stackRecipe.variants.align);
   assertAxisSelectors(css, 'data-justify', stackRecipe.variants.justify);
@@ -241,6 +243,25 @@ test('Stack CSS is column-only with no direction or wrap rules', () => {
 
   for (const attr of ['data-direction', 'data-wrap', 'data-collapse-below']) {
     expect(css).not.toContain(`.${stackClass}:where([${attr}=`);
+  }
+});
+
+/**
+ * asChild onto <ul>/<dl> must not leak UA padding/margin; the layout owns both.
+ */
+test('Stack, Inline, and Grid base rules reset UA padding and margin', () => {
+  const css = loadCss();
+  const stackClass = layoutClass(css, '[data-rail="start"]');
+  const inlineClass = layoutClass(css, '[data-align="baseline"]');
+  const gridClass = layoutClass(css, '[data-columns="auto"]');
+
+  for (const className of [stackClass, inlineClass, gridClass]) {
+    const base = css.match(
+      new RegExp(`\\.${escapeRe(className)}\\s*\\{([^}]+)\\}`),
+    );
+    expect(base).not.toBeNull();
+    expect(base![1]).toMatch(/margin:\s*0/);
+    expect(base![1]).toMatch(/padding:\s*0/);
   }
 });
 
