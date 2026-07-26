@@ -11,8 +11,8 @@ import {
 } from '@reactive/silk-core';
 
 const require = createRequire(import.meta.url);
-const packageRoot = path.dirname(fileURLToPath(import.meta.url));
-const monorepoRoot = path.resolve(packageRoot, '../../..');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const monorepoRoot = path.resolve(scriptDir, '../../..');
 
 function assert(cond: unknown, msg: string): asserts cond {
   if (!cond) {
@@ -20,10 +20,13 @@ function assert(cond: unknown, msg: string): asserts cond {
   }
 }
 
-const pkg = require.resolve('@reactive/silk-native/package.json');
-assert(pkg.includes('silk-native'), 'workspace package resolves');
+// Throws if the workspace package is not resolvable from this app.
+require.resolve('@reactive/silk-native/package.json');
 
-const { mapButtonStyle, mapTextStyle } = await import(
+const { mapButtonStyle, mapTextStyle }: Pick<
+  typeof import('@reactive/silk-native'),
+  'mapButtonStyle' | 'mapTextStyle'
+> = await import(
   pathToFileURL(
     path.join(monorepoRoot, 'packages/silk-native/dist/styles/mapStyles.js'),
   ).href

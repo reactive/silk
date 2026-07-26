@@ -5,13 +5,7 @@ import type {
   StackVariantProps,
   TextVariantProps,
 } from '@reactive/silk-core';
-import {
-  createContext,
-  useContext,
-  useMemo,
-  type JSX,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, type JSX, type ReactNode } from 'react';
 import { ThemeProvider, type ThemeProviderProps } from './ThemeProvider.js';
 
 /**
@@ -57,11 +51,9 @@ export function SilkProvider({
   children,
   ...themeProps
 }: SilkProviderProps): JSX.Element {
-  const value = useMemo(() => defaults ?? EMPTY_DEFAULTS, [defaults]);
-
   return (
     <ThemeProvider {...themeProps}>
-      <SilkDefaultsContext.Provider value={value}>
+      <SilkDefaultsContext.Provider value={defaults ?? EMPTY_DEFAULTS}>
         {children}
       </SilkDefaultsContext.Provider>
     </ThemeProvider>

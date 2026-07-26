@@ -1,6 +1,7 @@
 /**
  * Map silk-core Theme + recipe variant props → plain RN-compatible style objects.
- * No React Native imports — keep this runnable from Node mapper tests.
+ * Style shapes are declared locally rather than imported from react-native so
+ * the emitted .d.ts stands alone without RN types installed.
  */
 import {
   boxRecipe,
@@ -62,9 +63,7 @@ export type RnViewStyle = {
   borderStyle?: 'solid' | undefined;
   borderStartWidth?: number | undefined;
   borderStartColor?: string | undefined;
-  opacity?: number | undefined;
   alignSelf?: 'flex-start' | undefined;
-  maxWidth?: number | undefined;
 };
 
 export type RnTextStyle = {
@@ -131,8 +130,8 @@ function spaceScale(
 }
 
 function resolveSpaceStep(
-  step: string | undefined,
-  fallback: string,
+  step: `${SpaceStep}` | undefined,
+  fallback: `${SpaceStep}`,
 ): SpaceStep {
   const raw = step ?? fallback;
   return Number(raw) as SpaceStep;
@@ -152,16 +151,22 @@ const cssGenericFamilies: ReadonlySet<string> = new Set([
   'fantasy',
 ]);
 
+// Keyed by whole stack; a theme has three, so this stays bounded in practice.
+const nativeFontFamilyCache = new Map<string, string | undefined>();
+
 /** Peel a CSS font-family stack to a single face for RN. */
 export function resolveNativeFontFamily(stack: string): string | undefined {
+  if (nativeFontFamilyCache.has(stack)) {
+    return nativeFontFamilyCache.get(stack);
+  }
   const primary = stack
     .split(',')[0]
     ?.trim()
     .replace(/^["']|["']$/g, '');
-  if (!primary || cssGenericFamilies.has(primary)) {
-    return undefined;
-  }
-  return primary;
+  const face =
+    !primary || cssGenericFamilies.has(primary) ? undefined : primary;
+  nativeFontFamilyCache.set(stack, face);
+  return face;
 }
 
 export function mapBoxStyle(
@@ -269,7 +274,7 @@ function buttonColors(
   toneName: ToneName,
   pressed: boolean,
   disabled: boolean,
-): { backgroundColor: string | undefined; color: string; borderColor: string; borderWidth: number } {
+): { backgroundColor: string; color: string; borderColor: string } {
   const tone = theme.semantic.color.tones[toneName];
 
   if (disabled) {
@@ -277,7 +282,6 @@ function buttonColors(
       backgroundColor: tone.disabledBg,
       color: tone.disabledFg,
       borderColor: 'transparent',
-      borderWidth: 1,
     };
   }
 
@@ -286,7 +290,6 @@ function buttonColors(
       backgroundColor: pressed ? tone.active : tone.solid,
       color: tone.onSolid,
       borderColor: 'transparent',
-      borderWidth: 1,
     };
   }
 
@@ -295,25 +298,13 @@ function buttonColors(
       backgroundColor: pressed ? tone.subtleActive : tone.subtle,
       color: tone.text,
       borderColor: 'transparent',
-      borderWidth: 1,
     };
   }
 
-  if (variant === 'outline') {
-    return {
-      backgroundColor: pressed ? tone.subtleActive : 'transparent',
-      color: tone.text,
-      borderColor: tone.border,
-      borderWidth: 1,
-    };
-  }
-
-  // ghost — keep 1px transparent border so size matches solid/soft/outline (web).
   return {
     backgroundColor: pressed ? tone.subtleActive : 'transparent',
     color: tone.text,
-    borderColor: 'transparent',
-    borderWidth: 1,
+    borderColor: variant === 'outline' ? tone.border : 'transparent',
   };
 }
 
@@ -346,7 +337,8 @@ export function mapButtonStyle(
       paddingLeft: space[pad.px],
       paddingRight: space[pad.px],
       borderRadius: radius,
-      borderWidth: colors.borderWidth,
+      // Every variant keeps a 1px border so ghost/outline match solid sizing (web parity).
+      borderWidth: 1,
       borderColor: colors.borderColor,
       borderStyle: 'solid',
       backgroundColor: colors.backgroundColor,

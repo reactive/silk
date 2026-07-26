@@ -1,24 +1,14 @@
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import { withSource } from '../docsSource';
-import { NativeShell, type NativeShellState } from './NativeShell';
+import { NativeShell, nativeShellStates } from './NativeShell';
 import nativeShellSource from './NativeShell.tsx?raw';
-
-const states: NativeShellState[] = [
-  'normal',
-  'compact',
-  'dark',
-  'tenant',
-  'nested',
-  'longContent',
-  'disabled',
-];
 
 const meta = {
   title: 'Fixtures/NativeShell',
   component: NativeShell,
   parameters: withSource(nativeShellSource),
   argTypes: {
-    state: { control: 'select', options: states },
+    state: { control: 'select', options: nativeShellStates },
   },
   args: { state: 'normal' },
 } satisfies Meta<typeof NativeShell>;

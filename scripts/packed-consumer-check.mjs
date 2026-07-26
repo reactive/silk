@@ -25,10 +25,42 @@ function run(cmd, cwd = root) {
   execSync(cmd, { cwd, stdio: 'inherit' });
 }
 
-function listJsFiles(dir) {
+function listFiles(dir, matches = () => true) {
   return readdirSync(dir, { withFileTypes: true, recursive: true })
-    .filter((e) => e.isFile() && e.name.endsWith('.js'))
+    .filter((e) => e.isFile() && matches(e.name))
     .map((e) => join(e.parentPath ?? e.path, e.name));
+}
+
+const isJs = (name) => name.endsWith('.js');
+const isTest = (name) => /\.test\./.test(name);
+
+/**
+ * Typecheck `<name>.tsx` against the packed .d.ts so missing prop types or
+ * compound parts fail CI (runtime export checks alone won't).
+ */
+function checkConsumerTypes(name, compilerOptions) {
+  const config = join(fixture, `tsconfig.${name}.json`);
+  writeFileSync(
+    config,
+    JSON.stringify(
+      {
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          jsx: 'react-jsx',
+          strict: true,
+          skipLibCheck: true,
+          noEmit: true,
+          ...compilerOptions,
+        },
+        include: [`${name}.tsx`],
+      },
+      null,
+      2,
+    ),
+  );
+  run(`npx tsc -p ${config}`, fixture);
 }
 
 /** Linaria class selectors in the aggregate stylesheet. */
@@ -56,7 +88,7 @@ function assertClassNameParity(distDir, css) {
 
   const jsNames = new Set();
   const stringLit = /["']([a-zA-Z_][\w-]{2,})["']/g;
-  for (const file of listJsFiles(distDir)) {
+  for (const file of listFiles(distDir, isJs)) {
     const source = readFileSync(file, 'utf8');
     for (const m of source.matchAll(stringLit)) {
       if (cssNames.has(m[1])) {
@@ -114,10 +146,14 @@ try {
       'utf8',
     ),
   );
-  const nativeDeps = JSON.stringify(nativePkg.dependencies ?? {});
-  if (nativeDeps.includes('workspace:')) {
+  const workspaceDeps = Object.entries(nativePkg.dependencies).filter(
+    ([, range]) => range.startsWith('workspace:'),
+  );
+  if (workspaceDeps.length) {
     throw new Error(
-      'Packed @reactive/silk-native still contains workspace: protocol dependencies',
+      `Packed @reactive/silk-native still declares workspace: ranges: ${workspaceDeps
+        .map(([name]) => name)
+        .join(', ')}`,
     );
   }
 
@@ -167,11 +203,11 @@ try {
   }
 
   const distDir = join(fixture, 'node_modules/@reactive/silk/dist');
-  const listing = execSync(`find "${distDir}" -name '*.test.*'`, {
-    encoding: 'utf8',
-  }).trim();
-  if (listing) {
-    throw new Error(`Test artifacts shipped in package:\n${listing}`);
+  const testArtifacts = listFiles(distDir, isTest);
+  if (testArtifacts.length) {
+    throw new Error(
+      `Test artifacts shipped in package:\n${testArtifacts.join('\n')}`,
+    );
   }
 
   const entryUrl = pathToFileURL(
@@ -255,7 +291,7 @@ try {
     'wyw-in-js',
     '__webpack_require__',
   ];
-  for (const file of listJsFiles(distDir)) {
+  for (const file of listFiles(distDir, isJs)) {
     const js = readFileSync(file, 'utf8');
     for (const marker of banned) {
       if (js.includes(marker)) {
@@ -266,29 +302,6 @@ try {
     }
   }
 
-  // Declaration surface: compile a TS consumer against packed .d.ts so missing
-  // prop types / compound parts fail CI (runtime export checks alone won't).
-  writeFileSync(
-    join(fixture, 'tsconfig.json'),
-    JSON.stringify(
-      {
-        compilerOptions: {
-          target: 'ES2022',
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          jsx: 'react-jsx',
-          strict: true,
-          exactOptionalPropertyTypes: true,
-          skipLibCheck: true,
-          noEmit: true,
-          types: ['react', 'react-dom'],
-        },
-        include: ['consumer.tsx'],
-      },
-      null,
-      2,
-    ),
-  );
   writeFileSync(
     join(fixture, 'consumer.tsx'),
     `
@@ -400,7 +413,10 @@ export function Consumer(): JSX.Element {
 }
 `,
   );
-  run(`npx tsc -p ${join(fixture, 'tsconfig.json')}`, fixture);
+  checkConsumerTypes('consumer', {
+    exactOptionalPropertyTypes: true,
+    types: ['react', 'react-dom'],
+  });
 
   // Native package: declarations + RNW-aliased executed bundle (Node cannot
   // load react-native directly).
@@ -408,36 +424,11 @@ export function Consumer(): JSX.Element {
   if (!existsSync(join(nativeDist, 'index.js'))) {
     throw new Error('Packed silk-native missing dist/index.js');
   }
-  const nativeTests = execSync(`find "${nativeDist}" -name '*.test.*'`, {
-    encoding: 'utf8',
-  }).trim();
-  if (nativeTests) {
-    throw new Error(`Native test artifacts shipped:\n${nativeTests}`);
+  const nativeTests = listFiles(nativeDist, isTest);
+  if (nativeTests.length) {
+    throw new Error(`Native test artifacts shipped:\n${nativeTests.join('\n')}`);
   }
 
-  writeFileSync(
-    join(fixture, 'tsconfig.native.json'),
-    JSON.stringify(
-      {
-        compilerOptions: {
-          target: 'ES2022',
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          jsx: 'react-jsx',
-          strict: true,
-          skipLibCheck: true,
-          noEmit: true,
-          types: ['react'],
-          paths: {
-            'react-native': ['./node_modules/react-native-web'],
-          },
-        },
-        include: ['consumer.native.tsx'],
-      },
-      null,
-      2,
-    ),
-  );
   writeFileSync(
     join(fixture, 'consumer.native.tsx'),
     `
@@ -467,7 +458,10 @@ export function NativeConsumer(): JSX.Element {
 }
 `,
   );
-  run(`npx tsc -p ${join(fixture, 'tsconfig.native.json')}`, fixture);
+  checkConsumerTypes('consumer.native', {
+    types: ['react'],
+    paths: { 'react-native': ['./node_modules/react-native-web'] },
+  });
 
   const nativeBundleEntry = join(fixture, 'native-bundle-entry.mjs');
   const nativeBundleOut = join(fixture, 'native-bundle.mjs');

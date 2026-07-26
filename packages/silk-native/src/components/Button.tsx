@@ -41,11 +41,7 @@ export function Button({
     variant: variant ?? defaults.variant ?? buttonRecipe.defaults.variant,
     tone: tone ?? defaults.tone ?? buttonRecipe.defaults.tone,
     size: size ?? defaults.size ?? buttonRecipe.defaults.size,
-    density:
-      density ??
-      defaults.density ??
-      themeDensity ??
-      buttonRecipe.defaults.density,
+    density: density ?? defaults.density ?? themeDensity,
   };
   const isDisabled = Boolean(disabled);
   // Text color is press-independent — map once; view remaps only when pressed.
@@ -61,7 +57,7 @@ export function Button({
       style={(state) => {
         const view =
           state.pressed && !isDisabled
-            ? mapButtonStyle(theme, resolved, true, isDisabled).view
+            ? mapButtonStyle(theme, resolved, true, false).view
             : resting.view;
         const consumer =
           typeof style === 'function' ? style(state) : style;

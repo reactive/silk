@@ -15,16 +15,20 @@ import {
 } from '@reactive/silk-native';
 import { useMemo, type JSX } from 'react';
 
-export type NativeShellState =
-  | 'normal'
-  | 'compact'
-  | 'dark'
-  | 'tenant'
-  | 'nested'
-  | 'longContent'
-  | 'disabled';
+export const nativeShellStates = [
+  'normal',
+  'compact',
+  'dark',
+  'tenant',
+  'nested',
+  'longContent',
+  'disabled',
+] as const;
+
+export type NativeShellState = (typeof nativeShellStates)[number];
 
 const paired = generatePairedPalette('#0ea5e9');
+const longContentFiller = Array.from({ length: 60 }, () => 'content').join(' ');
 
 export interface NativeShellProps {
   readonly state?: NativeShellState;
@@ -83,7 +87,7 @@ export function NativeShell({
               <div data-region="long-content">
                 <Stack gap="2">
                   <Text measure="prose" tone="secondary">
-                    {Array.from({ length: 60 }, () => 'content').join(' ')}
+                    {longContentFiller}
                   </Text>
                 </Stack>
               </div>

@@ -76,25 +76,20 @@ async function measureIsolatedJs(
     entry,
     `import { ${exportName} } from ${JSON.stringify(entryPath)};\nexport { ${exportName} };\n`,
   );
-  const outfile = join(tmpDir, `${prefix}${exportName}.bundle.js`);
-  await esbuild.build({
+  const result = await esbuild.build({
     entryPoints: [entry],
     bundle: true,
     format: 'esm',
     platform: 'browser',
     minify: true,
-    outfile,
+    outfile: join(tmpDir, `${prefix}${exportName}.bundle.js`),
+    write: false,
     // Keep React (and RN for native) external — consumer already has them.
     external,
     logLevel: 'silent',
   });
-  const raw = readFileSync(outfile);
+  const raw = result.outputFiles[0].contents;
   return { raw: raw.length, gzip: gzipBytes(raw) };
-}
-
-async function measureBaseline(tmpDir) {
-  // createTheme import measures shared core+theme baseline from the monolith.
-  return measureIsolatedJs('createTheme', tmpDir);
 }
 
 function measureCss() {
@@ -149,24 +144,28 @@ async function main() {
   mkdirSync(tmpDir, { recursive: true });
   try {
     const css = measureCss();
-    const [baseline, ...isolatedEntries] = await Promise.all([
-      measureBaseline(tmpDir),
-      ...COMPONENTS.map(async (name) => [
-        name,
-        await measureIsolatedJs(name, tmpDir),
-      ]),
-    ]);
+    const [baseline, isolatedEntries, nativeIsolatedEntries] =
+      await Promise.all([
+        // createTheme import measures the shared core+theme baseline.
+        measureIsolatedJs('createTheme', tmpDir),
+        Promise.all(
+          COMPONENTS.map(async (name) => [
+            name,
+            await measureIsolatedJs(name, tmpDir),
+          ]),
+        ),
+        Promise.all(
+          NATIVE_COMPONENTS.map(async (name) => [
+            name,
+            await measureIsolatedJs(name, tmpDir, {
+              entryPath: nativeEntry,
+              external: ['react', 'react/jsx-runtime', 'react-native'],
+              prefix: 'native-',
+            }),
+          ]),
+        ),
+      ]);
     const isolated = Object.fromEntries(isolatedEntries);
-    const nativeIsolatedEntries = await Promise.all(
-      NATIVE_COMPONENTS.map(async (name) => [
-        name,
-        await measureIsolatedJs(name, tmpDir, {
-          entryPath: nativeEntry,
-          external: ['react', 'react/jsx-runtime', 'react-native'],
-          prefix: 'native-',
-        }),
-      ]),
-    );
     const nativeIsolated = Object.fromEntries(nativeIsolatedEntries);
     const ssr = await measureSsr();
 
@@ -197,11 +196,7 @@ async function main() {
 
     if (write) {
       const existing = loadBudgets();
-      const next = {
-        ...existing,
-        measured,
-        budgets: existing.budgets,
-      };
+      const next = { ...existing, measured };
       writeFileSync(budgetPath, `${JSON.stringify(next, null, 2)}\n`);
       console.log(`perf-budgets: wrote ${budgetPath}`);
     } else {
@@ -228,7 +223,7 @@ async function main() {
         }
       }
       for (const name of NATIVE_COMPONENTS) {
-        const max = budgets.nativeIsolatedGzip?.[name];
+        const max = budgets.nativeIsolatedGzip[name];
         if (max == null) {
           fail(`missing nativeIsolatedGzip budget for ${name}`);
           continue;

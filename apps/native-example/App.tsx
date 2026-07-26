@@ -19,6 +19,7 @@ import { useMemo, useState, type JSX } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 
 const paired = generatePairedPalette('#0ea5e9');
+const proseFiller = Array.from({ length: 40 }, () => 'word').join(' ');
 
 /**
  * Stage 6 exit demo: same Theme object + recipe contracts as web,
@@ -136,8 +137,7 @@ export function App(): JSX.Element {
                   ))}
                 </Stack>
                 <Text measure="prose" tone="secondary">
-                  Long prose measure:{' '}
-                  {Array.from({ length: 40 }, () => 'word').join(' ')}
+                  Long prose measure: {proseFiller}
                 </Text>
               </Stack>
 

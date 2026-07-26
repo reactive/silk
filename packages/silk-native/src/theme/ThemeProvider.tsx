@@ -11,7 +11,7 @@ import {
   type JSX,
   type ReactNode,
 } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, type ColorSchemeName } from 'react-native';
 
 export interface ThemeContextValue {
   readonly theme: Theme;
@@ -48,7 +48,7 @@ function ThemeProviderInner({
   children,
   appearance,
 }: ThemeProviderProps & {
-  readonly appearance: string | null | undefined;
+  readonly appearance: ColorSchemeName;
 }): JSX.Element {
   const parent = useContext(ThemeContext);
   const parentTheme = parent?.theme;
@@ -100,7 +100,7 @@ export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
   if (props.colorScheme === 'system' && props.theme === undefined) {
     return <SystemThemeProvider {...props} />;
   }
-  return <ThemeProviderInner {...props} appearance={undefined} />;
+  return <ThemeProviderInner {...props} appearance="unspecified" />;
 }
 
 export function useTheme(): ThemeContextValue {

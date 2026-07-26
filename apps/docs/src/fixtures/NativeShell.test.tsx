@@ -1,29 +1,23 @@
 import { expect, test } from '@rstest/core';
-import { render, within } from '@testing-library/react';
-import { NativeShell, type NativeShellState } from './NativeShell';
-
-const states: NativeShellState[] = [
-  'normal',
-  'compact',
-  'dark',
-  'tenant',
-  'nested',
-  'longContent',
-  'disabled',
-];
+import { render } from '@testing-library/react';
+import {
+  NativeShell,
+  nativeShellStates,
+  type NativeShellState,
+} from './NativeShell';
 
 function renderFixture(state: NativeShellState) {
   return render(<NativeShell state={state} />);
 }
 
-test.each(states)(
+test.each(nativeShellStates)(
   'NativeShell state "%s" mounts with fixture markers',
   (state) => {
-    const { container } = renderFixture(state);
+    const { container, getByText } = renderFixture(state);
     const root = container.querySelector('[data-fixture="native-shell"]');
     expect(root).not.toBeNull();
     expect(root?.getAttribute('data-fixture-state')).toBe(state);
-    expect(within(root as HTMLElement).getByText('Native shell')).toBeTruthy();
+    expect(getByText('Native shell')).toBeTruthy();
   },
 );
 
@@ -41,11 +35,9 @@ test('tenant summary includes tenant marker', () => {
 });
 
 test('nested state renders nested region', () => {
-  const { container } = renderFixture('nested');
+  const { container, getByText } = renderFixture('nested');
   expect(container.querySelector('[data-region="nested"]')).not.toBeNull();
-  expect(
-    within(container as HTMLElement).getByText(/Nested dark scheme/),
-  ).toBeTruthy();
+  expect(getByText(/Nested dark scheme/)).toBeTruthy();
 });
 
 test('longContent region is present', () => {
