@@ -62,7 +62,7 @@ function SettingsPanelSection({
   );
 }
 
-export type SettingsPanelSectionTitleProps = ComponentPropsWithoutRef<'h3'> & {
+export type SettingsPanelSectionTitleProps = ComponentPropsWithoutRef<'h2'> & {
   readonly ref?: Ref<HTMLHeadingElement>;
   readonly children?: ReactNode;
 };
@@ -73,7 +73,7 @@ function SettingsPanelSectionTitle({
 }: SettingsPanelSectionTitleProps): JSX.Element {
   return (
     <Heading
-      level="3"
+      level="2"
       size="sm"
       {...props}
       style={{ paddingBlockEnd: 'var(--silk-space-3)', ...props.style }}
