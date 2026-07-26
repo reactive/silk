@@ -93,6 +93,8 @@ Custom / tenant themes use the style-attribute path:
 </SilkProvider>
 ```
 
+`@reactive/silk/styles.layer.css` ships the same rules wrapped in `@layer silk`, so unlayered consumer CSS overrides Silk deterministically instead of depending on stylesheet order. Opt in when you control your own reset — see the cascade-order section in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Architecture
 
 Component usage and theming live in [Storybook](https://reactive.github.io/silk/). The repository architecture write-up is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), the guiding principles are [docs/PRINCIPLES.md](docs/PRINCIPLES.md), and the staged plan is [docs/ROADMAP.md](docs/ROADMAP.md).

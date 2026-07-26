@@ -1,3 +1,4 @@
+import { css } from '@linaria/core';
 import {
   Badge,
   Button,
@@ -18,7 +19,7 @@ import {
   Text,
   Textarea,
 } from '@reactive/silk';
-import { useState, type CSSProperties, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 
 export type SettingsFormState =
   | 'normal'
@@ -33,8 +34,13 @@ export interface SettingsFormProps {
 }
 
 // Width constraint only — Card supplies the surface, border, and elevation.
-const shellStyle: CSSProperties = { maxWidth: '36rem' };
-const narrowShellStyle: CSSProperties = { maxWidth: '18rem' };
+const shellClass: string = css`
+  max-width: 36rem;
+
+  &[data-narrow] {
+    max-width: 18rem;
+  }
+`;
 
 /**
  * Stage 2 exit fixture — settings form composed from Silk visual + form primitives.
@@ -53,7 +59,8 @@ export function SettingsForm({
     <div
       data-fixture="settings-form"
       data-fixture-state={state}
-      style={narrowLongContent ? narrowShellStyle : shellStyle}
+      data-narrow={narrowLongContent || undefined}
+      className={shellClass}
     >
       <Card elevation="raised" padding="5" radius="lg">
         <Stack gap="4">
@@ -152,7 +159,11 @@ export function SettingsForm({
                 <Field.Description>Days between email digests.</Field.Description>
               </Field.Root>
 
-              <Progress value={invalid ? 35 : 80} tone="success" label="Profile completion" />
+              <Progress
+                value={invalid ? 35 : 80}
+                tone="success"
+                label="Profile completion"
+              />
 
               <Inline gap="2" justify="end">
                 <Button variant="ghost" tone="neutral" disabled={disabled}>

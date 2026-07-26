@@ -46,6 +46,9 @@ jobs:
       - name: Packed consumer check
         run: yarn test:packed
 
+      - name: Performance budgets
+        run: yarn test:perf
+
       # Validates CSF/MDX, source alias, docgen, and Linaria extraction.
       # On main, docs.yml already builds and deploys the same output.
       - name: Build Storybook

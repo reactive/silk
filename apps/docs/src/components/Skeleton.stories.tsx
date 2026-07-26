@@ -2,7 +2,7 @@ import { Skeleton, skeletonRecipe, Stack } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 
 const meta = {
-  title: 'Components/Skeleton',
+  title: 'Components/Visual/Skeleton',
   component: Skeleton,
   tags: ['autodocs'],
   args: { ...skeletonRecipe.defaults },

@@ -108,6 +108,47 @@ test('Field.Root required forwards to Checkbox', () => {
   expect(checkbox.getAttribute('aria-required')).toBe('true');
 });
 
+test('Field.Label renders the required indicator', () => {
+  render(
+    <SilkProvider>
+      <Field.Root required>
+        <Field.Label>Email</Field.Label>
+        <Input />
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const label = screen.getByText(/Email/);
+  expect(label.querySelector('[data-required-indicator]')).not.toBeNull();
+});
+
+test('Field.Label composes with asChild, required or not', () => {
+  render(
+    <SilkProvider>
+      <Field.Root required controlId="req">
+        <Field.Label asChild>
+          <label data-testid="required-label">Email</label>
+        </Field.Label>
+        <Input />
+      </Field.Root>
+      <Field.Root controlId="opt">
+        <Field.Label asChild>
+          <label data-testid="optional-label">Name</label>
+        </Field.Label>
+        <Input />
+      </Field.Root>
+    </SilkProvider>,
+  );
+
+  const required = screen.getByTestId('required-label');
+  expect(required.getAttribute('for')).toBe('req');
+  expect(required.textContent).toContain('Email');
+  expect(required.querySelector('[data-required-indicator]')).not.toBeNull();
+
+  const optional = screen.getByTestId('optional-label');
+  expect(optional.textContent).toBe('Name');
+  expect(optional.querySelector('[data-required-indicator]')).toBeNull();
+});
+
 test('explicit aria props win over Field context', () => {
   render(
     <SilkProvider>

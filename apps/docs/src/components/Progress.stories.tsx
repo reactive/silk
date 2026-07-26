@@ -2,7 +2,7 @@ import { Progress, progressRecipe, Stack } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 
 const meta = {
-  title: 'Components/Progress',
+  title: 'Components/Visual/Progress',
   component: Progress,
   tags: ['autodocs'],
   args: {

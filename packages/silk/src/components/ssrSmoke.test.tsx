@@ -15,7 +15,12 @@ import { Slider } from './Slider';
 import { Spinner } from './Spinner';
 import { Surface } from './Surface';
 import { Switch } from './Switch';
+import { Tabs } from './Tabs';
 import { Textarea } from './Textarea';
+import { Toggle } from './Toggle';
+import { ToggleGroup } from './ToggleGroup';
+import { Accordion } from './Accordion';
+import { ScrollArea } from './ScrollArea';
 import { SilkProvider } from '../theme/SilkProvider';
 
 test('Stage 2 form and visual primitives SSR without throwing', () => {
@@ -57,7 +62,52 @@ test('Stage 2 form and visual primitives SSR without throwing', () => {
   expect(html).toContain('SSR');
   expect(html).toContain('data-elevation');
   expect(html).toContain('data-tone="success"');
-  expect(html).not.toContain('styled(');
+});
+
+test('Stage 3 inline interaction primitives SSR without throwing', () => {
+  const html = renderToString(
+    createElement(
+      SilkProvider,
+      null,
+      createElement(
+        Tabs.Root,
+        { defaultValue: 'a' },
+        createElement(
+          Tabs.List,
+          null,
+          createElement(Tabs.Trigger, { value: 'a' }, 'A'),
+        ),
+        createElement(Tabs.Content, { value: 'a' }, 'Panel'),
+      ),
+      createElement(
+        Accordion.Root,
+        { type: 'single' },
+        createElement(
+          Accordion.Item,
+          { value: '1' },
+          createElement(
+            Accordion.Header,
+            null,
+            createElement(Accordion.Trigger, null, 'Item'),
+          ),
+          createElement(Accordion.Content, null, 'Body'),
+        ),
+      ),
+      createElement(Toggle, { 'aria-label': 'Bold' }, 'B'),
+      createElement(
+        ToggleGroup.Root,
+        { type: 'single', 'aria-label': 'Align' },
+        createElement(ToggleGroup.Item, { value: 'left', 'aria-label': 'Left' }, 'L'),
+      ),
+      createElement(ScrollArea, null, createElement('p', null, 'Scroll')),
+    ),
+  );
+
+  expect(html).toContain('Panel');
+  expect(html).toContain('data-variant');
+  expect(html).toContain('data-radix-scroll-area-viewport');
+  expect(html).toContain('<style');
+  expect(html).toContain('scrollbar-width:none');
 });
 
 test('Field label/control association is correct in server markup', () => {

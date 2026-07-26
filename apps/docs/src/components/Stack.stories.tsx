@@ -1,9 +1,10 @@
+import { css } from '@linaria/core';
 import { Box, Button, Stack, Text, stackRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
 const meta = {
-  title: 'Components/Stack',
+  title: 'Components/Layout/Stack',
   component: Stack,
   tags: ['autodocs'],
   args: {
@@ -37,19 +38,30 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const itemStyle: CSSProperties = {
-  padding: 'var(--silk-space-2) var(--silk-space-3)',
-  borderRadius: 'var(--silk-radius-sm)',
-  backgroundColor: 'var(--silk-color-tone-accent-subtle)',
-  color: 'var(--silk-color-tone-accent-solid)',
-};
+const itemClass: string = css`
+  padding: var(--silk-space-2) var(--silk-space-3);
+  border-radius: var(--silk-radius-sm);
+  background-color: var(--silk-color-tone-accent-subtle);
+  color: var(--silk-color-tone-accent-solid);
+`;
+
+const narrowClass: string = css`
+  max-width: 12rem;
+`;
+
+const collapseFrameClass: string = css`
+  max-width: 20rem;
+  padding: var(--silk-space-3);
+  border: 1px dashed var(--silk-color-border-subtle);
+  border-radius: var(--silk-radius-md);
+`;
 
 function DemoItems(): JSX.Element {
   return (
     <>
-      <Box style={itemStyle}>One</Box>
-      <Box style={itemStyle}>Two</Box>
-      <Box style={itemStyle}>Three</Box>
+      <Box className={itemClass}>One</Box>
+      <Box className={itemClass}>Two</Box>
+      <Box className={itemClass}>Three</Box>
     </>
   );
 }
@@ -75,7 +87,7 @@ export const Wrap: Story = {
     direction: 'row',
     gap: '2',
     wrap: 'wrap',
-    style: { maxWidth: '12rem' },
+    className: narrowClass,
     children: (
       <>
         <DemoItems />
@@ -106,15 +118,7 @@ export const Composition: Story = {
 export const CollapseBelow: Story = {
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
-    <Box
-      contain
-      style={{
-        maxWidth: '20rem',
-        padding: 'var(--silk-space-3)',
-        border: '1px dashed var(--silk-color-border-subtle)',
-        borderRadius: 'var(--silk-radius-md)',
-      }}
-    >
+    <Box contain className={collapseFrameClass}>
       <Stack direction="row" gap="3" collapseBelow="md" align="center">
         <DemoItems />
       </Stack>

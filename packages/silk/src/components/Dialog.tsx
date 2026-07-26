@@ -9,6 +9,12 @@ import type {
 } from 'react';
 import { useComponentDefaults } from '../theme/SilkProvider';
 import { ThemeScopePortal } from '../theme/ThemeScope';
+import {
+  dialogPanelMotionClass,
+  floatingSurfaceClass,
+  floatingZIndex,
+  overlayMotionClass,
+} from './floatingSurface';
 
 export const DialogRoot: typeof RadixDialog.Root = RadixDialog.Root;
 export const DialogTrigger: typeof RadixDialog.Trigger = RadixDialog.Trigger;
@@ -20,22 +26,7 @@ export const DialogDescription: typeof RadixDialog.Description =
 const overlayClass: string = css`
   position: fixed;
   inset: 0;
-  background-color: var(--silk-color-overlay);
-  animation: silk-dialog-overlay-in var(--silk-motion-normal-duration-ms)
-    var(--silk-motion-normal-easing);
-
-  @keyframes silk-dialog-overlay-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
+  z-index: ${floatingZIndex.dialogOverlay};
 `;
 
 const contentClass: string = css`
@@ -43,33 +34,12 @@ const contentClass: string = css`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1;
-  box-sizing: border-box;
+  z-index: ${floatingZIndex.dialog};
   max-height: calc(100vh - var(--silk-space-8));
   overflow: auto;
-  background-color: var(--silk-color-surface-raised);
-  color: var(--silk-color-text-primary);
-  border: 1px solid var(--silk-color-border-subtle);
+  /* Dialog-specific: larger radius and padding than popper surfaces */
   border-radius: var(--silk-radius-lg);
-  box-shadow: var(--silk-shadow-overlay);
   padding: var(--silk-space-5);
-  animation: silk-dialog-content-in var(--silk-motion-normal-duration-ms)
-    var(--silk-motion-normal-easing);
-
-  @keyframes silk-dialog-content-in {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -48%) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
 
   &:where([data-size='sm']) {
     width: min(100% - var(--silk-space-6), 360px);
@@ -97,7 +67,7 @@ export interface DialogContentProps
    * Theme scope is reconstituted automatically for body portals; `container`
    * is not required for nested theming.
    */
-  readonly container?: HTMLElement;
+  readonly container?: HTMLElement | DocumentFragment | null;
   readonly overlayClassName?: string;
 }
 
@@ -119,14 +89,19 @@ export function DialogContent({
   const resolvedSize = size ?? defaults.size ?? dialogRecipe.defaults.size;
 
   return (
-    <RadixDialog.Portal container={container}>
+    <RadixDialog.Portal {...(container != null ? { container } : {})}>
       <ThemeScopePortal>
         <RadixDialog.Overlay
-          className={cx(overlayClass, overlayClassName)}
+          className={cx(overlayClass, overlayMotionClass, overlayClassName)}
         />
         <RadixDialog.Content
           {...props}
-          className={cx(contentClass, className)}
+          className={cx(
+            floatingSurfaceClass,
+            dialogPanelMotionClass,
+            contentClass,
+            className,
+          )}
           data-size={resolvedSize}
         >
           {children}

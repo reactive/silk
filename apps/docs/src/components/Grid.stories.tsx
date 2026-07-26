@@ -1,9 +1,10 @@
+import { css } from '@linaria/core';
 import { Box, Grid, Text, gridRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
 const meta = {
-  title: 'Components/Grid',
+  title: 'Components/Layout/Grid',
   component: Grid,
   tags: ['autodocs'],
   args: {
@@ -29,18 +30,18 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const cellStyle: CSSProperties = {
-  padding: 'var(--silk-space-3)',
-  borderRadius: 'var(--silk-radius-md)',
-  border: '1px solid var(--silk-color-border-subtle)',
-  backgroundColor: 'var(--silk-color-surface-raised)',
-};
+const cellClass: string = css`
+  padding: var(--silk-space-3);
+  border-radius: var(--silk-radius-md);
+  border: 1px solid var(--silk-color-border-subtle);
+  background-color: var(--silk-color-surface-raised);
+`;
 
 function Cells({ count }: { readonly count: number }): JSX.Element {
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
-        <Box key={i} style={cellStyle}>
+        <Box key={i} className={cellClass}>
           <Text role="label">Cell {i + 1}</Text>
           <Text tone="secondary" role="caption">
             Grid track

@@ -8,6 +8,7 @@ import type {
   ReactNode,
   Ref,
 } from 'react';
+import { cssVars } from '../theme/componentVars';
 import { useComponentDefaults } from '../theme/SilkProvider';
 
 export interface GridProps
@@ -93,10 +94,7 @@ export function Grid({
 
   const mergedStyle: CSSProperties | undefined =
     minColumnWidth !== undefined
-      ? ({
-          ...style,
-          '--silk-grid-min': minColumnWidth,
-        } as CSSProperties)
+      ? { ...style, ...cssVars({ '--silk-grid-min': minColumnWidth }) }
       : style;
 
   const Comp = asChild ? Slot.Root : 'div';

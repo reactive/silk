@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/addon-docs/blocks';
+import { Meta } from "@storybook/addon-docs/blocks";
 
 <Meta title="Introduction" />
 
@@ -10,10 +10,10 @@ This Storybook is the primary docs site for the library (tracks `main`).
 
 ## Packages
 
-| Package | Description |
-| --- | --- |
+| Package               | Description                                              |
+| --------------------- | -------------------------------------------------------- |
 | `@reactive/silk-core` | Platform-neutral tokens, `createTheme`, recipe contracts |
-| `@reactive/silk` | Web design system (Radix + Linaria) |
+| `@reactive/silk`      | Web design system (Radix + Linaria)                      |
 
 Composites can also ship as source via the [shadcn registry protocol](https://github.com/reactive/silk/blob/main/registry.json). Registry items pin compatible `@reactive/silk` versions. Zero Tailwind.
 
@@ -29,17 +29,15 @@ yarn add @reactive/silk
 Consumers must import the extracted stylesheet once:
 
 ```tsx
-import {
-  Button,
-  Identity,
-  SilkProvider,
-  createTheme,
-} from '@reactive/silk';
-import '@reactive/silk/styles.css';
+import { Button, Identity, SilkProvider, createTheme } from "@reactive/silk";
+import "@reactive/silk/styles.css";
 
 export function App() {
   return (
-    <SilkProvider colorScheme="light" defaults={{ Button: { variant: 'soft' } }}>
+    <SilkProvider
+      colorScheme="light"
+      defaults={{ Button: { variant: "soft" } }}
+    >
       <Button tone="accent">Save</Button>
       <Identity name="Ada Lovelace" meta="@ada" fallback="AL" />
     </SilkProvider>
@@ -50,7 +48,9 @@ export function App() {
 Custom / tenant themes use the style-attribute path:
 
 ```tsx
-<SilkProvider theme={createTheme({ semantic: { color: { surface: '#fafafa' } } })}>
+<SilkProvider
+  theme={createTheme({ semantic: { color: { surface: "#fafafa" } } })}
+>
   …
 </SilkProvider>
 ```
@@ -60,7 +60,71 @@ Custom / tenant themes use the style-attribute path:
 1. `createTheme(...)` — semantic theme
 2. `SilkProvider` `defaults` — typed per-component defaults
 3. Component props — `variant` / `tone` / `size` / `density` / …
-4. Escape hatches — `className`, `style`, public component CSS variables, slots / `asChild`
+4. Escape hatches — public component CSS variables, `className`, `style`, slots / `asChild`
+
+### Choosing an escape hatch
+
+They are ranked rather than interchangeable. Start with the **public CSS variables** a component exposes (`--silk-button-bg`, `--silk-surface-shadow`, …): the component only reads them, so your declaration always wins.
+
+Prefer **`styled(Component)`** from `@linaria/react` when you want a reusable named component (or typed dynamic props that compile to CSS variables):
+
+```tsx
+import { styled } from "@linaria/react";
+import { Button } from "@reactive/silk";
+
+const DangerButton = styled(Button)`
+  --silk-button-bg: var(--silk-color-tone-danger-solid);
+  --silk-button-radius: var(--silk-radius-full);
+
+  &:hover:not(:disabled) {
+    --silk-button-bg: var(--silk-color-tone-danger-hover);
+  }
+`;
+
+<DangerButton>Delete</DangerButton>;
+```
+
+Prefer **`css` + `className`** from `@linaria/core` when the style is a mixin — shared across hosts, stacked with `cx`, or a one-off that does not deserve a wrapper component:
+
+```tsx
+import { css, cx } from "@linaria/core";
+import { Box } from "@reactive/silk";
+
+const surface = css`
+  border: 1px solid var(--silk-color-border-subtle);
+  border-radius: var(--silk-radius-md);
+`;
+
+const narrow = css`
+  max-width: 20rem;
+`;
+
+<Box className={cx(surface, narrow)} padding="4">
+  …
+</Box>;
+```
+
+Both extract at build time and can carry state, media, and container selectors. `styled` wrapping a Silk component skips the DOM-tag prop filter; dynamic interpolations compile to CSS variables on `style` (prefer a `data-*` prop for custom inputs). `@linaria/react` is optional. Silk itself uses only `@linaria/core`.
+
+Reserve Silk's `cssVars` + `style` for values you only know at runtime and do not want to model as a prop:
+
+```tsx
+import { cssVars } from "@reactive/silk";
+
+<Button style={cssVars({ "--silk-button-bg": tenant.brandColor })}>
+  Save
+</Button>;
+```
+
+### Cascade order
+
+Silk keeps every rule at single-class specificity (variants use `:where([data-…])`), so a consumer class is a tie that stylesheet order breaks. If you need that guaranteed rather than incidental, import the layered stylesheet instead — its rules live in `@layer silk`, which any unlayered rule of yours outranks:
+
+```tsx
+import "@reactive/silk/styles.layer.css";
+```
+
+The trade-off: an unlayered global reset of yours will also outrank Silk. Put your reset in a layer too and declare the order — `@layer reset, silk;`.
 
 ## Architecture
 

@@ -1,9 +1,10 @@
+import { css, cx } from '@linaria/core';
 import { Box, Text, boxRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
 const meta = {
-  title: 'Components/Box',
+  title: 'Components/Layout/Box',
   component: Box,
   tags: ['autodocs'],
   args: {
@@ -21,16 +22,27 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const surfaceStyle: CSSProperties = {
-  border: '1px solid var(--silk-color-border-subtle)',
-  borderRadius: 'var(--silk-radius-md)',
-  backgroundColor: 'var(--silk-color-surface-raised)',
-};
+const surfaceClass: string = css`
+  border: 1px solid var(--silk-color-border-subtle);
+  border-radius: var(--silk-radius-md);
+  background-color: var(--silk-color-surface-raised);
+`;
+
+const narrowClass: string = css`
+  max-width: 20rem;
+`;
+
+const escapeOutlineClass: string = css`
+  display: grid;
+  gap: var(--silk-space-2);
+  outline: 2px dashed var(--silk-color-tone-accent-solid);
+  outline-offset: 2px;
+`;
 
 export const Basic: Story = {
   args: {
     padding: '4',
-    style: surfaceStyle,
+    className: surfaceClass,
     children: (
       <Text>
         Box provides box-model reset with semantic surface/text defaults and a
@@ -43,7 +55,7 @@ export const Basic: Story = {
 export const AsChild: Story = {
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
-    <Box asChild padding="4" style={surfaceStyle}>
+    <Box asChild padding="4" className={surfaceClass}>
       <section>
         <Text role="heading">Polymorphic via asChild</Text>
         <Text tone="secondary">Renders as a semantic section element.</Text>
@@ -58,7 +70,7 @@ export const Contain: Story = {
     <Box
       contain
       padding="4"
-      style={{ ...surfaceStyle, maxWidth: '20rem' }}
+      className={cx(surfaceClass, narrowClass)}
       data-testid="box-contain"
     >
       <Text role="label">contain</Text>
@@ -69,23 +81,25 @@ export const Contain: Story = {
   ),
 };
 
-export const EscapeHatches: Story = {
-  parameters: { controls: { disable: true } },
+export const ClassComposition: Story = {
+  parameters: {
+    controls: { disable: true },
+    docs: {
+      description: {
+        story:
+          'Prefer `css` + `cx` when styles are mixins to stack — not a new component type. See Button → StyledOverrides for the `styled(Component)` path.',
+      },
+    },
+  },
   render: (): JSX.Element => (
     <Box
-      className="docs-box-escape"
+      className={cx(surfaceClass, narrowClass, escapeOutlineClass)}
       padding="4"
-      style={{
-        ...surfaceStyle,
-        display: 'grid',
-        gap: 'var(--silk-space-2)',
-        maxWidth: '20rem',
-      }}
       data-testid="box-escape"
     >
-      <Text role="label">className + style + data-*</Text>
+      <Text role="label">css + cx</Text>
       <Text tone="secondary" role="caption">
-        Layout primitive — compose with Stack / Inline / Grid.
+        Independent classes composed onto one host.
       </Text>
     </Box>
   ),

@@ -1,12 +1,12 @@
 # Silk Guiding Principles
 
-This document is the **charter** for Silk. It exists so the project does not drift as the design evolves, constraints change, and new contributors (human or AI) join. [ARCHITECTURE.md](ARCHITECTURE.md) describes *how* the system is built today; this document describes *why*, and what must stay true.
+This document is the **charter** for Silk. It exists so the project does not drift as the design evolves, constraints change, and new contributors (human or AI) join. [ARCHITECTURE.md](ARCHITECTURE.md) describes _how_ the system is built today; this document describes _why_, and what must stay true.
 
 **Rule of use:** any design decision, PR, or roadmap change that conflicts with this document must either be rejected or come with an explicit amendment to this document. Silent divergence is the failure mode we are guarding against.
 
 ## What Silk is
 
-A **long-lived design system foundation** for applications — not another component library, and not a mirror of an existing one. Silk owns its own API. Think Radix + Material UI + Ant Design in *completeness*, with the architecture of a modern headless system.
+A **long-lived design system foundation** for applications — not another component library, and not a mirror of an existing one. Silk owns its own API. Think Radix + Material UI + Ant Design in _completeness_, with the architecture of a modern headless system.
 
 Silk optimizes for, in order:
 
@@ -29,8 +29,8 @@ The non-negotiables are **outcomes** (invariants), not tools. Tools are **bindin
 
 Violating any of these is a bug regardless of how convenient the violation is.
 
-- **No utility-class styling.** No Tailwind, no CVA, no runtime class-composition systems. Distributing source via a registry *protocol* is fine; shipping utility-class-flavored content through it is not.
-- **All CSS is statically extracted at build time.** Runtime styling is limited to CSS variables. No runtime CSS-in-JS, no per-provider `<style>` injection.
+- **No utility-class styling.** No Tailwind, no CVA, no runtime class-composition systems. Distributing source via a registry _protocol_ is fine; shipping utility-class-flavored content through it is not.
+- **No runtime-generated CSS.** Styling is extracted at build time; runtime styling is limited to CSS variables. Constant, SSR-rendered `<style>` content from behavior bindings is permitted when it is static, tiny, and CSP-nonce-compatible (e.g. Radix ScrollArea’s scrollbar-hiding rule). Forbidden: runtime CSS-in-JS, per-provider style injection, and any style whose content is computed per render or per theme.
 - **SSR-first.** Everything renders correctly on the server. No client-only architectures, no hydration hacks, no runtime style generation.
 - **Interaction mechanics are delegated, never reimplemented.** Focus management, keyboard interaction, overlay and dismissal semantics come from a proven, accessible behavior source. Silk owns visuals and API shape on top — and owns the end-to-end accessibility of the result (see ownership boundaries).
 - **Components never reference palette colors.** Only semantic tokens. The palette exists solely as raw material for themes.
@@ -38,26 +38,38 @@ Violating any of these is a bug regardless of how convenient the violation is.
 
 ### Current bindings
 
-| Invariant | Current binding |
-| --- | --- |
-| Static CSS extraction | Linaria |
-| Interaction behavior source (web) | Radix Primitives |
+| Invariant                            | Current binding                                         |
+| ------------------------------------ | ------------------------------------------------------- |
+| Static CSS extraction                | Linaria                                                 |
+| Interaction behavior source (web)    | Radix Primitives                                        |
 | Interaction behavior source (native) | OS behaviors + vetted native-backed libraries (Stage 6) |
-| SSR host | Anansi |
-| Source distribution | shadcn registry protocol |
+| SSR host                             | Anansi                                                  |
+| Source distribution                  | shadcn registry protocol                                |
 
 Bindings are commitments, not identity. Replacing one requires a charter amendment naming the trigger (maintenance stalled, security, platform incompatibility, or a strictly better implementation of the same invariant), the migration path, and its owner — and the invariants survive the replacement unchanged. Watch dependency health deliberately rather than discovering it in a crisis.
 
+**Linaria means `@linaria/core` only — as what Silk ships.** `@linaria/react`'s `styled` is excluded from Silk's own implementation, and _not_ because it generates CSS at runtime — it does not. A spike confirmed it extracts to ordinary static classes and compiles dynamic interpolations to CSS custom properties applied via `style`, which the runtime-styling invariant explicitly permits. Silk does not take the dependency for reasons that apply to _shipping it as a library_, not to consumers who already use it:
+
+1. **Cross-platform.** `styled`'s idiom is prop interpolation, which is web-only. Silk's variants come from `data-*` attributes typed by `silk-core` recipes precisely so native can implement the same contracts. Adopting `styled` internally would split the variant system into two incompatible halves.
+2. **Prop filtering.** `styled` on a DOM tag drops props that are not recognized as valid HTML/SVG attributes. Silk's targets are DOM tags and depend on exact `data-*` and ARIA passthrough, so that filtering would apply.
+3. **Composition.** Silk components resolve provider defaults, emit `data-*`, and wire Radix `asChild`/`Slot` by hand. `styled` supplies "element plus static class", so it adds a wrapper layer rather than replacing one.
+4. **Forced download.** Shipping `@linaria/react` would put its wrapper runtime (~2.9 KB gzip; `css` + `cx` alone is ~0.35 KB) on _every_ Silk consumer, including those who never write `styled`. That is a library-authoring cost, not a cost of consumer use — a consumer who already depends on `@linaria/react` pays zero marginal bytes.
+5. **Declaration emit.** Silk's `dts` build enables `isolatedDeclarations`; `styled` fails TS9010 on every export unless each component's type is written by hand. Consumer apps do not emit declarations, so they never hit this.
+
+Per render, a `styled` component clones its props (`Object.keys` + filter + a new object), runs `cx`, and mounts one extra `forwardRef` fiber. Dynamic interpolations also allocate a style object and call each interpolation. What it never does is generate, serialize, hash, or inject CSS — the costly part of runtime CSS-in-JS, and the part Linaria does not have.
+
+Consumers should prefer **`styled(Component)`** when they want a reusable named component or typed dynamic props that compile to CSS variables. Prefer **`css` + `className`** (and `cx` to compose) when the style is a mixin applied to several hosts, when you are stacking independent classes, or when a one-off class does not justify a wrapper fiber. Every Silk component forwards `className`; wrapping a component with `styled` skips the DOM-tag prop filter. Silk neither ships `@linaria/react` nor requires it.
+
 ## Ownership boundaries
 
-| Concern | Owner |
-| --- | --- |
-| Primitive interaction mechanics (focus, keyboard, overlays, dismissal) | Radix (web) / OS + vetted native-backed libraries (native) |
+| Concern                                                                                                | Owner                                                        |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| Primitive interaction mechanics (focus, keyboard, overlays, dismissal)                                 | Radix (web) / OS + vetted native-backed libraries (native)   |
 | End-to-end accessibility (accessible names, labels, contrast, composite semantics, motion preferences) | Silk — delegating mechanics does not delegate responsibility |
-| Visual language, variants, theming | Silk |
-| Component API shape | Silk (never mirrored from another library) |
-| Tokens, recipes, contracts, types | `silk-core` (platform-neutral) |
-| Rendering | Platform packages (`silk` web; `silk-native` later) |
+| Visual language, variants, theming                                                                     | Silk                                                         |
+| Component API shape                                                                                    | Silk (never mirrored from another library)                   |
+| Tokens, recipes, contracts, types                                                                      | `silk-core` (platform-neutral)                               |
+| Rendering                                                                                              | Platform packages (`silk` web; `silk-native` later)          |
 
 ## Theming is architectural, not a feature
 
@@ -100,7 +112,7 @@ How to choose between designs that all satisfy the constraints. These exist beca
 - **Convention over invention.** When two designs are similarly good and similarly complex, choose the one that matches de facto ecosystem standards — names, prop shapes, and patterns common across comparable libraries (`asChild`, `size`, `onOpenChange`, compound `Root`/`Trigger`/`Content` parts, …). Familiar shapes are pre-learned: agents produce correct code from training priors, and humans guess right on the first try. This is strictly a **tiebreaker** — it never overrides an invariant or a genuinely better design, and "Silk owns its API" means we choose deliberately, not that we invent for novelty's sake.
 - **Extension by addition.** Every layer must accept new members without rearchitecting: new semantic tokens, new recipes, new components, new themes, new platforms. The infrastructure Silk builds with — `defineRecipe`, `createTheme`, semantic tokens, the composition patterns — is public API, so downstream code can create components that are indistinguishable from first-party ones. If extending requires forking or patching, the boundary is drawn wrong.
 - **Predictable beats clever.** APIs should be guessable from the rest of the system: consistent naming, behavior discoverable from types, and patterns that transfer between components. If knowing one component doesn't help you use the next, the design has failed this heuristic.
-- **Intent at the surface, resolution underneath.** A usage site should expose every design decision made *there* — layout, spacing, color role, hierarchy — as semantic declarations, and nothing else. Concerns orthogonal to the usage site (exact palette values, light/dark mode, tenant theme, platform delivery) live behind layers of indirection and never leak into component code, so a reader reasons about what varies at this site without parsing what doesn't. The indirection must stay traversable: when the deeper layer *is* the concern, following it should be one well-named hop (token → theme entry), not an opaque lookup. Semantic color is the canonical case — `tone="danger"` states the complete design intent at the call site; which red that resolves to in dark mode is a theme-layer question, answered in the theme layer. This is also why **themes may change values but never meaning**. Invariant across every theme and mode: role mapping (`tone="danger"` always resolves to the danger role), distinguishability of states (hover / focus / disabled stay visibly distinct), relative hierarchy (primary emphasis stays above secondary), and contrast floors. Free to vary: the actual colors, radii, typefaces, and spacing values. The layers only stay separable if each one keeps its contract.
+- **Intent at the surface, resolution underneath.** A usage site should expose every design decision made _there_ — layout, spacing, color role, hierarchy — as semantic declarations, and nothing else. Concerns orthogonal to the usage site (exact palette values, light/dark mode, tenant theme, platform delivery) live behind layers of indirection and never leak into component code, so a reader reasons about what varies at this site without parsing what doesn't. The indirection must stay traversable: when the deeper layer _is_ the concern, following it should be one well-named hop (token → theme entry), not an opaque lookup. Semantic color is the canonical case — `tone="danger"` states the complete design intent at the call site; which red that resolves to in dark mode is a theme-layer question, answered in the theme layer. This is also why **themes may change values but never meaning**. Invariant across every theme and mode: role mapping (`tone="danger"` always resolves to the danger role), distinguishability of states (hover / focus / disabled stay visibly distinct), relative hierarchy (primary emphasis stays above secondary), and contrast floors. Free to vary: the actual colors, radii, typefaces, and spacing values. The layers only stay separable if each one keeps its contract.
 
 ## Customization ladder
 
@@ -109,9 +121,11 @@ Every component participates in all four levels; consumers must never feel trapp
 1. **Theme** — `createTheme(...)`
 2. **Provider defaults** — typed per-component defaults on `SilkProvider`
 3. **Component variants** — `variant` / `tone` / `size` / `density` / `appearance`
-4. **Escape hatches** — `className` (web), `style`, `ref`, data attributes, public component CSS variables, slots / composition
+4. **Escape hatches** — public component CSS variables, `className` (web), `style`, `ref`, data attributes, slots / composition
 
 Shipping a component without the escape-hatch level is a regression, not a simplification.
+
+The escape hatches are ranked, and the ranking is part of the design: **public CSS variables** first (order-independent, and the only hatch the component actively cooperates with), then a **statically extracted class** applied via `styled(Component)` or `css` + `className` (build-time, expressive enough for state and media selectors), then **`style`** (runtime values only). Prefer `styled` for reusable named components; prefer `css` + `cx` when composing mixins across hosts. A system whose documented override path is inline `style` has quietly conceded that its cascade contract does not hold — so the escape hatch a consumer reaches for first is a measure of whether levels 1–3 are doing their job. See ARCHITECTURE for the cascade-order guarantees behind the ranking.
 
 ## Distribution
 
@@ -125,7 +139,7 @@ Questions to ask before merging anything significant. A "no" means stop.
 - Does interaction behavior still come from the platform's behavior binding (Radix on web), with Silk styling it and owning the accessibility of the result?
 - Is every color referenced through a semantic token?
 - Does `silk-core` remain free of CSS, DOM, and React Native imports?
-- Is all CSS statically extracted — would this render correctly on the server with JS disabled styles-wise?
+- Is CSS free of runtime generation — would this render correctly on the server with JS disabled styles-wise? (Constant SSR `<style>` from a behavior binding is OK; dynamic style content is not.)
 - Do new props fit the existing axes (`variant`/`tone`/`size`/`density`/`appearance`) instead of inventing new ones?
 - Do composites take all styling and shared behavior from Silk primitives, while keeping semantically correct output markup?
 - Are all four customization levels intact, including escape hatches?
@@ -142,6 +156,10 @@ Principles can change — deliberately. An amendment requires: the change itself
 
 ### Amendment log
 
+- 2026-07-26 — **Corrected the `styled` cost framing.** The prior entry bundled ~2.9 KB gzip and `isolatedDeclarations` (TS9010) as general "cost" against `styled`; both are library-authoring constraints (Silk shipping the dep imposes bytes on every consumer; Silk's `dts` emit hits TS9010), not consumer costs. A consumer who already uses `@linaria/react` pays zero marginal bytes and never emits declarations. Per-render cost is a props clone plus one wrapper fiber — no stylesheet generation, serialization, or injection. The exclusion from Silk's implementation stands; the claim that consumer `styled(Button)` is "not lighter or more capable than `css` + `className`" does not.
+- 2026-07-26 — Recorded **why `@linaria/react`'s `styled` is excluded**, replacing the implicit assumption that it violated the runtime-CSS invariant. A spike showed it extracts static classes and uses CSS variables for dynamic values, which the invariant permits; the real grounds are cross-platform variant sharing, prop filtering, composition fit, and cost (measured ~2.9 KB gzip runtime, plus `isolatedDeclarations` failures). Reason: a guard defended by a wrong reason is a guard that loses the next argument. Also deleted a dead `expect(html).not.toContain('styled(')` SSR assertion that could never fail; the built-JS marker check in `packed-consumer-check.mjs` is the real guard.
+- 2026-07-26 — **Escape hatches are ranked** (public CSS variables → `className` with an extracted class → `style` for runtime values only), and the cascade contract behind the ranking is now explicit: an optional `@reactive/silk/styles.layer.css` wraps the same rules in `@layer silk` so unlayered consumer CSS wins deterministically. Reason: `:where([data-…])` keeps variants at single-class specificity, but that only makes a consumer class a _tie_ with Silk's base rules — the winner was decided by bundler module order. Documenting `className` and `style` as equals pushed consumers toward `style`, the least expressive hatch, for overrides Linaria handles better. The layered stylesheet stays opt-in because it also loses to unlayered consumer resets.
+- 2026-07-26 — Restated the static-CSS invariant as **outcomes**: no runtime-_generated_ CSS, SSR-correct output, CSS-variable theming. Explicitly permits constant, SSR-rendered `<style>` content from behavior bindings when static, tiny, and nonce-compatible (Stage 3 ScrollArea / Radix Viewport). Reason: the prior letter banned all `<style>` injection and would have forced a weaker native-scrollbar ScrollArea; the goals (SSR correctness, performance) hold without that strictness.
 - 2026-07 — Initial charter, distilled from the founding design brief.
 - 2026-07 — Added goals 7–8 (extensibility/flexibility, human-and-agent ergonomics) and the **Design heuristics** section: concept budget, convention-over-invention tiebreaker, extension by addition, predictability. Reason: Silk is consumed and maintained by AI agents as well as humans; concept cardinality and departure from ecosystem conventions are the main scaling costs for both.
 - 2026-07 — Cross-platform: interfaces converge even where implementations diverge. Shared concepts get one contract (ideally defined in `silk-core`); API divergence between web and native requires a real platform justification.

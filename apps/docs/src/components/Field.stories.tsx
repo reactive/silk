@@ -10,7 +10,7 @@ import {
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 
 const meta = {
-  title: 'Components/Field',
+  title: 'Components/Forms/Field',
   component: Field.Root,
   tags: ['autodocs'],
 } satisfies Meta<typeof Field.Root>;

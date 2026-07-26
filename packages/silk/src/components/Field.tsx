@@ -1,5 +1,5 @@
 import { css, cx } from '@linaria/core';
-import { Label as RadixLabel } from 'radix-ui';
+import { Label as RadixLabel, Slot } from 'radix-ui';
 import {
   Children,
   createContext,
@@ -279,7 +279,9 @@ function FieldLabel({
       className={cx(labelClass, className)}
       data-disabled={field?.disabled ? 'true' : undefined}
     >
-      {children}
+      {/* Unconditional even when the field is optional: the `null` branch still
+          counts as a child. See ARCHITECTURE.md#aschild-with-decorations */}
+      <Slot.Slottable>{children}</Slot.Slottable>
       {field?.required ? (
         <span aria-hidden="true" data-required-indicator="">
           *

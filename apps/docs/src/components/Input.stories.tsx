@@ -2,7 +2,7 @@ import { Input, inputRecipe, Stack } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 
 const meta = {
-  title: 'Components/Input',
+  title: 'Components/Forms/Input',
   component: Input,
   tags: ['autodocs'],
   args: {

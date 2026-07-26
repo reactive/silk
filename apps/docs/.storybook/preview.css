@@ -21,9 +21,3 @@ body {
   min-height: 4rem;
   padding: 0.25rem;
 }
-
-/* Makes the className pass-through visible in Components/Box → EscapeHatches. */
-.docs-box-escape {
-  outline: 2px dashed var(--silk-color-tone-accent-solid);
-  outline-offset: 2px;
-}

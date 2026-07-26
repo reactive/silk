@@ -12,8 +12,10 @@ import type {
   HeadingVariantProps,
   InlineVariantProps,
   InputVariantProps,
+  PopoverVariantProps,
   ProgressVariantProps,
   RadioGroupVariantProps,
+  SelectVariantProps,
   SeparatorVariantProps,
   SkeletonVariantProps,
   SliderVariantProps,
@@ -21,8 +23,11 @@ import type {
   StackVariantProps,
   SurfaceVariantProps,
   SwitchVariantProps,
+  TabsVariantProps,
   TextVariantProps,
   TextareaVariantProps,
+  ToastVariantProps,
+  ToggleVariantProps,
 } from '@reactive/silk-core';
 import {
   createContext,
@@ -62,6 +67,12 @@ export interface SilkDefaults {
   readonly RadioGroup?: Partial<RadioGroupVariantProps>;
   readonly Switch?: Partial<SwitchVariantProps>;
   readonly Slider?: Partial<SliderVariantProps>;
+  readonly Popover?: Partial<PopoverVariantProps>;
+  readonly Tabs?: Partial<TabsVariantProps>;
+  readonly Select?: Partial<SelectVariantProps>;
+  readonly Toast?: Partial<ToastVariantProps>;
+  readonly Toggle?: Partial<ToggleVariantProps>;
+  readonly ToggleGroup?: Partial<ToggleVariantProps>;
 }
 
 export interface SilkProviderProps extends ThemeProviderProps {

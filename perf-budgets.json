@@ -1,0 +1,46 @@
+{
+  "notes": "Package ships a single bundled dist/index.js, so named-export virtual consumers largely measure monolith cost. Budgets enforce regression of that package surface (JS gzip per consumer entry, CSS totals). SSR median is informational only.",
+  "budgets": {
+    "cssRaw": 130000,
+    "cssGzip": 15000,
+    "sharedBaselineGzip": 75000,
+    "ssrMedianMsSoft": 5,
+    "isolatedGzip": {
+      "Button": 70000,
+      "Dialog": 70000,
+      "Tooltip": 70000,
+      "Popover": 70000,
+      "DropdownMenu": 70000,
+      "Select": 70000,
+      "Tabs": 70000,
+      "Accordion": 70000,
+      "Toggle": 70000,
+      "ToggleGroup": 70000,
+      "ScrollArea": 70000,
+      "Toast": 70000
+    }
+  },
+  "measured": {
+    "generatedAt": "2026-07-26T05:59:33.491Z",
+    "sharedBaselineGzip": 62747,
+    "css": {
+      "raw": 106092,
+      "gzip": 10884
+    },
+    "isolated": {
+      "Button": { "raw": 191941, "gzip": 60583 },
+      "Dialog": { "raw": 191954, "gzip": 60622 },
+      "Tooltip": { "raw": 191805, "gzip": 60540 },
+      "Popover": { "raw": 191874, "gzip": 60548 },
+      "DropdownMenu": { "raw": 193072, "gzip": 60813 },
+      "Select": { "raw": 191527, "gzip": 60469 },
+      "Tabs": { "raw": 194714, "gzip": 61347 },
+      "Accordion": { "raw": 192124, "gzip": 60648 },
+      "Toggle": { "raw": 192246, "gzip": 60653 },
+      "ToggleGroup": { "raw": 194940, "gzip": 61388 },
+      "ScrollArea": { "raw": 191531, "gzip": 60471 },
+      "Toast": { "raw": 192870, "gzip": 60878 }
+    },
+    "ssr": { "medianMs": 0.685 }
+  }
+}

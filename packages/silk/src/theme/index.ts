@@ -11,6 +11,9 @@ export type {
 export { themeToCssVars } from './themeToCssVars';
 export type { CssVarMap } from './themeToCssVars';
 
+export { cssVars, silkComponentVarNames } from './componentVars';
+export type { SilkComponentVarName, SilkComponentVars } from './componentVars';
+
 export { ThemeProvider } from './ThemeProvider';
 export type { ThemeProviderProps } from './ThemeProvider';
 
