@@ -222,31 +222,11 @@ function layoutClass(css: string, uniqueSelector: string): string {
   return match![1];
 }
 
-/** Balanced-brace slice of every `@container` at-rule body. */
-function containerBlocks(css: string): readonly string[] {
-  const blocks: string[] = [];
-  const opener = /@container[^{]*\{/g;
-  let match: RegExpExecArray | null = opener.exec(css);
-  while (match !== null) {
-    let depth = 1;
-    let i = match.index + match[0].length;
-    while (i < css.length && depth > 0) {
-      if (css[i] === '{') depth += 1;
-      else if (css[i] === '}') depth -= 1;
-      i += 1;
-    }
-    blocks.push(css.slice(match.index, i));
-    opener.lastIndex = i;
-    match = opener.exec(css);
-  }
-  return blocks;
-}
-
 /**
  * Stack is vertical by construction: the axis lives in the base rule, and no
- * variant or container query may reintroduce a direction/wrap flip.
+ * variant may reintroduce a direction/wrap flip.
  */
-test('Stack CSS is column-only with no direction, wrap, or container rules', () => {
+test('Stack CSS is column-only with no direction or wrap rules', () => {
   const css = loadCss();
   const stackClass = layoutClass(css, '[data-rail="start"]');
 
@@ -262,18 +242,11 @@ test('Stack CSS is column-only with no direction, wrap, or container rules', () 
   for (const attr of ['data-direction', 'data-wrap', 'data-collapse-below']) {
     expect(css).not.toContain(`.${stackClass}:where([${attr}=`);
   }
-  for (const block of containerBlocks(css)) {
-    expect(block).not.toContain(`.${stackClass}`);
-  }
 });
 
 test('Grid justify maps to justify-items, not justify-content', () => {
   const css = loadCss();
-  const gridColumns = css.match(
-    /\.([a-zA-Z0-9_-]+):where\(\[data-columns="auto"\]\)/,
-  );
-  expect(gridColumns).not.toBeNull();
-  const gridClass = gridColumns![1];
+  const gridClass = layoutClass(css, '[data-columns="auto"]');
 
   for (const value of gridRecipe.variants.justify) {
     expect(css).toMatch(

@@ -68,22 +68,11 @@ function PostCardRoot({
         data-density={resolvedDensity}
       >
         <Comp {...props} className={densityClass} data-density={resolvedDensity}>
-          {asChild ? (
-            /* The Stack has to live inside the consumer's element, so the
-               children are re-parented through Slottable's render form.
-               See ARCHITECTURE.md#aschild-with-decorations */
-            <Slot.Slottable child={children}>
-              {(slotted) => (
-                <Stack gap="3" align="stretch">
-                  {slotted}
-                </Stack>
-              )}
-            </Slot.Slottable>
-          ) : (
-            <Stack gap="3" align="stretch">
-              {children}
-            </Stack>
-          )}
+          {/* Stack must live inside the consumer element when asChild; Slottable
+              re-parents children. See ARCHITECTURE.md#aschild-with-decorations */}
+          <Slot.Slottable child={children}>
+            {(slotted) => <Stack gap="3">{slotted}</Stack>}
+          </Slot.Slottable>
         </Comp>
       </Card>
     </PostCardContext.Provider>

@@ -23,18 +23,6 @@ export interface GridProps
   readonly children?: ReactNode;
 }
 
-/**
- * Both Grid axes place an item within its own track, so they share one map.
- * `justify` is `justify-items` here — unlike Stack/Inline, where `justify`
- * distributes content along the main axis.
- */
-const placementMap = {
-  start: 'start',
-  center: 'center',
-  end: 'end',
-  stretch: 'stretch',
-} as const;
-
 const columnsRules: string = gridRecipe.variants.columns
   .map((columns) => {
     const template =
@@ -63,7 +51,7 @@ const alignRules: string = gridRecipe.variants.align
   .map(
     (align) => `
     &:where([data-align='${align}']) {
-      align-items: ${placementMap[align]};
+      align-items: ${align};
     }
   `,
   )
@@ -73,7 +61,7 @@ const justifyRules: string = gridRecipe.variants.justify
   .map(
     (justify) => `
     &:where([data-justify='${justify}']) {
-      justify-items: ${placementMap[justify]};
+      justify-items: ${justify};
     }
   `,
   )
@@ -91,6 +79,8 @@ const gridClass: string = css`
 
 /**
  * CSS Grid layout primitive. `columns="auto"` uses fluid auto-fill tracks.
+ * `justify` is `justify-items` (item placement in the track) — unlike
+ * Stack/Inline, where `justify` distributes content along the main axis.
  */
 export function Grid({
   className,

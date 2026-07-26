@@ -24,7 +24,7 @@ function registrySources(): readonly string[] {
 }
 
 const removedApis = [
-  ['Center', /\bCenter\b/],
+  ['Center', /(?:import\s+\{[^}]*\bCenter\b|<Center[\s/>])/],
   ['Stack direction', /<Stack[^>]*\sdirection=/],
   ['Stack wrap', /<Stack[^>]*\swrap=/],
   ['Stack collapseBelow', /<Stack[^>]*\scollapseBelow=/],

@@ -7,6 +7,7 @@ import {
   collapseBelowRulesInline,
   type CollapseBelowProp,
 } from '../layout/collapseBelow';
+import { flexAlignMap, flexJustifyMap } from '../layout/flexMaps';
 import { useComponentDefaults } from '../theme/SilkProvider';
 
 export interface InlineProps
@@ -20,23 +21,6 @@ export interface InlineProps
   readonly ref?: Ref<HTMLDivElement>;
   readonly children?: ReactNode;
 }
-
-const alignMap = {
-  start: 'flex-start',
-  center: 'center',
-  end: 'flex-end',
-  stretch: 'stretch',
-  baseline: 'baseline',
-} as const;
-
-const justifyMap = {
-  start: 'flex-start',
-  center: 'center',
-  end: 'flex-end',
-  between: 'space-between',
-  around: 'space-around',
-  evenly: 'space-evenly',
-} as const;
 
 const gapRules: string = inlineRecipe.variants.gap
   .map(
@@ -52,7 +36,7 @@ const alignRules: string = inlineRecipe.variants.align
   .map(
     (align) => `
     &:where([data-align='${align}']) {
-      align-items: ${alignMap[align]};
+      align-items: ${flexAlignMap[align]};
     }
   `,
   )
@@ -62,7 +46,7 @@ const justifyRules: string = inlineRecipe.variants.justify
   .map(
     (justify) => `
     &:where([data-justify='${justify}']) {
-      justify-content: ${justifyMap[justify]};
+      justify-content: ${flexJustifyMap[justify]};
     }
   `,
   )
@@ -103,8 +87,8 @@ const inlineClass: string = css`
 `;
 
 /**
- * Horizontal flow layout. Defaults to wrapping — the intrinsic-first cousin of
- * `Stack direction="row"`.
+ * Horizontal flow layout. Defaults to wrapping — the intrinsic-first counterpart
+ * of vertical `Stack`.
  */
 export function Inline({
   className,

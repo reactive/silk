@@ -135,7 +135,7 @@ test('Separator is decorative by default and exposes orientation', () => {
  * migrated call site can silently reintroduce a horizontal Stack.
  */
 test('Stack rejects the removed horizontal-flow props', () => {
-  const rejected = (
+  void (
     <>
       {/* @ts-expect-error Stack is vertical-only — use Inline */}
       <Stack direction="row" />
@@ -145,5 +145,4 @@ test('Stack rejects the removed horizontal-flow props', () => {
       <Stack collapseBelow="md" />
     </>
   );
-  expect(rejected).toBeTruthy();
 });
