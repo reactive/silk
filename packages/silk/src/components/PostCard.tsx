@@ -4,6 +4,7 @@ import {
   type PostModel,
   type StatModel,
 } from '@reactive/silk-core';
+import { Slot } from 'radix-ui';
 import {
   createContext,
   useContext,
@@ -55,6 +56,7 @@ function PostCardRoot({
   const resolvedDensity =
     density ?? defaults.density ?? postCardRecipe.defaults.density;
 
+  const Comp = asChild ? Slot.Root : 'article';
   return (
     <PostCardContext.Provider value={{ density: resolvedDensity }}>
       <Card
@@ -65,15 +67,24 @@ function PostCardRoot({
         className={className}
         data-density={resolvedDensity}
       >
-        <article
-          {...props}
-          className={densityClass}
-          data-density={resolvedDensity}
-        >
-          <Stack gap="3" align="stretch">
-            {children}
-          </Stack>
-        </article>
+        <Comp {...props} className={densityClass} data-density={resolvedDensity}>
+          {asChild ? (
+            /* The Stack has to live inside the consumer's element, so the
+               children are re-parented through Slottable's render form.
+               See ARCHITECTURE.md#aschild-with-decorations */
+            <Slot.Slottable child={children}>
+              {(slotted) => (
+                <Stack gap="3" align="stretch">
+                  {slotted}
+                </Stack>
+              )}
+            </Slot.Slottable>
+          ) : (
+            <Stack gap="3" align="stretch">
+              {children}
+            </Stack>
+          )}
+        </Comp>
       </Card>
     </PostCardContext.Provider>
   );

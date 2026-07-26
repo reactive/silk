@@ -28,6 +28,14 @@ test('FeedItem loading uses busy PostCard skeleton', () => {
   ).toBe('true');
 });
 
+test('FeedItem without an entry renders empty, not busy', () => {
+  const { container } = render(<FeedItem data-testid="feed-item" />);
+  expect(screen.queryByLabelText('Loading feed item')).toBe(null);
+  expect(container.querySelector('[data-testid="feed-item"]')?.innerHTML).toBe(
+    '',
+  );
+});
+
 test('FeedItem has no axe violations', async () => {
   const { container } = render(
     <FeedItem

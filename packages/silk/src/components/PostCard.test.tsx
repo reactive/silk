@@ -21,6 +21,23 @@ test('PostCard renders article with author and body', () => {
   );
 });
 
+test('PostCard.Root asChild renders the consumer element as the root', () => {
+  const { container } = render(
+    <ul>
+      <PostCard.Root asChild data-testid="root">
+        <li>Body</li>
+      </PostCard.Root>
+    </ul>,
+  );
+
+  const root = screen.getByTestId('root');
+  expect(root.tagName).toBe('LI');
+  expect(root.parentElement).toBe(container.querySelector('ul'));
+  expect(container.querySelector('article')).toBe(null);
+  expect(root.getAttribute('data-density')).toBe('comfortable');
+  expect(root.textContent).toBe('Body');
+});
+
 test('PostCard has no axe violations', async () => {
   const { container } = render(<PostCard model={model} />);
   await expectNoAxeViolations(container);
