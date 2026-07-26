@@ -1,9 +1,8 @@
-import { Button, Inline, Stack, Text, stackRecipe } from '@reactive/silk';
+import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
+import { Box, Button, Inline, Stack, Text, stackRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
-import { withSource } from '../docsSource';
-import { DemoItems, tallFrameClass } from './Stack.demo';
-import stackDemoSource from './Stack.demo.tsx?raw';
 
 const meta = {
   title: 'Components/Layout/Stack',
@@ -14,7 +13,6 @@ const meta = {
         component:
           'Stack is vertical-only, so `align` is always the horizontal axis and `justify` always the vertical one. For horizontal flow reach for `Inline`.',
       },
-      ...withSource(stackDemoSource).docs,
     },
   },
   args: {
@@ -44,10 +42,33 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const DemoItem = styled(Box)`
+  padding: var(--silk-space-2) var(--silk-space-3);
+  border-radius: var(--silk-radius-sm);
+  /* solid/on-solid — subtle+solid fails WCAG AA at 16px */
+  background-color: var(--silk-color-tone-accent-solid);
+  color: var(--silk-color-tone-accent-on-solid);
+`;
+
+const tallFrameClass: string = css`
+  height: 14rem;
+  padding: var(--silk-space-3);
+  border: 1px dashed var(--silk-color-border-subtle);
+  border-radius: var(--silk-radius-md);
+`;
+
+const demoItems = (
+  <>
+    <DemoItem>One</DemoItem>
+    <DemoItem>Two</DemoItem>
+    <DemoItem>Three</DemoItem>
+  </>
+);
+
 export const Column: Story = {
   args: {
     gap: '3',
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 
@@ -55,7 +76,7 @@ export const Align: Story = {
   args: {
     gap: '3',
     align: 'center',
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 
@@ -65,7 +86,7 @@ export const Justify: Story = {
     align: 'start',
     justify: 'between',
     className: tallFrameClass,
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 
@@ -73,7 +94,7 @@ export const Rail: Story = {
   args: {
     gap: '2',
     rail: 'start',
-    children: <DemoItems />,
+    children: demoItems,
   },
 };
 

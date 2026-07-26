@@ -1,9 +1,8 @@
 import { describe, expect, test } from '@rstest/core';
 
 /**
- * Story files that import local composition helpers (fixtures, demos,
- * VariantMatrix, surfacePanel) must attach that source via docsSource helpers
- * so the Storybook code panel stays reproducible.
+ * Story files that import local composition helpers must attach that source via
+ * docsSource helpers so the Storybook code panel stays reproducible.
  */
 const storySources = import.meta.glob('../**/*.stories.tsx', {
   query: '?raw',
@@ -11,10 +10,18 @@ const storySources = import.meta.glob('../**/*.stories.tsx', {
   eager: true,
 }) as Record<string, string>;
 
-const localHelperImport =
-  /from\s+['"](\.\.?\/(?:[^'"]+\.demo|VariantMatrix|surfacePanel)|\.\/(?:SocialFeed|InspectorPanel|AppSkeleton|SettingsForm))(?:\.tsx)?['"]/;
+const fixtureModules = import.meta.glob('../fixtures/*.{ts,tsx}', {
+  eager: true,
+});
 
-/** Body without import/export-from lines — so import names alone do not pass. */
+const fixtureNames = new Set(
+  Object.keys(fixtureModules)
+    .map((path) => path.match(/\/([^/]+)\.tsx?$/)?.[1])
+    .filter((name): name is string =>
+      Boolean(name && !name.includes('.stories') && !name.includes('.test')),
+    ),
+);
+
 function codeWithoutImports(source: string): string {
   return source
     .split('\n')
@@ -22,26 +29,68 @@ function codeWithoutImports(source: string): string {
     .join('\n');
 }
 
-const usesMatrixSource = /\.\.\.matrixSource\b|\bparameters:\s*matrixSource\b/;
-const usesWithSource = /\b(?:withSource|withStaticSource)\s*\(/;
-const hasRawAttachment = /\?raw['"]/;
+function importedHelpers(source: string): string[] {
+  const helpers: string[] = [];
+  const fromRe =
+    /from\s+['"](\.\.?\/[^'"]+)['"]/g;
+  for (const match of source.matchAll(fromRe)) {
+    const spec = match[1]!;
+    if (spec.endsWith('.demo') || spec.endsWith('.demo.tsx')) {
+      helpers.push(spec.replace(/\.tsx$/, ''));
+      continue;
+    }
+    if (
+      spec === '../VariantMatrix' ||
+      spec === '../VariantMatrix.tsx' ||
+      spec.endsWith('/VariantMatrix')
+    ) {
+      helpers.push('VariantMatrix');
+      continue;
+    }
+    if (
+      spec === '../surfacePanel' ||
+      spec === '../surfacePanel.tsx' ||
+      spec.endsWith('/surfacePanel')
+    ) {
+      helpers.push('surfacePanel');
+      continue;
+    }
+    const fixture = spec.match(/^\.\/([^/.]+)$/)?.[1];
+    if (fixture && fixtureNames.has(fixture)) {
+      helpers.push(fixture);
+    }
+  }
+  return helpers;
+}
+
+function hasAttachmentFor(helper: string, source: string, body: string): boolean {
+  if (helper === 'VariantMatrix') {
+    return /\.\.\.matrixSource\b|\bparameters:\s*matrixSource\b/.test(body);
+  }
+  const base = helper.replace(/^\.\.?\//, '').replace(/\.demo$/, '');
+  const rawForHelper = new RegExp(
+    `${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\.demo)?\\.tsx\\?raw`,
+  );
+  return (
+    /\bwithSource\s*\(/.test(body) &&
+    rawForHelper.test(source)
+  );
+}
 
 describe('story show-code transparency', () => {
   for (const [path, source] of Object.entries(storySources)) {
-    test(`${path} attaches docs source when it imports local helpers`, () => {
-      if (!localHelperImport.test(source)) {
+    test(`${path} attaches docs source for each local helper import`, () => {
+      const helpers = importedHelpers(source);
+      if (helpers.length === 0) {
         return;
       }
       const body = codeWithoutImports(source);
-      // matrixSource already embeds VariantMatrix.tsx?raw; other helpers need a
-      // local ?raw import passed into withSource / withStaticSource.
-      const ok =
-        usesMatrixSource.test(body) ||
-        (usesWithSource.test(body) && hasRawAttachment.test(source));
-      expect(
-        ok,
-        `${path} imports a local helper/fixture but does not call withSource / withStaticSource / matrixSource with a ?raw attachment`,
-      ).toBe(true);
+      for (const helper of helpers) {
+        expect(
+          hasAttachmentFor(helper, source, body),
+          `${path} imports ${helper} but does not attach its source via withSource / matrixSource`,
+        ).toBe(true);
+      }
     });
   }
 });

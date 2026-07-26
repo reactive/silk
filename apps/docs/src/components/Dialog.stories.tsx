@@ -29,7 +29,7 @@ const meta = {
         component:
           'Radix owns focus, keyboard, and portal behavior; Silk owns visuals. Use `Dialog.Root` + parts, or compose with `Dialog.Content` for Portal+Overlay+Content. Body portals reconstitute the nearest ThemeProvider scope.',
       },
-      ...withSource(dialogDemoSource).docs,
+      ...withSource(dialogDemoSource, surfacePanelSource).docs,
     },
   },
   argTypes: {
@@ -112,10 +112,7 @@ export const Layering: Story = {
 };
 
 export const NestedThemePortal: Story = {
-  parameters: {
-    controls: { disable: true },
-    ...withSource(dialogDemoSource, surfacePanelSource),
-  },
+  parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <Stack gap="4">
       <Text tone="secondary">

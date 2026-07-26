@@ -10,7 +10,7 @@ type SourceContext = {
   };
 };
 
-type DocsSourceParameters = {
+export type DocsSourceParameters = {
   readonly docs: {
     readonly source: {
       readonly type: 'dynamic';
@@ -19,38 +19,22 @@ type DocsSourceParameters = {
   };
 };
 
-/** Drop react-docgen injections if a `?raw` import still went through that loader. */
-function cleanSource(source: string): string {
-  const marker = '.__docgenInfo=';
-  const index = source.indexOf(marker);
-  if (index === -1) {
-    return source.trimEnd();
-  }
-  // Docgen appends at EOF; cut from the statement start (optional leading `;`).
-  const start = source.lastIndexOf(';', index);
-  return source.slice(0, start === -1 ? index : start).trimEnd();
-}
-
-/**
- * Force Storybook's emit/transform path even for non-args stories. Without
- * `type: 'dynamic'`, CSF-only stories skip `docs.source.transform` and the
- * code panel never sees appended modules.
- */
 function attachSources(
   preferOriginalSource: boolean,
   sources: readonly string[],
 ): DocsSourceParameters {
-  const cleaned = sources.map(cleanSource);
+  const cleaned = sources.map((source) => source.trimEnd());
   return {
     docs: {
       source: {
+        // Force Storybook's emit path so transforms run for non-args stories.
         type: 'dynamic',
         transform: (code: string, context: SourceContext): string => {
           const original = context.parameters?.docs?.source?.originalSource;
           const base =
-            preferOriginalSource && original?.trim()
+            preferOriginalSource && original != null && original.trim() !== ''
               ? original
-              : code?.trim()
+              : code.trim() !== ''
                 ? code
                 : (original ?? '');
           return [base, ...cleaned].join('\n\n');
@@ -62,23 +46,14 @@ function attachSources(
 
 /**
  * Append supporting module source beneath a story's snippet in the code panel.
- * Prefer for fixtures and `*.demo.tsx` helpers so Show code stays drift-free.
- * Uses the live/dynamic snippet when available (args-accurate).
+ * Prefer for fixtures and extracted helpers so Show code stays drift-free.
  */
 export function withSource(...sources: readonly string[]): DocsSourceParameters {
   return attachSources(false, sources);
 }
 
-/**
- * Prefer static CSF source plus supporting modules — use when the dynamic
- * serializer loses information (e.g. VariantMatrix function children).
- */
-export function withStaticSource(
-  ...sources: readonly string[]
-): DocsSourceParameters {
-  return attachSources(true, sources);
-}
-
-/** Ready-made parameters for cross-product matrix stories. */
-export const matrixSource: DocsSourceParameters =
-  withStaticSource(variantMatrixSource);
+/** Ready-made parameters for cross-product matrix stories (CSF + VariantMatrix). */
+export const matrixSource: DocsSourceParameters = attachSources(
+  true,
+  [variantMatrixSource],
+);

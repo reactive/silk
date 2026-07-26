@@ -58,7 +58,6 @@ const Chip = styled(Box)`
   color: var(--silk-color-tone-accent-on-solid);
 `;
 
-/** Applied via Inline `className` args — stays a class string. */
 const fullWidthClass: string = css`
   width: 100%;
 `;
