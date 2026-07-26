@@ -14,6 +14,7 @@ import type {
   Theme,
   ToneName,
 } from '../tokens/index.js';
+import { parseHexChannels } from './colorMath.js';
 
 export interface CreateThemeOptions {
   readonly colorScheme?: ColorScheme;
@@ -57,17 +58,6 @@ function mergePalette(
     red: mergeScale(base.red, override.red),
     green: mergeScale(base.green, override.green),
   };
-}
-
-function parseHexChannels(color: string): [number, number, number] | null {
-  if (!/^#[0-9a-f]{6}$/i.test(color)) {
-    return null;
-  }
-  return [
-    Number.parseInt(color.slice(1, 3), 16),
-    Number.parseInt(color.slice(3, 5), 16),
-    Number.parseInt(color.slice(5, 7), 16),
-  ];
 }
 
 /**

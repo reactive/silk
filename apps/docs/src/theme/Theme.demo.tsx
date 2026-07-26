@@ -1,24 +1,10 @@
-import {
-  Button,
-  Inline,
-  Text,
-  createTheme,
-} from '@reactive/silk';
+import { Button, Inline, Text } from '@reactive/silk';
 import type { JSX } from 'react';
 import { SurfacePanel } from '../surfacePanel';
+import { emberLight } from './tenants';
 
-export const tenantTheme = createTheme({
-  colorScheme: 'light',
-  semantic: {
-    color: {
-      surface: '#fff7ed',
-      surfaceRaised: '#ffedd5',
-      textPrimary: '#7c2d12',
-      textSecondary: '#9a3412',
-      borderSubtle: '#fdba74',
-    },
-  },
-});
+/** Warm tenant — same ember light theme as TenantGallery. */
+export const tenantTheme = emberLight;
 
 export const providerDefaults = {
   Button: { variant: 'soft', tone: 'neutral' },

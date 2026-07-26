@@ -10,7 +10,7 @@ Silk is pre-1.0. This document defines what counts as **public API** and how bre
 | Semantic token names | `surface`, `textPrimary`, `tones.accent.solid`, space steps `0`–`10` | Renaming or removing a token key is breaking |
 | Public CSS variables | `--silk-color-surface`, `--silk-color-surface-sunken`, `--silk-color-overlay`, `--silk-shadow-raised`, `--silk-shadow-overlay`, `--silk-color-tone-*-text`, `--silk-space-2`, `--silk-button-bg`, `--silk-grid-min` | Removing or changing the meaning of a documented `--silk-*` variable is breaking |
 | Recipe shapes | `buttonRecipe.variants`, `stackRecipe.defaults` | Removing an axis or declared value is breaking |
-| Core utilities | `defineRecipe`, `createTheme`, `compactSpace`, `DensityName` | Signature or behavioral changes that affect consumers are breaking |
+| Core utilities | `defineRecipe`, `createTheme`, `generateScale`, `generatePairedPalette`, `checkThemeContrast`, `contrastRatio`, `relativeLuminance`, `compactSpace`, `DensityName` | Signature or behavioral changes that affect consumers are breaking |
 | Package exports / subpaths | `@reactive/silk`, `@reactive/silk-core/tokens`, `@reactive/silk/styles.css` | Removing an export path is breaking |
 
 **Not public API** (may change without a major bump pre-1.0, but still prefer a changeset note):
@@ -48,6 +48,15 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **Tone interaction ramp** — `solid` / `hover` / `active` are three distinct fills in every scheme, all keeping `onSolid` at 4.5:1. Light `hover` is blended between palette steps 11 and 12 because `solid` sits at 11 with only one step of headroom. *breaking:* themes pinning those hex values must re-derive them.
 - **`Field.Root controlId`** — names the labelled control so `Field.Label htmlFor` and the control agree during server rendering. `FieldContextValue.controlId` is gone; `inputId` is the one resolved id. Setting `id` on a control inside a Field no longer retargets the label. *breaking:* move control-level `id` overrides up to `Field.Root controlId`.
 - Compact space remains the fixed `compactSpace` scale (not overridable via `createTheme.semantic.space`).
+
+## Stage 5 public additions
+
+- **`generateScale(seedHex, colorScheme)`** — OKLCH 12-step `PaletteScale` from canonical sRGB hex (`#RGB` / `#RRGGBB`); invalid input throws. Stable: hex input contract, 12-step shape, lowercase `#rrggbb` output. May improve: exact L/C curves between minors (validate with `checkThemeContrast`).
+- **`generatePairedPalette(brandHex, options?)`** — tenant recipe → `{ light, dark }` palettes (`blue`/`gray` from brand; `red`/`green` default or optional seeds). Dark derivation is a full palette, not accent-only.
+- **`checkThemeContrast(theme)`** → `{ ok, violations }` with discriminated kinds `contrast` \| `unsupported-color` \| `distinctness`. Hex-only audit; non-hex semantic colors are diagnostics, not silent passes.
+- **`contrastRatio` / `relativeLuminance` / `parseCanonicalHex`** — platform-neutral hex contrast helpers.
+- **Theme scope channels** — `semanticVars` vs `customVars` on web theme scope (behavior change for named-inside-tenant portals: component hooks now inherit; semantic vars still drop).
+- **Public component CSS-var list frozen** in `silkComponentVarMeta` (documented in Theming.mdx). Removals/renames/meaning changes are breaking.
 
 ## Stage 3 public additions
 

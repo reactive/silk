@@ -38,6 +38,13 @@ function extractComponentVars(css: string): Set<string> {
   return found;
 }
 
+test('silkComponentVarMeta names match silkComponentVarNames', async () => {
+  const { silkComponentVarMeta } = await import('./componentVars');
+  expect(silkComponentVarMeta.map((entry) => entry.name)).toEqual([
+    ...silkComponentVarNames,
+  ]);
+});
+
 test('no undeclared --silk-* hook leaks into the stylesheet', () => {
   const inCss = extractComponentVars(loadDistCss());
   expect([...inCss].sort()).toEqual([...silkComponentVarNames].sort());

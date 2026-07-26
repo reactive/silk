@@ -38,11 +38,17 @@ Do **not** declare `--silk-button-bg: var(--silk-accent)` on the component — t
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Named light/dark | Static CSS + `data-theme` / `color-scheme` (and `prefers-color-scheme` when unset)                                                                                                                                                   |
 | Dynamic / tenant | `themeToCssVars(theme)` on the ThemeProvider `style` attribute                                                                                                                                                                       |
-| Nesting          | Secondary. Works via DOM variable inheritance in normal flow. Portals reconstitute the nearest ThemeProvider scope (class + `data-theme` + custom CSS vars); pass Dialog `container` when the portal DOM must live inside a subtree. |
+| Nesting          | Secondary. Works via DOM variable inheritance in normal flow. Portals reconstitute the nearest ThemeProvider scope (class + `data-theme` + semantic vars + custom vars); pass Dialog `container` when the portal DOM must live inside a subtree. |
 
 Prefer either `theme` (custom object) or `colorScheme` (named/static). If both are passed, `theme` wins for `data-theme` and inline variables. Nested providers inherit omitted `colorScheme` / `density` from the nearest ancestor.
 
+**Variable channels (Stage 5):** theme scope splits CSS variables into `semanticVars` (theme-owned: `--silk-color-*`, scales, type, motion, shadows, focus geometry) and `customVars` (component hooks / extensions). A nested `theme` or `colorScheme` **replaces** semantic vars so named children do not drag outer tenant semantics into portals; custom vars **always inherit** so branding hooks survive an inner named flip.
+
+**Tenant branding:** `generatePairedPalette(brandHex)` → `{ light, dark }` palettes (accent + brand-tinted gray; optional danger/success seeds). `generateScale` is the OKLCH 12-step primitive. `checkThemeContrast(theme)` audits the semantic contrast contract (hex-only; non-hex yields `unsupported-color` diagnostics).
+
 No runtime CSS-in-JS. No ad hoc `<style>` injection per provider. Constant SSR-rendered `<style>` from behavior bindings (Radix ScrollArea Viewport) is allowed when static and nonce-compatible — see PRINCIPLES amendment 2026-07-26.
+
+Public component CSS variables are listed in `silkComponentVarMeta` / Theming.mdx — sparse by design; removals/renames are breaking.
 
 ### Density
 

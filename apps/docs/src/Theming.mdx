@@ -40,6 +40,37 @@ const theme = createTheme({
 
 Prefer **either** `theme` **or** `colorScheme`. If both are passed, `theme` wins for `data-theme` and inline variables.
 
+### Palette generation and dark derivation
+
+For multi-tenant branding, generate a full light+dark palette from one brand hex:
+
+```tsx
+import {
+  createTheme,
+  generatePairedPalette,
+  checkThemeContrast,
+} from '@reactive/silk';
+
+const paired = generatePairedPalette('#0ea5e9');
+const light = createTheme({ colorScheme: 'light', palette: paired.light });
+const dark = createTheme({ colorScheme: 'dark', palette: paired.dark });
+
+// CI / playground guard — hex-only semantic audit
+const { ok, violations } = checkThemeContrast(light);
+```
+
+Slot mapping for `generatePairedPalette(brand)`:
+
+| Palette scale | Source |
+| --- | --- |
+| `blue` (accent) | Brand chromatic OKLCH ramp |
+| `gray` (surfaces / neutral / text) | Low-chroma brand-hue ramp |
+| `red` / `green` | Built-in defaults, or `dangerSeedHex` / `successSeedHex` |
+
+`generateScale(seed, colorScheme)` is the lower-level primitive (12-step OKLCH ramp). Seed input is canonical sRGB hex (`#RGB` / `#RRGGBB`); invalid input throws. Algorithm curves may improve between minors; the hex contract and 12-step shape are stable.
+
+See **Theme/TenantGallery** (two tenants × light/dark side by side) and **Theme/ThemePlayground** (live controls + contrast readout).
+
 ## Typography and fonts
 
 Silk exposes three font-family tokens (inspired by Claude Cowork's sans / serif / mono roles) and maps typography roles onto them:
@@ -88,23 +119,66 @@ Defaults are a typed map — not a runtime component registry.
 
 ## Nesting and portals
 
-Nesting works via DOM CSS variable inheritance in normal flow.
+Nesting works via DOM CSS variable inheritance in normal flow, with two variable **channels**:
 
-Portals (for example Dialog) still render under `document.body` by default, but Silk reconstitutes the **nearest** `ThemeProvider` / `SilkProvider` scope on the portaled tree: the same theme class, `data-theme` (when set), and custom `createTheme` CSS variables. Nested providers therefore theme their dialogs correctly without an explicit portal container.
+| Channel | Contents | Nested `theme` / `colorScheme` |
+| --- | --- | --- |
+| Semantic | `--silk-color-*`, radii, type, motion, shadows, focus geometry, space source scales | **Replaced** — named children do not carry outer tenant semantics into portals |
+| Custom | Component hooks (`--silk-button-bg`, …) and other `--silk-*` extensions | **Inherited** — portals under an inner named scheme still see outer hooks |
 
-For cases where you need the portal DOM to live inside a particular subtree (stacking, clipping, or measuring against that subtree), pass Dialog `container`. Nested theming itself does **not** require `container` — see **Components/Interaction/Dialog → NestedThemePortal**.
+Supported patterns:
 
-## Component CSS variable hooks
+1. **Tenant → named** — outer `theme={tenant}`, inner `colorScheme="dark"`: inner (and its portals) use named dark semantics; outer component hooks still apply.
+2. **Named → tenant** — outer named scheme, inner custom theme: inner semantics win for that subtree and its portals.
+3. **Tenant → tenant** — inner custom theme fully replaces outer semantics; custom hooks merge.
 
-Public hooks like `--silk-button-bg` resolve through private vars:
+Portals (Dialog, Popover, Select, …) reconstitute the nearest scope: theme class, `data-theme`, semantic vars, and custom vars. Nested theming does **not** require Dialog `container` — pass `container` only when the portal DOM must live inside a particular subtree.
+
+Constant SSR `<style>` from behavior bindings (ScrollArea) is charter-permitted and is not a theme stylesheet.
+
+## Public component CSS variable hooks
+
+Component tokens stay sparse — an override surface, not a parallel token system. Every hook is consumed as `var(--silk-…, <semantic fallback>)` and never pre-declared on the component.
+
+{/* COMPONENT_VAR_TABLE_START */}
+| Variable | Component | Default resolution | Rationale |
+| --- | --- | --- | --- |
+| `--silk-avatar-size` | Avatar | mediaScale edge (px) | Runtime size when not using the size axis |
+| `--silk-badge-bg` | Badge | tone solid / subtle by variant | Brand fill override |
+| `--silk-badge-border` | Badge | tone border | Brand border override |
+| `--silk-badge-fg` | Badge | tone onSolid / text by variant | Brand foreground override |
+| `--silk-badge-radius` | Badge | radius.md / full by size | Corner radius escape hatch |
+| `--silk-button-bg` | Button | tone solid / subtle by variant | Brand fill override |
+| `--silk-button-border` | Button | tone border | Brand border override |
+| `--silk-button-fg` | Button | tone onSolid / text by variant | Brand foreground override |
+| `--silk-button-radius` | Button | radius.md | Corner radius escape hatch |
+| `--silk-card-bg` | Card | color.surfaceRaised | Surface fill override |
+| `--silk-card-border` | Card | color.borderSubtle | Border override |
+| `--silk-card-radius` | Card | radius.lg | Corner radius escape hatch |
+| `--silk-card-shadow` | Card | shadow.raised when elevated | Elevation ink override |
+| `--silk-empty-state-measure` | EmptyState | measure.prose | Readable measure for empty-state copy |
+| `--silk-grid-min` | Grid | minColumnWidth prop / recipe default | Runtime track minimum |
+| `--silk-input-bg` | Input/Textarea | color.surfaceSunken | Control fill override |
+| `--silk-input-border` | Input/Textarea | color.borderSubtle | Control border override |
+| `--silk-input-radius` | Input/Textarea | radius.md | Control radius escape hatch |
+| `--silk-scrollarea-thumb` | ScrollArea | color.borderSubtle | Scrollbar thumb ink |
+| `--silk-select-bg` | Select | color.surfaceSunken | Trigger fill override |
+| `--silk-select-border` | Select | color.borderSubtle | Trigger border override |
+| `--silk-select-radius` | Select | radius.md | Trigger radius escape hatch |
+| `--silk-status-dot-bg` | StatusDot | tone solid | Status ink override |
+| `--silk-surface-bg` | Surface | color.surface / surfaceRaised / surfaceSunken | Surface fill override |
+| `--silk-surface-border` | Surface | color.borderSubtle | Surface border override |
+| `--silk-surface-radius` | Surface | radius.md | Surface radius escape hatch |
+| `--silk-surface-shadow` | Surface | shadow.raised when elevated | Elevation ink override |
+{/* COMPONENT_VAR_TABLE_END */}
 
 ```css
 --_bg: var(--silk-button-bg, var(--_tone-solid));
 ```
 
-Do **not** pre-declare `--silk-button-bg: var(--silk-accent)` on the component — that shadows consumer overrides. See **Components/Visual/Button → StyledOverrides**.
+Do **not** pre-declare `--silk-button-bg: var(--silk-accent)` on the component — that shadows consumer overrides. See **Components/Visual/Button → StyledOverrides**. Removals, renames, and meaning changes are breaking per [API_POLICY](https://github.com/reactive/silk/blob/main/docs/API_POLICY.md).
 
 ## Further reading
 
-- Theme stories under **Theme**
+- Theme stories under **Theme** (TenantGallery, ThemePlayground, TokenAudit)
 - Architecture: [docs/ARCHITECTURE.md](https://github.com/reactive/silk/blob/main/docs/ARCHITECTURE.md)

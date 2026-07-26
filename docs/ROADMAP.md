@@ -88,16 +88,16 @@ Where product value lives. Styling and shared behavior come entirely from Silk p
 
 ---
 
-## Stage 5 — Theming maturity
+## Stage 5 — Theming maturity ✅ (done)
 
 Harden theming from "works" to "product-grade multi-tenant".
 
-- Nested themes: extend the Stage 2 acceptance tests to full-app composition and document the supported patterns.
-- Tenant branding: `createTheme` ergonomics for partial overrides, palette generation/contrast guidance, dark-mode derivation.
-- Component token audit: confirm the public CSS-variable surface is sparse, documented, and stable (it becomes API).
-- Theme preview/dev tooling in Storybook (live token editing against real components).
+- Nested themes: fixture-scale acceptance (SocialFeed / InspectorPanel) under tenants × schemes; portal channel split (`semanticVars` vs `customVars`); patterns documented in Theming.mdx + ARCHITECTURE.
+- Tenant branding: `generateScale` (OKLCH) + `generatePairedPalette` (paired light/dark, accent + gray); `checkThemeContrast` / `contrastRatio` public; ThemePlayground + TenantGallery in docs.
+- Component token audit: `silkComponentVarMeta` is the single source; Theming.mdx table sync-tested; sparse criteria documented.
+- Theme preview: Storybook ThemePlayground (debounced controls, contrast readout, last-valid-theme hold).
 
-**Exit criteria:** two visually distinct tenant themes plus light/dark run side by side in docs with no runtime CSS generation; public component-token list documented.
+**Exit criteria (met):** Ocean + Ember tenants × light/dark side by side in docs (inline CSS vars only); public component-token list documented and drift-guarded.
 
 ---
 
@@ -136,7 +136,7 @@ Tracked from the founding brief; each has a home stage where it must be resolved
 | Question | Resolved in | Status |
 | --- | --- | --- |
 | Recipes: shared model vs. per-renderer | Stage 0 | ✅ Shared contracts in core; renderers own styling |
-| Semantic vs. component tokens, how many | Stage 2/5 | Partially — Stage 2 audit landed (`success`, surfaces, shadows, tone `text`); Stage 5 freezes public CSS-var list |
+| Semantic vs. component tokens, how many | Stage 2/5 | ✅ Stage 2 audit + Stage 5 freeze (`silkComponentVarMeta` / Theming.mdx) |
 | Responsive strategy | Stage 1 | ✅ Intrinsic-first + container queries; `collapseBelow` web-only |
 | Slot architecture for composites | Stage 4 | ✅ Dual API, compound-first — [COMPOSITES.md](COMPOSITES.md) |
 | Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | ✅ Proven on web; native spike validates in Stage 1 |

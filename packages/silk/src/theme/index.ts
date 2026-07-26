@@ -1,19 +1,39 @@
-export { createTheme } from '@reactive/silk-core';
+export {
+  checkThemeContrast,
+  contrastRatio,
+  createTheme,
+  generatePairedPalette,
+  generateScale,
+  relativeLuminance,
+} from '@reactive/silk-core';
 export type {
   ColorScheme,
+  ContrastViolation,
   CreateThemeOptions,
   DensityName,
   FontFamilyName,
+  GenerateScaleOptions,
+  PairedPalette,
+  PairedPaletteOptions,
   Palette,
   SemanticTokens,
   Theme,
+  ThemeContrastResult,
 } from '@reactive/silk-core';
 
 export { themeToCssVars } from './themeToCssVars';
 export type { CssVarMap } from './themeToCssVars';
 
-export { cssVars, silkComponentVarNames } from './componentVars';
-export type { SilkComponentVarName, SilkComponentVars } from './componentVars';
+export {
+  cssVars,
+  silkComponentVarMeta,
+  silkComponentVarNames,
+} from './componentVars';
+export type {
+  SilkComponentVarMeta,
+  SilkComponentVarName,
+  SilkComponentVars,
+} from './componentVars';
 
 export { ThemeProvider } from './ThemeProvider';
 export type { ThemeProviderProps } from './ThemeProvider';

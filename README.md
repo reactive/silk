@@ -17,7 +17,7 @@ yarn docs    # http://localhost:6006
 
 ## Status
 
-Stage 2 (visual primitives & forms): `Surface`, `Card`, `Heading`, `Badge`, status primitives, `Field`/`Input`/`Textarea`, Radix-backed form controls, token audit (`success`, elevation shadows, contrast), SettingsForm fixture, and [pre-1.0 API policy](docs/API_POLICY.md). Stage 1 layout vocabulary remains. The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
+Stage 5 (theming maturity): `generatePairedPalette` / `generateScale`, `checkThemeContrast`, nested portal variable channels, TenantGallery + ThemePlayground in docs, frozen public component CSS-var list. Prior stages shipped layout, visual/forms, interaction primitives, and composites. The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
 
 ## Packages
 
@@ -89,10 +89,13 @@ export function App() {
 }
 ```
 
-Custom / tenant themes use the style-attribute path:
+Custom / tenant themes use the style-attribute path. For brand seeds with paired light/dark:
 
 ```tsx
-<SilkProvider theme={createTheme({ semantic: { color: { surface: '#fafafa' } } })}>
+import { createTheme, generatePairedPalette } from '@reactive/silk';
+
+const paired = generatePairedPalette('#0ea5e9');
+<SilkProvider theme={createTheme({ colorScheme: 'light', palette: paired.light })}>
   …
 </SilkProvider>
 ```

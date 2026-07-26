@@ -1,4 +1,7 @@
-import { createTheme } from '@reactive/silk-core';
+import {
+  createTheme,
+  generatePairedPalette,
+} from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
 import { Badge } from '../components/Badge';
@@ -87,6 +90,42 @@ test('Dialog portal reconstitutes theme for Stage 2 content', async () => {
 
   const input = await screen.findByLabelText('Portal input');
   expect(input).toBeTruthy();
-  const portalScope = input.closest('[data-theme="dark"]');
+  const portalScope = input.closest('[data-theme="dark"]') as HTMLElement | null;
   expect(portalScope).not.toBeNull();
+  expect(portalScope!.style.getPropertyValue('--silk-color-surface-raised')).toBe(
+    '#1a1a1a',
+  );
+});
+
+test('paired tenant themes side by side use inline vars only', () => {
+  const ocean = generatePairedPalette('#0ea5e9');
+  const ember = generatePairedPalette('#ea580c');
+  const oceanTheme = createTheme({
+    colorScheme: 'light',
+    palette: ocean.light,
+  });
+  const emberTheme = createTheme({
+    colorScheme: 'dark',
+    palette: ember.dark,
+  });
+
+  const before = document.querySelectorAll('style').length;
+  const { container } = render(
+    <>
+      <ThemeProvider theme={oceanTheme}>
+        <Button>Ocean</Button>
+      </ThemeProvider>
+      <ThemeProvider theme={emberTheme}>
+        <Button>Ember</Button>
+      </ThemeProvider>
+    </>,
+  );
+  const scopes = container.querySelectorAll('[data-theme]');
+  expect(scopes.length).toBe(2);
+  for (const scope of scopes) {
+    expect(
+      (scope as HTMLElement).style.getPropertyValue('--silk-color-surface'),
+    ).not.toBe('');
+  }
+  expect(document.querySelectorAll('style').length).toBe(before);
 });
