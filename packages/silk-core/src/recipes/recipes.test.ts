@@ -29,6 +29,14 @@ import {
   textareaRecipe,
   toastRecipe,
   toggleRecipe,
+  statusDotRecipe,
+  mediaObjectRecipe,
+  actionBarRecipe,
+  statGroupRecipe,
+  emptyStateRecipe,
+  postCardRecipe,
+  commentRecipe,
+  profileCardRecipe,
 } from './index.js';
 
 function assertRecipeDefaults(recipe: {
@@ -74,6 +82,14 @@ test('all recipes provide every axis default', () => {
   assertRecipeDefaults(selectRecipe);
   assertRecipeDefaults(toastRecipe);
   assertRecipeDefaults(toggleRecipe);
+  assertRecipeDefaults(statusDotRecipe);
+  assertRecipeDefaults(mediaObjectRecipe);
+  assertRecipeDefaults(actionBarRecipe);
+  assertRecipeDefaults(statGroupRecipe);
+  assertRecipeDefaults(emptyStateRecipe);
+  assertRecipeDefaults(postCardRecipe);
+  assertRecipeDefaults(commentRecipe);
+  assertRecipeDefaults(profileCardRecipe);
 });
 
 test('buttonRecipe exposes expected variant axes', () => {

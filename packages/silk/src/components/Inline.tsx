@@ -78,6 +78,16 @@ const wrapRules: string = inlineRecipe.variants.wrap
   )
   .join('\n');
 
+const directionRules: string = inlineRecipe.variants.direction
+  .map(
+    (direction) => `
+    &:where([data-direction='${direction}']) {
+      flex-direction: ${direction};
+    }
+  `,
+  )
+  .join('\n');
+
 const inlineClass: string = css`
   display: flex;
   flex-direction: row;
@@ -87,6 +97,7 @@ const inlineClass: string = css`
   ${alignRules}
   ${justifyRules}
   ${wrapRules}
+  ${directionRules}
   /* Adaptive rules must stay last — equal specificity, source order wins. */
   ${collapseBelowRulesInline}
 `;
@@ -102,6 +113,7 @@ export function Inline({
   align,
   justify,
   wrap,
+  direction,
   collapseBelow,
   ...props
 }: InlineProps): JSX.Element {
@@ -111,6 +123,8 @@ export function Inline({
   const resolvedJustify =
     justify ?? defaults.justify ?? inlineRecipe.defaults.justify;
   const resolvedWrap = wrap ?? defaults.wrap ?? inlineRecipe.defaults.wrap;
+  const resolvedDirection =
+    direction ?? defaults.direction ?? inlineRecipe.defaults.direction;
 
   const Comp = asChild ? Slot.Root : 'div';
   return (
@@ -121,6 +135,7 @@ export function Inline({
       data-align={resolvedAlign}
       data-justify={resolvedJustify}
       data-wrap={resolvedWrap}
+      data-direction={resolvedDirection}
       {...collapseBelowDomProps(collapseBelow)}
     />
   );

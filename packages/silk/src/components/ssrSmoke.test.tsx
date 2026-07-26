@@ -2,25 +2,33 @@ import { createTheme } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { renderToString } from 'react-dom/server';
 import { createElement } from 'react';
+import { Accordion } from './Accordion';
+import { ActionBar } from './ActionBar';
 import { Badge } from './Badge';
 import { Card } from './Card';
 import { Checkbox } from './Checkbox';
+import { EmptyState } from './EmptyState';
+import { FeedItem } from './FeedItem';
 import { Field } from './Field';
 import { Heading } from './Heading';
+import { Identity } from './Identity';
 import { Input } from './Input';
+import { MediaObject } from './MediaObject';
+import { PostCard } from './PostCard';
 import { Progress } from './Progress';
 import { RadioGroup } from './RadioGroup';
+import { ScrollArea } from './ScrollArea';
 import { Skeleton } from './Skeleton';
 import { Slider } from './Slider';
 import { Spinner } from './Spinner';
+import { StatGroup } from './StatGroup';
+import { StatusDot } from './StatusDot';
 import { Surface } from './Surface';
 import { Switch } from './Switch';
 import { Tabs } from './Tabs';
 import { Textarea } from './Textarea';
 import { Toggle } from './Toggle';
 import { ToggleGroup } from './ToggleGroup';
-import { Accordion } from './Accordion';
-import { ScrollArea } from './ScrollArea';
 import { SilkProvider } from '../theme/SilkProvider';
 
 test('Stage 2 form and visual primitives SSR without throwing', () => {
@@ -128,6 +136,51 @@ test('Field label/control association is correct in server markup', () => {
   // label works with JS disabled and hydration has nothing to correct.
   expect(html).toContain('for="email"');
   expect(html).toContain('id="email"');
+});
+
+test('Stage 4 composites SSR without throwing', () => {
+  const html = renderToString(
+    createElement(
+      SilkProvider,
+      null,
+      createElement(Identity, {
+        model: {
+          id: 'u1',
+          name: 'Ada',
+          fallback: 'A',
+        },
+      }),
+      createElement(
+        MediaObject,
+        { media: createElement('span', null, 'M') },
+        'Content',
+      ),
+      createElement(
+        ActionBar.Root,
+        { 'aria-label': 'Actions' },
+        createElement(ActionBar.Action, null, 'Like'),
+      ),
+      createElement(StatGroup, {
+        stats: [{ id: 'a', label: 'A', value: 1 }],
+      }),
+      createElement(EmptyState, { title: 'Empty' }),
+      createElement(PostCard, {
+        model: {
+          id: 'p1',
+          author: { id: 'u1', name: 'Ada', fallback: 'A' },
+          body: 'Hello',
+          createdAt: '2026-07-26T10:00:00.000Z',
+        },
+      }),
+      createElement(FeedItem, { loading: true }),
+      createElement(StatusDot, null),
+    ),
+  );
+
+  expect(html).toContain('Ada');
+  expect(html).toContain('Empty');
+  expect(html).toContain('Hello');
+  expect(html).toContain('aria-busy');
 });
 
 test('Field+Slider SSR omits Label htmlFor and names thumb via labelledby', () => {

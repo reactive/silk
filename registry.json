@@ -7,11 +7,207 @@
       "name": "identity",
       "type": "registry:component",
       "title": "Identity",
-      "description": "Compound Identity composite (Avatar + Name + Meta) with a convenience form. Built on @reactive/silk primitives — zero Tailwind.",
-      "dependencies": ["@reactive/silk"],
+      "description": "Identity composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
       "files": [
         {
           "path": "registry/identity/identity.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "status-dot",
+      "type": "registry:component",
+      "title": "StatusDot",
+      "description": "StatusDot composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/status-dot/status-dot.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "media-object",
+      "type": "registry:component",
+      "title": "MediaObject",
+      "description": "MediaObject composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core",
+        "radix-ui"
+      ],
+      "files": [
+        {
+          "path": "registry/media-object/media-object.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "action-bar",
+      "type": "registry:component",
+      "title": "ActionBar",
+      "description": "ActionBar composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core",
+        "radix-ui"
+      ],
+      "files": [
+        {
+          "path": "registry/action-bar/action-bar.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "stat-group",
+      "type": "registry:component",
+      "title": "StatGroup",
+      "description": "StatGroup composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/stat-group/stat-group.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "empty-state",
+      "type": "registry:component",
+      "title": "EmptyState",
+      "description": "EmptyState composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/empty-state/empty-state.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "post-card",
+      "type": "registry:component",
+      "title": "PostCard",
+      "description": "PostCard composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/post-card/post-card.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "comment",
+      "type": "registry:component",
+      "title": "Comment",
+      "description": "Comment composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/comment/comment.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "comment-thread",
+      "type": "registry:component",
+      "title": "CommentThread",
+      "description": "CommentThread composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/comment-thread/comment-thread.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "notification",
+      "type": "registry:component",
+      "title": "Notification",
+      "description": "Notification composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/notification/notification.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "profile-card",
+      "type": "registry:component",
+      "title": "ProfileCard",
+      "description": "ProfileCard composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/profile-card/profile-card.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "settings-panel",
+      "type": "registry:component",
+      "title": "SettingsPanel",
+      "description": "SettingsPanel composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk"
+      ],
+      "files": [
+        {
+          "path": "registry/settings-panel/settings-panel.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "feed-item",
+      "type": "registry:component",
+      "title": "FeedItem",
+      "description": "FeedItem composite. Built on @reactive/silk primitives — zero Tailwind.",
+      "dependencies": [
+        "@reactive/silk",
+        "@reactive/silk-core"
+      ],
+      "files": [
+        {
+          "path": "registry/feed-item/feed-item.tsx",
           "type": "registry:component"
         }
       ]

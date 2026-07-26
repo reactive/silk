@@ -23,11 +23,13 @@ const inlineVariants: {
     'evenly',
   ];
   readonly wrap: readonly ['nowrap', 'wrap'];
+  readonly direction: readonly ['row', 'row-reverse'];
 } = {
   gap: spaceVariantSteps,
   align: ['start', 'center', 'end', 'stretch', 'baseline'],
   justify: ['start', 'center', 'end', 'between', 'around', 'evenly'],
   wrap: ['nowrap', 'wrap'],
+  direction: ['row', 'row-reverse'],
 };
 
 export const inlineRecipe: Recipe<typeof inlineVariants> = defineRecipe({
@@ -37,6 +39,7 @@ export const inlineRecipe: Recipe<typeof inlineVariants> = defineRecipe({
     align: 'center',
     justify: 'start',
     wrap: 'wrap',
+    direction: 'row',
   },
 });
 

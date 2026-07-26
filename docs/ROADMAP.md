@@ -74,16 +74,17 @@ Wrap the remaining Radix behaviors. `Dialog` is the template: Radix owns behavio
 
 ---
 
-## Stage 4 — Composites (product components)
+## Stage 4 — Composites (product components) ✅ (done)
 
 Where product value lives. Styling and shared behavior come entirely from Silk primitives; semantic HTML is encouraged where it carries meaning (per the charter's output-semantics rule). `Identity` is the exemplar.
 
-- Building blocks: `MediaObject`, `ActionBar`, `StatGroup`.
+- Building blocks: `MediaObject`, `ActionBar`, `StatGroup`, `EmptyState`, `StatusDot`.
 - Social: `PostCard`, `Comment`, `CommentThread`, `Notification`, `FeedItem`, `ProfileCard`, `SettingsPanel`.
-- Settle the **slot architecture** question (open design question from the brief): compound components + context, convenience props on top — document the chosen pattern as the standard for all composites. Until this lands, `Identity`'s compound pattern is **provisional** and subject to revision; don't treat it as the standard.
-- Composite models (the data-shape contracts composites accept) defined in core so native can share them.
+- Slot architecture settled: dual API, compound-first — documented in [COMPOSITES.md](COMPOSITES.md); `Identity` retrofit (no bespoke CSS).
+- Composite models in `@reactive/silk-core/models` (serializable only).
+- Primitive gaps closed for the design language: Card/Surface `interactive`, Inline `direction`, Stack `rail`, `StatusDot`.
 
-**Exit criteria:** a committed social-feed fixture page (loading, empty, error, and long-thread states) is assembled from composites alone; slot/composition pattern documented; composite models live in `silk-core`.
+**Exit criteria (met):** SocialFeed fixture (loading / empty / error / long-thread / narrow / reduced-motion) assembled from composites alone; slot pattern documented; models in `silk-core`.
 
 ---
 
@@ -136,6 +137,6 @@ Tracked from the founding brief; each has a home stage where it must be resolved
 | Recipes: shared model vs. per-renderer | Stage 0 | ✅ Shared contracts in core; renderers own styling |
 | Semantic vs. component tokens, how many | Stage 2/5 | Partially — Stage 2 audit landed (`success`, surfaces, shadows, tone `text`); Stage 5 freezes public CSS-var list |
 | Responsive strategy | Stage 1 | ✅ Intrinsic-first + container queries; `collapseBelow` web-only |
-| Slot architecture for composites | Stage 4 | Open — `Identity`'s pattern is provisional, not yet the standard |
+| Slot architecture for composites | Stage 4 | ✅ Dual API, compound-first — [COMPOSITES.md](COMPOSITES.md) |
 | Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | ✅ Proven on web; native spike validates in Stage 1 |
 | Registry: packages vs. generated source | Stage 7 | Scaffolded; final split pending |

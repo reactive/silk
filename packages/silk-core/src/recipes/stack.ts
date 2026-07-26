@@ -10,11 +10,13 @@ const stackVariants: {
   readonly gap: typeof spaceVariantSteps;
   readonly align: readonly ['start', 'center', 'end', 'stretch'];
   readonly wrap: readonly ['nowrap', 'wrap'];
+  readonly rail: readonly ['none', 'start'];
 } = {
   direction: ['row', 'column'],
   gap: spaceVariantSteps,
   align: ['start', 'center', 'end', 'stretch'],
   wrap: ['nowrap', 'wrap'],
+  rail: ['none', 'start'],
 };
 
 export const stackRecipe: Recipe<typeof stackVariants> = defineRecipe({
@@ -24,6 +26,7 @@ export const stackRecipe: Recipe<typeof stackVariants> = defineRecipe({
     gap: '2',
     align: 'stretch',
     wrap: 'nowrap',
+    rail: 'none',
   },
 });
 

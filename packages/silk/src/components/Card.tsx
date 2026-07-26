@@ -38,6 +38,23 @@ const radiusRules: string = cardRecipe.variants.radius
   )
   .join('\n');
 
+const interactiveHoverRules: string = `
+  /* Conformance: both axis values must appear in extracted CSS. */
+  &:where([data-interactive='false']) {
+    cursor: inherit;
+  }
+  &:where([data-interactive='true'][data-elevation='flat']):where(a:hover),
+  &:where([data-interactive='true'][data-elevation='flat']):where(button:hover) {
+    box-shadow: var(--silk-card-shadow, var(--silk-shadow-raised));
+  }
+  &:where([data-interactive='true'][data-elevation='raised']):where(a:hover),
+  &:where([data-interactive='true'][data-elevation='raised']):where(button:hover),
+  &:where([data-interactive='true'][data-elevation='overlay']):where(a:hover),
+  &:where([data-interactive='true'][data-elevation='overlay']):where(button:hover) {
+    box-shadow: var(--silk-card-shadow, var(--silk-shadow-overlay));
+  }
+`;
+
 const cardClass: string = css`
   /* Block/flex box so asChild on <a> (inline by default) still lays out as a card. */
   display: flex;
@@ -58,6 +75,7 @@ const cardClass: string = css`
   ${elevationRules}
   ${paddingRules}
   ${radiusRules}
+  ${interactiveHoverRules}
 
   &:where(a),
   &:where(button) {
@@ -76,7 +94,9 @@ const cardClass: string = css`
 
 /**
  * Content card composed on Surface semantics.
- * Interactive cards: wrap a real link/button via `asChild` — no fake-control flag.
+ * Interactive cards: wrap a real link/button via `asChild` — `interactive`
+ * only styles hover elevation on real anchors/buttons and never implies
+ * clickability on its own.
  */
 export function Card({
   className,
@@ -84,6 +104,7 @@ export function Card({
   elevation,
   padding,
   radius,
+  interactive,
   ...props
 }: CardProps): JSX.Element {
   const defaults = useComponentDefaults('Card');
@@ -92,6 +113,8 @@ export function Card({
   const resolvedPadding =
     padding ?? defaults.padding ?? cardRecipe.defaults.padding;
   const resolvedRadius = radius ?? defaults.radius ?? cardRecipe.defaults.radius;
+  const resolvedInteractive =
+    interactive ?? defaults.interactive ?? cardRecipe.defaults.interactive;
 
   const Comp = asChild ? Slot.Root : 'div';
   return (
@@ -101,6 +124,7 @@ export function Card({
       data-elevation={resolvedElevation}
       data-padding={resolvedPadding}
       data-radius={resolvedRadius}
+      data-interactive={resolvedInteractive}
     />
   );
 }

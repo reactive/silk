@@ -14,7 +14,7 @@ This document describes how the system is built today. The _why_ — goals, cons
 @reactive/silk-native   React Native renderer consuming the same core
 ```
 
-Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`.
+Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/models`.
 
 **Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs today; playgrounds / native examples later) live under `apps/`.
 
@@ -84,7 +84,7 @@ Recipes are **contracts** (variant unions + defaults). Web CSS interpolates reci
 | Visual      | `Text`, `Button`, `Avatar`, `Surface`, `Card`, `Heading`, `Badge`, `Skeleton`, `Spinner`, `Progress`                                        | `Button` is the reference variant engine; `Surface` owns elevation                                                 |
 | Interaction | `Dialog`, `Popover`, `Tooltip`, `DropdownMenu`, `Select`, `Tabs`, `Accordion`, `ScrollArea`, `Toast`, `Toggle`/`ToggleGroup`, form controls | Radix behavior, Silk visuals; floating surfaces share `floatingSurface` + Presence-compatible enter/exit keyframes |
 | Forms       | `Field`, `Input`, `Textarea`                                                                                                                | Field owns id/`aria-*` wiring (single vs group modes)                                                              |
-| Composite   | `Identity`                                                                                                                                  | Compound parts + convenience props                                                                                 |
+| Composite   | `Identity`, `MediaObject`, `ActionBar`, `StatGroup`, `EmptyState`, `PostCard`, `Comment`/`CommentThread`, `Notification`, `FeedItem`, `ProfileCard`, `SettingsPanel` | Dual API (compound-first + convenience); see [COMPOSITES.md](COMPOSITES.md)                                        |
 
 Escape hatches on every component: `className`, `style`, `ref` (React 19 prop), data attributes, `asChild` where sensible.
 

@@ -1,17 +1,17 @@
-import { css, cx } from '@linaria/core';
-import type { AvatarVariantProps } from '@reactive/silk-core';
+import type { AvatarVariantProps, IdentityModel } from '@reactive/silk-core';
 import {
   createContext,
   useContext,
-  type CSSProperties,
+  type ComponentPropsWithoutRef,
   type JSX,
   type ReactNode,
   type Ref,
 } from 'react';
 import { useComponentDefaults } from '../theme/SilkProvider';
 import { Avatar, type AvatarProps } from './Avatar';
+import { Inline } from './Inline';
 import { Stack } from './Stack';
-import { Text } from './Text';
+import { Text, type TextProps } from './Text';
 
 interface IdentityContextValue {
   readonly size: NonNullable<AvatarVariantProps['size']>;
@@ -27,41 +27,35 @@ function useIdentityContext(): IdentityContextValue {
   return ctx;
 }
 
-export interface IdentityRootProps {
+export interface IdentityRootProps extends ComponentPropsWithoutRef<'div'> {
   readonly size?: AvatarVariantProps['size'];
-  readonly className?: string;
-  readonly style?: CSSProperties;
-  readonly children?: ReactNode;
+  readonly asChild?: boolean;
   readonly ref?: Ref<HTMLDivElement>;
 }
 
-const rootClass: string = css`
-  display: inline-flex;
-  align-items: center;
-  gap: var(--silk-space-2);
-  min-width: 0;
-`;
-
 function IdentityRoot({
   size,
+  asChild = false,
   className,
-  style,
   children,
-  ref,
+  ...props
 }: IdentityRootProps): JSX.Element {
   const defaults = useComponentDefaults('Identity');
   const resolvedSize = size ?? defaults.size ?? 'md';
 
   return (
     <IdentityContext.Provider value={{ size: resolvedSize }}>
-      <div
-        ref={ref}
-        className={cx(rootClass, className)}
-        style={style}
+      <Inline
+        {...props}
+        asChild={asChild}
+        gap="2"
+        align="center"
+        wrap="nowrap"
+        className={className}
         data-size={resolvedSize}
       >
         {children}
-      </div>
+      </Inline>
     </IdentityContext.Provider>
   );
 }
@@ -73,68 +67,48 @@ function IdentityAvatar(props: IdentityAvatarProps): JSX.Element {
   return <Avatar size={size} {...props} />;
 }
 
-export interface IdentityNameProps {
-  readonly className?: string;
-  readonly children?: ReactNode;
-  readonly ref?: Ref<HTMLParagraphElement>;
+export type IdentityNameProps = Omit<TextProps, 'role' | 'tone'>;
+
+function IdentityName(props: IdentityNameProps): JSX.Element {
+  useIdentityContext();
+  return <Text {...props} role="label" tone="primary" />;
 }
 
-function IdentityName({
-  className,
-  children,
-  ref,
-}: IdentityNameProps): JSX.Element {
-  return (
-    <Text
-      {...(ref !== undefined ? { ref } : {})}
-      {...(className !== undefined ? { className } : {})}
-      role="label"
-      tone="primary"
-    >
-      {children}
-    </Text>
-  );
+export type IdentityMetaProps = Omit<TextProps, 'role' | 'tone'>;
+
+function IdentityMeta(props: IdentityMetaProps): JSX.Element {
+  useIdentityContext();
+  return <Text {...props} role="caption" tone="secondary" />;
 }
 
-export interface IdentityMetaProps {
-  readonly className?: string;
-  readonly children?: ReactNode;
-  readonly ref?: Ref<HTMLParagraphElement>;
-}
-
-function IdentityMeta({
-  className,
-  children,
-  ref,
-}: IdentityMetaProps): JSX.Element {
-  return (
-    <Text
-      {...(ref !== undefined ? { ref } : {})}
-      {...(className !== undefined ? { className } : {})}
-      role="caption"
-      tone="secondary"
-    >
-      {children}
-    </Text>
-  );
-}
-
-export interface IdentityProps {
-  readonly name: ReactNode;
-  readonly meta?: ReactNode;
+interface IdentityConvenienceBase
+  extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
   readonly avatar?: string | ReactNode;
   readonly avatarAlt?: string;
   readonly fallback?: ReactNode;
+  readonly meta?: ReactNode | null;
   readonly size?: AvatarVariantProps['size'];
-  readonly className?: string;
-  readonly style?: CSSProperties;
   readonly ref?: Ref<HTMLDivElement>;
 }
 
+export type IdentityProps = IdentityConvenienceBase &
+  (
+    | {
+        readonly model: IdentityModel;
+        readonly name?: ReactNode;
+      }
+    | {
+        readonly model?: never;
+        readonly name: ReactNode;
+      }
+  );
+
 /**
- * Convenience form — Ant-style data-in API over compound parts.
+ * Convenience form — thin sugar over compound parts.
+ * Precedence: explicit props → model → provider defaults → primitive defaults.
  */
 function IdentityConvenience({
+  model,
   name,
   meta,
   avatar,
@@ -142,40 +116,57 @@ function IdentityConvenience({
   fallback,
   size,
   className,
-  style,
-  ref,
+  ...props
 }: IdentityProps): JSX.Element {
+  const resolvedName = name !== undefined ? name : model!.name;
+  const resolvedMeta = meta !== undefined ? meta : (model?.meta ?? undefined);
+  const resolvedFallback =
+    fallback !== undefined ? fallback : (model?.fallback ?? undefined);
+  const resolvedAvatar =
+    avatar !== undefined
+      ? avatar
+      : model?.avatar !== undefined
+        ? model.avatar.src
+        : undefined;
+  const resolvedAvatarAlt =
+    avatarAlt !== undefined ? avatarAlt : (model?.avatar?.alt ?? undefined);
+
   let avatarNode: JSX.Element;
-  if (typeof avatar === 'string') {
+  if (typeof resolvedAvatar === 'string') {
     avatarNode = (
       <IdentityAvatar
-        src={avatar}
-        {...(avatarAlt !== undefined ? { alt: avatarAlt } : {})}
-        {...(fallback !== undefined ? { fallback } : {})}
+        src={resolvedAvatar}
+        {...(resolvedAvatarAlt !== undefined
+          ? { alt: resolvedAvatarAlt }
+          : {})}
+        {...(resolvedFallback !== undefined
+          ? { fallback: resolvedFallback }
+          : {})}
       />
     );
-  } else if (avatar === undefined) {
+  } else if (resolvedAvatar === undefined) {
     avatarNode = (
       <IdentityAvatar
-        {...(fallback !== undefined ? { fallback } : {})}
+        {...(resolvedFallback !== undefined
+          ? { fallback: resolvedFallback }
+          : {})}
       />
     );
   } else {
-    avatarNode = <IdentityAvatar>{avatar}</IdentityAvatar>;
+    avatarNode = <IdentityAvatar>{resolvedAvatar}</IdentityAvatar>;
   }
 
   return (
     <IdentityRoot
+      {...props}
       {...(size !== undefined ? { size } : {})}
       {...(className !== undefined ? { className } : {})}
-      {...(style !== undefined ? { style } : {})}
-      {...(ref !== undefined ? { ref } : {})}
     >
       {avatarNode}
       <Stack gap="0" align="start">
-        <IdentityName>{name}</IdentityName>
-        {meta !== undefined && meta !== null ? (
-          <IdentityMeta>{meta}</IdentityMeta>
+        <IdentityName>{resolvedName}</IdentityName>
+        {resolvedMeta !== undefined && resolvedMeta !== null ? (
+          <IdentityMeta>{resolvedMeta}</IdentityMeta>
         ) : null}
       </Stack>
     </IdentityRoot>

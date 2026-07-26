@@ -28,6 +28,7 @@ import {
   textareaRecipe,
   toastRecipe,
   toggleRecipe,
+  statusDotRecipe,
 } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { containerBreakpointNames } from '../layout/containerBreakpoints';
@@ -71,6 +72,8 @@ test('recipe conformance: layout component axes are styled', () => {
   assertAxisSelectors(css, 'data-align', inlineRecipe.variants.align);
   assertAxisSelectors(css, 'data-justify', inlineRecipe.variants.justify);
   assertAxisSelectors(css, 'data-wrap', inlineRecipe.variants.wrap);
+  assertAxisSelectors(css, 'data-direction', inlineRecipe.variants.direction);
+  assertAxisSelectors(css, 'data-rail', stackRecipe.variants.rail);
   assertAxisSelectors(css, 'data-columns', gridRecipe.variants.columns);
   assertAxisSelectors(css, 'data-axis', centerRecipe.variants.axis);
   assertAxisSelectors(css, 'data-size', containerRecipe.variants.size);
@@ -87,8 +90,10 @@ test('recipe conformance: Stage 2 visual and form axes are styled', () => {
   assertAxisSelectors(css, 'data-elevation', surfaceRecipe.variants.elevation);
   assertAxisSelectors(css, 'data-radius', surfaceRecipe.variants.radius);
   assertAxisSelectors(css, 'data-border', surfaceRecipe.variants.border);
+  assertAxisSelectors(css, 'data-interactive', surfaceRecipe.variants.interactive);
   assertAxisSelectors(css, 'data-elevation', cardRecipe.variants.elevation);
   assertAxisSelectors(css, 'data-padding', cardRecipe.variants.padding);
+  assertAxisSelectors(css, 'data-interactive', cardRecipe.variants.interactive);
   // Heading `level` selects the HTML tag only — not a CSS axis.
   assertAxisSelectors(css, 'data-size', headingRecipe.variants.size);
   assertAxisSelectors(css, 'data-tone', headingRecipe.variants.tone);
@@ -114,6 +119,13 @@ test('recipe conformance: Stage 2 visual and form axes are styled', () => {
   expect(css).toContain('--silk-color-surface-sunken');
   expect(css).toContain('--silk-color-overlay');
   expect(css).toContain('prefers-reduced-motion');
+});
+
+test('recipe conformance: Stage 4 status indicator axes', () => {
+  const css = loadCss();
+  assertAxisSelectors(css, 'data-tone', statusDotRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-size', statusDotRecipe.variants.size);
+  expect(css).toContain('--silk-status-dot-bg');
 });
 
 test('recipe conformance: Stage 3 interaction axes and floating motion', () => {
@@ -223,11 +235,18 @@ test('collapseBelow rules follow Stack/Inline direction and align in CSS', () =>
   }
 
   // Stack: direction collapses; stretch only when not already column.
+  // Prefer `data-rail` to identify Stack — Inline also has `data-direction`.
+  const stackRail = css.match(
+    /\.([a-zA-Z0-9_-]+):where\(\[data-rail="start"\]\)/,
+  );
+  expect(stackRail).not.toBeNull();
+  const stackClass = stackRail![1];
   const stackDirection = css.match(
-    /\.([a-zA-Z0-9_-]+):where\(\[data-direction="row"\]\)\s*\{[^}]*flex-direction:\s*row/,
+    new RegExp(
+      `\\.${stackClass.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:where\\(\\[data-direction="row"\\]\\)\\s*\\{[^}]*flex-direction:\\s*row`,
+    ),
   );
   expect(stackDirection).not.toBeNull();
-  const stackClass = stackDirection![1];
   const stackCollapseSel = `.${stackClass}:where([data-collapse-below="md"])`;
   assertAfter(stackDirection![0], stackCollapseSel);
   assertAfter(`.${stackClass}:where([data-align="center"])`, stackCollapseSel);

@@ -71,6 +71,17 @@ const wrapRules: string = stackRecipe.variants.wrap
   )
   .join('\n');
 
+const railRules: string = `
+  &:where([data-rail='none']) {
+    border-inline-start: none;
+    padding-inline-start: 0;
+  }
+  &:where([data-rail='start']) {
+    border-inline-start: 1px solid var(--silk-color-border-subtle);
+    padding-inline-start: var(--silk-space-3);
+  }
+`;
+
 const stackClass: string = css`
   display: flex;
   box-sizing: border-box;
@@ -79,6 +90,7 @@ const stackClass: string = css`
   ${gapRules}
   ${alignRules}
   ${wrapRules}
+  ${railRules}
   /* Adaptive rules must stay last — equal specificity, source order wins. */
   ${collapseBelowRulesStack}
 `;
@@ -93,6 +105,7 @@ export function Stack({
   gap,
   align,
   wrap,
+  rail,
   collapseBelow,
   ...props
 }: StackProps): JSX.Element {
@@ -102,6 +115,7 @@ export function Stack({
   const resolvedGap = gap ?? defaults.gap ?? stackRecipe.defaults.gap;
   const resolvedAlign = align ?? defaults.align ?? stackRecipe.defaults.align;
   const resolvedWrap = wrap ?? defaults.wrap ?? stackRecipe.defaults.wrap;
+  const resolvedRail = rail ?? defaults.rail ?? stackRecipe.defaults.rail;
 
   const Comp = asChild ? Slot.Root : 'div';
   return (
@@ -112,6 +126,7 @@ export function Stack({
       data-gap={resolvedGap}
       data-align={resolvedAlign}
       data-wrap={resolvedWrap}
+      data-rail={resolvedRail}
       {...collapseBelowDomProps(collapseBelow)}
     />
   );

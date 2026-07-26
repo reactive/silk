@@ -78,3 +78,14 @@ export const FallbackOnly: Story = {
     meta: 'docs composite',
   },
 };
+
+export const FromModel: Story = {
+  args: {
+    model: {
+      id: 'u1',
+      name: 'Ada Lovelace',
+      meta: '@ada',
+      fallback: 'AL',
+    },
+  },
+};
