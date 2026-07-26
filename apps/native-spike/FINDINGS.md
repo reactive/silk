@@ -22,7 +22,7 @@ Goal: catch web-shaped assumptions in tokens/recipes while contracts are cheap t
 
 | Assumption | Web | Native (this spike) | Verdict |
 | --- | --- | --- | --- |
-| Typography `family` | CSS font-family list (`ui-sans-serif, system-ui, …`) | Take first face or omit → platform default | Keep CSS-oriented default stack in core; native serializer resolves. Optional later: structured `family` / `nativeFamily`. |
+| Typography `family` | `FontFamilyName` (`sans` / `serif` / `mono`) → CSS stack in `semantic.fontFamily` | Resolve name through `fontFamily`, take first face (or omit for system) | Structured `family` landed in core; native serializer still peels the CSS stack. Optional later: dedicated `nativeFamily` map. |
 | Motion `easing` | CSS `cubic-bezier(...)` strings | Unused by Box/Stack/Text/Button styles here | Leave as string; native motion layer can map or ignore. |
 | Theme delivery | CSS vars + `data-theme` / `data-density` | `ThemeProvider` context with `Theme` + `density` | Renderer-only; do not put CSS var names in core. |
 | Interaction states | `:hover` / `:focus-visible` / `transition` | `Pressable` pressed + disabled only | Web-only affordances; recipes stay visual (variant/tone/size/density). |

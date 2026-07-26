@@ -21,9 +21,27 @@ test('createTheme returns light scheme defaults', () => {
   );
   expect(theme.semantic.typography.headingSm.size).toBe(16);
   expect(theme.semantic.typography.headingXl.size).toBe(36);
+  expect(theme.semantic.typography.body.family).toBe('sans');
+  expect(theme.semantic.typography.headingLg.family).toBe('sans');
+  expect(theme.semantic.typography.headingXl.family).toBe('serif');
+  expect(theme.semantic.fontFamily.sans).toContain('Inter');
+  expect(theme.semantic.fontFamily.serif).toContain('Source Serif 4');
+  expect(theme.semantic.fontFamily.mono).toContain('JetBrains Mono');
   expect(theme.semantic.color.textSecondary).toBe(theme.palette.gray[11]);
   expect(theme.semantic.space[2]).toBe(8);
   expect(theme.semantic.radius.md).toBe(8);
+});
+
+test('fontFamily override retargets stacks without changing role assignments', () => {
+  const theme = createTheme({
+    semantic: {
+      fontFamily: { sans: 'Custom Sans, sans-serif' },
+    },
+  });
+
+  expect(theme.semantic.fontFamily.sans).toBe('Custom Sans, sans-serif');
+  expect(theme.semantic.fontFamily.serif).toContain('Source Serif 4');
+  expect(theme.semantic.typography.body.family).toBe('sans');
 });
 
 test('createTheme deeply merges one tone leaf without clobbering siblings', () => {

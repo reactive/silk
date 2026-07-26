@@ -1,11 +1,26 @@
 import type { Decorator, Preview } from 'storybook-react-rsbuild';
 import {
   SilkProvider,
+  createTheme,
   type ColorScheme,
   type DensityName,
+  type Theme,
 } from '@reactive/silk';
 import type { JSX } from 'react';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/source-serif-4';
+import '@fontsource-variable/jetbrains-mono';
 import './preview.css';
+
+// Runtime theme vars (inline) so silk-core token edits apply after `dist/`
+// rebuilds without waiting for Linaria to re-extract namedThemes.css.ts.
+// Built once per module evaluation: ThemeProvider memoizes on theme identity,
+// and HMR re-runs this after a core rebuild. `system` keeps the static named
+// themes so prefers-color-scheme still applies.
+const runtimeThemes: Record<ColorScheme, Theme> = {
+  light: createTheme({ colorScheme: 'light' }),
+  dark: createTheme({ colorScheme: 'dark' }),
+};
 
 const withSilkProvider: Decorator = (Story, context): JSX.Element => {
   const colorScheme = (context.globals.colorScheme ?? 'light') as
@@ -14,7 +29,12 @@ const withSilkProvider: Decorator = (Story, context): JSX.Element => {
   const density = (context.globals.density ?? 'comfortable') as DensityName;
 
   return (
-    <SilkProvider colorScheme={colorScheme} density={density}>
+    <SilkProvider
+      {...(colorScheme === 'system'
+        ? { colorScheme }
+        : { theme: runtimeThemes[colorScheme] })}
+      density={density}
+    >
       <div className="silk-story-canvas">
         <Story />
       </div>

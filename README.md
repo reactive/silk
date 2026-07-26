@@ -74,6 +74,10 @@ import {
   createTheme,
 } from '@reactive/silk';
 import '@reactive/silk/styles.css';
+// Optional — Silk ships no font files (see docs Theming → Typography and fonts).
+import '@fontsource-variable/inter';
+import '@fontsource-variable/source-serif-4';
+import '@fontsource-variable/jetbrains-mono';
 
 export function App() {
   return (

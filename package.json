@@ -12,7 +12,7 @@
     "test": "yarn workspaces foreach -A -pt run test",
     "test:packed": "node scripts/packed-consumer-check.mjs",
     "test:perf": "node scripts/perf-budgets.mjs",
-    "docs": "yarn workspace @reactive/silk-docs storybook",
+    "docs": "node scripts/docs-dev.mjs",
     "docs:build": "yarn workspace @reactive/silk-docs build:storybook",
     "test:storybook": "yarn workspace @reactive/silk-docs test:storybook:ci",
     "changeset": "changeset",
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
+    "concurrently": "^10.0.4",
     "esbuild": "^0.28.1",
     "typescript": "^7.0.2"
   }

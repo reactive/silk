@@ -94,14 +94,31 @@ function resolveSpaceStep(
   return Number(raw) as SpaceStep;
 }
 
-/** Web default stacks are CSS font-family lists; RN needs a single face. */
-export function resolveNativeFontFamily(family: string): string | undefined {
-  const primary = family.split(',')[0]?.trim();
-  if (!primary || primary === 'ui-sans-serif' || primary === 'system-ui') {
-    // Let RN pick the platform default (omit fontFamily).
+/** CSS generic families name no real face — RN wants the platform default instead. */
+const cssGenericFamilies: ReadonlySet<string> = new Set([
+  'ui-sans-serif',
+  'ui-serif',
+  'ui-monospace',
+  'ui-rounded',
+  'system-ui',
+  'sans-serif',
+  'serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+]);
+
+/** Peel a CSS font-family stack to a single face for RN. */
+export function resolveNativeFontFamily(stack: string): string | undefined {
+  const primary = stack
+    .split(',')[0]
+    ?.trim()
+    .replace(/^["']|["']$/g, '');
+  if (!primary || cssGenericFamilies.has(primary)) {
+    // Omit fontFamily so RN picks the platform default.
     return undefined;
   }
-  return primary.replace(/^["']|["']$/g, '');
+  return primary;
 }
 
 export function mapBoxStyle(
@@ -157,7 +174,9 @@ export function mapTextStyle(
 
   return {
     color: toneColor,
-    fontFamily: resolveNativeFontFamily(typo.family),
+    fontFamily: resolveNativeFontFamily(
+      theme.semantic.fontFamily[typo.family],
+    ),
     fontSize: typo.size,
     lineHeight: typo.lineHeight * typo.size,
     fontWeight: weight,
@@ -236,7 +255,9 @@ export function mapButtonStyle(
     },
     text: {
       color,
-      fontFamily: resolveNativeFontFamily(label.family),
+      fontFamily: resolveNativeFontFamily(
+        theme.semantic.fontFamily[label.family],
+      ),
       fontSize,
       lineHeight: 1.2 * fontSize,
       fontWeight: String(label.weight) as NonNullable<RnTextStyle['fontWeight']>,

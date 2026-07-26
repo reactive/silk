@@ -1,5 +1,6 @@
 import {
   compactSpace,
+  fontFamilyNames,
   measureNames,
   motionNames,
   spaceSteps,
@@ -50,6 +51,7 @@ function buildThemeCssVars(theme: Theme): CssVarMap {
     color,
     space,
     radius,
+    fontFamily,
     typography,
     measure,
     motion,
@@ -96,10 +98,14 @@ function buildThemeCssVars(theme: Theme): CssVarMap {
     vars[`--silk-measure-${name}`] = `${measure[name]}ch`;
   }
 
+  for (const name of fontFamilyNames) {
+    vars[`--silk-font-${name}`] = fontFamily[name];
+  }
+
   for (const role of typographyRoles) {
     const key = typographyRoleVarKey[role];
     const typo = typography[role];
-    vars[`--silk-typography-${key}-family`] = typo.family;
+    vars[`--silk-typography-${key}-family`] = `var(--silk-font-${typo.family})`;
     vars[`--silk-typography-${key}-size`] = px(typo.size);
     vars[`--silk-typography-${key}-line-height`] = String(typo.lineHeight);
     vars[`--silk-typography-${key}-weight`] = String(typo.weight);

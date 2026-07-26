@@ -56,6 +56,8 @@ export type DensityName = 'comfortable' | 'compact';
 
 export type RadiusName = 'none' | 'sm' | 'md' | 'lg' | 'full';
 
+export type FontFamilyName = 'sans' | 'serif' | 'mono';
+
 export type TypographyRole =
   | 'body'
   | 'bodySm'
@@ -67,7 +69,7 @@ export type TypographyRole =
   | 'caption';
 
 export interface TypographyRecord {
-  readonly family: string;
+  readonly family: FontFamilyName;
   readonly size: number;
   readonly lineHeight: number;
   readonly weight: number;
@@ -118,6 +120,8 @@ export interface SemanticTokens {
   };
   readonly space: Readonly<Record<SpaceStep, number>>;
   readonly radius: Readonly<Record<RadiusName, number>>;
+  /** CSS `font-family` stacks; typography roles select one by `FontFamilyName`. */
+  readonly fontFamily: Readonly<Record<FontFamilyName, string>>;
   readonly typography: Readonly<Record<TypographyRole, TypographyRecord>>;
   /**
    * Comfortable line lengths in characters. A count rather than a length so it

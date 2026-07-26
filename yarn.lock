@@ -2356,6 +2356,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fontsource-variable/inter@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "@fontsource-variable/inter@npm:5.3.0"
+  checksum: 10c0/46fbe41e8482a718f99634c8254346c6081d615415059be12e177224c903d688199125967825e75d4b8122668fd83f70880e11d4e02d08c20b503c65fe2a96d1
+  languageName: node
+  linkType: hard
+
+"@fontsource-variable/jetbrains-mono@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "@fontsource-variable/jetbrains-mono@npm:5.3.0"
+  checksum: 10c0/ba983321b530a56696b12390a377c79a962376a33359eeda37c9a2141450802e0b630e6c232d90aab0281179e623d01c77d1bc8059ce595fe865fbc6d6022ffb
+  languageName: node
+  linkType: hard
+
+"@fontsource-variable/source-serif-4@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "@fontsource-variable/source-serif-4@npm:5.3.0"
+  checksum: 10c0/1cdc56fc7ba96b701c4f74d814825b346eafb9064c565d09fbdd8f319e68c64e80a3b66a324684bdef2d343429e1fd38a075382f38d946b187381b34205b427b
+  languageName: node
+  linkType: hard
+
 "@hapi/address@npm:^5.1.1":
   version: 5.1.1
   resolution: "@hapi/address@npm:5.1.1"
@@ -5344,6 +5365,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@reactive/silk-docs@workspace:apps/docs"
   dependencies:
+    "@fontsource-variable/inter": "npm:^5.3.0"
+    "@fontsource-variable/jetbrains-mono": "npm:^5.3.0"
+    "@fontsource-variable/source-serif-4": "npm:^5.3.0"
     "@linaria/core": "npm:^8.1.1"
     "@linaria/react": "npm:^8.1.1"
     "@reactive/silk": "workspace:*"
@@ -15099,6 +15123,7 @@ __metadata:
   resolution: "silk@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.31.1"
+    concurrently: "npm:^10.0.4"
     esbuild: "npm:^0.28.1"
     typescript: "npm:^7.0.2"
   languageName: unknown

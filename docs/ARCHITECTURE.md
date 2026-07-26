@@ -18,12 +18,12 @@ Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/mode
 
 **Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs today; playgrounds / native examples later) live under `apps/`.
 
-**Build order:** `silk-core` must emit `dist/` before `silk` builds. Linaria evaluates core imports at build time; missing core dist fails the web build. `yarn workspaces foreach -A -pt run build` handles this topologically.
+**Build order:** `silk-core` must emit `dist/` before `silk` builds. Linaria evaluates core imports at build time; missing core dist fails the web build. `yarn workspaces foreach -A -pt run build` handles this topologically. For Storybook, `yarn docs` watch-builds core, and the preview decorator applies `createTheme()` inline for light/dark so token edits do not depend on re-extracting `namedThemes.css.ts`.
 
 ## Theme model
 
 1. **Palette** — 12-step color scales. Never referenced by components.
-2. **Semantic tokens** — surfaces, text, borders, interaction tone contracts, space, radius, typography, motion. Canonical values are platform-neutral (numbers for dimensions; typography `lineHeight` is unitless).
+2. **Semantic tokens** — surfaces, text, borders, interaction tone contracts, space, radius, `fontFamily` (sans/serif/mono stacks), typography roles, motion. Canonical values are platform-neutral (numbers for dimensions; typography `lineHeight` is unitless; typography `family` is a `FontFamilyName` that references `fontFamily`).
 3. **Component tokens** — sparse public CSS variables (`--silk-button-bg`) resolved via private vars:
 
 ```css

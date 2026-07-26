@@ -20,4 +20,7 @@ body {
   box-sizing: border-box;
   min-height: 4rem;
   padding: 0.25rem;
+  /* Inside SilkProvider, so role vars resolve. The body rule above cannot use
+     them: theme vars land on the provider div, not :root. */
+  font-family: var(--silk-typography-body-family);
 }

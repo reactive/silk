@@ -240,6 +240,7 @@ function mergeSemantic(
     },
     space: { ...base.space, ...override.space },
     radius: { ...base.radius, ...override.radius },
+    fontFamily: { ...base.fontFamily, ...override.fontFamily },
     typography: {
       body: { ...base.typography.body, ...override.typography?.body },
       bodySm: { ...base.typography.bodySm, ...override.typography?.bodySm },

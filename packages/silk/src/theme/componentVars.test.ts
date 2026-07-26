@@ -11,6 +11,7 @@ import { silkComponentVarNames } from './componentVars';
 const tokenNamespaces = new Set([
   'color',
   'focus',
+  'font',
   'measure',
   'motion',
   'radius',

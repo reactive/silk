@@ -26,11 +26,14 @@ yarn add @reactive/silk
 
 ## Quick start
 
-Consumers must import the extracted stylesheet once:
+Consumers must import the extracted stylesheet once. Fonts are optional — see **Theming → Typography and fonts**:
 
 ```tsx
 import { Button, Identity, SilkProvider, createTheme } from "@reactive/silk";
 import "@reactive/silk/styles.css";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/source-serif-4";
+import "@fontsource-variable/jetbrains-mono";
 
 export function App() {
   return (
@@ -137,7 +140,8 @@ Hard constraints: no Tailwind, no CVA, Linaria static extraction only, SSR-first
 ## Local docs development
 
 ```bash
-yarn build          # silk-core dist is required for Linaria
-yarn docs           # Storybook on :6006
+yarn docs           # watch-builds silk-core + Storybook on :6006
 yarn docs:build     # static site → apps/docs/storybook-static
 ```
+
+Storybook aliases `@reactive/silk` to source (HMR) but loads `@reactive/silk-core` from `dist/`. `yarn docs` keeps that dist fresh. The preview decorator applies `createTheme()` as inline CSS variables for light/dark, so token edits show up after the core rebuild without a Storybook restart (toolbar **system** still uses static named themes).
