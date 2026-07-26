@@ -3,8 +3,8 @@ import { inlineRecipe, type InlineVariantProps } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import {
-  collapseBelowClass,
   collapseBelowDomProps,
+  collapseBelowRules,
   type CollapseBelowProp,
 } from '../layout/collapseBelow';
 import { useComponentDefaults } from '../theme/SilkProvider';
@@ -87,6 +87,8 @@ const inlineClass: string = css`
   ${alignRules}
   ${justifyRules}
   ${wrapRules}
+  /* Adaptive rules must stay last — equal specificity, source order wins. */
+  ${collapseBelowRules}
 `;
 
 /**
@@ -114,7 +116,7 @@ export function Inline({
   return (
     <Comp
       {...props}
-      className={cx(inlineClass, collapseBelowClass, className)}
+      className={cx(inlineClass, className)}
       data-gap={resolvedGap}
       data-align={resolvedAlign}
       data-justify={resolvedJustify}

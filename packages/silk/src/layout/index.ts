@@ -8,5 +8,5 @@ export type {
   ContainerSize,
 } from './containerBreakpoints';
 
-export { collapseBelowClass, collapseBelowDomProps } from './collapseBelow';
+export { collapseBelowDomProps } from './collapseBelow';
 export type { CollapseBelowProp } from './collapseBelow';

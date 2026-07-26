@@ -6,8 +6,8 @@ import {
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import {
-  collapseBelowClass,
   collapseBelowDomProps,
+  collapseBelowRules,
   type CollapseBelowProp,
 } from '../layout/collapseBelow';
 import { useComponentDefaults } from '../theme/SilkProvider';
@@ -79,6 +79,8 @@ const stackClass: string = css`
   ${gapRules}
   ${alignRules}
   ${wrapRules}
+  /* Adaptive rules must stay last — equal specificity, source order wins. */
+  ${collapseBelowRules}
 `;
 
 /**
@@ -105,7 +107,7 @@ export function Stack({
   return (
     <Comp
       {...props}
-      className={cx(stackClass, collapseBelowClass, className)}
+      className={cx(stackClass, className)}
       data-direction={resolvedDirection}
       data-gap={resolvedGap}
       data-align={resolvedAlign}

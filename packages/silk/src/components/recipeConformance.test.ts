@@ -90,3 +90,66 @@ test('density remaps space vars and collapseBelow container queries exist', () =
   }
   expect(css).toContain('@container');
 });
+
+/**
+ * collapseBelow must share each component's Linaria class and appear after
+ * direction/base and align rules so equal-specificity source order wins for
+ * both `flex-direction: column` and `align-items: stretch`.
+ */
+test('collapseBelow rules follow Stack/Inline direction and align in CSS', () => {
+  const css = loadCss();
+  const escape = (value: string): string =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  function collapseBlock(className: string): string {
+    const match = css.match(
+      new RegExp(
+        `\\.${escape(className)}:where\\(\\[data-collapse-below="md"\\]\\)\\s*\\{([^}]+)\\}`,
+      ),
+    );
+    expect(match).not.toBeNull();
+    return match![1];
+  }
+
+  function assertCollapseAfter(earlierNeedle: string, className: string): void {
+    const earlierIdx = css.indexOf(earlierNeedle);
+    expect(earlierIdx).toBeGreaterThan(-1);
+    const collapseIdx = css.indexOf(
+      `.${className}:where([data-collapse-below="md"])`,
+    );
+    expect(collapseIdx).toBeGreaterThan(earlierIdx);
+    const body = collapseBlock(className);
+    expect(body).toContain('flex-direction: column');
+    expect(body).toContain('align-items: stretch');
+  }
+
+  // Stack: direction + align on the same hashed class as collapseBelow.
+  const stackDirection = css.match(
+    /\.([a-zA-Z0-9_-]+):where\(\[data-direction="row"\]\)\s*\{[^}]*flex-direction:\s*row/,
+  );
+  expect(stackDirection).not.toBeNull();
+  const stackClass = stackDirection![1];
+  assertCollapseAfter(stackDirection![0], stackClass);
+  assertCollapseAfter(
+    `.${stackClass}:where([data-align="center"])`,
+    stackClass,
+  );
+
+  // Inline: identify via justify axis (Inline-only), then check row base + align.
+  const inlineJustify = css.match(
+    /\.([a-zA-Z0-9_-]+):where\(\[data-justify="start"\]\)/,
+  );
+  expect(inlineJustify).not.toBeNull();
+  const inlineClass = inlineJustify![1];
+  const inlineBase = css.match(
+    new RegExp(
+      `\\.${escape(inlineClass)}\\s*\\{[^}]*flex-direction:\\s*row`,
+    ),
+  );
+  expect(inlineBase).not.toBeNull();
+  assertCollapseAfter(inlineBase![0], inlineClass);
+  assertCollapseAfter(
+    `.${inlineClass}:where([data-align="center"])`,
+    inlineClass,
+  );
+});
