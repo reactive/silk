@@ -38,13 +38,13 @@ const scrollAreaClass: string = css`
   border: 1px solid var(--silk-color-border-subtle);
   border-radius: var(--silk-radius-md);
 
-  &[data-long='true'] {
+  &[data-long] {
     height: 120px;
   }
 `;
 
 const scrollPadClass: string = css`
-  padding: 12px;
+  padding: var(--silk-space-3);
 `;
 
 const SHORT_ROWS = ['Short list item 1', 'Short list item 2'] as const;
@@ -206,7 +206,7 @@ export function InspectorPanel({
             <div data-region="scroll">
               <ScrollArea
                 className={scrollAreaClass}
-                data-long={longContent ? 'true' : undefined}
+                data-long={longContent || undefined}
               >
                 <div className={scrollPadClass}>
                   {rows.map((line) => (

@@ -1,5 +1,5 @@
 import { styled } from '@linaria/react';
-import { Button, buttonRecipe } from '@reactive/silk';
+import { Button, buttonRecipe, cssVars } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
 import { VariantMatrix } from '../VariantMatrix';
@@ -81,17 +81,12 @@ export const StyledOverrides: Story = {
   ),
 };
 
-const BrandButton = styled(Button)`
-  --silk-button-bg: ${(props) =>
-    (props as { readonly 'data-brand'?: string })['data-brand'] ?? ''};
-`;
-
-export const RuntimeStyled: Story = {
+export const RuntimeCssVariables: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'Dynamic values compile to CSS custom properties on `style` under the hood. Prefer a `data-*` prop (here `data-brand`) so the value is a real attribute — unlike styled-components, Linaria does not strip `$`-prefixed props when wrapping a component. (Linaria’s `styled` typings only expose `style` on the interpolation props object, so the cast is local to the interpolator.)',
+          'When the value is only known at runtime, `cssVars` types the public hooks for the `style` prop. Prefer `styled` (above) for reusable static overrides.',
       },
     },
   },
@@ -99,9 +94,9 @@ export const RuntimeStyled: Story = {
     const brandColor = '#7c3aed';
 
     return (
-      <BrandButton {...args} data-brand={brandColor}>
+      <Button {...args} style={cssVars({ '--silk-button-bg': brandColor })}>
         Runtime hook value
-      </BrandButton>
+      </Button>
     );
   },
 };

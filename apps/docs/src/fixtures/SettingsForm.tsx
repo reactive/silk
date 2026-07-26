@@ -37,7 +37,7 @@ export interface SettingsFormProps {
 const shellClass: string = css`
   max-width: 36rem;
 
-  &[data-narrow='true'] {
+  &[data-narrow] {
     max-width: 18rem;
   }
 `;
@@ -59,7 +59,7 @@ export function SettingsForm({
     <div
       data-fixture="settings-form"
       data-fixture-state={state}
-      data-narrow={narrowLongContent ? 'true' : undefined}
+      data-narrow={narrowLongContent || undefined}
       className={shellClass}
     >
       <Card elevation="raised" padding="5" radius="lg">

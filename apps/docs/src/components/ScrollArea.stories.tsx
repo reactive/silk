@@ -19,7 +19,7 @@ const frameClass: string = css`
 `;
 
 const padClass: string = css`
-  padding: 12px;
+  padding: var(--silk-space-3);
 `;
 
 export const Basic: Story = {

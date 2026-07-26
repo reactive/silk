@@ -1,4 +1,4 @@
-import { css } from '@linaria/core';
+import { css, cx } from '@linaria/core';
 import { Surface, surfaceRecipe, Text } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
@@ -36,8 +36,7 @@ const paddedClass: string = css`
   padding: var(--silk-space-4);
 `;
 
-const matrixClass: string = css`
-  padding: var(--silk-space-4);
+const matrixMinWidthClass: string = css`
   min-width: 8rem;
 `;
 
@@ -58,7 +57,7 @@ export const ElevationMatrix: Story = {
         <Surface
           elevation={elevation}
           border="subtle"
-          className={matrixClass}
+          className={cx(paddedClass, matrixMinWidthClass)}
         >
           <Text>{elevation}</Text>
         </Surface>

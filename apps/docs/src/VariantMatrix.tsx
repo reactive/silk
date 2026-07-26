@@ -10,17 +10,22 @@ interface VariantMatrixProps<Row extends string, Column extends string> {
   readonly children: (row: Row, column: Column) => ReactNode;
 }
 
+type MatrixDyn = {
+  readonly 'data-column-count': number;
+  readonly 'data-column-width': string;
+  readonly 'data-align': string;
+};
+
+const dyn = (props: object): MatrixDyn => props as MatrixDyn;
+
 const Matrix = styled(Box)`
   display: grid;
   gap: var(--silk-space-3) var(--silk-space-5);
   grid-template-columns: max-content repeat(
-    ${(props) =>
-      (props as { readonly 'data-column-count': number })['data-column-count']},
-    ${(props) =>
-      (props as { readonly 'data-column-width': string })['data-column-width']}
+    ${(props) => dyn(props)['data-column-count']},
+    ${(props) => dyn(props)['data-column-width']}
   );
-  align-items: ${(props) =>
-    (props as { readonly 'data-align': string })['data-align']};
+  align-items: ${(props) => dyn(props)['data-align']};
 `;
 
 /**

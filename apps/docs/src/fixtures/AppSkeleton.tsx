@@ -9,7 +9,6 @@ import {
   Stack,
   Text,
   ThemeProvider,
-  type DensityName,
 } from '@reactive/silk';
 import type { JSX } from 'react';
 
@@ -31,18 +30,19 @@ const shellClass: string = css`
   background-color: var(--silk-color-surface);
   overflow: hidden;
 
-  &[data-narrow='true'] {
+  &[data-narrow] {
     max-width: 22rem;
   }
 
-  &[data-overflow='true'] {
+  &[data-overflow] {
     max-height: 22rem;
     overflow: auto;
   }
 `;
 
+/** Fill the shell so the body's `flex: 1` has a definite height. */
 const shellStackClass: string = css`
-  min-height: 28rem;
+  min-height: 100%;
 `;
 
 const headerClass: string = css`
@@ -61,7 +61,7 @@ const sidebarClass: string = css`
   min-width: 0;
   flex: 0 0 12rem;
 
-  &[data-narrow='true'] {
+  &[data-narrow] {
     flex: 1 1 auto;
   }
 `;
@@ -70,7 +70,7 @@ const contentClass: string = css`
   flex: 1;
   min-width: 0;
 
-  &[data-overflow='true'] {
+  &[data-overflow] {
     overflow: auto;
     max-height: 100%;
   }
@@ -105,8 +105,6 @@ const footerClass: string = css`
 export function AppSkeleton({
   state = 'normal',
 }: AppSkeletonProps): JSX.Element {
-  const density: DensityName | undefined =
-    state === 'compactDensity' ? 'compact' : undefined;
   const narrow = state === 'sidebarCollapse';
   const overflow = state === 'overflow';
   const longContent = state === 'longContent';
@@ -115,8 +113,8 @@ export function AppSkeleton({
     <Box
       data-fixture="app-skeleton"
       data-fixture-state={state}
-      data-narrow={narrow ? 'true' : undefined}
-      data-overflow={overflow ? 'true' : undefined}
+      data-narrow={narrow || undefined}
+      data-overflow={overflow || undefined}
       className={shellClass}
       contain
     >
@@ -143,7 +141,7 @@ export function AppSkeleton({
           <Box
             padding="3"
             className={sidebarClass}
-            data-narrow={narrow ? 'true' : undefined}
+            data-narrow={narrow || undefined}
             data-region="sidebar"
           >
             <Stack gap="2">
@@ -160,7 +158,7 @@ export function AppSkeleton({
           <Box
             padding="4"
             className={contentClass}
-            data-overflow={overflow ? 'true' : undefined}
+            data-overflow={overflow || undefined}
             data-region="content"
           >
             <Container size="md" padding="0">
@@ -225,9 +223,8 @@ export function AppSkeleton({
     </Box>
   );
 
-  return density !== undefined ? (
-    <ThemeProvider density={density}>{body}</ThemeProvider>
-  ) : (
-    body
-  );
+  if (state === 'compactDensity') {
+    return <ThemeProvider density="compact">{body}</ThemeProvider>;
+  }
+  return body;
 }
