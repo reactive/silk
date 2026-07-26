@@ -131,6 +131,29 @@ test('style attribute --silk-* overrides propagate to portal scope', () => {
   expect(scope.style.padding).toBe('');
 });
 
+test('named nested portal replaces semantics but preserves component hooks', () => {
+  const theme = createTheme({
+    semantic: { color: { surface: 'rgb(1, 2, 3)' } },
+  });
+
+  render(
+    <ThemeProvider
+      theme={theme}
+      style={{ ['--silk-button-bg' as string]: 'rgb(4, 5, 6)' }}
+    >
+      <ThemeProvider colorScheme="dark">
+        <OpenDialog />
+      </ThemeProvider>
+    </ThemeProvider>,
+  );
+
+  const scope = portalScope(screen.getByRole('dialog'));
+  expect(scope.getAttribute('data-theme')).toBe('dark');
+  // Outer tenant semantics must not override the named dark theme in the portal.
+  expect(scope.style.getPropertyValue('--silk-color-surface')).toBe('');
+  expect(scope.style.getPropertyValue('--silk-button-bg')).toBe('rgb(4, 5, 6)');
+});
+
 test('explicit container still hosts a single theme scope wrapper', () => {
   const host = document.createElement('div');
   document.body.append(host);

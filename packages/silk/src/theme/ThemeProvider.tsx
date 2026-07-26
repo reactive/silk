@@ -9,6 +9,10 @@ import {
 } from 'react';
 import { Slot } from 'radix-ui';
 import {
+  mergeCssVarMaps,
+  partitionCssVars,
+} from './partitionCssVars';
+import {
   ThemeScopeContext,
   themeScopeDomProps,
   type ThemeScopeValue,
@@ -84,6 +88,13 @@ function resolveDataTheme(
  * Theme scope root. Named themes flip `data-theme` against static CSS;
  * custom themes set CSS variables on the style attribute.
  * Nested providers inherit omitted `colorScheme` / `density` from the parent.
+ *
+ * Variable channels:
+ * - `semanticVars` — theme-owned tokens; replaced by nested `theme` /
+ *   `colorScheme` (named children do not carry outer tenant semantics into
+ *   portals).
+ * - `customVars` — component hooks / extensions; always inherit so portals
+ *   under an inner named scheme still see outer branding hooks.
  */
 export function ThemeProvider({
   theme,
@@ -97,29 +108,44 @@ export function ThemeProvider({
   const parent = useContext(ThemeScopeContext);
   const dataTheme = resolveDataTheme(theme, colorScheme, parent?.dataTheme);
   const resolvedDensity = density ?? parent?.density;
-  const inheritsParentVars =
-    theme === undefined && colorScheme === undefined;
+  const replacesSemantics = theme !== undefined || colorScheme !== undefined;
 
   const themeVars = useMemo(
     () => (theme ? themeToCssVars(theme) : undefined),
     [theme],
   );
-  const styleVars = useMemo(() => pickSilkCssVars(style), [style]);
+  const styleParts = useMemo(
+    () => partitionCssVars(pickSilkCssVars(style)),
+    [style],
+  );
 
   const scopeValue = useMemo((): ThemeScopeValue => {
-    const parentVars = inheritsParentVars ? parent?.cssVars : undefined;
-    const cssVars =
-      themeVars || styleVars || parentVars
-        ? { ...parentVars, ...themeVars, ...styleVars }
-        : undefined;
-    return { dataTheme, density: resolvedDensity, cssVars };
+    const parentSemantic = replacesSemantics
+      ? undefined
+      : parent?.semanticVars;
+    const semanticVars = mergeCssVarMaps(
+      parentSemantic,
+      themeVars,
+      styleParts.semanticVars,
+    );
+    const customVars = mergeCssVarMaps(
+      parent?.customVars,
+      styleParts.customVars,
+    );
+    return {
+      dataTheme,
+      density: resolvedDensity,
+      semanticVars,
+      customVars,
+    };
   }, [
     themeVars,
-    styleVars,
+    styleParts,
     dataTheme,
     resolvedDensity,
-    inheritsParentVars,
-    parent?.cssVars,
+    replacesSemantics,
+    parent?.semanticVars,
+    parent?.customVars,
   ]);
 
   const domProps = useMemo(

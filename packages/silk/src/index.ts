@@ -208,9 +208,15 @@ export type {
 } from './components';
 
 export {
+  checkThemeContrast,
+  contrastRatio,
   createTheme,
   cssVars,
   densityClass,
+  generatePairedPalette,
+  generateScale,
+  relativeLuminance,
+  silkComponentVarMeta,
   silkComponentVarNames,
   SilkProvider,
   ThemeProvider,
@@ -220,17 +226,23 @@ export {
 } from './theme';
 export type {
   ColorScheme,
+  ContrastViolation,
   CreateThemeOptions,
   CssVarMap,
   DensityName,
   FontFamilyName,
+  GenerateScaleOptions,
+  PairedPalette,
+  PairedPaletteOptions,
   Palette,
   SemanticTokens,
+  SilkComponentVarMeta,
   SilkComponentVarName,
   SilkComponentVars,
   SilkDefaults,
   SilkProviderProps,
   Theme,
+  ThemeContrastResult,
   ThemeProviderProps,
 } from './theme';
 

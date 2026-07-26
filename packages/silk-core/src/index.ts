@@ -51,8 +51,23 @@ export {
   toneNames,
 } from './tokens/index.js';
 
-export { createTheme } from './theme/index.js';
-export type { CreateThemeOptions } from './theme/index.js';
+export {
+  checkThemeContrast,
+  contrastRatio,
+  createTheme,
+  generatePairedPalette,
+  generateScale,
+  parseCanonicalHex,
+  relativeLuminance,
+} from './theme/index.js';
+export type {
+  ContrastViolation,
+  CreateThemeOptions,
+  GenerateScaleOptions,
+  PairedPalette,
+  PairedPaletteOptions,
+  ThemeContrastResult,
+} from './theme/index.js';
 
 export {
   actionBarRecipe,

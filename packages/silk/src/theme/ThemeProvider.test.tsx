@@ -73,12 +73,15 @@ test('nested density-only provider inherits parent colorScheme', () => {
   expect(inner.getAttribute('data-density')).toBe('compact');
 });
 
-test('explicit named scheme drops parent custom CSS vars', () => {
+test('explicit named scheme drops parent semantic vars but keeps component hooks', () => {
   const theme = createTheme({
     semantic: { color: { surface: 'rgb(1, 2, 3)' } },
   });
   const { container } = render(
-    <ThemeProvider theme={theme}>
+    <ThemeProvider
+      theme={theme}
+      style={{ ['--silk-button-bg' as string]: 'rgb(4, 5, 6)' }}
+    >
       <ThemeProvider colorScheme="dark">
         <span>content</span>
       </ThemeProvider>
@@ -90,6 +93,7 @@ test('explicit named scheme drops parent custom CSS vars', () => {
     'rgb(1, 2, 3)',
   );
   expect(inner.style.getPropertyValue('--silk-color-surface')).toBe('');
+  expect(inner.style.getPropertyValue('--silk-button-bg')).toBe('rgb(4, 5, 6)');
   expect(inner.getAttribute('data-theme')).toBe('dark');
 });
 

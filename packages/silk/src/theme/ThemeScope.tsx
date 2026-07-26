@@ -10,12 +10,22 @@ import {
   type ReactNode,
 } from 'react';
 import { themeScopeClasses } from './namedThemes.css';
+import { mergeCssVarMaps } from './partitionCssVars';
 import type { CssVarMap } from './themeToCssVars';
 
 export interface ThemeScopeValue {
   readonly dataTheme: ColorScheme | undefined;
   readonly density: DensityName | undefined;
-  readonly cssVars: CssVarMap | undefined;
+  /**
+   * Theme-owned variables (`--silk-color-*`, scales, …). Replaced by a nested
+   * `theme` / `colorScheme` provider; not inherited across named boundaries.
+   */
+  readonly semanticVars: CssVarMap | undefined;
+  /**
+   * Component hooks and extension `--silk-*` vars. Inherit through named-theme
+   * children so portals under an inner `colorScheme` still see outer hooks.
+   */
+  readonly customVars: CssVarMap | undefined;
 }
 
 export const ThemeScopeContext: Context<ThemeScopeValue | null> =
@@ -37,9 +47,10 @@ export function themeScopeDomProps(
   readonly 'data-theme'?: ColorScheme;
   readonly 'data-density'?: DensityName;
 } {
+  const cssVars = mergeCssVarMaps(scope.semanticVars, scope.customVars);
   const style =
-    scope.cssVars || extras?.style
-      ? { ...scope.cssVars, ...extras?.style }
+    cssVars || extras?.style
+      ? { ...cssVars, ...extras?.style }
       : undefined;
 
   return {
