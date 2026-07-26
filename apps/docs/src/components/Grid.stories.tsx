@@ -1,7 +1,8 @@
-import { css } from '@linaria/core';
-import { Box, Grid, Text, gridRecipe } from '@reactive/silk';
+import { Grid, gridRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import type { JSX } from 'react';
+import { withSource } from '../docsSource';
+import { Cells } from './Grid.demo';
+import gridDemoSource from './Grid.demo.tsx?raw';
 
 const meta = {
   title: 'Components/Layout/Grid',
@@ -12,6 +13,7 @@ const meta = {
         component:
           'Both `align` and `justify` place an item inside its own track (`align-items` / `justify-items`). Tracks are always `1fr`, so there is no free space to distribute — this is the one place `justify` means item placement rather than content distribution.',
       },
+      ...withSource(gridDemoSource).docs,
     },
   },
   args: {
@@ -40,28 +42,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<typeof meta>;
-
-const cellClass: string = css`
-  padding: var(--silk-space-3);
-  border-radius: var(--silk-radius-md);
-  border: 1px solid var(--silk-color-border-subtle);
-  background-color: var(--silk-color-surface-raised);
-`;
-
-function Cells({ count }: { readonly count: number }): JSX.Element {
-  return (
-    <>
-      {Array.from({ length: count }, (_, i) => (
-        <Box key={i} className={cellClass}>
-          <Text role="label">Cell {i + 1}</Text>
-          <Text tone="secondary" role="caption">
-            Grid track
-          </Text>
-        </Box>
-      ))}
-    </>
-  );
-}
 
 export const FixedColumns: Story = {
   args: {

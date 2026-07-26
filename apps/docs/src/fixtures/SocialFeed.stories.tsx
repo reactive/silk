@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { withSource } from '../docsSource';
 import { SocialFeed, type SocialFeedState } from './SocialFeed';
+import socialFeedSource from './SocialFeed.tsx?raw';
 
 const states: SocialFeedState[] = [
   'normal',
@@ -14,6 +16,7 @@ const states: SocialFeedState[] = [
 const meta = {
   title: 'Fixtures/SocialFeed',
   component: SocialFeed,
+  parameters: withSource(socialFeedSource),
   argTypes: {
     state: { control: 'select', options: states },
   },

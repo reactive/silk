@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { withSource } from '../docsSource';
 import { SettingsForm, type SettingsFormState } from './SettingsForm';
+import settingsFormSource from './SettingsForm.tsx?raw';
 
 const states: SettingsFormState[] = [
   'normal',
@@ -13,6 +15,7 @@ const states: SettingsFormState[] = [
 const meta = {
   title: 'Fixtures/SettingsForm',
   component: SettingsForm,
+  parameters: withSource(settingsFormSource),
   argTypes: {
     state: {
       control: 'select',

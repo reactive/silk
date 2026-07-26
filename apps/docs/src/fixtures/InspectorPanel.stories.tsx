@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { withSource } from '../docsSource';
 import { InspectorPanel, type InspectorPanelState } from './InspectorPanel';
+import inspectorPanelSource from './InspectorPanel.tsx?raw';
 
 const states: InspectorPanelState[] = [
   'normal',
@@ -13,6 +15,7 @@ const states: InspectorPanelState[] = [
 const meta = {
   title: 'Fixtures/InspectorPanel',
   component: InspectorPanel,
+  parameters: withSource(inspectorPanelSource),
   argTypes: {
     state: {
       control: 'select',

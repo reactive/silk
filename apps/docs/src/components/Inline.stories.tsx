@@ -1,4 +1,5 @@
 import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import { Box, Button, Inline, Text, inlineRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
@@ -49,7 +50,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const chipClass: string = css`
+const Chip = styled(Box)`
   padding: var(--silk-space-1) var(--silk-space-2);
   border-radius: var(--silk-radius-full);
   /* solid/on-solid — subtle+solid fails WCAG AA at 16px */
@@ -57,6 +58,7 @@ const chipClass: string = css`
   color: var(--silk-color-tone-accent-on-solid);
 `;
 
+/** Applied via Inline `className` args — stays a class string. */
 const fullWidthClass: string = css`
   width: 100%;
 `;
@@ -65,7 +67,7 @@ const narrowClass: string = css`
   max-width: 14rem;
 `;
 
-const collapseFrameClass: string = css`
+const CollapseFrame = styled(Box)`
   max-width: 20rem;
   padding: var(--silk-space-3);
   border: 1px dashed var(--silk-color-border-subtle);
@@ -76,10 +78,10 @@ export const Default: Story = {
   args: {
     children: (
       <>
-        <Box className={chipClass}>Alpha</Box>
-        <Box className={chipClass}>Beta</Box>
-        <Box className={chipClass}>Gamma</Box>
-        <Box className={chipClass}>Delta</Box>
+        <Chip>Alpha</Chip>
+        <Chip>Beta</Chip>
+        <Chip>Gamma</Chip>
+        <Chip>Delta</Chip>
       </>
     ),
   },
@@ -113,9 +115,7 @@ export const Wrap: Story = {
       <>
         {['Design', 'Systems', 'Tokens', 'Recipes', 'Layout', 'Density'].map(
           (label) => (
-            <Box key={label} className={chipClass}>
-              {label}
-            </Box>
+            <Chip key={label}>{label}</Chip>
           ),
         )}
       </>
@@ -126,16 +126,16 @@ export const Wrap: Story = {
 export const CollapseBelow: Story = {
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
-    <Box contain className={collapseFrameClass}>
+    <CollapseFrame contain>
       <Inline gap="3" align="center" wrap="nowrap" collapseBelow="md">
-        <Box className={chipClass}>One</Box>
-        <Box className={chipClass}>Two</Box>
-        <Box className={chipClass}>Three</Box>
+        <Chip>One</Chip>
+        <Chip>Two</Chip>
+        <Chip>Three</Chip>
       </Inline>
       <Text tone="secondary" role="caption">
         Resize the container — row collapses to a stretched column below md
         (768px).
       </Text>
-    </Box>
+    </CollapseFrame>
   ),
 };

@@ -1,7 +1,9 @@
-import { css } from '@linaria/core';
-import { Box, Button, Inline, Stack, Text, stackRecipe } from '@reactive/silk';
+import { Button, Inline, Stack, Text, stackRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { withSource } from '../docsSource';
+import { DemoItems, tallFrameClass } from './Stack.demo';
+import stackDemoSource from './Stack.demo.tsx?raw';
 
 const meta = {
   title: 'Components/Layout/Stack',
@@ -12,6 +14,7 @@ const meta = {
         component:
           'Stack is vertical-only, so `align` is always the horizontal axis and `justify` always the vertical one. For horizontal flow reach for `Inline`.',
       },
+      ...withSource(stackDemoSource).docs,
     },
   },
   args: {
@@ -40,31 +43,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<typeof meta>;
-
-const itemClass: string = css`
-  padding: var(--silk-space-2) var(--silk-space-3);
-  border-radius: var(--silk-radius-sm);
-  /* solid/on-solid — subtle+solid fails WCAG AA at 16px */
-  background-color: var(--silk-color-tone-accent-solid);
-  color: var(--silk-color-tone-accent-on-solid);
-`;
-
-const tallFrameClass: string = css`
-  height: 14rem;
-  padding: var(--silk-space-3);
-  border: 1px dashed var(--silk-color-border-subtle);
-  border-radius: var(--silk-radius-md);
-`;
-
-function DemoItems(): JSX.Element {
-  return (
-    <>
-      <Box className={itemClass}>One</Box>
-      <Box className={itemClass}>Two</Box>
-      <Box className={itemClass}>Three</Box>
-    </>
-  );
-}
 
 export const Column: Story = {
   args: {

@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { withSource } from '../docsSource';
 import { AppSkeleton, type AppSkeletonState } from './AppSkeleton';
+import appSkeletonSource from './AppSkeleton.tsx?raw';
 
 const states: AppSkeletonState[] = [
   'normal',
@@ -12,6 +14,7 @@ const states: AppSkeletonState[] = [
 const meta = {
   title: 'Fixtures/AppSkeleton',
   component: AppSkeleton,
+  parameters: withSource(appSkeletonSource),
   argTypes: {
     state: {
       control: 'select',

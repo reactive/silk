@@ -1,4 +1,5 @@
 import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import {
   Accordion,
   Button,
@@ -33,7 +34,7 @@ const shellClass: string = css`
   max-width: 42rem;
 `;
 
-const scrollAreaClass: string = css`
+const ScrollFrame = styled(ScrollArea)`
   height: 80px;
   border: 1px solid var(--silk-color-border-subtle);
   border-radius: var(--silk-radius-md);
@@ -43,7 +44,7 @@ const scrollAreaClass: string = css`
   }
 `;
 
-const scrollPadClass: string = css`
+const ScrollPad = styled.div`
   padding: var(--silk-space-3);
 `;
 
@@ -241,16 +242,13 @@ export function InspectorPanel({
             </Tabs.Root>
 
             <div data-region="scroll">
-              <ScrollArea
-                className={scrollAreaClass}
-                data-long={longContent || undefined}
-              >
-                <div className={scrollPadClass}>
+              <ScrollFrame data-long={longContent || undefined}>
+                <ScrollPad>
                   {rows.map((line) => (
                     <Text key={line}>{line}</Text>
                   ))}
-                </div>
-              </ScrollArea>
+                </ScrollPad>
+              </ScrollFrame>
             </div>
 
             {state === 'reducedMotion' ? (
