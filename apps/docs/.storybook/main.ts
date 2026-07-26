@@ -35,7 +35,9 @@ const config: StorybookConfig = {
       resolve: {
         alias: {
           // Source for HMR, Linaria extraction, and prop tables.
-          // silk-core stays on package exports → dist (Linaria eval).
+          // silk-core stays on package exports → dist (Linaria eval + runtime).
+          // `yarn docs` watch-builds core; preview applies createTheme() inline
+          // so token edits do not wait on namedThemes re-extraction.
           '@reactive/silk$': '../../packages/silk/src/index.ts',
         },
       },

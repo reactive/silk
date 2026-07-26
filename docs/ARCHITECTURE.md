@@ -18,7 +18,7 @@ Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/mode
 
 **Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs today; playgrounds / native examples later) live under `apps/`.
 
-**Build order:** `silk-core` must emit `dist/` before `silk` builds. Linaria evaluates core imports at build time; missing core dist fails the web build. `yarn workspaces foreach -A -pt run build` handles this topologically.
+**Build order:** `silk-core` must emit `dist/` before `silk` builds. Linaria evaluates core imports at build time; missing core dist fails the web build. `yarn workspaces foreach -A -pt run build` handles this topologically. For Storybook, `yarn docs` watch-builds core, and the preview decorator applies `createTheme()` inline for light/dark so token edits do not depend on re-extracting `namedThemes.css.ts`.
 
 ## Theme model
 
