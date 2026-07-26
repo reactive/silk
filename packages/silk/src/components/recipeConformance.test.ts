@@ -93,15 +93,15 @@ test('density remaps space vars and collapseBelow container queries exist', () =
 
 /**
  * collapseBelow must share each component's Linaria class and appear after
- * direction/base and align rules so equal-specificity source order wins for
- * both `flex-direction: column` and `align-items: stretch`.
+ * direction/base and align rules so equal-specificity source order wins.
+ * Stack guards stretch so already-column keeps align; Inline always stretches.
  */
 test('collapseBelow rules follow Stack/Inline direction and align in CSS', () => {
   const css = loadCss();
   const escape = (value: string): string =>
     value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  function collapseBlock(className: string): string {
+  function collapsePlainBlock(className: string): string {
     const match = css.match(
       new RegExp(
         `\\.${escape(className)}:where\\(\\[data-collapse-below="md"\\]\\)\\s*\\{([^}]+)\\}`,
@@ -111,31 +111,37 @@ test('collapseBelow rules follow Stack/Inline direction and align in CSS', () =>
     return match![1];
   }
 
-  function assertCollapseAfter(earlierNeedle: string, className: string): void {
+  function assertAfter(earlierNeedle: string, laterNeedle: string): void {
     const earlierIdx = css.indexOf(earlierNeedle);
+    const laterIdx = css.indexOf(laterNeedle);
     expect(earlierIdx).toBeGreaterThan(-1);
-    const collapseIdx = css.indexOf(
-      `.${className}:where([data-collapse-below="md"])`,
-    );
-    expect(collapseIdx).toBeGreaterThan(earlierIdx);
-    const body = collapseBlock(className);
-    expect(body).toContain('flex-direction: column');
-    expect(body).toContain('align-items: stretch');
+    expect(laterIdx).toBeGreaterThan(earlierIdx);
   }
 
-  // Stack: direction + align on the same hashed class as collapseBelow.
+  // Stack: direction collapses; stretch only when not already column.
   const stackDirection = css.match(
     /\.([a-zA-Z0-9_-]+):where\(\[data-direction="row"\]\)\s*\{[^}]*flex-direction:\s*row/,
   );
   expect(stackDirection).not.toBeNull();
   const stackClass = stackDirection![1];
-  assertCollapseAfter(stackDirection![0], stackClass);
-  assertCollapseAfter(
-    `.${stackClass}:where([data-align="center"])`,
-    stackClass,
+  const stackCollapseSel = `.${stackClass}:where([data-collapse-below="md"])`;
+  assertAfter(stackDirection![0], stackCollapseSel);
+  assertAfter(`.${stackClass}:where([data-align="center"])`, stackCollapseSel);
+
+  const stackDirectionBody = collapsePlainBlock(stackClass);
+  expect(stackDirectionBody).toContain('flex-direction: column');
+  expect(stackDirectionBody).not.toContain('align-items');
+
+  const stackStretchGuard = `.${stackClass}:where([data-collapse-below="md"]:not([data-direction="column"]))`;
+  expect(css).toContain(stackStretchGuard);
+  assertAfter(`.${stackClass}:where([data-align="center"])`, stackStretchGuard);
+  expect(css).toMatch(
+    new RegExp(
+      `${escape(stackStretchGuard)}\\s*\\{[^}]*align-items:\\s*stretch`,
+    ),
   );
 
-  // Inline: identify via justify axis (Inline-only), then check row base + align.
+  // Inline: always direction + stretch together (no data-direction guard).
   const inlineJustify = css.match(
     /\.([a-zA-Z0-9_-]+):where\(\[data-justify="start"\]\)/,
   );
@@ -147,9 +153,17 @@ test('collapseBelow rules follow Stack/Inline direction and align in CSS', () =>
     ),
   );
   expect(inlineBase).not.toBeNull();
-  assertCollapseAfter(inlineBase![0], inlineClass);
-  assertCollapseAfter(
+  const inlineCollapseSel = `.${inlineClass}:where([data-collapse-below="md"])`;
+  assertAfter(inlineBase![0], inlineCollapseSel);
+  assertAfter(
     `.${inlineClass}:where([data-align="center"])`,
-    inlineClass,
+    inlineCollapseSel,
+  );
+
+  const inlineBody = collapsePlainBlock(inlineClass);
+  expect(inlineBody).toContain('flex-direction: column');
+  expect(inlineBody).toContain('align-items: stretch');
+  expect(css).not.toContain(
+    `.${inlineClass}:where([data-collapse-below="md"]:not(`,
   );
 });

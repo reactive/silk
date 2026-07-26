@@ -4,7 +4,7 @@ import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import {
   collapseBelowDomProps,
-  collapseBelowRules,
+  collapseBelowRulesInline,
   type CollapseBelowProp,
 } from '../layout/collapseBelow';
 import { useComponentDefaults } from '../theme/SilkProvider';
@@ -88,7 +88,7 @@ const inlineClass: string = css`
   ${justifyRules}
   ${wrapRules}
   /* Adaptive rules must stay last — equal specificity, source order wins. */
-  ${collapseBelowRules}
+  ${collapseBelowRulesInline}
 `;
 
 /**
