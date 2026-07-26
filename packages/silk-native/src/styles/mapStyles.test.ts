@@ -42,6 +42,7 @@ test('mapStackStyle is vertical with align/justify/gap/rail', () => {
   expect(stack.justifyContent).toBe('space-between');
   expect(stack.borderStartWidth).toBe(1);
   expect(stack.borderStartColor).toBe(theme.semantic.color.borderSubtle);
+  expect(stack.borderStyle).toBe('solid');
   expect(stack.paddingStart).toBe(theme.semantic.space[3]);
 });
 

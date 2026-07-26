@@ -204,6 +204,7 @@ export function mapStackStyle(
     // Logical start edge — mirrors web `border-inline-start` for RTL.
     style.borderStartWidth = 1;
     style.borderStartColor = theme.semantic.color.borderSubtle;
+    style.borderStyle = 'solid';
     style.paddingStart = space[3];
   }
 
