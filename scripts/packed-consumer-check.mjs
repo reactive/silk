@@ -60,7 +60,12 @@ try {
   const css = readFileSync(cssPath, 'utf8');
   for (const needle of [
     '--silk-color-surface',
+    '--silk-space-compact-2',
+    '--silk-space-comfortable-2',
     'data-variant',
+    'data-density',
+    'data-collapse-below',
+    '@container',
     'prefers-reduced-motion',
   ]) {
     if (!css.includes(needle)) {
@@ -68,9 +73,6 @@ try {
     }
   }
 
-  const packed = readFileSync(join(root, 'silk.tgz'));
-  // Lightweight check: tarball listing via npm pack already filtered files;
-  // assert installed package has no test declaration artifacts.
   const distDir = join(fixture, 'node_modules/@reactive/silk/dist');
   const listing = execSync(`find "${distDir}" -name '*.test.*'`, {
     encoding: 'utf8',
@@ -78,7 +80,6 @@ try {
   if (listing) {
     throw new Error(`Test artifacts shipped in package:\n${listing}`);
   }
-  void packed;
 
   const entryUrl = pathToFileURL(
     join(fixture, 'node_modules/@reactive/silk/dist/index.js'),
@@ -86,6 +87,18 @@ try {
   const mod = await import(entryUrl);
   if (typeof mod.createTheme !== 'function' || typeof mod.Button !== 'function') {
     throw new Error('ESM import from packed tarball failed to expose API');
+  }
+  for (const name of [
+    'Inline',
+    'Grid',
+    'Center',
+    'Container',
+    'Separator',
+    'containerBreakpoints',
+  ]) {
+    if (mod[name] === undefined) {
+      throw new Error(`Packed ESM missing Stage 1 export: ${name}`);
+    }
   }
 
   const js = readFileSync(

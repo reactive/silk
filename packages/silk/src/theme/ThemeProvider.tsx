@@ -1,6 +1,7 @@
-import type { ColorScheme, Theme } from '@reactive/silk-core';
+import type { ColorScheme, DensityName, Theme } from '@reactive/silk-core';
 import {
   createElement,
+  useContext,
   useMemo,
   type CSSProperties,
   type JSX,
@@ -46,9 +47,16 @@ export interface ThemeProviderProps {
   /**
    * Selects the named theme via `data-theme` against static CSS.
    * `'system'` omits the attribute so prefers-color-scheme applies.
+   * Omitted inherits the nearest ancestor ThemeProvider's scheme.
    * Ignored for `data-theme` when `theme` is set (uses `theme.colorScheme`).
    */
   readonly colorScheme?: ColorScheme | 'system';
+  /**
+   * System density. Sets `data-density` so effective `--silk-space-*` vars
+   * remap. Omitted inherits from an ancestor; root fallback is comfortable
+   * via the default effective aliases.
+   */
+  readonly density?: DensityName;
   readonly children: ReactNode;
   readonly className?: string;
   readonly style?: CSSProperties;
@@ -58,12 +66,16 @@ export interface ThemeProviderProps {
 function resolveDataTheme(
   theme: Theme | undefined,
   colorScheme: ColorScheme | 'system' | undefined,
+  parentDataTheme: ColorScheme | undefined,
 ): ColorScheme | undefined {
   if (theme) {
     return theme.colorScheme;
   }
-  if (colorScheme === 'system' || colorScheme === undefined) {
+  if (colorScheme === 'system') {
     return undefined;
+  }
+  if (colorScheme === undefined) {
+    return parentDataTheme;
   }
   return colorScheme;
 }
@@ -71,25 +83,44 @@ function resolveDataTheme(
 /**
  * Theme scope root. Named themes flip `data-theme` against static CSS;
  * custom themes set CSS variables on the style attribute.
+ * Nested providers inherit omitted `colorScheme` / `density` from the parent.
  */
 export function ThemeProvider({
   theme,
-  colorScheme = 'system',
+  colorScheme,
+  density,
   children,
   className,
   style,
   asChild = false,
 }: ThemeProviderProps): JSX.Element {
-  const dataTheme = resolveDataTheme(theme, colorScheme);
+  const parent = useContext(ThemeScopeContext);
+  const dataTheme = resolveDataTheme(theme, colorScheme, parent?.dataTheme);
+  const resolvedDensity = density ?? parent?.density;
+  const inheritsParentVars =
+    theme === undefined && colorScheme === undefined;
+
+  const themeVars = useMemo(
+    () => (theme ? themeToCssVars(theme) : undefined),
+    [theme],
+  );
+  const styleVars = useMemo(() => pickSilkCssVars(style), [style]);
+
   const scopeValue = useMemo((): ThemeScopeValue => {
-    const themeVars = theme ? themeToCssVars(theme) : undefined;
-    const styleVars = pickSilkCssVars(style);
+    const parentVars = inheritsParentVars ? parent?.cssVars : undefined;
     const cssVars =
-      themeVars || styleVars
-        ? { ...themeVars, ...styleVars }
+      themeVars || styleVars || parentVars
+        ? { ...parentVars, ...themeVars, ...styleVars }
         : undefined;
-    return { dataTheme, cssVars };
-  }, [theme, style, dataTheme]);
+    return { dataTheme, density: resolvedDensity, cssVars };
+  }, [
+    themeVars,
+    styleVars,
+    dataTheme,
+    resolvedDensity,
+    inheritsParentVars,
+    parent?.cssVars,
+  ]);
 
   const props = {
     ...themeScopeDomProps(scopeValue, {

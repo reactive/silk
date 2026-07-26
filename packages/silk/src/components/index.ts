@@ -4,6 +4,21 @@ export type { BoxProps } from './Box';
 export { Stack } from './Stack';
 export type { StackProps } from './Stack';
 
+export { Inline } from './Inline';
+export type { InlineProps } from './Inline';
+
+export { Grid } from './Grid';
+export type { GridProps } from './Grid';
+
+export { Center } from './Center';
+export type { CenterProps } from './Center';
+
+export { Container } from './Container';
+export type { ContainerProps } from './Container';
+
+export { Separator } from './Separator';
+export type { SeparatorProps } from './Separator';
+
 export { Text } from './Text';
 export type { TextProps } from './Text';
 

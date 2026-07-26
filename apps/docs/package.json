@@ -8,7 +8,8 @@
   "scripts": {
     "storybook": "storybook dev -p 6006",
     "build:storybook": "storybook build -o storybook-static",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "rstest run"
   },
   "dependencies": {
     "@reactive/silk": "workspace:*",
@@ -17,13 +18,20 @@
   "devDependencies": {
     "@rsbuild/core": "~2.1.8",
     "@rsbuild/plugin-react": "^1.4.5",
+    "@rspack/plugin-react-refresh": "^1.6.1",
+    "@rstest/core": "^0.11.4",
     "@storybook/addon-a11y": "10.5.4",
     "@storybook/addon-docs": "10.5.4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/react-refresh": "^0",
     "@wyw-in-js/webpack-loader": "^2.3.0",
+    "jsdom": "^29.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-refresh": "^0.18.0",
     "remark-gfm": "^4.0.1",
     "storybook": "10.5.4",
     "storybook-react-rsbuild": "3.3.4",

@@ -1,5 +1,6 @@
 import { css } from '@linaria/core';
 import { createTheme } from '@reactive/silk-core';
+import { densityClass } from './density.css';
 import { themeToCssVars } from './themeToCssVars';
 
 function varsToCssBlock(vars: Readonly<Record<string, string>>): string {
@@ -14,6 +15,7 @@ const darkVars = themeToCssVars(createTheme({ colorScheme: 'dark' }));
 /**
  * Applied on the ThemeProvider root. Light by default; dark via data-theme.
  * Prefers-color-scheme fallback when data-theme is unset (system).
+ * Density remapping is composed via `densityClass` (see ThemeScope).
  */
 export const themeScopeClass: string = css`
   color-scheme: light;
@@ -31,3 +33,6 @@ export const themeScopeClass: string = css`
     }
   }
 `;
+
+/** Class list for theme scope roots — named themes + density remap. */
+export const themeScopeClasses: string = `${themeScopeClass} ${densityClass}`;

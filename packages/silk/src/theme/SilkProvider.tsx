@@ -1,7 +1,13 @@
 import type {
   AvatarVariantProps,
+  BoxVariantProps,
   ButtonVariantProps,
+  CenterVariantProps,
+  ContainerVariantProps,
   DialogVariantProps,
+  GridVariantProps,
+  InlineVariantProps,
+  SeparatorVariantProps,
   StackVariantProps,
   TextVariantProps,
 } from '@reactive/silk-core';
@@ -21,6 +27,12 @@ export interface SilkDefaults {
   readonly Button?: Partial<ButtonVariantProps>;
   readonly Text?: Partial<TextVariantProps>;
   readonly Stack?: Partial<StackVariantProps>;
+  readonly Box?: Partial<BoxVariantProps>;
+  readonly Inline?: Partial<InlineVariantProps>;
+  readonly Grid?: Partial<GridVariantProps>;
+  readonly Center?: Partial<CenterVariantProps>;
+  readonly Container?: Partial<ContainerVariantProps>;
+  readonly Separator?: Partial<SeparatorVariantProps>;
   readonly Dialog?: Partial<DialogVariantProps>;
   readonly Avatar?: Partial<AvatarVariantProps>;
   readonly Identity?: Partial<AvatarVariantProps>;

@@ -26,6 +26,10 @@ const meta = {
       control: 'select',
       options: [...stackRecipe.variants.wrap],
     },
+    collapseBelow: {
+      control: 'select',
+      options: [false, 'xs', 'sm', 'md', 'lg'],
+    },
   },
 } satisfies Meta<typeof Stack>;
 
@@ -96,5 +100,27 @@ export const Composition: Story = {
         Gap and align resolve through space tokens and recipe defaults.
       </Text>
     </Stack>
+  ),
+};
+
+export const CollapseBelow: Story = {
+  parameters: { controls: { disable: true } },
+  render: (): JSX.Element => (
+    <Box
+      contain
+      style={{
+        maxWidth: '20rem',
+        padding: 'var(--silk-space-3)',
+        border: '1px dashed var(--silk-color-border-subtle)',
+        borderRadius: 'var(--silk-radius-md)',
+      }}
+    >
+      <Stack direction="row" gap="3" collapseBelow="md" align="center">
+        <DemoItems />
+      </Stack>
+      <Text tone="secondary" role="caption">
+        Resize the container — row collapses to column below md (768px).
+      </Text>
+    </Box>
   ),
 };

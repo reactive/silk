@@ -5,10 +5,20 @@ import {
 } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
+import {
+  collapseBelowClass,
+  collapseBelowDomProps,
+  type CollapseBelowProp,
+} from '../layout/collapseBelow';
 import { useComponentDefaults } from '../theme/SilkProvider';
 
 export interface StackProps
   extends Omit<ComponentPropsWithoutRef<'div'>, 'wrap'>, StackVariantProps {
+  /**
+   * Switch to column direction when the nearest size container is narrower
+   * than this breakpoint (web-only; container queries).
+   */
+  readonly collapseBelow?: CollapseBelowProp;
   readonly asChild?: boolean;
   readonly ref?: Ref<HTMLDivElement>;
   readonly children?: ReactNode;
@@ -81,6 +91,7 @@ export function Stack({
   gap,
   align,
   wrap,
+  collapseBelow,
   ...props
 }: StackProps): JSX.Element {
   const defaults = useComponentDefaults('Stack');
@@ -94,11 +105,12 @@ export function Stack({
   return (
     <Comp
       {...props}
-      className={cx(stackClass, className)}
+      className={cx(stackClass, collapseBelowClass, className)}
       data-direction={resolvedDirection}
       data-gap={resolvedGap}
       data-align={resolvedAlign}
       data-wrap={resolvedWrap}
+      {...collapseBelowDomProps(collapseBelow)}
     />
   );
 }
