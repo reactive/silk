@@ -60,6 +60,13 @@ function OverlayControls({
 }): JSX.Element {
   const [menuOpen, setMenuOpen] = useState(overlaysOpen);
   const [selectOpen, setSelectOpen] = useState(overlaysOpen);
+  const [prevOverlaysOpen, setPrevOverlaysOpen] = useState(overlaysOpen);
+
+  if (prevOverlaysOpen !== overlaysOpen) {
+    setPrevOverlaysOpen(overlaysOpen);
+    setMenuOpen(overlaysOpen);
+    setSelectOpen(overlaysOpen);
+  }
 
   return (
     <Stack gap="3" data-region="general">
@@ -98,6 +105,31 @@ function OverlayControls({
   );
 }
 
+function FixtureTooltip({
+  overlaysOpen,
+}: {
+  readonly overlaysOpen: boolean;
+}): JSX.Element {
+  const [open, setOpen] = useState(overlaysOpen);
+  const [prevOverlaysOpen, setPrevOverlaysOpen] = useState(overlaysOpen);
+
+  if (prevOverlaysOpen !== overlaysOpen) {
+    setPrevOverlaysOpen(overlaysOpen);
+    setOpen(overlaysOpen);
+  }
+
+  return (
+    <Tooltip.Root open={open} onOpenChange={setOpen}>
+      <Tooltip.Trigger asChild>
+        <Button size="sm" variant="outline">
+          Help
+        </Button>
+      </Tooltip.Trigger>
+      <Tooltip.Content>Inspector help tip</Tooltip.Content>
+    </Tooltip.Root>
+  );
+}
+
 function FixtureToasts({
   overlaysOpen,
   multipleToasts,
@@ -105,8 +137,20 @@ function FixtureToasts({
   readonly overlaysOpen: boolean;
   readonly multipleToasts: boolean;
 }): JSX.Element {
-  const [toastOpen, setToastOpen] = useState(overlaysOpen || multipleToasts);
+  const primaryOpen = overlaysOpen || multipleToasts;
+  const [toastOpen, setToastOpen] = useState(primaryOpen);
   const [toastTwoOpen, setToastTwoOpen] = useState(multipleToasts);
+  const [prevPrimaryOpen, setPrevPrimaryOpen] = useState(primaryOpen);
+  const [prevMultipleToasts, setPrevMultipleToasts] = useState(multipleToasts);
+
+  if (prevPrimaryOpen !== primaryOpen) {
+    setPrevPrimaryOpen(primaryOpen);
+    setToastOpen(primaryOpen);
+  }
+  if (prevMultipleToasts !== multipleToasts) {
+    setPrevMultipleToasts(multipleToasts);
+    setToastTwoOpen(multipleToasts);
+  }
 
   return (
     <Toast.Provider swipeDirection="right">
@@ -163,14 +207,7 @@ export function InspectorPanel({
               <Heading level="2" size="lg">
                 Inspector
               </Heading>
-              <Tooltip.Root {...(overlaysOpen ? { open: true } : {})}>
-                <Tooltip.Trigger asChild>
-                  <Button size="sm" variant="outline">
-                    Help
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content>Inspector help tip</Tooltip.Content>
-              </Tooltip.Root>
+              <FixtureTooltip overlaysOpen={overlaysOpen} />
             </Inline>
 
             <Tabs.Root defaultValue="general" variant="line">

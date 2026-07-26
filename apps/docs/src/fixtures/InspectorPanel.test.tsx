@@ -83,3 +83,32 @@ test('multipleToasts shows two toast titles', () => {
   expect(screen.getByText('Primary toast')).toBeTruthy();
   expect(screen.getByText('Secondary toast')).toBeTruthy();
 });
+
+test('changing state after mount opens and closes overlays', () => {
+  const { rerender } = renderFixture('normal');
+  expect(document.querySelector('[role="menu"]')).toBeNull();
+  expect(document.querySelector('[role="listbox"]')).toBeNull();
+  expect(screen.queryByText('Primary toast')).toBeNull();
+
+  const withState = (state: InspectorPanelState) => (
+    <SilkProvider colorScheme="light">
+      <InspectorPanel state={state} />
+    </SilkProvider>
+  );
+
+  rerender(withState('overlaysOpen'));
+  expect(document.querySelector('[role="menu"]')).not.toBeNull();
+  expect(document.querySelector('[role="listbox"]')).not.toBeNull();
+  expect(document.querySelector('[role="tooltip"]')).not.toBeNull();
+  expect(screen.getByText('Primary toast')).toBeTruthy();
+
+  rerender(withState('normal'));
+  expect(document.querySelector('[role="menu"]')).toBeNull();
+  expect(document.querySelector('[role="listbox"]')).toBeNull();
+  expect(document.querySelector('[role="tooltip"]')).toBeNull();
+  expect(screen.queryByText('Primary toast')).toBeNull();
+
+  rerender(withState('multipleToasts'));
+  expect(screen.getByText('Primary toast')).toBeTruthy();
+  expect(screen.getByText('Secondary toast')).toBeTruthy();
+});
