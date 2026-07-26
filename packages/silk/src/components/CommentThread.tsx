@@ -10,10 +10,6 @@ const listClass: string = css`
   list-style: none;
 `;
 
-const continueButtonClass: string = css`
-  align-self: flex-start;
-`;
-
 export interface CommentThreadProps
   extends Omit<ComponentPropsWithoutRef<'ul'>, 'children'> {
   readonly comments: readonly CommentModel[];
@@ -47,15 +43,12 @@ function CommentThreadItem({
     comment.hasMoreReplies ||
     (!canNest && (comment.replyCount > 0 || loadedReplies.length > 0));
 
-  const continueText =
-    typeof continueLabel === 'string' && comment.replyCount > 0
-      ? `${continueLabel} (${comment.replyCount})`
-      : continueLabel;
+  const countSuffix =
+    comment.replyCount > 0 ? ` (${comment.replyCount})` : null;
 
   const continueButton =
-    needsContinue && onContinue ? (
+    needsContinue && onContinue !== undefined ? (
       <Button
-        className={continueButtonClass}
         variant="ghost"
         tone="accent"
         size="sm"
@@ -64,31 +57,25 @@ function CommentThreadItem({
           onContinue(comment);
         }}
       >
-        {continueText}
-        {typeof continueLabel !== 'string' && comment.replyCount > 0
-          ? ` (${comment.replyCount})`
-          : null}
+        {continueLabel}
+        {countSuffix}
       </Button>
-    ) : null;
+    ) : undefined;
 
   // Replies nest inside the comment's own content column, so every level
-  // indents by the media column and renders its own rail.
-  const replies =
-    hasInlineReplies || continueButton !== null ? (
-      <>
-        {hasInlineReplies ? (
-          <CommentThread
-            comments={loadedReplies}
-            depth={depth + 1}
-            maxDepth={maxDepth}
-            {...(onContinue !== undefined ? { onContinue } : {})}
-            continueLabel={continueLabel}
-            {...(onAction !== undefined ? { onAction } : {})}
-          />
-        ) : null}
-        {continueButton}
-      </>
-    ) : undefined;
+  // indents by the media column and renders its own rail. The continue button
+  // continues this comment's thread rather than being one of its replies, so it
+  // goes to the footer slot, outside that rail.
+  const replies = hasInlineReplies ? (
+    <CommentThread
+      comments={loadedReplies}
+      depth={depth + 1}
+      maxDepth={maxDepth}
+      {...(onContinue !== undefined ? { onContinue } : {})}
+      continueLabel={continueLabel}
+      {...(onAction !== undefined ? { onAction } : {})}
+    />
+  ) : undefined;
 
   return (
     <li>
@@ -97,7 +84,8 @@ function CommentThreadItem({
         onAction={(actionId) => {
           onAction?.(actionId, comment);
         }}
-        {...(replies !== undefined ? { replies } : {})}
+        replies={replies}
+        footer={continueButton}
       />
     </li>
   );

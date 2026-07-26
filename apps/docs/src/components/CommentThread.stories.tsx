@@ -67,3 +67,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {};
+
+/** Past `maxDepth`, deeper replies collapse into a continue affordance. */
+export const Truncated: Story = {
+  args: {
+    maxDepth: 1,
+    onContinue: () => {},
+  },
+};

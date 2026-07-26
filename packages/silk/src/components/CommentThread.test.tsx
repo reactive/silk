@@ -82,7 +82,9 @@ test('CommentThread shows continue when hasMoreReplies with loaded replies', () 
     />,
   );
   expect(screen.getByText('Loaded reply')).toBeTruthy();
-  expect(screen.getByRole('button', { name: /Continue thread/i })).toBeTruthy();
+  const button = screen.getByRole('button', { name: /Continue thread/i });
+  // The rail carries replies; continuing the thread is the parent's affordance.
+  expect(button.closest('[data-rail="start"]')).toBeNull();
 });
 
 test('CommentThread hides continue without onContinue', () => {
@@ -113,6 +115,33 @@ test('CommentThread hides continue without onContinue', () => {
   );
   expect(screen.getByText('Loaded reply')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Continue thread/i })).toBeNull();
+});
+
+test('CommentThread keeps the continue button outside the reply rail', () => {
+  const { container } = render(
+    <CommentThread
+      comments={[
+        {
+          id: 'c1',
+          author: { id: 'u1', name: 'Ada', fallback: 'A' },
+          body: 'Root',
+          createdAt: '2026-07-26T10:00:00.000Z',
+          replyCount: 3,
+          hasMoreReplies: true,
+        },
+      ]}
+      onContinue={() => {}}
+    />,
+  );
+
+  // Nothing is nested inline, so the lone continue affordance must not
+  // manufacture a reply rail of its own.
+  expect(container.querySelectorAll('[data-rail="start"]')).toHaveLength(0);
+
+  // It still lives in the comment's content column, under the byline.
+  const contentColumn = screen.getByText('Root').closest('[data-gap="1"]');
+  const button = screen.getByRole('button', { name: /Continue thread/i });
+  expect(contentColumn!.contains(button)).toBe(true);
 });
 
 test('CommentThread has no axe violations', async () => {

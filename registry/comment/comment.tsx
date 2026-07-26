@@ -151,6 +151,8 @@ export interface CommentProps
   readonly onAction?: (actionId: string) => void;
   /** Nested replies, rendered railed inside this comment's content column. */
   readonly replies?: ReactNode;
+  /** Trailing affordance (e.g. "continue thread"), placed after the replies and outside their rail. */
+  readonly footer?: ReactNode;
 }
 
 function CommentConvenience({
@@ -159,6 +161,7 @@ function CommentConvenience({
   onAction,
   size,
   replies,
+  footer,
   ...props
 }: CommentProps): JSX.Element {
   const defaults = useComponentDefaults('Comment');
@@ -221,6 +224,7 @@ function CommentConvenience({
         {replies !== undefined ? (
           <CommentReplies>{replies}</CommentReplies>
         ) : null}
+        {footer}
       </MediaObject>
     </CommentRoot>
   );
