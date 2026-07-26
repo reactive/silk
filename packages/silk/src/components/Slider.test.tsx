@@ -27,9 +27,48 @@ test('Slider Field wiring lands on the thumb', () => {
     </SilkProvider>,
   );
   const thumb = screen.getByRole('slider', { name: 'Volume' });
+  const label = screen.getByText('Volume');
+  expect(label.getAttribute('for')).toBeNull();
+  expect(thumb.getAttribute('id')).toBeNull();
+  expect(thumb.getAttribute('aria-labelledby')).toBe(label.id);
+  expect(document.getElementById(label.id)).toBe(label);
   const describedBy = thumb.getAttribute('aria-describedby');
   expect(describedBy).toBeTruthy();
   expect(document.getElementById(describedBy!)?.textContent).toBe('Loudness');
+});
+
+test('multi-thumb Slider omits Label htmlFor and thumb ids', () => {
+  render(
+    <SilkProvider>
+      <Field.Root>
+        <Field.Label>Price range</Field.Label>
+        <Slider defaultValue={[20, 80]} />
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const label = screen.getByText('Price range');
+  expect(label.getAttribute('for')).toBeNull();
+  const thumbs = screen.getAllByRole('slider', { name: 'Price range' });
+  expect(thumbs).toHaveLength(2);
+  for (const thumb of thumbs) {
+    expect(thumb.getAttribute('id')).toBeNull();
+    expect(thumb.getAttribute('aria-labelledby')).toBe(label.id);
+  }
+});
+
+test('explicit Slider id is kept; Label still omits htmlFor', () => {
+  render(
+    <SilkProvider>
+      <Field.Root>
+        <Field.Label>Volume</Field.Label>
+        <Slider id="volume" defaultValue={[50]} />
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const label = screen.getByText('Volume');
+  const thumb = screen.getByRole('slider', { name: 'Volume' });
+  expect(label.getAttribute('for')).toBeNull();
+  expect(thumb.getAttribute('id')).toBe('volume');
 });
 
 test('Slider in a label-less Field keeps its aria-label', () => {
@@ -127,9 +166,27 @@ test('Slider Field wiring finds Label nested in layout wrappers', () => {
       </Field.Root>
     </SilkProvider>,
   );
+  const label = screen.getByText('Volume');
   const thumb = screen.getByRole('slider', { name: 'Volume' });
-  expect(thumb.getAttribute('aria-labelledby')).toBeTruthy();
+  expect(label.getAttribute('for')).toBeNull();
+  expect(thumb.getAttribute('aria-labelledby')).toBe(label.id);
   const describedBy = thumb.getAttribute('aria-describedby');
   expect(describedBy).toBeTruthy();
   expect(document.getElementById(describedBy!)?.textContent).toBe('Loudness');
+});
+
+test('Field.Root required shows indicator but Slider has no aria-required', () => {
+  // Range / role=slider always has a value; required is Field presentation only.
+  render(
+    <SilkProvider>
+      <Field.Root required>
+        <Field.Label>Volume</Field.Label>
+        <Slider defaultValue={[50]} />
+      </Field.Root>
+    </SilkProvider>,
+  );
+  expect(document.querySelector('[data-required-indicator]')).not.toBeNull();
+  const thumb = screen.getByRole('slider', { name: 'Volume' });
+  expect(thumb.getAttribute('aria-required')).toBeNull();
+  expect(thumb.hasAttribute('required')).toBe(false);
 });

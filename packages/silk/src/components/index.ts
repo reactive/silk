@@ -69,13 +69,19 @@ export type { SpinnerProps } from './Spinner';
 export { Progress } from './Progress';
 export type { ProgressProps } from './Progress';
 
-export { Field, useFieldContext, useFieldControlProps } from './Field';
+export {
+  Field,
+  fieldLabelAssociation,
+  useFieldContext,
+  useFieldControlProps,
+} from './Field';
 export type {
   AriaInvalid,
   FieldContextValue,
   FieldControlProps,
   FieldDescriptionProps,
   FieldErrorProps,
+  FieldLabelAssociation,
   FieldLabelProps,
   FieldMode,
   FieldRootProps,

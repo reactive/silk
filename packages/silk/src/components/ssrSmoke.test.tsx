@@ -79,3 +79,22 @@ test('Field label/control association is correct in server markup', () => {
   expect(html).toContain('for="email"');
   expect(html).toContain('id="email"');
 });
+
+test('Field+Slider SSR omits Label htmlFor and names thumb via labelledby', () => {
+  const html = renderToString(
+    createElement(
+      SilkProvider,
+      null,
+      createElement(
+        Field.Root,
+        { controlId: 'volume' },
+        createElement(Field.Label, null, 'Volume'),
+        createElement(Slider, { defaultValue: [50] }),
+      ),
+    ),
+  );
+
+  expect(html).not.toContain('for="volume"');
+  expect(html).toContain('aria-labelledby=');
+  expect(html).toContain('role="slider"');
+});

@@ -5,7 +5,11 @@ import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
 import { focusRingCss } from '../theme/focusRing';
 import { useComponentDefaults } from '../theme/SilkProvider';
 import { tonePrivateVarsCss } from '../theme/tonePrivateVars';
-import { useFieldControlProps } from './Field';
+import {
+  fieldLabelAssociation,
+  useFieldControlProps,
+  type FieldLabelAssociation,
+} from './Field';
 
 export interface SliderProps
   extends Omit<ComponentPropsWithoutRef<typeof RadixSlider.Root>, 'asChild'>,
@@ -114,7 +118,11 @@ const thumbClass: string = css`
 
 /**
  * Radix-backed slider. Accessible name/description/valuetext live on Thumb
- * (the `role="slider"` node), not the Root span.
+ * (the `role="slider"` node), not the Root span. Thumbs are not HTML-labelable,
+ * so Field associates via `aria-labelledby` (not Label `htmlFor`).
+ *
+ * `Field.Root required` is presentation-only here: `role="slider"` does not
+ * support `aria-required`, and a range always has a value (unlike Checkbox).
  */
 export function Slider({
   className,
@@ -204,3 +212,9 @@ export function Slider({
     </RadixSlider.Root>
   );
 }
+
+(
+  Slider as typeof Slider & {
+    [fieldLabelAssociation]: FieldLabelAssociation;
+  }
+)[fieldLabelAssociation] = 'labelledby';

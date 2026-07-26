@@ -1,11 +1,33 @@
 import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
 import { SilkProvider } from '../theme/SilkProvider';
-import { Field } from './Field';
+import {
+  Field,
+  fieldLabelAssociation,
+  useFieldControlProps,
+  type FieldLabelAssociation,
+} from './Field';
+import { Checkbox } from './Checkbox';
 import { Inline } from './Inline';
 import { Input } from './Input';
 import { RadioGroup } from './RadioGroup';
 import { Stack } from './Stack';
+
+function MarkedControl({
+  id,
+  'aria-labelledby': ariaLabelledBy,
+}: {
+  id?: string;
+  'aria-labelledby'?: string;
+}) {
+  const fieldProps = useFieldControlProps({ id, 'aria-labelledby': ariaLabelledBy });
+  return <div role="group" {...fieldProps} />;
+}
+(
+  MarkedControl as typeof MarkedControl & {
+    [fieldLabelAssociation]: FieldLabelAssociation;
+  }
+)[fieldLabelAssociation] = 'labelledby';
 
 test('Field single mode wires label, description, error to Input', () => {
   render(
@@ -53,6 +75,37 @@ test('Field.Root controlId names the control and the label together', () => {
   const input = screen.getByLabelText(/Name/);
   expect(input.getAttribute('id')).toBe('custom-id');
   expect(screen.getByText(/Name/).getAttribute('for')).toBe('custom-id');
+});
+
+test('labelledby-marked control omits Label htmlFor and auto id', () => {
+  render(
+    <SilkProvider>
+      <Field.Root>
+        <Field.Label>Range</Field.Label>
+        <MarkedControl />
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const label = screen.getByText('Range');
+  const control = screen.getByRole('group', { name: 'Range' });
+  expect(label.getAttribute('for')).toBeNull();
+  expect(control.getAttribute('id')).toBeNull();
+  expect(control.getAttribute('aria-labelledby')).toBe(label.id);
+});
+
+test('Field.Root required forwards to Checkbox', () => {
+  render(
+    <SilkProvider>
+      <Field.Root required controlId="marketing">
+        <Inline gap="2" align="center">
+          <Checkbox />
+          <Field.Label>Updates</Field.Label>
+        </Inline>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const checkbox = screen.getByRole('checkbox', { name: /Updates/ });
+  expect(checkbox.getAttribute('aria-required')).toBe('true');
 });
 
 test('explicit aria props win over Field context', () => {

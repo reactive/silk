@@ -18,6 +18,22 @@ import { typographyRoleCss } from '../theme/typographyCss';
 
 export type FieldMode = 'single' | 'group';
 
+/** How Field.Label associates with the control. */
+export type FieldLabelAssociation = 'htmlFor' | 'labelledby';
+
+/**
+ * Mark a control component so Field.Root omits Label `htmlFor` and does not
+ * auto-assign `inputId` (see `useFieldControlProps({ labelledBy: true })`).
+ * Used when the focusable node is not HTML-labelable (e.g. `role="slider"`).
+ *
+ * Detection walks JSX children (layout wrappers are transparent). Opaque
+ * wrappers that hide the marked component should use `mode="group"` instead,
+ * or re-export the marker on the wrapper component type.
+ */
+export const fieldLabelAssociation: unique symbol = Symbol.for(
+  'silk.fieldLabelAssociation',
+);
+
 export type AriaInvalid = NonNullable<AriaAttributes['aria-invalid']>;
 
 /** Wiring a Field publishes to its label, description, error, and control. */
@@ -27,6 +43,11 @@ export interface FieldContextValue {
   readonly labelId: string;
   /** Id of the rendered Field.Label, or undefined when the Field has none. */
   readonly labelledBy: string | undefined;
+  /**
+   * `htmlFor` — Label uses `htmlFor={inputId}` (native labelable controls).
+   * `labelledby` — Label omits `htmlFor`; control uses `aria-labelledby`.
+   */
+  readonly labelAssociation: FieldLabelAssociation;
   readonly descriptionId: string;
   readonly errorId: string;
   readonly describedBy: string | undefined;
@@ -46,14 +67,16 @@ export function useFieldContext(): FieldContextValue | null {
 
 export interface FieldRootProps extends ComponentPropsWithoutRef<'div'> {
   /**
-   * `single` — control receives id + aria-describedby; Label uses htmlFor.
+   * `single` — control receives id + aria-describedby; Label uses htmlFor
+   * (unless a labelledby-marked control like Slider is present).
    * `group` — group receives aria-labelledby; Label is not htmlFor-associated.
    */
   readonly mode?: FieldMode;
   /**
-   * Id for the labelled control, defaulting to a generated one. Set it here
-   * rather than on the control so Label `htmlFor` and the control agree on the
-   * server as well as after hydration.
+   * Id for the labelled control when using `htmlFor` association, defaulting to
+   * a generated one. Set it here rather than on the control so Label `htmlFor`
+   * and the control agree during SSR. Ignored for labelledby-marked controls
+   * (e.g. Slider) and in `group` mode, where Label omits `htmlFor`.
    */
   readonly controlId?: string;
   readonly invalid?: boolean;
@@ -88,6 +111,15 @@ function isElementOfType(
   return isValidElement(child) && child.type === type;
 }
 
+function isLabelledByControl(type: unknown): boolean {
+  return (
+    (typeof type === 'function' ||
+      (typeof type === 'object' && type !== null)) &&
+    fieldLabelAssociation in type &&
+    (type as Record<symbol, unknown>)[fieldLabelAssociation] === 'labelledby'
+  );
+}
+
 /**
  * SSR-safe aria wiring from Field.Root descendants.
  * Layout wrappers (Inline, Stack, Fragment, …) are transparent; nested
@@ -96,11 +128,18 @@ function isElementOfType(
  */
 function ariaFromFieldChildren(
   children: ReactNode,
+  mode: FieldMode,
   labelId: string,
   descriptionId: string,
   errorId: string,
-): { labelledBy: string | undefined; describedBy: string | undefined } {
+): {
+  labelledBy: string | undefined;
+  describedBy: string | undefined;
+  labelAssociation: FieldLabelAssociation;
+} {
   let labelledBy: string | undefined;
+  let labelAssociation: FieldLabelAssociation =
+    mode === 'group' ? 'labelledby' : 'htmlFor';
   const describedParts: string[] = [];
 
   const walk = (nodes: ReactNode): void => {
@@ -119,6 +158,9 @@ function ariaFromFieldChildren(
         describedParts.push(child.props.id ?? errorId);
         return;
       }
+      if (labelAssociation === 'htmlFor' && isLabelledByControl(child.type)) {
+        labelAssociation = 'labelledby';
+      }
       walk((child.props as { children?: ReactNode }).children);
     });
   };
@@ -128,6 +170,7 @@ function ariaFromFieldChildren(
     labelledBy,
     describedBy:
       describedParts.length > 0 ? describedParts.join(' ') : undefined,
+    labelAssociation,
   };
 }
 
@@ -147,9 +190,10 @@ function FieldRoot({
   const descriptionId = `${reactId}-description`;
   const errorId = `${reactId}-error`;
 
-  const { labelledBy, describedBy } = useMemo(
-    () => ariaFromFieldChildren(children, labelId, descriptionId, errorId),
-    [children, labelId, descriptionId, errorId],
+  const { labelledBy, describedBy, labelAssociation } = useMemo(
+    () =>
+      ariaFromFieldChildren(children, mode, labelId, descriptionId, errorId),
+    [children, mode, labelId, descriptionId, errorId],
   );
 
   const value = useMemo<FieldContextValue>(
@@ -158,6 +202,7 @@ function FieldRoot({
       inputId,
       labelId,
       labelledBy,
+      labelAssociation,
       descriptionId,
       errorId,
       describedBy,
@@ -170,6 +215,7 @@ function FieldRoot({
       inputId,
       labelId,
       labelledBy,
+      labelAssociation,
       descriptionId,
       errorId,
       describedBy,
@@ -222,9 +268,8 @@ function FieldLabel({
 }: FieldLabelProps): JSX.Element {
   const field = useFieldContext();
   const htmlFor =
-    field?.mode === 'single'
-      ? (props.htmlFor ?? field.inputId)
-      : props.htmlFor;
+    props.htmlFor ??
+    (field?.labelAssociation === 'htmlFor' ? field.inputId : undefined);
 
   return (
     <RadixLabel.Root
@@ -327,9 +372,11 @@ export function useFieldControlProps(options?: {
   readonly disabled?: boolean | undefined;
   readonly required?: boolean | undefined;
   /**
-   * When true (or in `group` mode), wire `aria-labelledby` to the Field label.
-   * Use for controls where `htmlFor` does not provide an accessible name
-   * (e.g. `role="slider"`).
+   * When true (or in `group` mode / `labelAssociation: 'labelledby'`), wire
+   * `aria-labelledby` to the Field label and skip auto `id` (Label will not
+   * use `htmlFor`). Use for controls where `htmlFor` cannot supply an
+   * accessible name (e.g. `role="slider"`). Mark the component with
+   * `fieldLabelAssociation` so Field.Root omits Label `htmlFor` as well.
    */
   readonly labelledBy?: boolean | undefined;
 }): FieldControlProps {
@@ -367,13 +414,19 @@ export function useFieldControlProps(options?: {
     required: options?.required ?? field.required,
   };
 
-  if (field.mode === 'single') {
+  const useLabelledBy =
+    field.mode === 'group' ||
+    field.labelAssociation === 'labelledby' ||
+    options?.labelledBy === true;
+
+  // labelledby association: no auto id (Label omits htmlFor). Explicit id wins.
+  if (field.mode === 'single' && !useLabelledBy) {
     result.id = options?.id ?? field.inputId;
   } else if (options?.id !== undefined) {
     result.id = options.id;
   }
 
-  if (field.mode === 'group' || options?.labelledBy === true) {
+  if (useLabelledBy) {
     const labelledBy = options?.['aria-labelledby'] ?? field.labelledBy;
     if (labelledBy !== undefined) result['aria-labelledby'] = labelledBy;
   }
