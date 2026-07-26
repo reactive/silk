@@ -228,7 +228,7 @@ export function SocialFeed({
       <Container size={narrow ? 'sm' : 'md'} padding="5">
         <Stack gap="5" align="stretch">
           <Stack gap="1" align="start">
-            <Heading level="1" size="lg">
+            <Heading level="1">
               Social feed
             </Heading>
             <Text role="caption" tone="secondary">
