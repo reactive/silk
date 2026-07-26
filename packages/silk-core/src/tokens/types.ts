@@ -21,7 +21,7 @@ export type ToneName = 'neutral' | 'accent' | 'danger';
 
 /**
  * Interaction color contract for a single tone.
- * Components consume these via semantic CSS variables — never palette steps.
+ * Components consume these via semantic tokens — never palette steps.
  */
 export interface InteractionToneColors {
   readonly solid: string;
@@ -36,6 +36,9 @@ export interface InteractionToneColors {
 }
 
 export type SpaceStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+/** System density axis — remaps effective space tokens without changing step names. */
+export type DensityName = 'comfortable' | 'compact';
 
 export type RadiusName = 'none' | 'sm' | 'md' | 'lg' | 'full';
 

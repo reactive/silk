@@ -22,6 +22,43 @@ export const defaultSpace: Readonly<Record<SpaceStep, number>> = {
 };
 
 /**
+ * Compact density space scale. Same step names as `defaultSpace`; smaller values.
+ * Web remaps `--silk-space-*` to these under `[data-density='compact']`.
+ */
+export const compactSpace: Readonly<Record<SpaceStep, number>> = {
+  0: 0,
+  1: 3,
+  2: 6,
+  3: 9,
+  4: 12,
+  5: 16,
+  6: 20,
+  7: 24,
+  8: 32,
+  9: 40,
+  10: 48,
+};
+
+export const spaceSteps: readonly SpaceStep[] = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+];
+
+/** String form of `spaceSteps` for recipe gap/padding axes. */
+export const spaceVariantSteps: readonly [
+  '0',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
+] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+
+/**
  * Radius scale in px. `full` is a finite large value suitable for pills;
  * web CSS may still use `9999px` via serializer convention.
  */

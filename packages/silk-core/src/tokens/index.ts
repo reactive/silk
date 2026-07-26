@@ -1,6 +1,7 @@
 export type {
   ColorScheme,
   DeepPartial,
+  DensityName,
   InteractionToneColors,
   MotionName,
   MotionRecord,
@@ -30,9 +31,12 @@ export {
 } from './palette.js';
 
 export {
+  compactSpace,
   createSharedSemanticScales,
   defaultMotion,
   defaultRadius,
   defaultSpace,
   defaultTypography,
+  spaceSteps,
+  spaceVariantSteps,
 } from './scales.js';

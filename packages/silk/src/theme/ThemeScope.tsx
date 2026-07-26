@@ -1,5 +1,5 @@
 import { cx } from '@linaria/core';
-import type { ColorScheme } from '@reactive/silk-core';
+import type { ColorScheme, DensityName } from '@reactive/silk-core';
 import {
   createContext,
   useContext,
@@ -8,16 +8,21 @@ import {
   type JSX,
   type ReactNode,
 } from 'react';
-import { themeScopeClass } from './namedThemes.css';
+import { themeScopeClasses } from './namedThemes.css';
 import type { CssVarMap } from './themeToCssVars';
 
 export interface ThemeScopeValue {
   readonly dataTheme: ColorScheme | undefined;
+  readonly density: DensityName | undefined;
   readonly cssVars: CssVarMap | undefined;
 }
 
 export const ThemeScopeContext: Context<ThemeScopeValue | null> =
   createContext<ThemeScopeValue | null>(null);
+
+export function useThemeDensity(): DensityName | undefined {
+  return useContext(ThemeScopeContext)?.density;
+}
 
 export function themeScopeDomProps(
   scope: ThemeScopeValue,
@@ -29,6 +34,7 @@ export function themeScopeDomProps(
   readonly className: string;
   readonly style?: CSSProperties;
   readonly 'data-theme'?: ColorScheme;
+  readonly 'data-density'?: DensityName;
 } {
   const style =
     scope.cssVars || extras?.style
@@ -36,10 +42,13 @@ export function themeScopeDomProps(
       : undefined;
 
   return {
-    className: cx(themeScopeClass, extras?.className),
+    className: cx(themeScopeClasses, extras?.className),
     ...(style !== undefined ? { style } : {}),
     ...(scope.dataTheme !== undefined
       ? { 'data-theme': scope.dataTheme }
+      : {}),
+    ...(scope.density !== undefined
+      ? { 'data-density': scope.density }
       : {}),
   };
 }

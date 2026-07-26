@@ -17,7 +17,7 @@ yarn docs    # http://localhost:6006
 
 ## Status
 
-Foundation milestone (Stage 0): token/theme/variant architecture, layout/visual/interaction exemplars, Identity composite, and a shadcn-protocol registry scaffold. The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
+Stage 1 (layout system): layout vocabulary (`Inline`, `Grid`, `Center`, `Container`, `Separator`), system density through space tokens, intrinsic-first + container-query responsive strategy, AppSkeleton fixture, native contract spike, and [pre-1.0 API policy](docs/API_POLICY.md). The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
 
 ## Packages
 
@@ -31,6 +31,7 @@ Foundation milestone (Stage 0): token/theme/variant architecture, layout/visual/
 | App | Description |
 | --- | --- |
 | [`@reactive/silk-docs`](apps/docs) | Private Storybook docs site (not published) |
+| [`@reactive/silk-native-spike`](apps/native-spike) | Throwaway Expo spike consuming `silk-core` (Stage 1; not published) |
 
 Libraries live under `packages/`; runnable consumers (docs, future playgrounds / native examples) live under `apps/`.
 

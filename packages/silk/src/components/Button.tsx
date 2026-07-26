@@ -2,7 +2,9 @@ import { css, cx } from '@linaria/core';
 import { buttonRecipe, type ButtonVariantProps } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef, JSX, ReactNode, Ref } from 'react';
+import { densityClass } from '../theme/density.css';
 import { useComponentDefaults } from '../theme/SilkProvider';
+import { useThemeDensity } from '../theme/ThemeScope';
 
 export interface ButtonProps
   extends Omit<ComponentPropsWithoutRef<'button'>, 'color'>,
@@ -13,18 +15,9 @@ export interface ButtonProps
 }
 
 const sizePadding = {
-  sm: {
-    comfortable: 'var(--silk-space-1) var(--silk-space-2)',
-    compact: 'var(--silk-space-1) var(--silk-space-2)',
-  },
-  md: {
-    comfortable: 'var(--silk-space-2) var(--silk-space-3)',
-    compact: 'var(--silk-space-1) var(--silk-space-3)',
-  },
-  lg: {
-    comfortable: 'var(--silk-space-3) var(--silk-space-4)',
-    compact: 'var(--silk-space-2) var(--silk-space-4)',
-  },
+  sm: 'var(--silk-space-1) var(--silk-space-2)',
+  md: 'var(--silk-space-2) var(--silk-space-3)',
+  lg: 'var(--silk-space-3) var(--silk-space-4)',
 } as const;
 
 const sizeFont = {
@@ -51,18 +44,14 @@ const toneRules: string = buttonRecipe.variants.tone
   )
   .join('\n');
 
-const sizeDensityRules: string = buttonRecipe.variants.size
-  .map((size) =>
-    buttonRecipe.variants.density
-      .map(
-        (density) => `
-    &:where([data-size='${size}'][data-density='${density}']) {
-      padding: ${sizePadding[size][density]};
+const sizeRules: string = buttonRecipe.variants.size
+  .map(
+    (size) => `
+    &:where([data-size='${size}']) {
+      padding: ${sizePadding[size]};
       font-size: ${sizeFont[size]};
     }
   `,
-      )
-      .join('\n'),
   )
   .join('\n');
 
@@ -153,12 +142,13 @@ const buttonClass: string = css`
     }
   }
 
-  ${sizeDensityRules}
+  ${sizeRules}
 `;
 
 /**
  * Visual primitive — reference implementation of data-attribute variants,
  * interaction-state color contract, and public/private CSS variable pattern.
+ * Density remaps effective space tokens (system-level); size padding uses those vars.
  */
 export function Button({
   className,
@@ -171,19 +161,23 @@ export function Button({
   ...props
 }: ButtonProps): JSX.Element {
   const defaults = useComponentDefaults('Button');
+  const themeDensity = useThemeDensity();
   const resolvedVariant =
     variant ?? defaults.variant ?? buttonRecipe.defaults.variant;
   const resolvedTone = tone ?? defaults.tone ?? buttonRecipe.defaults.tone;
   const resolvedSize = size ?? defaults.size ?? buttonRecipe.defaults.size;
   const resolvedDensity =
-    density ?? defaults.density ?? buttonRecipe.defaults.density;
+    density ??
+    defaults.density ??
+    themeDensity ??
+    buttonRecipe.defaults.density;
 
   const Comp = asChild ? Slot.Root : 'button';
   return (
     <Comp
       {...props}
       type={asChild ? undefined : type}
-      className={cx(buttonClass, className)}
+      className={cx(buttonClass, densityClass, className)}
       data-variant={resolvedVariant}
       data-tone={resolvedTone}
       data-size={resolvedSize}

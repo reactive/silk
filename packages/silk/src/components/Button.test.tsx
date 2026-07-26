@@ -33,3 +33,14 @@ test('Button accepts className escape hatch', () => {
     'consumer-override',
   );
 });
+
+test('Button inherits SilkProvider density', () => {
+  render(
+    <SilkProvider density="compact">
+      <Button>Save</Button>
+    </SilkProvider>,
+  );
+  expect(
+    screen.getByRole('button', { name: 'Save' }).getAttribute('data-density'),
+  ).toBe('compact');
+});

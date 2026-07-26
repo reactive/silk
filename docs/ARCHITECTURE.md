@@ -40,9 +40,33 @@ Do **not** declare `--silk-button-bg: var(--silk-accent)` on the component — t
 | Dynamic / tenant | `themeToCssVars(theme)` on the ThemeProvider `style` attribute |
 | Nesting | Secondary. Works via DOM variable inheritance in normal flow. Portals reconstitute the nearest ThemeProvider scope (class + `data-theme` + custom CSS vars); pass Dialog `container` when the portal DOM must live inside a subtree. |
 
-Prefer either `theme` (custom object) or `colorScheme` (named/static). If both are passed, `theme` wins for `data-theme` and inline variables.
+Prefer either `theme` (custom object) or `colorScheme` (named/static). If both are passed, `theme` wins for `data-theme` and inline variables. Nested providers inherit omitted `colorScheme` / `density` from the nearest ancestor.
 
 No runtime CSS-in-JS. No ad hoc `<style>` injection per provider.
+
+### Density
+
+System-level density remaps effective space tokens without renaming steps:
+
+| Scale | Source vars | When active |
+| --- | --- | --- |
+| Comfortable | `--silk-space-comfortable-*` (from `theme.semantic.space` / `defaultSpace`) | Default effective aliases |
+| Compact | `--silk-space-compact-*` (from core `compactSpace`) | `[data-density='compact']` |
+
+Effective `--silk-space-*` aliases are owned by `densityClass` (not `themeToCssVars`), so density remaps cannot be overridden by equal-specificity theme rules or inline custom-theme styles. `ThemeProvider` / `SilkProvider` `density` and per-component axes (e.g. Button) set `data-density` so the remap applies for that subtree. Components consume only effective vars — no per-component density padding tables.
+
+### Responsive strategy (web-only)
+
+**Intrinsic-first + container queries.** Layout primitives are fluid by design (`Inline` wraps, `Grid` `columns="auto"` auto-fills, `Container` max-width). There is no viewport breakpoint system and no responsive prop objects in core recipes.
+
+| Concern | Owner |
+| --- | --- |
+| Fluid defaults | Layout components |
+| Container breakpoints (`xs`/`sm`/`md`/`lg`) | `@reactive/silk` only (`containerBreakpoints`) |
+| Adaptive switch | Web-only `collapseBelow` on `Stack` / `Inline` → pre-generated `@container (width < Npx)` rules |
+| Size containment | `Container` always; `Box contain` opt-in |
+
+Core recipes stay platform-neutral. Native does not implement container queries.
 
 ## Variants
 
@@ -56,7 +80,7 @@ Recipes are **contracts** (variant unions + defaults). Web CSS interpolates reci
 
 | Layer | Examples | Notes |
 | --- | --- | --- |
-| Layout | `Box`, `Stack` | Spacing via CSS variables |
+| Layout | `Box`, `Stack`, `Inline`, `Grid`, `Center`, `Container`, `Separator` | Spacing via CSS variables; responsive via container queries (web) |
 | Visual | `Text`, `Button`, `Avatar` | `Button` is the reference variant engine |
 | Interaction | `Dialog` | Radix behavior, Silk visuals |
 | Composite | `Identity` | Compound parts + convenience props |
@@ -70,6 +94,8 @@ Escape hatches on every component: `className`, `style`, `ref` (React 19 prop), 
 3. Component props — `variant` / `tone` / `size` / `density` / …
 4. Escape hatches — className, style, public component CSS variables, slots/`asChild`
 
+Public API surface and pre-1.0 breaking-change rules: [API_POLICY.md](API_POLICY.md).
+
 ## Distribution
 
 - **Primitives & tokens:** npm packages (`@reactive/silk-core`, `@reactive/silk`)
@@ -81,3 +107,4 @@ Escape hatches on every component: `className`, `style`, `ref` (React 19 prop), 
 - Linaria static extraction only
 - SSR-first (Anansi-compatible); no hydration theme hacks
 - Accessibility behavior from Radix whenever possible
+- Responsive layout stays out of `silk-core` recipes

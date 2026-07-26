@@ -1,6 +1,7 @@
 export type {
   ColorScheme,
   DeepPartial,
+  DensityName,
   InteractionToneColors,
   MotionName,
   MotionRecord,
@@ -19,6 +20,7 @@ export type {
 export {
   blueScale,
   blueScaleDark,
+  compactSpace,
   createSharedSemanticScales,
   defaultMotion,
   defaultPalette,
@@ -32,6 +34,8 @@ export {
   greenScaleDark,
   redScale,
   redScaleDark,
+  spaceSteps,
+  spaceVariantSteps,
 } from './tokens/index.js';
 
 export { createTheme } from './theme/index.js';
@@ -39,17 +43,29 @@ export type { CreateThemeOptions } from './theme/index.js';
 
 export {
   avatarRecipe,
+  boxRecipe,
   buttonRecipe,
+  centerRecipe,
+  containerRecipe,
   defineRecipe,
   dialogRecipe,
+  gridRecipe,
+  inlineRecipe,
+  separatorRecipe,
   stackRecipe,
   textRecipe,
 } from './recipes/index.js';
 export type {
   AvatarVariantProps,
+  BoxVariantProps,
   ButtonVariantProps,
+  CenterVariantProps,
+  ContainerVariantProps,
   DialogVariantProps,
+  GridVariantProps,
+  InlineVariantProps,
   Recipe,
+  SeparatorVariantProps,
   StackVariantProps,
   TextVariantProps,
   VariantDefinitions,

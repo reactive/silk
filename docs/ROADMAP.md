@@ -32,7 +32,7 @@ The architecture spike, proven end to end.
 
 ---
 
-## Stage 1 — Layout system
+## Stage 1 — Layout system ✅ (done)
 
 Complete the layout vocabulary so nothing downstream reaches for ad hoc flex/grid CSS.
 
@@ -42,7 +42,7 @@ Complete the layout vocabulary so nothing downstream reaches for ad hoc flex/gri
 - **Native contract spike** (pulled forward from Stage 6): a throwaway Expo app under `apps/` consuming `silk-core` directly — theme delivery plus `Box`/`Stack`/`Text`/`Button` — to catch web-shaped assumptions in tokens and recipes while the contracts are still cheap to change. Findings fold back into core; nothing is published. Stage 6 graduates this into a real package.
 - **Pre-1.0 API policy**: define what counts as public API (component props, semantic token names, public CSS variables, recipe shapes, core utilities like `defineRecipe`/`createTheme`) and the breaking-change rules changesets enforce — *before* the component surface grows. Stage 7 matures this into deprecation and codemod policy.
 
-**Exit criteria:** a committed fixture page skeleton (header / content / sidebar / footer, with overflow and long-content states) is built from layout primitives alone; responsive strategy documented in ARCHITECTURE.md; the native spike renders core-driven exemplars in Expo with divergences resolved or logged as justified; the pre-1.0 API policy is documented.
+**Exit criteria (met):** a committed fixture page skeleton (header / content / sidebar / footer, with overflow and long-content states) is built from layout primitives alone; responsive strategy documented in ARCHITECTURE.md; the native spike renders core-driven exemplars in Expo with divergences resolved or logged as justified; the pre-1.0 API policy is documented.
 
 ---
 
@@ -134,7 +134,7 @@ Tracked from the founding brief; each has a home stage where it must be resolved
 | --- | --- | --- |
 | Recipes: shared model vs. per-renderer | Stage 0 | ✅ Shared contracts in core; renderers own styling |
 | Semantic vs. component tokens, how many | Stage 2/5 | Partially — sparse component tokens; audit pending |
-| Responsive strategy | Stage 1 | Open |
+| Responsive strategy | Stage 1 | ✅ Intrinsic-first + container queries; `collapseBelow` web-only |
 | Slot architecture for composites | Stage 4 | Open — `Identity`'s pattern is provisional, not yet the standard |
-| Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | Proven on web; native spike validates in Stage 1 |
+| Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | ✅ Proven on web; native spike validates in Stage 1 |
 | Registry: packages vs. generated source | Stage 7 | Scaffolded; final split pending |

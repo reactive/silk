@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Silk Native Spike",
+    "slug": "silk-native-spike",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["ios", "android", "web"],
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

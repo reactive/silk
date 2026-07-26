@@ -2,6 +2,7 @@ export { createTheme } from '@reactive/silk-core';
 export type {
   ColorScheme,
   CreateThemeOptions,
+  DensityName,
   Palette,
   SemanticTokens,
   Theme,
@@ -15,3 +16,6 @@ export type { ThemeProviderProps } from './ThemeProvider';
 
 export { SilkProvider } from './SilkProvider';
 export type { SilkDefaults, SilkProviderProps } from './SilkProvider';
+
+export { densityClass } from './density.css';
+export { useThemeDensity } from './ThemeScope';

@@ -1,4 +1,4 @@
-import type { Theme } from '@reactive/silk-core';
+import { compactSpace, spaceSteps, type Theme } from '@reactive/silk-core';
 
 export type CssVarMap = Readonly<Record<`--silk-${string}`, string>>;
 
@@ -9,6 +9,10 @@ function px(value: number): string {
 /**
  * Serialize a canonical Theme into CSS custom properties for the style attribute.
  * Palette values are intentionally not emitted.
+ *
+ * Space tokens emit source scales only (`--silk-space-comfortable-*`,
+ * `--silk-space-compact-*`). Effective `--silk-space-*` aliases are owned by
+ * `densityClass` so density remaps are not overridden by theme/inline styles.
  */
 export function themeToCssVars(theme: Theme): CssVarMap {
   const { color, space, radius, typography, motion } = theme.semantic;
@@ -33,8 +37,11 @@ export function themeToCssVars(theme: Theme): CssVarMap {
     vars[`--silk-color-tone-${tone}-disabled-bg`] = t.disabledBg;
   }
 
-  for (const step of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const) {
-    vars[`--silk-space-${step}`] = px(space[step]);
+  for (const step of spaceSteps) {
+    vars[`--silk-space-comfortable-${step}`] = px(space[step]);
+    vars[`--silk-space-compact-${step}`] = px(compactSpace[step]);
+    // Effective `--silk-space-*` aliases are owned by densityClass — do not
+    // emit them here or inline/theme CSS would override density remaps.
   }
 
   for (const name of ['none', 'sm', 'md', 'lg', 'full'] as const) {
