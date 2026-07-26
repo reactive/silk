@@ -2,8 +2,10 @@ import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
 import { SilkProvider } from '../theme/SilkProvider';
 import { Field } from './Field';
+import { Inline } from './Inline';
 import { Input } from './Input';
 import { RadioGroup } from './RadioGroup';
+import { Stack } from './Stack';
 
 test('Field single mode wires label, description, error to Input', () => {
   render(
@@ -132,6 +134,84 @@ test('custom Description/Error ids appear in aria-describedby', () => {
   );
   const input = screen.getByLabelText(/Email/);
   expect(input.getAttribute('aria-describedby')).toBe('my-desc my-err');
+});
+
+test('group mode finds Label nested in layout wrappers', () => {
+  render(
+    <SilkProvider>
+      <Field.Root mode="group">
+        <Stack gap="2">
+          <Field.Label>Plan</Field.Label>
+          <RadioGroup.Root>
+            <RadioGroup.Item value="free">Free</RadioGroup.Item>
+          </RadioGroup.Root>
+        </Stack>
+      </Field.Root>
+    </SilkProvider>,
+  );
+
+  const group = screen.getByRole('radiogroup');
+  const labelledBy = group.getAttribute('aria-labelledby');
+  expect(labelledBy).toBeTruthy();
+  expect(document.getElementById(labelledBy!)?.textContent).toContain('Plan');
+});
+
+test('Description/Error nested in layout wrappers still describe the control', () => {
+  render(
+    <SilkProvider>
+      <Field.Root invalid>
+        <Inline gap="2" align="center">
+          <Field.Label>Email</Field.Label>
+          <Input />
+        </Inline>
+        <Stack gap="1">
+          <Field.Description>Work email</Field.Description>
+          <Field.Error>Required</Field.Error>
+        </Stack>
+      </Field.Root>
+    </SilkProvider>,
+  );
+
+  const input = screen.getByLabelText(/Email/);
+  const describedBy = input.getAttribute('aria-describedby') ?? '';
+  expect(describedBy.split(' ')).toHaveLength(2);
+  for (const id of describedBy.split(' ')) {
+    expect(document.getElementById(id)).not.toBeNull();
+  }
+  expect(document.getElementById(describedBy.split(' ')[0]!)?.textContent).toBe(
+    'Work email',
+  );
+});
+
+test('nested Field.Root slots do not leak into the outer Field', () => {
+  render(
+    <SilkProvider>
+      <Field.Root mode="group">
+        <RadioGroup.Root aria-label="Outer">
+          <RadioGroup.Item value="a">A</RadioGroup.Item>
+        </RadioGroup.Root>
+        {/* Wrapper ensures the boundary is hit during descendant walk. */}
+        <Stack gap="2">
+          <Field.Root>
+            <Field.Label>Inner</Field.Label>
+            <Input />
+            <Field.Description>Inner hint</Field.Description>
+          </Field.Root>
+        </Stack>
+      </Field.Root>
+    </SilkProvider>,
+  );
+
+  const group = screen.getByRole('radiogroup', { name: 'Outer' });
+  expect(group.getAttribute('aria-labelledby')).toBeNull();
+  expect(group.getAttribute('aria-describedby')).toBeNull();
+
+  const inner = screen.getByLabelText(/Inner/);
+  const innerDescribedBy = inner.getAttribute('aria-describedby');
+  expect(innerDescribedBy).toBeTruthy();
+  expect(document.getElementById(innerDescribedBy!)?.textContent).toBe(
+    'Inner hint',
+  );
 });
 
 test('explicit aria-invalid grammar is preserved; false clears visual invalid', () => {

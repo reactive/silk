@@ -13,8 +13,8 @@ export interface SliderProps
   readonly ref?: Ref<HTMLSpanElement>;
   readonly children?: ReactNode;
   /**
-   * Per-thumb accessible names when `value` has multiple thumbs.
-   * Falls back to `aria-label` / Field label for a single thumb.
+   * Per-thumb accessible names. Preferred when `value` has multiple thumbs.
+   * Falls back to Field label, or root `aria-label` (indexed for multi-thumb).
    */
   readonly thumbLabels?: readonly string[];
   /** Per-thumb aria-valuetext; single-thumb also accepts root `aria-valuetext`. */
@@ -148,6 +148,8 @@ export function Slider({
 
   const thumbCount = (props.value ?? props.defaultValue ?? [0]).length;
   const fieldLabelledBy = fieldProps['aria-labelledby'];
+  const fieldDescribedBy = fieldProps['aria-describedby'];
+  const fieldInvalid = fieldProps['aria-invalid'];
   const resolvedDisabled = fieldProps.disabled;
 
   return (
@@ -166,12 +168,15 @@ export function Slider({
         <RadixSlider.Range className={rangeClass} />
       </RadixSlider.Track>
       {Array.from({ length: thumbCount }, (_, index) => {
-        const label =
-          thumbLabels?.[index] ??
-          (thumbCount === 1 && !fieldLabelledBy ? ariaLabel : undefined);
-        const labelledBy = thumbCount === 1 ? fieldLabelledBy : undefined;
-        const describedBy =
-          thumbCount === 1 ? fieldProps['aria-describedby'] : undefined;
+        const thumbLabel = thumbLabels?.[index];
+        // labelledby wins over aria-label in accname — clear Field wiring when
+        // an explicit per-thumb label is provided.
+        const labelledBy =
+          thumbLabel !== undefined ? undefined : fieldLabelledBy;
+        let label = thumbLabel;
+        if (label === undefined && !fieldLabelledBy && ariaLabel !== undefined) {
+          label = thumbCount === 1 ? ariaLabel : `${ariaLabel} (${index + 1})`;
+        }
         const valueText =
           thumbValueText?.[index] ??
           (thumbCount === 1 ? ariaValueText : undefined);
@@ -189,9 +194,9 @@ export function Slider({
             id={thumbId}
             aria-label={label}
             aria-labelledby={labelledBy}
-            aria-describedby={describedBy}
+            aria-describedby={fieldDescribedBy}
             aria-valuetext={valueText}
-            aria-invalid={fieldProps['aria-invalid']}
+            aria-invalid={fieldInvalid}
           />
         );
       })}

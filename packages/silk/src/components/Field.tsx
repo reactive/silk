@@ -88,39 +88,47 @@ function isElementOfType(
   return isValidElement(child) && child.type === type;
 }
 
-/** SSR-safe: build aria-describedby from direct Description/Error children. */
-function describedByFromChildren(
-  children: ReactNode,
-  descriptionId: string,
-  errorId: string,
-): string | undefined {
-  const parts: string[] = [];
-  Children.forEach(children, (child) => {
-    if (isElementOfType(child, FieldDescription)) {
-      parts.push(child.props.id ?? descriptionId);
-    }
-    if (isElementOfType(child, FieldError)) {
-      parts.push(child.props.id ?? errorId);
-    }
-  });
-  return parts.length > 0 ? parts.join(' ') : undefined;
-}
-
 /**
- * SSR-safe: id of a direct Label child. Controls must not point
- * `aria-labelledby` at an id no element carries.
+ * SSR-safe aria wiring from Field.Root descendants.
+ * Layout wrappers (Inline, Stack, Fragment, …) are transparent; nested
+ * Field.Root boundaries are not — their slots belong to the inner field.
+ * Controls must not point `aria-labelledby` at an id no element carries.
  */
-function labelledByFromChildren(
+function ariaFromFieldChildren(
   children: ReactNode,
   labelId: string,
-): string | undefined {
-  let found: string | undefined;
-  Children.forEach(children, (child) => {
-    if (found === undefined && isElementOfType(child, FieldLabel)) {
-      found = child.props.id ?? labelId;
-    }
-  });
-  return found;
+  descriptionId: string,
+  errorId: string,
+): { labelledBy: string | undefined; describedBy: string | undefined } {
+  let labelledBy: string | undefined;
+  const describedParts: string[] = [];
+
+  const walk = (nodes: ReactNode): void => {
+    Children.forEach(nodes, (child) => {
+      if (!isValidElement(child)) return;
+      if (child.type === FieldRoot) return;
+      if (isElementOfType(child, FieldLabel)) {
+        labelledBy ??= child.props.id ?? labelId;
+        return;
+      }
+      if (isElementOfType(child, FieldDescription)) {
+        describedParts.push(child.props.id ?? descriptionId);
+        return;
+      }
+      if (isElementOfType(child, FieldError)) {
+        describedParts.push(child.props.id ?? errorId);
+        return;
+      }
+      walk((child.props as { children?: ReactNode }).children);
+    });
+  };
+
+  walk(children);
+  return {
+    labelledBy,
+    describedBy:
+      describedParts.length > 0 ? describedParts.join(' ') : undefined,
+  };
 }
 
 function FieldRoot({
@@ -139,13 +147,9 @@ function FieldRoot({
   const descriptionId = `${reactId}-description`;
   const errorId = `${reactId}-error`;
 
-  const describedBy = useMemo(
-    () => describedByFromChildren(children, descriptionId, errorId),
-    [children, descriptionId, errorId],
-  );
-  const labelledBy = useMemo(
-    () => labelledByFromChildren(children, labelId),
-    [children, labelId],
+  const { labelledBy, describedBy } = useMemo(
+    () => ariaFromFieldChildren(children, labelId, descriptionId, errorId),
+    [children, labelId, descriptionId, errorId],
   );
 
   const value = useMemo<FieldContextValue>(
