@@ -49,6 +49,14 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **`Field.Root controlId`** — names the labelled control so `Field.Label htmlFor` and the control agree during server rendering. `FieldContextValue.controlId` is gone; `inputId` is the one resolved id. Setting `id` on a control inside a Field no longer retargets the label. *breaking:* move control-level `id` overrides up to `Field.Root controlId`.
 - Compact space remains the fixed `compactSpace` scale (not overridable via `createTheme.semantic.space`).
 
+## Stage 3 public additions
+
+- **Recipes:** `popoverRecipe` (`size`), `tabsRecipe` (`variant`), `selectRecipe` (`size`/`density`), `toastRecipe` (`tone`), `toggleRecipe` (`size`) — shared by Toggle and ToggleGroup.
+- **Components (web):** `Popover`, `Tooltip` (+ app-level `Tooltip.Provider`), `DropdownMenu`, `Select` (defaults `position="popper"`), `Tabs`, `Accordion`, `ScrollArea`, `Toast`, `Toggle`, `ToggleGroup`.
+- **Select public CSS variables:** `--silk-select-bg`, `--silk-select-border`, `--silk-select-radius` (distinct from `--silk-input-*`).
+- **SilkDefaults keys:** `Popover`, `Tabs`, `Select`, `Toast`, `Toggle`, `ToggleGroup`.
+- **Charter:** constant SSR `<style>` from behavior bindings permitted (ScrollArea Viewport). See PRINCIPLES amendment 2026-07-26.
+
 ## Escape hatches stay
 
 Shipping a component without the customization ladder’s escape-hatch level (`className`, `style`, `ref`, data attributes, public component CSS variables, `asChild` where sensible) is a regression, not a simplification — see [PRINCIPLES.md](PRINCIPLES.md).

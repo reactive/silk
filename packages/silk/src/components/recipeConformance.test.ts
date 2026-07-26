@@ -19,13 +19,18 @@ import {
   radioGroupRecipe,
   separatorRecipe,
   skeletonRecipe,
+  popoverRecipe,
+  selectRecipe,
   sliderRecipe,
   spinnerRecipe,
   stackRecipe,
   surfaceRecipe,
   switchRecipe,
+  tabsRecipe,
   textRecipe,
   textareaRecipe,
+  toastRecipe,
+  toggleRecipe,
 } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { containerBreakpointNames } from '../layout/containerBreakpoints';
@@ -119,6 +124,24 @@ test('recipe conformance: Stage 2 visual and form axes are styled', () => {
   expect(css).toContain('--silk-color-surface-sunken');
   expect(css).toContain('--silk-color-overlay');
   expect(css).toContain('prefers-reduced-motion');
+});
+
+test('recipe conformance: Stage 3 interaction axes and floating motion', () => {
+  const css = loadCss();
+  assertAxisSelectors(css, 'data-size', popoverRecipe.variants.size);
+  assertAxisSelectors(css, 'data-variant', tabsRecipe.variants.variant);
+  assertAxisSelectors(css, 'data-size', selectRecipe.variants.size);
+  assertAxisSelectors(css, 'data-density', selectRecipe.variants.density);
+  assertAxisSelectors(css, 'data-tone', toastRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-size', toggleRecipe.variants.size);
+  expect(css).toContain('silk-float-in');
+  expect(css).toContain('silk-float-out');
+  expect(css).toContain('silk-overlay-in');
+  expect(css).toContain('silk-overlay-out');
+  expect(css).toContain('silk-dialog-panel-in');
+  expect(css).toContain('silk-dialog-panel-out');
+  expect(css).toContain('silk-accordion-open');
+  expect(css).toContain('silk-accordion-close');
 });
 
 test('looping animations use the loop motion token, not transition durations', () => {

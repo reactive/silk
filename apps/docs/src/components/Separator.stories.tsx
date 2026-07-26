@@ -10,7 +10,7 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
 
 const meta = {
-  title: 'Components/Separator',
+  title: 'Components/Layout/Separator',
   component: Separator,
   tags: ['autodocs'],
   args: {

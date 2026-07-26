@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 import { VariantMatrix } from '../VariantMatrix';
 
 const meta = {
-  title: 'Components/Badge',
+  title: 'Components/Visual/Badge',
   component: Badge,
   tags: ['autodocs'],
   args: {

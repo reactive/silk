@@ -1,0 +1,40 @@
+import { Button, Popover, Stack, Text, popoverRecipe } from '@reactive/silk';
+import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import type { JSX } from 'react';
+
+const meta = {
+  title: 'Components/Interaction/Popover',
+  component: Popover.Content,
+  tags: ['autodocs'],
+  argTypes: {
+    size: {
+      control: 'select',
+      options: [...popoverRecipe.variants.size],
+    },
+  },
+} satisfies Meta<typeof Popover.Content>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Basic: Story = {
+  args: { size: popoverRecipe.defaults.size },
+  render: ({ size = popoverRecipe.defaults.size }): JSX.Element => (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <Button>Open popover</Button>
+      </Popover.Trigger>
+      <Popover.Content size={size}>
+        <Stack gap="2">
+          <Text role="heading">Details</Text>
+          <Text tone="secondary">Floating surface with size axis.</Text>
+          <Popover.Close asChild>
+            <Button size="sm" variant="outline">
+              Close
+            </Button>
+          </Popover.Close>
+        </Stack>
+      </Popover.Content>
+    </Popover.Root>
+  ),
+};

@@ -4940,6 +4940,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@reactive/silk-docs@workspace:apps/docs"
   dependencies:
+    "@linaria/core": "npm:^8.1.1"
     "@reactive/silk": "workspace:*"
     "@reactive/silk-core": "workspace:*"
     "@rsbuild/core": "npm:~2.1.8"
@@ -4993,9 +4994,11 @@ __metadata:
     "@rstest/core": "npm:^0.11.4"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/react": "npm:^16.3.2"
+    "@testing-library/user-event": "npm:^14.6.1"
     "@types/react": "npm:^19.2.7"
     "@types/react-dom": "npm:^19.2.3"
     "@wyw-in-js/webpack-loader": "npm:^2.3.0"
+    axe-core: "npm:^4.12.1"
     jsdom: "npm:^29.1.1"
     radix-ui: "npm:^1.6.6"
     react: "npm:^19.2.8"
@@ -6509,7 +6512,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axe-core@npm:^4.2.0":
+"axe-core@npm:^4.12.1, axe-core@npm:^4.2.0":
   version: 4.12.1
   resolution: "axe-core@npm:4.12.1"
   checksum: 10c0/03438bd98cef38ad57554feea0d8de21705001db2655c27e0c33ff55e16dd7d6f49c28fb420dc93f7532e68ff363c0953056a5836e6f47068f193eb1765c7db7
@@ -7777,7 +7780,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0":
+"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0, esbuild@npm:^0.28.1":
   version: 0.28.1
   resolution: "esbuild@npm:0.28.1"
   dependencies:
@@ -12457,6 +12460,7 @@ __metadata:
   resolution: "silk@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.31.1"
+    esbuild: "npm:^0.28.1"
     typescript: "npm:^7.0.2"
   languageName: unknown
   linkType: soft

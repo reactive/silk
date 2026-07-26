@@ -41,6 +41,9 @@ try {
           '@reactive/silk': `file:${join(root, 'silk.tgz')}`,
           react: '^19.0.0',
           'react-dom': '^19.0.0',
+          typescript: '~5.9.0',
+          '@types/react': '^19.0.0',
+          '@types/react-dom': '^19.0.0',
         },
       },
       null,
@@ -76,6 +79,20 @@ try {
     if (!css.includes(needle)) {
       throw new Error(`Packed CSS missing ${needle}`);
     }
+  }
+
+  const layerCssPath = join(
+    fixture,
+    'node_modules/@reactive/silk/dist/index.layer.css',
+  );
+  if (!existsSync(layerCssPath)) {
+    throw new Error(`Missing layered CSS at ${layerCssPath}`);
+  }
+  const layerCss = readFileSync(layerCssPath, 'utf8');
+  if (layerCss !== `@layer silk {\n${css.trimEnd()}\n}\n`) {
+    throw new Error(
+      'Layered CSS is not index.css wrapped verbatim in @layer silk',
+    );
   }
 
   const distDir = join(fixture, 'node_modules/@reactive/silk/dist');
@@ -114,6 +131,16 @@ try {
     'RadioGroup',
     'Switch',
     'Slider',
+    'Tooltip',
+    'Popover',
+    'DropdownMenu',
+    'Select',
+    'Tabs',
+    'Accordion',
+    'Toggle',
+    'ToggleGroup',
+    'ScrollArea',
+    'Toast',
   ]) {
     if (mod[name] === undefined) {
       throw new Error(`Packed ESM missing Stage export: ${name}`);
@@ -128,6 +155,11 @@ try {
     'createTheme',
     'surfaceRecipe',
     'inputRecipe',
+    'popoverRecipe',
+    'tabsRecipe',
+    'selectRecipe',
+    'toastRecipe',
+    'toggleRecipe',
     'defaultShadow',
   ]) {
     if (coreMod[name] === undefined) {
@@ -149,14 +181,146 @@ try {
     }
   }
 
+  // Declaration surface: compile a TS consumer against packed .d.ts so missing
+  // prop types / compound parts fail CI (runtime export checks alone won't).
+  writeFileSync(
+    join(fixture, 'tsconfig.json'),
+    JSON.stringify(
+      {
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          jsx: 'react-jsx',
+          strict: true,
+          exactOptionalPropertyTypes: true,
+          skipLibCheck: true,
+          noEmit: true,
+          types: ['react', 'react-dom'],
+        },
+        include: ['consumer.tsx'],
+      },
+      null,
+      2,
+    ),
+  );
+  writeFileSync(
+    join(fixture, 'consumer.tsx'),
+    `
+import type {
+  AccordionContentProps,
+  AccordionItemProps,
+  AccordionTriggerProps,
+  DialogContentProps,
+  PopoverContentProps,
+  ScrollAreaAssembledProps,
+  SelectContentProps,
+  SelectRootProps,
+  TabsRootProps,
+  ToastRootProps,
+  ToastViewportProps,
+  ToggleGroupRootProps,
+  ToggleProps,
+  TooltipContentProps,
+} from '@reactive/silk';
+import {
+  Accordion,
+  Dialog,
+  DropdownMenu,
+  Popover,
+  ScrollArea,
+  Select,
+  Tabs,
+  Toast,
+  Toggle,
+  ToggleGroup,
+  Tooltip,
+} from '@reactive/silk';
+import type { JSX } from 'react';
+
+declare const dialogProps: DialogContentProps;
+declare const popoverProps: PopoverContentProps;
+declare const tooltipProps: TooltipContentProps;
+declare const selectRootProps: SelectRootProps;
+declare const selectContentProps: SelectContentProps;
+declare const tabsProps: TabsRootProps;
+declare const accordionItemProps: AccordionItemProps;
+declare const accordionTriggerProps: AccordionTriggerProps;
+declare const accordionContentProps: AccordionContentProps;
+declare const toastRootProps: ToastRootProps;
+declare const toastViewportProps: ToastViewportProps;
+declare const toggleProps: ToggleProps;
+declare const toggleGroupProps: ToggleGroupRootProps;
+declare const scrollProps: ScrollAreaAssembledProps;
+
+export function Consumer(): JSX.Element {
+  return (
+    <>
+      <Dialog.Root>
+        <Dialog.Content {...dialogProps} />
+      </Dialog.Root>
+      <Popover.Root>
+        <Popover.Content {...popoverProps} />
+      </Popover.Root>
+      <Tooltip.Provider>
+        <Tooltip.Root>
+          <Tooltip.Content {...tooltipProps} />
+        </Tooltip.Root>
+      </Tooltip.Provider>
+      <DropdownMenu.Root>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem>
+            <DropdownMenu.ItemIndicator>✓</DropdownMenu.ItemIndicator>
+            Item
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+      <Select.Root {...selectRootProps}>
+        <Select.Trigger>
+          <Select.Value />
+        </Select.Trigger>
+        <Select.Content {...selectContentProps}>
+          <Select.Item value="a">A</Select.Item>
+        </Select.Content>
+      </Select.Root>
+      <Tabs.Root {...tabsProps} defaultValue="a">
+        <Tabs.List>
+          <Tabs.Trigger value="a">A</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="a">Panel</Tabs.Content>
+      </Tabs.Root>
+      <Accordion.Root type="single">
+        <Accordion.Item {...accordionItemProps} value="1">
+          <Accordion.Header>
+            <Accordion.Trigger {...accordionTriggerProps}>T</Accordion.Trigger>
+          </Accordion.Header>
+          <Accordion.Content {...accordionContentProps}>C</Accordion.Content>
+        </Accordion.Item>
+      </Accordion.Root>
+      <Toggle {...toggleProps}>B</Toggle>
+      <ToggleGroup.Root {...toggleGroupProps} type="single">
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>
+      <ScrollArea {...scrollProps}>
+        <p>scroll</p>
+      </ScrollArea>
+      <Toast.Provider>
+        <Toast.Root {...toastRootProps}>
+          <Toast.Title>T</Toast.Title>
+        </Toast.Root>
+        <Toast.Viewport {...toastViewportProps} />
+      </Toast.Provider>
+    </>
+  );
+}
+`,
+  );
+  run(`npx tsc -p ${join(fixture, 'tsconfig.json')}`, fixture);
+
   console.log('packed-consumer-check: OK');
 } finally {
   rmSync(fixture, { recursive: true, force: true });
   for (const f of ['silk-core.tgz', 'silk.tgz']) {
-    try {
-      rmSync(join(root, f), { force: true });
-    } catch {
-      /* ignore */
-    }
+    rmSync(join(root, f), { force: true });
   }
 }

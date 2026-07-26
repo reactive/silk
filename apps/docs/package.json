@@ -16,6 +16,7 @@
     "@reactive/silk-core": "workspace:*"
   },
   "devDependencies": {
+    "@linaria/core": "^8.1.1",
     "@rsbuild/core": "~2.1.8",
     "@rsbuild/plugin-react": "^1.4.5",
     "@rspack/plugin-react-refresh": "^1.6.1",

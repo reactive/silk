@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
 
 const meta = {
-  title: 'Components/Identity',
+  title: 'Components/Composite/Identity',
   component: Identity,
   tags: ['autodocs'],
   args: {

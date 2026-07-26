@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { CSSProperties } from 'react';
 
 const meta = {
-  title: 'Components/Center',
+  title: 'Components/Layout/Center',
   component: Center,
   tags: ['autodocs'],
   args: {

@@ -1,9 +1,10 @@
+import { css } from '@linaria/core';
 import { Box, Text, boxRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { CSSProperties, JSX } from 'react';
 
 const meta = {
-  title: 'Components/Box',
+  title: 'Components/Layout/Box',
   component: Box,
   tags: ['autodocs'],
   args: {
@@ -69,11 +70,16 @@ export const Contain: Story = {
   ),
 };
 
+const escapeOutlineClass: string = css`
+  outline: 2px dashed var(--silk-color-tone-accent-solid);
+  outline-offset: 2px;
+`;
+
 export const EscapeHatches: Story = {
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <Box
-      className="docs-box-escape"
+      className={escapeOutlineClass}
       padding="4"
       style={{
         ...surfaceStyle,

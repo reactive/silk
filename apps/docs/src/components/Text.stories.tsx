@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 import { VariantMatrix } from '../VariantMatrix';
 
 const meta = {
-  title: 'Components/Text',
+  title: 'Components/Visual/Text',
   component: Text,
   tags: ['autodocs'],
   args: {

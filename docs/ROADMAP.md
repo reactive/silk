@@ -60,16 +60,17 @@ Establish the full visual language and the accessibility-critical form layer.
 
 ---
 
-## Stage 3 — Interaction primitives
+## Stage 3 — Interaction primitives ✅ (done)
 
 Wrap the remaining Radix behaviors. `Dialog` is the template: Radix owns behavior, Silk owns visuals, portals reconstitute theme scope.
 
 - Components: `Popover`, `Tooltip`, `DropdownMenu`, `Tabs`, `Accordion`, `Select`, `ScrollArea`, `Toast`, `Toggle`/`ToggleGroup`.
-- Shared patterns extracted once, not per component: portal theming, overlay/motion tokens, positioning surfaces (popover-like components share visual treatment).
-- Motion: define motion tokens (durations, easings) in core; respect `prefers-reduced-motion` on web.
-- Performance budgets: define per-component JS size, extracted CSS size, and SSR render-cost budgets and wire CI comparison — overlays are where runtime cost first concentrates, and goal 3 ("excellent SSR performance") becomes measurable here.
+- Shared patterns extracted once, not per component: portal theming, overlay/motion tokens, positioning surfaces (`floatingSurface` + enter/exit keyframes; Dialog migrated onto them).
+- Motion: tokens already in core (`fast`/`normal`/`slow`/`loop`); floating/overlay/accordion/toast animations respect `prefers-reduced-motion`.
+- Performance budgets: `scripts/perf-budgets.mjs` + `perf-budgets.json` (isolated consumer JS gzip, CSS totals, informational SSR); CI via `yarn test:perf`.
+- API matrix: [STAGE3_API_MATRIX.md](STAGE3_API_MATRIX.md). Charter amendment: constant SSR `<style>` from behavior bindings permitted (ScrollArea).
 
-**Exit criteria:** all listed components shipped with stories and a11y tests; a shared "floating surface" style layer exists instead of per-component duplication.
+**Exit criteria (met):** all listed components shipped with stories and a11y tests; shared floating-surface style layer; InspectorPanel fixture with overlay/long-content/reduced-motion/nested-theme/multiple-toast states.
 
 ---
 

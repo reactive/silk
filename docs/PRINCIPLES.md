@@ -30,7 +30,7 @@ The non-negotiables are **outcomes** (invariants), not tools. Tools are **bindin
 Violating any of these is a bug regardless of how convenient the violation is.
 
 - **No utility-class styling.** No Tailwind, no CVA, no runtime class-composition systems. Distributing source via a registry *protocol* is fine; shipping utility-class-flavored content through it is not.
-- **All CSS is statically extracted at build time.** Runtime styling is limited to CSS variables. No runtime CSS-in-JS, no per-provider `<style>` injection.
+- **No runtime-generated CSS.** Styling is extracted at build time; runtime styling is limited to CSS variables. Constant, SSR-rendered `<style>` content from behavior bindings is permitted when it is static, tiny, and CSP-nonce-compatible (e.g. Radix ScrollArea’s scrollbar-hiding rule). Forbidden: runtime CSS-in-JS, per-provider style injection, and any style whose content is computed per render or per theme.
 - **SSR-first.** Everything renders correctly on the server. No client-only architectures, no hydration hacks, no runtime style generation.
 - **Interaction mechanics are delegated, never reimplemented.** Focus management, keyboard interaction, overlay and dismissal semantics come from a proven, accessible behavior source. Silk owns visuals and API shape on top — and owns the end-to-end accessibility of the result (see ownership boundaries).
 - **Components never reference palette colors.** Only semantic tokens. The palette exists solely as raw material for themes.
@@ -109,9 +109,11 @@ Every component participates in all four levels; consumers must never feel trapp
 1. **Theme** — `createTheme(...)`
 2. **Provider defaults** — typed per-component defaults on `SilkProvider`
 3. **Component variants** — `variant` / `tone` / `size` / `density` / `appearance`
-4. **Escape hatches** — `className` (web), `style`, `ref`, data attributes, public component CSS variables, slots / composition
+4. **Escape hatches** — public component CSS variables, `className` (web), `style`, `ref`, data attributes, slots / composition
 
 Shipping a component without the escape-hatch level is a regression, not a simplification.
+
+The escape hatches are ranked, and the ranking is part of the design: **public CSS variables** first (order-independent, and the only hatch the component actively cooperates with), then a **`className` carrying a statically extracted class** (build-time, expressive enough for state and media selectors), then **`style`** (runtime values only). A system whose documented override path is inline `style` has quietly conceded that its cascade contract does not hold — so the escape hatch a consumer reaches for first is a measure of whether levels 1–3 are doing their job. See ARCHITECTURE for the cascade-order guarantees behind the ranking.
 
 ## Distribution
 
@@ -125,7 +127,7 @@ Questions to ask before merging anything significant. A "no" means stop.
 - Does interaction behavior still come from the platform's behavior binding (Radix on web), with Silk styling it and owning the accessibility of the result?
 - Is every color referenced through a semantic token?
 - Does `silk-core` remain free of CSS, DOM, and React Native imports?
-- Is all CSS statically extracted — would this render correctly on the server with JS disabled styles-wise?
+- Is CSS free of runtime generation — would this render correctly on the server with JS disabled styles-wise? (Constant SSR `<style>` from a behavior binding is OK; dynamic style content is not.)
 - Do new props fit the existing axes (`variant`/`tone`/`size`/`density`/`appearance`) instead of inventing new ones?
 - Do composites take all styling and shared behavior from Silk primitives, while keeping semantically correct output markup?
 - Are all four customization levels intact, including escape hatches?
@@ -142,6 +144,8 @@ Principles can change — deliberately. An amendment requires: the change itself
 
 ### Amendment log
 
+- 2026-07-26 — **Escape hatches are ranked** (public CSS variables → `className` with an extracted class → `style` for runtime values only), and the cascade contract behind the ranking is now explicit: an optional `@reactive/silk/styles.layer.css` wraps the same rules in `@layer silk` so unlayered consumer CSS wins deterministically. Reason: `:where([data-…])` keeps variants at single-class specificity, but that only makes a consumer class a *tie* with Silk's base rules — the winner was decided by bundler module order. Documenting `className` and `style` as equals pushed consumers toward `style`, the least expressive hatch, for overrides Linaria handles better. The layered stylesheet stays opt-in because it also loses to unlayered consumer resets.
+- 2026-07-26 — Restated the static-CSS invariant as **outcomes**: no runtime-*generated* CSS, SSR-correct output, CSS-variable theming. Explicitly permits constant, SSR-rendered `<style>` content from behavior bindings when static, tiny, and nonce-compatible (Stage 3 ScrollArea / Radix Viewport). Reason: the prior letter banned all `<style>` injection and would have forced a weaker native-scrollbar ScrollArea; the goals (SSR correctness, performance) hold without that strictness.
 - 2026-07 — Initial charter, distilled from the founding design brief.
 - 2026-07 — Added goals 7–8 (extensibility/flexibility, human-and-agent ergonomics) and the **Design heuristics** section: concept budget, convention-over-invention tiebreaker, extension by addition, predictability. Reason: Silk is consumed and maintained by AI agents as well as humans; concept cardinality and departure from ecosystem conventions are the main scaling costs for both.
 - 2026-07 — Cross-platform: interfaces converge even where implementations diverge. Shared concepts get one contract (ideally defined in `silk-core`); API divergence between web and native requires a real platform justification.

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { CSSProperties, JSX } from 'react';
 
 const meta = {
-  title: 'Components/Inline',
+  title: 'Components/Layout/Inline',
   component: Inline,
   tags: ['autodocs'],
   args: {

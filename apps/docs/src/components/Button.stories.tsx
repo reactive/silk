@@ -1,10 +1,11 @@
-import { Button, buttonRecipe } from '@reactive/silk';
+import { css } from '@linaria/core';
+import { Button, buttonRecipe, cssVars } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 import { VariantMatrix } from '../VariantMatrix';
 
 const meta = {
-  title: 'Components/Button',
+  title: 'Components/Visual/Button',
   component: Button,
   tags: ['autodocs'],
   args: {
@@ -56,18 +57,47 @@ export const AsChild: Story = {
   },
 };
 
+const pillClass: string = css`
+  --silk-button-bg: var(--silk-color-tone-danger-solid);
+  --silk-button-fg: var(--silk-color-tone-danger-on-solid);
+  --silk-button-radius: var(--silk-radius-full);
+
+  &:hover:not(:disabled) {
+    --silk-button-bg: var(--silk-color-tone-danger-hover);
+  }
+`;
+
 export const CssVariableOverrides: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Set public hooks from a Linaria class. Extracted at build time, no per-render object, and — unlike `style` — able to carry state, media, and container selectors.',
+      },
+    },
+  },
+  render: (args): JSX.Element => (
+    <Button {...args} className={pillClass}>
+      Override hooks
+    </Button>
+  ),
+};
+
+export const RuntimeCssVariables: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'When the value is only known at runtime (tenant branding, a computed dimension), `cssVars` types the same hooks for the `style` prop — React `CSSProperties` cannot express custom properties on its own.',
+      },
+    },
+  },
   render: (args): JSX.Element => {
-    // Custom properties are not expressible in React's CSSProperties.
-    const style = {
-      '--silk-button-bg': 'var(--silk-color-tone-danger-solid)',
-      '--silk-button-fg': 'var(--silk-color-tone-danger-on-solid)',
-      '--silk-button-radius': 'var(--silk-radius-full)',
-    } as CSSProperties;
+    const brandColor = '#7c3aed';
 
     return (
-      <Button {...args} style={style}>
-        Override hooks
+      <Button {...args} style={cssVars({ '--silk-button-bg': brandColor })}>
+        Runtime hook value
       </Button>
     );
   },

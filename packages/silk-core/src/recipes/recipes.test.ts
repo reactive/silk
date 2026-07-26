@@ -17,13 +17,18 @@ import {
   radioGroupRecipe,
   separatorRecipe,
   skeletonRecipe,
+  popoverRecipe,
+  selectRecipe,
   sliderRecipe,
   spinnerRecipe,
   stackRecipe,
   surfaceRecipe,
   switchRecipe,
+  tabsRecipe,
   textRecipe,
   textareaRecipe,
+  toastRecipe,
+  toggleRecipe,
 } from './index.js';
 
 function assertRecipeDefaults(recipe: {
@@ -64,6 +69,11 @@ test('all recipes provide every axis default', () => {
   assertRecipeDefaults(radioGroupRecipe);
   assertRecipeDefaults(switchRecipe);
   assertRecipeDefaults(sliderRecipe);
+  assertRecipeDefaults(popoverRecipe);
+  assertRecipeDefaults(tabsRecipe);
+  assertRecipeDefaults(selectRecipe);
+  assertRecipeDefaults(toastRecipe);
+  assertRecipeDefaults(toggleRecipe);
 });
 
 test('buttonRecipe exposes expected variant axes', () => {

@@ -31,7 +31,17 @@ const preview: Preview = {
           'Theming',
           'Theme',
           'Fixtures',
-          'Components',
+          [
+            'Components',
+            [
+              'Layout',
+              'Visual',
+              'Forms',
+              'Interaction',
+              'Composite',
+              '*',
+            ],
+          ],
           '*',
         ],
       },

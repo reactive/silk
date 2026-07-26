@@ -62,7 +62,7 @@ Nesting works via DOM CSS variable inheritance in normal flow.
 
 Portals (for example Dialog) still render under `document.body` by default, but Silk reconstitutes the **nearest** `ThemeProvider` / `SilkProvider` scope on the portaled tree: the same theme class, `data-theme` (when set), and custom `createTheme` CSS variables. Nested providers therefore theme their dialogs correctly without an explicit portal container.
 
-For cases where you need the portal DOM to live inside a particular subtree (stacking, clipping, or measuring against that subtree), pass Dialog `container`. Nested theming itself does **not** require `container` — see **Components/Dialog → NestedThemePortal**.
+For cases where you need the portal DOM to live inside a particular subtree (stacking, clipping, or measuring against that subtree), pass Dialog `container`. Nested theming itself does **not** require `container` — see **Components/Interaction/Dialog → NestedThemePortal**.
 
 ## Component CSS variable hooks
 
@@ -72,7 +72,7 @@ Public hooks like `--silk-button-bg` resolve through private vars:
 --_bg: var(--silk-button-bg, var(--_tone-solid));
 ```
 
-Do **not** pre-declare `--silk-button-bg: var(--silk-accent)` on the component — that shadows consumer overrides. See **Components/Button → CssVariableOverrides**.
+Do **not** pre-declare `--silk-button-bg: var(--silk-accent)` on the component — that shadows consumer overrides. See **Components/Visual/Button → CssVariableOverrides**.
 
 ## Further reading
 

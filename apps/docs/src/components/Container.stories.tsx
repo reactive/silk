@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { CSSProperties, JSX } from 'react';
 
 const meta = {
-  title: 'Components/Container',
+  title: 'Components/Layout/Container',
   component: Container,
   tags: ['autodocs'],
   args: {

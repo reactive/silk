@@ -11,7 +11,7 @@ import type { JSX, ReactNode } from 'react';
 import { surfacePanelStyle } from '../surfacePanelStyle';
 
 const meta = {
-  title: 'Components/Dialog',
+  title: 'Components/Interaction/Dialog',
   component: Dialog.Content,
   tags: ['autodocs'],
   parameters: {
