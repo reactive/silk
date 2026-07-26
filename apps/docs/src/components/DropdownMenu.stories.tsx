@@ -1,10 +1,10 @@
 import { Button, DropdownMenu } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/DropdownMenu',
-  tags: ['autodocs'],
 } satisfies Meta;
 
 export default meta;
@@ -27,6 +27,12 @@ export const Basic: Story = {
       </DropdownMenu.Content>
     </DropdownMenu.Root>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Actions' }));
+    await expect(
+      await screen.findByRole('menuitem', { name: /New/ }),
+    ).toBeInTheDocument();
+  },
 };
 
 export const CheckboxAndRadio: Story = {

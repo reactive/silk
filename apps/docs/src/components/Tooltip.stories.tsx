@@ -2,11 +2,11 @@ import { styled } from '@linaria/react';
 import { Button, Tooltip } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/Tooltip',
   component: Tooltip.Content,
-  tags: ['autodocs'],
   parameters: {
     docs: {
       description: {
@@ -22,7 +22,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Basic: Story = {
   render: (): JSX.Element => (
-    <Tooltip.Provider>
+    <Tooltip.Provider delayDuration={0}>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
           <Button>Hover</Button>
@@ -31,6 +31,12 @@ export const Basic: Story = {
       </Tooltip.Root>
     </Tooltip.Provider>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.hover(canvas.getByRole('button', { name: 'Hover' }));
+    await expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'Helpful tip',
+    );
+  },
 };
 
 /**

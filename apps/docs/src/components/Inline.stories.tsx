@@ -1,12 +1,10 @@
 import { css } from '@linaria/core';
 import { Box, Button, Inline, Text, inlineRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import type { JSX } from 'react';
 
 const meta = {
   title: 'Components/Layout/Inline',
   component: Inline,
-  tags: ['autodocs'],
   args: {
     ...inlineRecipe.defaults,
   },
@@ -41,8 +39,9 @@ type Story = StoryObj<typeof meta>;
 const chipClass: string = css`
   padding: var(--silk-space-1) var(--silk-space-2);
   border-radius: var(--silk-radius-full);
-  background-color: var(--silk-color-tone-accent-subtle);
-  color: var(--silk-color-tone-accent-solid);
+  /* solid/on-solid — subtle+solid fails WCAG AA at 16px */
+  background-color: var(--silk-color-tone-accent-solid);
+  color: var(--silk-color-tone-accent-on-solid);
 `;
 
 const fullWidthClass: string = css`

@@ -13,7 +13,6 @@ import type { JSX } from 'react';
 const meta = {
   title: 'Components/Layout/Separator',
   component: Separator,
-  tags: ['autodocs'],
   args: {
     ...separatorRecipe.defaults,
     decorative: true,

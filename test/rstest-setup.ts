@@ -21,6 +21,7 @@ if (typeof Element !== 'undefined') {
     hasPointerCapture?: (pointerId: number) => boolean;
     setPointerCapture?: (pointerId: number) => void;
     releasePointerCapture?: (pointerId: number) => void;
+    scrollIntoView?: (arg?: boolean | ScrollIntoViewOptions) => void;
   };
   if (typeof proto.hasPointerCapture !== 'function') {
     proto.hasPointerCapture = () => false;
@@ -30,6 +31,9 @@ if (typeof Element !== 'undefined') {
   }
   if (typeof proto.releasePointerCapture !== 'function') {
     proto.releasePointerCapture = () => {};
+  }
+  if (typeof proto.scrollIntoView !== 'function') {
+    proto.scrollIntoView = () => {};
   }
 }
 

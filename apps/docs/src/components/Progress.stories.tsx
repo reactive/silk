@@ -4,7 +4,6 @@ import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 const meta = {
   title: 'Components/Visual/Progress',
   component: Progress,
-  tags: ['autodocs'],
   args: {
     ...progressRecipe.defaults,
     value: 60,

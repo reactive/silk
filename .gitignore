@@ -12,6 +12,7 @@ node_modules
 dist
 *.tsbuildinfo
 storybook-static
+apps/docs/.storybook-serve
 
 # Test / coverage
 coverage

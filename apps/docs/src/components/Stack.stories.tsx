@@ -6,7 +6,6 @@ import type { JSX } from 'react';
 const meta = {
   title: 'Components/Layout/Stack',
   component: Stack,
-  tags: ['autodocs'],
   args: {
     ...stackRecipe.defaults,
   },
@@ -41,8 +40,9 @@ type Story = StoryObj<typeof meta>;
 const itemClass: string = css`
   padding: var(--silk-space-2) var(--silk-space-3);
   border-radius: var(--silk-radius-sm);
-  background-color: var(--silk-color-tone-accent-subtle);
-  color: var(--silk-color-tone-accent-solid);
+  /* solid/on-solid — subtle+solid fails WCAG AA at 16px */
+  background-color: var(--silk-color-tone-accent-solid);
+  color: var(--silk-color-tone-accent-on-solid);
 `;
 
 const narrowClass: string = css`

@@ -23,7 +23,14 @@ const withSilkProvider: Decorator = (Story, context): JSX.Element => {
 };
 
 const preview: Preview = {
+  tags: ['autodocs'],
   parameters: {
+    docs: {
+      codePanel: true,
+    },
+    a11y: {
+      test: 'error',
+    },
     options: {
       storySort: {
         order: [

@@ -6,7 +6,6 @@ import { VariantMatrix } from '../VariantMatrix';
 const meta = {
   title: 'Components/Visual/Text',
   component: Text,
-  tags: ['autodocs'],
   args: {
     children: 'The quick brown fox jumps over the lazy dog.',
     ...textRecipe.defaults,
@@ -31,6 +30,7 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {};
 
 export const RoleToneMatrix: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <VariantMatrix

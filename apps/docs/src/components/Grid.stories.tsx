@@ -6,7 +6,6 @@ import type { JSX } from 'react';
 const meta = {
   title: 'Components/Layout/Grid',
   component: Grid,
-  tags: ['autodocs'],
   args: {
     ...gridRecipe.defaults,
   },

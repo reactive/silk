@@ -13,7 +13,6 @@ const states: InspectorPanelState[] = [
 const meta = {
   title: 'Fixtures/InspectorPanel',
   component: InspectorPanel,
-  tags: ['autodocs'],
   argTypes: {
     state: {
       control: 'select',

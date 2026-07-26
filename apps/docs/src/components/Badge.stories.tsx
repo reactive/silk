@@ -6,7 +6,6 @@ import { VariantMatrix } from '../VariantMatrix';
 const meta = {
   title: 'Components/Visual/Badge',
   component: Badge,
-  tags: ['autodocs'],
   args: {
     children: 'Badge',
     ...badgeRecipe.defaults,
@@ -25,6 +24,7 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {};
 
 export const VariantToneMatrix: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <VariantMatrix

@@ -1,10 +1,10 @@
 import { Input, inputRecipe, Stack } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { expect } from 'storybook/test';
 
 const meta = {
   title: 'Components/Forms/Input',
   component: Input,
-  tags: ['autodocs'],
   args: {
     ...inputRecipe.defaults,
     placeholder: 'Type here',
@@ -20,9 +20,15 @@ export const Primary: Story = {};
 
 export const Invalid: Story = {
   args: { 'aria-invalid': true, defaultValue: 'bad' },
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.getByRole('textbox', { name: 'Demo input' }),
+    ).toHaveAttribute('aria-invalid', 'true');
+  },
 };
 
 export const Sizes: Story = {
+  tags: ['!test'],
   render: () => (
     <Stack gap="2">
       {inputRecipe.variants.size.map((size) => (

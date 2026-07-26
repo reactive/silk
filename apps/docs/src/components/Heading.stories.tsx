@@ -6,7 +6,6 @@ import { VariantMatrix } from '../VariantMatrix';
 const meta = {
   title: 'Components/Visual/Heading',
   component: Heading,
-  tags: ['autodocs'],
   args: {
     children: 'Section title',
     ...headingRecipe.defaults,
@@ -25,6 +24,7 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {};
 
 export const SizeMatrix: Story = {
+  tags: ['!test'],
   parameters: { controls: { disable: true } },
   render: (): JSX.Element => (
     <VariantMatrix

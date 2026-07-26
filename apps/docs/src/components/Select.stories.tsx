@@ -1,10 +1,10 @@
 import { Field, Select, Stack, selectRecipe } from '@reactive/silk';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import type { JSX } from 'react';
+import { expect, screen, userEvent } from 'storybook/test';
 
 const meta = {
   title: 'Components/Interaction/Select',
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',
@@ -32,9 +32,16 @@ export const Basic: Story = {
       </Select.Root>
     </Field.Root>
   ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('combobox'));
+    await expect(
+      await screen.findByRole('option', { name: 'Banana' }),
+    ).toBeInTheDocument();
+  },
 };
 
 export const Sizes: Story = {
+  tags: ['!test'],
   render: (): JSX.Element => (
     <Stack gap="3">
       {selectRecipe.variants.size.map((size) => (

@@ -9,7 +9,9 @@
     "storybook": "storybook dev -p 6006",
     "build:storybook": "storybook build -o storybook-static",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "rstest run"
+    "test": "rstest run",
+    "test:storybook": "test-storybook --url http://127.0.0.1:6006/silk/",
+    "test:storybook:ci": "node ./scripts/test-storybook-ci.mjs"
   },
   "dependencies": {
     "@reactive/silk": "workspace:*",
@@ -24,13 +26,17 @@
     "@rstest/core": "^0.11.4",
     "@storybook/addon-a11y": "10.5.4",
     "@storybook/addon-docs": "10.5.4",
+    "@storybook/test-runner": "^0.24.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/react-refresh": "^0",
     "@wyw-in-js/webpack-loader": "^2.3.0",
+    "concurrently": "^10.0.4",
+    "http-server": "^14.1.1",
     "jsdom": "^29.1.1",
+    "playwright": "^1.62.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-refresh": "^0.18.0",
@@ -38,6 +44,7 @@
     "storybook": "10.5.4",
     "storybook-react-rsbuild": "3.3.4",
     "typescript": "^7.0.2",
+    "wait-on": "^9.1.0",
     "webpack": "^5"
   }
 }
