@@ -1,9 +1,30 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
 import { SilkProvider } from '../theme/SilkProvider';
 import { Field } from './Field';
 import { Inline } from './Inline';
 import { Slider } from './Slider';
+
+/**
+ * Field.Root also sets data-orientation. Ancestor `[data-orientation] &`
+ * selectors would steal vertical track sizing inside a default Field and
+ * collapse the horizontal track height to 0.
+ */
+test('Slider vertical track/range styles bind to self, not ancestors', () => {
+  const source = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'Slider.tsx'),
+    'utf8',
+  );
+  expect(source).not.toMatch(/\[data-orientation=['"]vertical['"]\]\s*&/);
+  expect(source.match(/&:where\(\[data-orientation='vertical'\]\)/g)).toEqual([
+    "&:where([data-orientation='vertical'])",
+    "&:where([data-orientation='vertical'])",
+    "&:where([data-orientation='vertical'])",
+  ]);
+});
 
 test('Slider puts accessible name on the thumb role=slider', () => {
   render(

@@ -71,7 +71,10 @@ const trackClass: string = css`
   border-radius: var(--silk-radius-full);
   height: var(--_track-h);
 
-  [data-orientation='vertical'] & {
+  /* Self-selector: Field.Root also sets data-orientation, so an ancestor
+     match would apply vertical track sizing inside a horizontal Field and
+     collapse the line to 0. Radix sets data-orientation on Track/Range. */
+  &:where([data-orientation='vertical']) {
     width: var(--_track-h);
     height: 100%;
   }
@@ -83,7 +86,7 @@ const rangeClass: string = css`
   border-radius: inherit;
   height: 100%;
 
-  [data-orientation='vertical'] & {
+  &:where([data-orientation='vertical']) {
     width: 100%;
   }
 `;
