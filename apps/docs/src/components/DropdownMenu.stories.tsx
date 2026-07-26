@@ -11,6 +11,15 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Basic: Story = {
+  parameters: {
+    // Radix hides #storybook-root with aria-hidden while the trigger stays
+    // focusable; axe flags that as aria-hidden-focus when the menu is open.
+    a11y: {
+      config: {
+        rules: [{ id: 'aria-hidden-focus', enabled: false }],
+      },
+    },
+  },
   render: (): JSX.Element => (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>

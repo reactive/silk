@@ -24,9 +24,11 @@ export const Basic: Story = {
       <Popover.Trigger asChild>
         <Button>Open popover</Button>
       </Popover.Trigger>
-      <Popover.Content size={size}>
+      <Popover.Content size={size} aria-labelledby="popover-details-title">
         <Stack gap="2">
-          <Text role="heading">Details</Text>
+          <Text role="heading" id="popover-details-title">
+            Details
+          </Text>
           <Text tone="secondary">Floating surface with size axis.</Text>
           <Popover.Close asChild>
             <Button size="sm" variant="outline">
