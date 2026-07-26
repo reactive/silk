@@ -41,16 +41,10 @@ const COMPOSITES = [
   'FeedItem',
 ];
 
-/** Matches `from '…'` / `from "…"`. */
 const FROM_RE = /from\s+['"]([^'"]+)['"]/g;
 
-/** Packages registry consumers already have (or that are framework peers). */
-const IMPLICIT_DEPS = new Set([
-  'react',
-  'react-dom',
-  'react/jsx-runtime',
-  'react/jsx-dev-runtime',
-]);
+/** Package roots registry consumers already have (or that are framework peers). */
+const IMPLICIT_DEPS = new Set(['react', 'react-dom']);
 
 function toKebab(name) {
   return name
@@ -62,14 +56,19 @@ function toKebab(name) {
 function isFile(path) {
   try {
     return statSync(path).isFile();
-  } catch {
-    return false;
+  } catch (err) {
+    if (err?.code === 'ENOENT' || err?.code === 'ENOTDIR') {
+      return false;
+    }
+    throw err;
   }
 }
 
 function resolveSourceFile(fromFile, specifier) {
   if (!specifier.startsWith('.')) {
-    return null;
+    throw new Error(
+      `Expected relative specifier, got '${specifier}' from ${fromFile}`,
+    );
   }
   const base = resolve(dirname(fromFile), specifier);
   const fileCandidates = [base, `${base}.ts`, `${base}.tsx`, `${base}.css.ts`];
@@ -103,7 +102,7 @@ function collectPublicModules() {
 
   /**
    * @param {string} fromFile
-   * @param {Set<string> | null} wantedNames null = accept every named re-export
+   * @param {Set<string> | undefined} wantedNames omit to accept every named re-export
    */
   function visit(fromFile, wantedNames) {
     const source = readFileSync(fromFile, 'utf8');
@@ -140,7 +139,7 @@ function collectPublicModules() {
     }
   }
 
-  visit(rootIndex, null);
+  visit(rootIndex);
   return publicModules;
 }
 
@@ -158,33 +157,48 @@ function packageNameFromSpecifier(specifier) {
 /**
  * Walk the entry module and every non-public relative dependency, emitting
  * companions into outDir. Public relative imports become `@reactive/silk`.
+ *
+ * @returns {{ outName: string, body: string }[]} rewritten bodies (entry without banner)
  */
-function emitRegistryItem(entryAbsPath, outDir, entryOutName, publicModules) {
-  /** @type {Map<string, string>} absPath → emitted basename (with extension) */
-  const emittedNames = new Map();
-  emittedNames.set(entryAbsPath, entryOutName);
+function emitRegistryItem(
+  entryAbsPath,
+  outDir,
+  entryOutName,
+  publicModules,
+  entryBanner,
+) {
+  /** @type {Map<string, { outName: string, source: string }>} */
+  const modules = new Map();
+  const usedBasenames = new Set();
+
+  function enqueue(absPath, outName) {
+    if (usedBasenames.has(outName)) {
+      throw new Error(
+        `Registry basename collision: ${outName} from ${absPath}`,
+      );
+    }
+    usedBasenames.add(outName);
+    modules.set(absPath, {
+      outName,
+      source: readFileSync(absPath, 'utf8'),
+    });
+  }
+
+  enqueue(entryAbsPath, entryOutName);
 
   const queue = [entryAbsPath];
   while (queue.length > 0) {
     const absPath = queue.shift();
-    const source = readFileSync(absPath, 'utf8');
+    const { source } = modules.get(absPath);
     for (const specifier of listFromSpecifiers(source)) {
       if (!specifier.startsWith('.')) {
         continue;
       }
       const resolved = resolveSourceFile(absPath, specifier);
-      if (publicModules.has(resolved) || emittedNames.has(resolved)) {
+      if (publicModules.has(resolved) || modules.has(resolved)) {
         continue;
       }
-      const outName = basename(resolved);
-      for (const [otherAbs, otherName] of emittedNames) {
-        if (otherName === outName && otherAbs !== resolved) {
-          throw new Error(
-            `Registry basename collision: ${outName} from ${resolved} and ${otherAbs}`,
-          );
-        }
-      }
-      emittedNames.set(resolved, outName);
+      enqueue(resolved, basename(resolved));
       queue.push(resolved);
     }
   }
@@ -193,35 +207,27 @@ function emitRegistryItem(entryAbsPath, outDir, entryOutName, publicModules) {
   mkdirSync(outDir, { recursive: true });
 
   const written = [];
-  for (const [absPath, outName] of emittedNames) {
-    const isEntry = absPath === entryAbsPath;
-    const body = readFileSync(absPath, 'utf8').replace(
-      FROM_RE,
-      (full, specifier) => {
-        if (!specifier.startsWith('.')) {
-          return full;
-        }
-        const resolved = resolveSourceFile(absPath, specifier);
-        if (publicModules.has(resolved)) {
-          return "from '@reactive/silk'";
-        }
-        const companion = emittedNames.get(resolved);
-        if (!companion) {
-          throw new Error(
-            `Missing companion mapping for ${resolved} (from ${absPath})`,
-          );
-        }
-        // Match package source style: extensionless, except `.css` for *.css.ts.
-        if (companion.endsWith('.css.ts')) {
-          return `from './${companion.slice(0, -'.ts'.length)}'`;
-        }
-        return `from './${companion.replace(/\.tsx?$/, '')}'`;
-      },
-    );
+  for (const [absPath, { outName, source }] of modules) {
+    const body = source.replace(FROM_RE, (full, specifier) => {
+      if (!specifier.startsWith('.')) {
+        return full;
+      }
+      const resolved = resolveSourceFile(absPath, specifier);
+      if (publicModules.has(resolved)) {
+        return "from '@reactive/silk'";
+      }
+      const companion = modules.get(resolved)?.outName;
+      if (!companion) {
+        throw new Error(
+          `Missing companion mapping for ${resolved} (from ${absPath})`,
+        );
+      }
+      return `from './${companion.replace(/\.tsx?$/, '')}'`;
+    });
 
-    const outPath = join(outDir, outName);
-    writeFileSync(outPath, body);
-    written.push({ absPath, outName, outPath, isEntry, body });
+    const isEntry = absPath === entryAbsPath;
+    writeFileSync(join(outDir, outName), isEntry ? entryBanner + body : body);
+    written.push({ outName, body });
   }
 
   return written;
@@ -232,7 +238,7 @@ function collectDependencies(bodies) {
   for (const body of bodies) {
     for (const specifier of listFromSpecifiers(body)) {
       const pkg = packageNameFromSpecifier(specifier);
-      if (!pkg || IMPLICIT_DEPS.has(pkg) || IMPLICIT_DEPS.has(specifier)) {
+      if (!pkg || IMPLICIT_DEPS.has(pkg)) {
         continue;
       }
       deps.add(pkg);
@@ -254,19 +260,13 @@ for (const name of COMPOSITES) {
     throw new Error(`Missing composite source: ${srcPath}`);
   }
 
+  const banner = `/**\n * ${name} composite — synced from packages/silk/src/components/${name}.tsx\n * via scripts/sync-registry.mjs. Consumer-owned source; depends on @reactive/silk.\n */\n`;
   const written = emitRegistryItem(
     srcPath,
     outDir,
     entryOutName,
     publicModules,
-  );
-
-  const entry = written.find((file) => file.isEntry);
-  const banner = `/**\n * ${name} composite — synced from packages/silk/src/components/${name}.tsx\n * via scripts/sync-registry.mjs. Consumer-owned source; depends on @reactive/silk.\n */\n`;
-  writeFileSync(entry.outPath, banner + entry.body);
-
-  const bodies = written.map((file) =>
-    file.isEntry ? banner + file.body : file.body,
+    banner,
   );
 
   items.push({
@@ -274,7 +274,7 @@ for (const name of COMPOSITES) {
     type: 'registry:component',
     title: name,
     description: `${name} composite. Built on @reactive/silk primitives — zero Tailwind.`,
-    dependencies: collectDependencies(bodies),
+    dependencies: collectDependencies(written.map((file) => file.body)),
     files: written.map((file) => ({
       path: `registry/${kebab}/${file.outName}`,
       type: 'registry:component',

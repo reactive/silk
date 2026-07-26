@@ -2,25 +2,15 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@rstest/core';
+import { listRegistrySources } from '../test/registrySources';
 
 const componentsDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(componentsDir, '../../../..');
-const registryDir = join(repoRoot, 'registry');
 
 function componentSources(): readonly string[] {
   return readdirSync(componentsDir)
     .filter((file) => file.endsWith('.tsx') && !file.includes('.test.'))
     .map((file) => join(componentsDir, file));
-}
-
-function registrySources(): readonly string[] {
-  return readdirSync(registryDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .flatMap((entry) =>
-      readdirSync(join(registryDir, entry.name))
-        .filter((file) => /\.(tsx?|css\.ts)$/.test(file))
-        .map((file) => join(registryDir, entry.name, file)),
-    );
 }
 
 const removedApis = [
@@ -36,7 +26,7 @@ const removedApis = [
  */
 test('composites and registry sources use no removed layout API', () => {
   const violations: string[] = [];
-  for (const path of [...componentSources(), ...registrySources()]) {
+  for (const path of [...componentSources(), ...listRegistrySources(repoRoot)]) {
     const source = readFileSync(path, 'utf8');
     for (const [label, pattern] of removedApis) {
       if (pattern.test(source)) {

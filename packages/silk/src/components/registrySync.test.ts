@@ -1,23 +1,28 @@
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@rstest/core';
+import { listRegistrySources } from '../test/registrySources';
 
 const componentsDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(componentsDir, '../../../..');
-const registryDir = join(repoRoot, 'registry');
 const packageIndex = join(repoRoot, 'packages/silk/src/index.ts');
 const syncScript = join(repoRoot, 'scripts/sync-registry.mjs');
 
-function registrySources(): readonly string[] {
-  return readdirSync(registryDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .flatMap((entry) =>
-      readdirSync(join(registryDir, entry.name))
-        .filter((file) => /\.(tsx?|css\.ts)$/.test(file))
-        .map((file) => join(registryDir, entry.name, file)),
-    );
+/** Parse `{ a as b, type C }` → imported (source) + local (binding) names. */
+function parseNamedBindings(
+  clause: string,
+): readonly { imported: string; local: string }[] {
+  const bindings: { imported: string; local: string }[] = [];
+  for (const part of clause.split(',')) {
+    const cleaned = part.trim().replace(/^type\s+/, '');
+    if (!cleaned) continue;
+    const [imported, alias] = cleaned.split(/\s+as\s+/).map((s) => s.trim());
+    if (!imported) continue;
+    bindings.push({ imported, local: alias || imported });
+  }
+  return bindings;
 }
 
 function publicExportNames(indexSource: string): ReadonlySet<string> {
@@ -25,15 +30,8 @@ function publicExportNames(indexSource: string): ReadonlySet<string> {
   for (const match of indexSource.matchAll(
     /export\s+(?:type\s+)?\{([^}]+)\}/g,
   )) {
-    for (const part of match[1].split(',')) {
-      const name = part
-        .trim()
-        .split(/\s+as\s+/)
-        .at(-1)
-        ?.trim();
-      if (name) {
-        names.add(name);
-      }
+    for (const { local } of parseNamedBindings(match[1])) {
+      names.add(local);
     }
   }
   return names;
@@ -45,7 +43,7 @@ function snapshotRegistry(): Map<string, string> {
     'registry.json',
     readFileSync(join(repoRoot, 'registry.json'), 'utf8'),
   );
-  for (const path of registrySources()) {
+  for (const path of listRegistrySources(repoRoot)) {
     snap.set(relative(repoRoot, path), readFileSync(path, 'utf8'));
   }
   return snap;
@@ -59,7 +57,7 @@ test('registry @reactive/silk imports resolve to public package exports', () => 
   const publicNames = publicExportNames(readFileSync(packageIndex, 'utf8'));
   const violations: string[] = [];
 
-  for (const path of registrySources()) {
+  for (const path of listRegistrySources(repoRoot)) {
     const source = readFileSync(path, 'utf8');
     const importRe =
       /import\s+(type\s+)?(?:(\w+)(?:\s*,\s*)?)?(?:\{([^}]+)\})?\s+from\s+['"]@reactive\/silk['"]/g;
@@ -69,15 +67,8 @@ test('registry @reactive/silk imports resolve to public package exports', () => 
         names.push(match[2]);
       }
       if (match[3]) {
-        for (const part of match[3].split(',')) {
-          const binding = part
-            .trim()
-            .replace(/^type\s+/, '')
-            .split(/\s+as\s+/)[0]
-            ?.trim();
-          if (binding) {
-            names.push(binding);
-          }
+        for (const { imported } of parseNamedBindings(match[3])) {
+          names.push(imported);
         }
       }
       for (const name of names) {
@@ -93,41 +84,50 @@ test('registry @reactive/silk imports resolve to public package exports', () => 
   expect(violations).toEqual([]);
 });
 
+const PRIVATE_COMPANIONS = [
+  {
+    file: 'registry/comment/formatTimestamp.ts',
+    importedFrom: 'registry/comment/comment.tsx',
+    importPat: /from ['"]\.\/formatTimestamp['"]/,
+  },
+  {
+    file: 'registry/post-card/formatTimestamp.ts',
+    importedFrom: 'registry/post-card/post-card.tsx',
+    importPat: /from ['"]\.\/formatTimestamp['"]/,
+  },
+  {
+    file: 'registry/notification/formatTimestamp.ts',
+    importedFrom: 'registry/notification/notification.tsx',
+    importPat: /from ['"]\.\/formatTimestamp['"]/,
+  },
+  {
+    file: 'registry/profile-card/ActionDescriptorButton.tsx',
+    importedFrom: 'registry/profile-card/profile-card.tsx',
+    importPat: /from ['"]\.\/ActionDescriptorButton['"]/,
+    companionImportPat: /from ['"]@reactive\/silk['"]/,
+  },
+  {
+    file: 'registry/status-dot/tonePrivateVars.ts',
+    importedFrom: 'registry/status-dot/status-dot.tsx',
+    importPat: /from ['"]\.\/tonePrivateVars['"]/,
+  },
+] as const;
+
 test('sync-registry emits companions for private helpers and is idempotent', () => {
   const before = snapshotRegistry();
   execFileSync(process.execPath, [syncScript], { cwd: repoRoot, stdio: 'pipe' });
   const after = snapshotRegistry();
 
-  expect(after.get('registry/comment/formatTimestamp.ts')?.length).toBeGreaterThan(
-    0,
-  );
-  expect(
-    after.get('registry/post-card/formatTimestamp.ts')?.length,
-  ).toBeGreaterThan(0);
-  expect(
-    after.get('registry/notification/formatTimestamp.ts')?.length,
-  ).toBeGreaterThan(0);
-  expect(
-    after.get('registry/profile-card/ActionDescriptorButton.tsx')?.length,
-  ).toBeGreaterThan(0);
-  expect(
-    after.get('registry/status-dot/tonePrivateVars.ts')?.length,
-  ).toBeGreaterThan(0);
+  for (const companion of PRIVATE_COMPANIONS) {
+    expect(after.has(companion.file)).toBe(true);
+    expect(after.get(companion.file)!.length).toBeGreaterThan(0);
+    expect(after.get(companion.importedFrom)).toMatch(companion.importPat);
+    if ('companionImportPat' in companion && companion.companionImportPat) {
+      expect(after.get(companion.file)).toMatch(companion.companionImportPat);
+    }
+  }
 
-  expect(after.get('registry/comment/comment.tsx')).toMatch(
-    /from ['"]\.\/formatTimestamp['"]/,
-  );
-  expect(after.get('registry/profile-card/profile-card.tsx')).toMatch(
-    /from ['"]\.\/ActionDescriptorButton['"]/,
-  );
-  expect(after.get('registry/profile-card/ActionDescriptorButton.tsx')).toMatch(
-    /from ['"]@reactive\/silk['"]/,
-  );
-  expect(after.get('registry/status-dot/status-dot.tsx')).toMatch(
-    /from ['"]\.\/tonePrivateVars['"]/,
-  );
-
-  const statusDotItem = JSON.parse(after.get('registry.json') ?? '{}').items.find(
+  const statusDotItem = JSON.parse(after.get('registry.json')!).items.find(
     (item: { name: string }) => item.name === 'status-dot',
   );
   expect(statusDotItem.dependencies).toContain('@linaria/core');
