@@ -12,6 +12,7 @@ import { ThemeScopePortal } from '../theme/ThemeScope';
 import {
   dialogPanelMotionClass,
   floatingSurfaceClass,
+  floatingZIndex,
   overlayMotionClass,
 } from './floatingSurface';
 
@@ -25,6 +26,7 @@ export const DialogDescription: typeof RadixDialog.Description =
 const overlayClass: string = css`
   position: fixed;
   inset: 0;
+  z-index: ${floatingZIndex.dialogOverlay};
 `;
 
 const contentClass: string = css`
@@ -32,7 +34,7 @@ const contentClass: string = css`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1;
+  z-index: ${floatingZIndex.dialog};
   max-height: calc(100vh - var(--silk-space-8));
   overflow: auto;
   /* Dialog-specific: larger radius and padding than popper surfaces */

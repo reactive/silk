@@ -62,7 +62,6 @@ test('Stage 2 form and visual primitives SSR without throwing', () => {
   expect(html).toContain('SSR');
   expect(html).toContain('data-elevation');
   expect(html).toContain('data-tone="success"');
-  expect(html).not.toContain('styled(');
 });
 
 test('Stage 3 inline interaction primitives SSR without throwing', () => {

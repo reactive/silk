@@ -177,9 +177,13 @@ try {
     join(fixture, 'node_modules/@reactive/silk/dist/index.js'),
     'utf8',
   );
+  // `styled(` catches the `@linaria/react` wrapper runtime, excluded for the
+  // reasons in PRINCIPLES (cross-platform variants, prop filtering, tree cost)
+  // rather than because it generates CSS at runtime — it does not.
+  // `createGlobalStyle` catches styled-components creeping in.
   for (const banned of ['styled(', 'createGlobalStyle']) {
     if (js.includes(banned)) {
-      throw new Error(`Runtime style generation marker found: ${banned}`);
+      throw new Error(`Banned styling runtime marker found: ${banned}`);
     }
   }
 

@@ -20,9 +20,10 @@ Escape hatches on every rendered part: `className`, `style`, React 19 `ref`, dat
 ## Shared infrastructure (not public API)
 
 - `floatingSurface` Linaria class + enter/exit keyframes (`silk-float-in` / `silk-float-out`, `fast` tokens).
+- `floatingZIndex` — one stacking scale for every body-portaled surface, Dialog overlay/content included (see [ARCHITECTURE.md](ARCHITECTURE.md#stacking)).
 - `ThemeScopePortal` (existing) — each primitive composes its own Radix Portal around it.
 - Neutral control geometry helpers shared by Input/Select (Select must not inherit `--silk-input-*`).
 
 ## Dialog migration
 
-Dialog Content/Overlay migrate onto shared floating-surface / motion conventions (distinct open/closed keyframes; exit animation). Size recipe unchanged.
+Dialog Content/Overlay migrate onto shared floating-surface / motion conventions (distinct open/closed keyframes; exit animation) and onto the shared `floatingZIndex` scale. Size recipe unchanged.

@@ -1,7 +1,13 @@
 import { css } from '@linaria/core';
 
-/** Stacking for floating layers (Dialog overlay/content stay local). */
+/**
+ * Stacking for body-portaled layers. Dialog sits *below* the anchored surfaces
+ * so overlays opened from inside a dialog — siblings of the panel, not
+ * descendants — still paint above it. See ARCHITECTURE.md#stacking.
+ */
 export const floatingZIndex = {
+  dialogOverlay: 30,
+  dialog: 35,
   popover: 40,
   menu: 45,
   tooltip: 50,

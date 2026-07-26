@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/addon-docs/blocks';
+import { Meta } from "@storybook/addon-docs/blocks";
 
 <Meta title="Introduction" />
 
@@ -10,10 +10,10 @@ This Storybook is the primary docs site for the library (tracks `main`).
 
 ## Packages
 
-| Package | Description |
-| --- | --- |
+| Package               | Description                                              |
+| --------------------- | -------------------------------------------------------- |
 | `@reactive/silk-core` | Platform-neutral tokens, `createTheme`, recipe contracts |
-| `@reactive/silk` | Web design system (Radix + Linaria) |
+| `@reactive/silk`      | Web design system (Radix + Linaria)                      |
 
 Composites can also ship as source via the [shadcn registry protocol](https://github.com/reactive/silk/blob/main/registry.json). Registry items pin compatible `@reactive/silk` versions. Zero Tailwind.
 
@@ -29,17 +29,15 @@ yarn add @reactive/silk
 Consumers must import the extracted stylesheet once:
 
 ```tsx
-import {
-  Button,
-  Identity,
-  SilkProvider,
-  createTheme,
-} from '@reactive/silk';
-import '@reactive/silk/styles.css';
+import { Button, Identity, SilkProvider, createTheme } from "@reactive/silk";
+import "@reactive/silk/styles.css";
 
 export function App() {
   return (
-    <SilkProvider colorScheme="light" defaults={{ Button: { variant: 'soft' } }}>
+    <SilkProvider
+      colorScheme="light"
+      defaults={{ Button: { variant: "soft" } }}
+    >
       <Button tone="accent">Save</Button>
       <Identity name="Ada Lovelace" meta="@ada" fallback="AL" />
     </SilkProvider>
@@ -50,7 +48,9 @@ export function App() {
 Custom / tenant themes use the style-attribute path:
 
 ```tsx
-<SilkProvider theme={createTheme({ semantic: { color: { surface: '#fafafa' } } })}>
+<SilkProvider
+  theme={createTheme({ semantic: { color: { surface: "#fafafa" } } })}
+>
   …
 </SilkProvider>
 ```
@@ -69,8 +69,8 @@ They are ranked rather than interchangeable. Start with the **public CSS variabl
 For anything static the hooks don't cover, pass a **Linaria class** through `className`. It is extracted at build time, allocates nothing per render, and can reach state and media selectors that `style` cannot:
 
 ```tsx
-import { css } from '@linaria/core';
-import { Button } from '@reactive/silk';
+import { css } from "@linaria/core";
+import { Button } from "@reactive/silk";
 
 const pill = css`
   --silk-button-bg: var(--silk-color-tone-danger-solid);
@@ -87,17 +87,35 @@ const pill = css`
 Reserve **`style`** for values you only know at runtime. `cssVars` types the hooks for it, since React's `CSSProperties` cannot express custom properties:
 
 ```tsx
-import { cssVars } from '@reactive/silk';
+import { cssVars } from "@reactive/silk";
 
-<Button style={cssVars({ '--silk-button-bg': tenant.brandColor })}>Save</Button>;
+<Button style={cssVars({ "--silk-button-bg": tenant.brandColor })}>
+  Save
+</Button>;
 ```
+
+### `styled(Component)`
+
+If you already use Linaria's `styled`, wrapping a Silk component is a peer of `css` + `className` — better when you want a reusable named component or typed dynamic props that compile to CSS variables:
+
+```tsx
+import { styled } from "@linaria/react";
+import { Button } from "@reactive/silk";
+
+const DangerButton = styled(Button)`
+  --silk-button-bg: var(--silk-color-tone-danger-solid);
+  --silk-button-radius: var(--silk-radius-full);
+`;
+```
+
+It works because every Silk component forwards `className`. Wrapping a component skips the DOM-tag prop filter that `styled.div` applies. Cost per render is one wrapper fiber and a props clone — not stylesheet work. If `@linaria/react` is already a dependency, there are no extra bytes. Silk itself does not use `styled`, for reasons that apply to being a cross-platform library, not to consumer apps.
 
 ### Cascade order
 
 Silk keeps every rule at single-class specificity (variants use `:where([data-…])`), so a consumer class is a tie that stylesheet order breaks. If you need that guaranteed rather than incidental, import the layered stylesheet instead — its rules live in `@layer silk`, which any unlayered rule of yours outranks:
 
 ```tsx
-import '@reactive/silk/styles.layer.css';
+import "@reactive/silk/styles.layer.css";
 ```
 
 The trade-off: an unlayered global reset of yours will also outrank Silk. Put your reset in a layer too and declare the order — `@layer reset, silk;`.

@@ -32,6 +32,7 @@ import {
 import { expect, test } from '@rstest/core';
 import { containerBreakpointNames } from '../layout/containerBreakpoints';
 import { loadDistCss as loadCss } from '../test/distCss';
+import { floatingZIndex } from './floatingSurface';
 
 function assertAxisSelectors(
   css: string,
@@ -131,6 +132,36 @@ test('recipe conformance: Stage 3 interaction axes and floating motion', () => {
   expect(css).toContain('silk-dialog-panel-out');
   expect(css).toContain('silk-accordion-open');
   expect(css).toContain('silk-accordion-close');
+});
+
+test('portaled surfaces share one stacking scale with Dialog below them', () => {
+  const css = loadCss();
+  const rules = css.match(/[^{}]*\{[^{}]*\}/g) ?? [];
+
+  // Anchor each value to the rule that owns it: matching on the number alone
+  // would still pass if the overlay and panel values were swapped.
+  function ruleContaining(needle: string): string {
+    const matched = rules.filter((rule) => rule.includes(needle));
+    expect(matched).toHaveLength(1);
+    return matched[0]!;
+  }
+
+  expect(ruleContaining('inset: 0')).toContain(
+    `z-index: ${floatingZIndex.dialogOverlay}`,
+  );
+  expect(
+    ruleContaining('max-height: calc(100vh - var(--silk-space-8))'),
+  ).toContain(`z-index: ${floatingZIndex.dialog}`);
+
+  for (const value of Object.values(floatingZIndex)) {
+    expect(css).toMatch(new RegExp(`z-index: ${value}\\b`));
+  }
+
+  // Overlays opened inside a dialog portal out as siblings of the panel, so
+  // renumbering Dialog above the anchored surfaces would hide them behind it.
+  const { dialogOverlay, dialog, ...anchored } = floatingZIndex;
+  expect(dialogOverlay).toBeLessThan(dialog);
+  expect(Math.min(...Object.values(anchored))).toBeGreaterThan(dialog);
 });
 
 test('looping animations use the loop motion token, not transition durations', () => {
