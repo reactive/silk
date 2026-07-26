@@ -70,6 +70,9 @@ const justifyRules: string = gridRecipe.variants.justify
 const gridClass: string = css`
   display: grid;
   box-sizing: border-box;
+  /* asChild targets like <dl>/<ul>/<p> carry UA margin and padding the layout owns. */
+  margin: 0;
+  padding: 0;
   min-width: 0;
   ${columnsRules}
   ${gapRules}

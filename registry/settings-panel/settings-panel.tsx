@@ -28,7 +28,7 @@ function SettingsPanelRoot({
   ...props
 }: SettingsPanelRootProps): JSX.Element {
   return (
-    <Card asChild elevation="raised" radius="lg" padding="5" className={className}>
+    <Card asChild elevation="raised" radius="lg" className={className}>
       <section {...props}>
         <Stack gap="4" align="stretch">
           {children}

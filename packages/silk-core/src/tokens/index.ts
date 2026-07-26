@@ -5,6 +5,7 @@ export type {
   ElevationName,
   FocusRingGeometry,
   InteractionToneColors,
+  MeasureName,
   MotionName,
   MotionRecord,
   Palette,
@@ -36,7 +37,9 @@ export {
 export {
   compactSpace,
   defaultFocusRing,
+  defaultMeasure,
   defaultMotion,
+  measureNames,
   defaultRadius,
   defaultShadow,
   defaultSpace,

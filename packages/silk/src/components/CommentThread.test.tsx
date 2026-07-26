@@ -121,3 +121,37 @@ test('CommentThread has no axe violations', async () => {
   );
   await expectNoAxeViolations(container);
 });
+
+test('CommentThread nests replies in the content column without inline indent', async () => {
+  const { container } = render(
+    <CommentThread comments={comments} maxDepth={2} />,
+  );
+
+  // Depth arithmetic used to set paddingInlineStart; nesting is structural now.
+  expect(container.querySelector('[style]')).toBeNull();
+
+  const replyRails = container.querySelectorAll('[data-rail="start"]');
+  // One rail per reply level: Root→Child and Child→Grandchild.
+  expect(replyRails).toHaveLength(2);
+
+  const rootArticle = screen.getByText('Root').closest('article');
+  expect(rootArticle).not.toBeNull();
+  const contentColumn = screen.getByText('Root').closest('[data-gap="1"]');
+  expect(contentColumn).not.toBeNull();
+  expect(rootArticle!.contains(contentColumn!)).toBe(true);
+
+  const replies = contentColumn!.querySelector('[data-rail="start"]');
+  expect(replies).not.toBeNull();
+  const nestedList = replies!.querySelector(':scope > ul');
+  expect(nestedList).not.toBeNull();
+  expect(nestedList!.contains(screen.getByText('Child'))).toBe(true);
+
+  // Replies must not sit as a sibling of the comment under the list item.
+  const listItem = rootArticle!.parentElement;
+  expect(listItem?.tagName).toBe('LI');
+  expect(listItem!.querySelector(':scope > ul')).toBeNull();
+
+  expect(container.querySelectorAll('ul').length).toBeGreaterThanOrEqual(2);
+  expect(container.querySelectorAll('li')).toHaveLength(3);
+  await expectNoAxeViolations(container);
+});

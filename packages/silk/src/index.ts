@@ -141,6 +141,7 @@ export type {
   FieldLabelAssociation,
   FieldLabelProps,
   FieldMode,
+  FieldOrientation,
   FieldRootProps,
   GridProps,
   HeadingProps,

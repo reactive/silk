@@ -1,5 +1,6 @@
 import {
   compactSpace,
+  measureNames,
   motionNames,
   spaceSteps,
   toneNames,
@@ -45,8 +46,16 @@ export function themeToCssVars(theme: Theme): CssVarMap {
 }
 
 function buildThemeCssVars(theme: Theme): CssVarMap {
-  const { color, space, radius, typography, motion, shadow, focusRing } =
-    theme.semantic;
+  const {
+    color,
+    space,
+    radius,
+    typography,
+    measure,
+    motion,
+    shadow,
+    focusRing,
+  } = theme.semantic;
   const vars: Record<`--silk-${string}`, string> = {
     '--silk-color-surface': color.surface,
     '--silk-color-surface-raised': color.surfaceRaised,
@@ -80,6 +89,11 @@ function buildThemeCssVars(theme: Theme): CssVarMap {
 
   for (const name of ['none', 'sm', 'md', 'lg', 'full'] as const) {
     vars[`--silk-radius-${name}`] = px(radius[name]);
+  }
+
+  // `ch` so the cap tracks whatever font the renderer actually resolves.
+  for (const name of measureNames) {
+    vars[`--silk-measure-${name}`] = `${measure[name]}ch`;
   }
 
   for (const role of typographyRoles) {

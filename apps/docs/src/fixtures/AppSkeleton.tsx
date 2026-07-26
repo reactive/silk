@@ -145,14 +145,20 @@ export function AppSkeleton({
             data-narrow={narrow || undefined}
             data-region="sidebar"
           >
-            <Stack gap="2">
-              <Text role="label">Navigation</Text>
-              <Separator />
-              {['Overview', 'Projects', 'Settings'].map((item) => (
-                <Box key={item} className={navItemClass}>
-                  <Text role="caption">{item}</Text>
-                </Box>
-              ))}
+            <Stack gap="4">
+              <Stack gap="2">
+                <Stack gap="1">
+                  <Text role="label">Navigation</Text>
+                  <Separator />
+                </Stack>
+                <Stack gap="1">
+                  {['Overview', 'Projects', 'Settings'].map((item) => (
+                    <Box key={item} className={navItemClass}>
+                      <Text role="caption">{item}</Text>
+                    </Box>
+                  ))}
+                </Stack>
+              </Stack>
             </Stack>
           </Box>
 
@@ -166,7 +172,7 @@ export function AppSkeleton({
               <Stack gap="4">
                 <Stack gap="2">
                   <Text role="headingLg">Workspace</Text>
-                  <Text tone="secondary">
+                  <Text tone="secondary" measure="prose">
                     Header, sidebar, content, and footer composed from Box,
                     Stack, Inline, Grid, Container, and Separator.
                   </Text>
@@ -179,10 +185,12 @@ export function AppSkeleton({
                 >
                   {['Alpha', 'Beta', 'Gamma', 'Delta'].map((name) => (
                     <Box key={name} padding="3" className={cardTileClass}>
-                      <Text role="label">{name}</Text>
-                      <Text tone="secondary" role="caption">
-                        Card body
-                      </Text>
+                      <Stack gap="2">
+                        <Text role="label">{name}</Text>
+                        <Text tone="secondary" role="caption">
+                          Card body
+                        </Text>
+                      </Stack>
                     </Box>
                   ))}
                 </Grid>

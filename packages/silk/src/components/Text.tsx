@@ -29,6 +29,10 @@ const textClass: string = css`
   margin: 0;
   ${roleRules}
   ${toneRules}
+
+  &:where([data-measure='prose']) {
+    max-width: var(--silk-measure-prose);
+  }
 `;
 
 /**
@@ -40,11 +44,14 @@ export function Text({
   asChild = false,
   role,
   tone,
+  measure,
   ...props
 }: TextProps): JSX.Element {
   const defaults = useComponentDefaults('Text');
   const resolvedRole = role ?? defaults.role ?? textRecipe.defaults.role;
   const resolvedTone = tone ?? defaults.tone ?? textRecipe.defaults.tone;
+  const resolvedMeasure =
+    measure ?? defaults.measure ?? textRecipe.defaults.measure;
 
   const Comp = asChild ? Slot.Root : 'p';
   return (
@@ -53,6 +60,7 @@ export function Text({
       className={cx(textClass, className)}
       data-role={resolvedRole}
       data-tone={resolvedTone}
+      data-measure={resolvedMeasure}
     />
   );
 }

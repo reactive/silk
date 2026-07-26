@@ -56,6 +56,8 @@ const interactiveHoverRules: string = `
 `;
 
 const surfaceClass: string = css`
+  /* Block box so asChild on <a> (inline by default) still lays out as a surface. */
+  display: block;
   box-sizing: border-box;
   margin: 0;
   min-width: 0;

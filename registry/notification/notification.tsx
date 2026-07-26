@@ -2,7 +2,11 @@
  * Notification composite — synced from packages/silk/src/components/Notification.tsx
  * via scripts/sync-registry.mjs. Consumer-owned source; depends on @reactive/silk.
  */
-import type { NotificationModel } from '@reactive/silk-core';
+import {
+  mediaScale,
+  type MediaScaleSize,
+  type NotificationModel,
+} from '@reactive/silk-core';
 import type {
   ComponentPropsWithoutRef,
   JSX,
@@ -10,14 +14,16 @@ import type {
   Ref,
 } from 'react';
 import { Avatar } from '@reactive/silk';
-import { Box } from '@reactive/silk';
+import { Card } from '@reactive/silk';
 import { formatTimestamp } from './formatTimestamp';
 import { Inline } from '@reactive/silk';
 import { MediaObject } from '@reactive/silk';
 import { Stack } from '@reactive/silk';
 import { StatusDot } from '@reactive/silk';
-import { Surface } from '@reactive/silk';
 import { Text } from '@reactive/silk';
+
+/** Notifications sit alongside posts in a feed, so they share the post scale. */
+const NOTIFICATION_SIZE: MediaScaleSize = 'md';
 
 export interface NotificationRootProps
   extends ComponentPropsWithoutRef<'article'> {
@@ -39,11 +45,10 @@ function NotificationRoot({
 
   if (href !== undefined) {
     return (
-      <Surface
+      <Card
         asChild
         elevation={elevation}
         radius="lg"
-        border="subtle"
         interactive={interactive}
         className={className}
       >
@@ -54,22 +59,16 @@ function NotificationRoot({
         >
           {children}
         </a>
-      </Surface>
+      </Card>
     );
   }
 
   return (
-    <Surface
-      asChild
-      elevation={elevation}
-      radius="lg"
-      border="subtle"
-      className={className}
-    >
+    <Card asChild elevation={elevation} radius="lg" className={className}>
       <article {...props} data-read={read ? 'true' : 'false'}>
         {children}
       </article>
-    </Surface>
+    </Card>
   );
 }
 
@@ -94,49 +93,50 @@ function NotificationConvenience({
       read={model.read}
       {...(model.href !== undefined ? { href: model.href } : {})}
     >
-      <Box padding="4">
-        <MediaObject
-          gap="3"
-          align="start"
-          media={
-            <Avatar
-              size="md"
-              {...(model.actor?.avatar !== undefined
-                ? {
-                    src: model.actor.avatar.src,
-                    alt: model.actor.avatar.alt,
-                  }
-                : {})}
-              fallback={actorFallback}
-            />
-          }
-        >
-          <Stack gap="1" align="start">
-            <Inline gap="2" align="center" wrap="wrap">
-              {!model.read ? (
-                <StatusDot
-                  tone="accent"
-                  size="sm"
-                  role="img"
-                  aria-label="Unread"
-                  aria-hidden={false}
-                />
-              ) : null}
-              {model.actor !== undefined ? (
-                <Text role="label" tone="primary">
-                  {model.actor.name}
-                </Text>
-              ) : null}
-              <Text role="body" tone="secondary">
-                {model.text}
+      <MediaObject
+        size={NOTIFICATION_SIZE}
+        align="start"
+        media={
+          <Avatar
+            size={NOTIFICATION_SIZE}
+            {...(model.actor?.avatar !== undefined
+              ? {
+                  src: model.actor.avatar.src,
+                  alt: model.actor.avatar.alt,
+                }
+              : {})}
+            fallback={actorFallback}
+          />
+        }
+      >
+        <Stack gap="1" align="start">
+          <Inline gap="2" align="center" wrap="wrap">
+            {!model.read ? (
+              <StatusDot
+                tone="accent"
+                size="sm"
+                role="img"
+                aria-label="Unread"
+                aria-hidden={false}
+              />
+            ) : null}
+            {model.actor !== undefined ? (
+              <Text
+                role={mediaScale[NOTIFICATION_SIZE].primaryRole}
+                tone="primary"
+              >
+                {model.actor.name}
               </Text>
-            </Inline>
-            <Text asChild role="caption" tone="secondary">
-              <time dateTime={model.createdAt}>{timeLabel}</time>
+            ) : null}
+            <Text role="body" tone="secondary">
+              {model.text}
             </Text>
-          </Stack>
-        </MediaObject>
-      </Box>
+          </Inline>
+          <Text asChild role="caption" tone="secondary">
+            <time dateTime={model.createdAt}>{timeLabel}</time>
+          </Text>
+        </Stack>
+      </MediaObject>
     </NotificationRoot>
   );
 }

@@ -1,3 +1,4 @@
+import { mediaScale, mediaScaleSizes } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
 import { expectNoAxeViolations } from '../test/a11y';
@@ -23,6 +24,27 @@ test('Identity compound parts share size context', () => {
   const root = screen.getByText('Ada').closest('[data-size]');
   expect(root?.getAttribute('data-size')).toBe('lg');
   expect(screen.getByText('AL').getAttribute('data-size')).toBe('lg');
+});
+
+test('Identity name and meta roles track mediaScale size', () => {
+  for (const size of mediaScaleSizes) {
+    const { unmount } = render(
+      <Identity.Root size={size}>
+        <Identity.Name>Ada</Identity.Name>
+        <Identity.Meta>@ada</Identity.Meta>
+      </Identity.Root>,
+    );
+    expect(screen.getByText('Ada').getAttribute('data-role')).toBe(
+      mediaScale[size].primaryRole,
+    );
+    expect(screen.getByText('@ada').getAttribute('data-role')).toBe(
+      mediaScale[size].metaRole,
+    );
+    unmount();
+  }
+  expect(mediaScale.sm.primaryRole).toBe('label');
+  expect(mediaScale.md.primaryRole).toBe('headingSm');
+  expect(mediaScale.lg.primaryRole).toBe('headingSm');
 });
 
 test('Identity model supplies defaults; explicit props override', () => {

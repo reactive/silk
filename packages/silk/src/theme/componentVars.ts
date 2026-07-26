@@ -10,6 +10,7 @@ import type { CSSProperties } from 'react';
  * renamed, or dropped without the list following.
  */
 export const silkComponentVarNames = [
+  '--silk-avatar-size',
   '--silk-badge-bg',
   '--silk-badge-border',
   '--silk-badge-fg',
@@ -22,6 +23,7 @@ export const silkComponentVarNames = [
   '--silk-card-border',
   '--silk-card-radius',
   '--silk-card-shadow',
+  '--silk-empty-state-measure',
   '--silk-grid-min',
   '--silk-input-bg',
   '--silk-input-border',

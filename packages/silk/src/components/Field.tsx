@@ -18,6 +18,14 @@ import { typographyRoleCss } from '../theme/typographyCss';
 
 export type FieldMode = 'single' | 'group';
 
+/**
+ * `vertical` — label above the control (text inputs, selects, textareas).
+ * `horizontal` — control leading its label on one line, with the description
+ * and error aligned under the label. This is the shape a boolean control wants;
+ * without it every checkbox field has to hand-assemble the row.
+ */
+export type FieldOrientation = 'vertical' | 'horizontal';
+
 /** How Field.Label associates with the control. */
 export type FieldLabelAssociation = 'htmlFor' | 'labelledby';
 
@@ -72,6 +80,8 @@ export interface FieldRootProps extends ComponentPropsWithoutRef<'div'> {
    * `group` — group receives aria-labelledby; Label is not htmlFor-associated.
    */
   readonly mode?: FieldMode;
+  /** Where the label sits relative to the control. Defaults to `vertical`. */
+  readonly orientation?: FieldOrientation;
   /**
    * Id for the labelled control when using `htmlFor` association, defaulting to
    * a generated one. Set it here rather than on the control so Label `htmlFor`
@@ -97,6 +107,27 @@ const rootClass: string = css`
 
   &:where([data-disabled='true']) {
     opacity: 0.7;
+  }
+
+  /*
+   * A grid rather than a row: the control auto-places into column 1, and
+   * pinning the three known slots to column 2 keeps the description and error
+   * under the label they explain instead of under the control.
+   */
+  &:where([data-orientation='horizontal']) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--silk-space-2);
+    row-gap: var(--silk-space-1);
+
+    > :where(
+      [data-field-label],
+      [data-field-description],
+      [data-field-error]
+    ) {
+      grid-column: 2;
+    }
   }
 `;
 
@@ -177,6 +208,7 @@ function ariaFromFieldChildren(
 function FieldRoot({
   className,
   mode = 'single',
+  orientation = 'vertical',
   controlId,
   invalid = false,
   disabled = false,
@@ -233,6 +265,7 @@ function FieldRoot({
         data-invalid={invalid ? 'true' : undefined}
         data-disabled={disabled ? 'true' : undefined}
         data-mode={mode}
+        data-orientation={orientation}
       >
         {children}
       </div>
@@ -277,6 +310,7 @@ function FieldLabel({
       id={props.id ?? field?.labelId}
       htmlFor={htmlFor}
       className={cx(labelClass, className)}
+      data-field-label=""
       data-disabled={field?.disabled ? 'true' : undefined}
     >
       {/* Unconditional even when the field is optional: the `null` branch still

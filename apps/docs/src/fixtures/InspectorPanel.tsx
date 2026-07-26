@@ -70,7 +70,7 @@ function OverlayControls({
 
   return (
     <Stack gap="3" data-region="general">
-      <Text tone="secondary">
+      <Text tone="secondary" measure="prose">
         Compose Tabs, Select, menus, and toast feedback.
       </Text>
       <Select.Root

@@ -1,6 +1,7 @@
 import {
   Checkbox,
   Field,
+  Inline,
   Input,
   RadioGroup,
   Stack,
@@ -68,11 +69,18 @@ export const MixedControls: Story = {
         <Field.Label>Notes</Field.Label>
         <Textarea rows={3} />
       </Field.Root>
-      <Field.Root>
-        <Checkbox defaultChecked /> <Field.Label>Subscribe</Field.Label>
+      <Field.Root controlId="subscribe" orientation="horizontal">
+        <Checkbox defaultChecked />
+        <Field.Label>Subscribe</Field.Label>
+        <Field.Description>Weekly digest of new activity.</Field.Description>
       </Field.Root>
+      {/* Settings rows push the control to the far edge — a layout choice the
+          field itself does not own. */}
       <Field.Root>
-        <Switch aria-label="Airplane mode" />
+        <Inline gap="2" align="center" justify="between">
+          <Field.Label>Airplane mode</Field.Label>
+          <Switch />
+        </Inline>
       </Field.Root>
     </Stack>
   ),

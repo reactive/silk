@@ -4,7 +4,9 @@
  */
 import {
   mediaObjectRecipe,
+  mediaScale,
   type MediaObjectVariantProps,
+  type MediaScaleSize,
 } from '@reactive/silk-core';
 import { Slot } from 'radix-ui';
 import {
@@ -23,6 +25,7 @@ interface MediaObjectContextValue {
   readonly align: NonNullable<MediaObjectVariantProps['align']>;
   readonly gap: NonNullable<MediaObjectVariantProps['gap']>;
   readonly mediaPosition: NonNullable<MediaObjectVariantProps['mediaPosition']>;
+  readonly size: MediaScaleSize;
 }
 
 const MediaObjectContext = createContext<MediaObjectContextValue | null>(null);
@@ -48,6 +51,7 @@ function MediaObjectRoot({
   align,
   gap,
   mediaPosition,
+  size,
   asChild = false,
   className,
   children,
@@ -56,7 +60,10 @@ function MediaObjectRoot({
   const defaults = useComponentDefaults('MediaObject');
   const resolvedAlign =
     align ?? defaults.align ?? mediaObjectRecipe.defaults.align;
-  const resolvedGap = gap ?? defaults.gap ?? mediaObjectRecipe.defaults.gap;
+  const resolvedSize = size ?? defaults.size ?? mediaObjectRecipe.defaults.size;
+  // `size` supplies the gap so the distance follows the media it separates;
+  // an explicit `gap` is the opt-out.
+  const resolvedGap = gap ?? defaults.gap ?? mediaScale[resolvedSize].gap;
   const resolvedMediaPosition =
     mediaPosition ??
     defaults.mediaPosition ??
@@ -68,6 +75,7 @@ function MediaObjectRoot({
         align: resolvedAlign,
         gap: resolvedGap,
         mediaPosition: resolvedMediaPosition,
+        size: resolvedSize,
       }}
     >
       <Inline
@@ -79,6 +87,7 @@ function MediaObjectRoot({
         direction={resolvedMediaPosition === 'end' ? 'row-reverse' : 'row'}
         className={className}
         data-media-position={resolvedMediaPosition}
+        data-size={resolvedSize}
       >
         {children}
       </Inline>

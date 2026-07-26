@@ -1,3 +1,4 @@
+import { css, cx } from '@linaria/core';
 import {
   emptyStateRecipe,
   type EmptyStateVariantProps,
@@ -31,7 +32,10 @@ function useEmptyStateContext(): EmptyStateContextValue {
   return ctx;
 }
 
-const gapBySize = { sm: '2', md: '3', lg: '4' } as const;
+/** Between the media, the copy block, and the action — the outer rhythm. */
+const gapBySize = { sm: '4', md: '5', lg: '6' } as const;
+/** Inside the copy block, so the title and description read as one unit. */
+const copyGapBySize = { sm: '1', md: '2', lg: '2' } as const;
 const headingBySize = { sm: 'sm', md: 'md', lg: 'lg' } as const;
 
 export interface EmptyStateRootProps
@@ -106,6 +110,14 @@ export type EmptyStateDescriptionProps = ComponentPropsWithoutRef<'p'> & {
   readonly children?: ReactNode;
 };
 
+/*
+ * Deliberately tighter than `--silk-measure-prose`: this copy is centered and
+ * short, and a centered block reads better well under the reading measure.
+ */
+const descriptionClass: string = css`
+  max-width: var(--silk-empty-state-measure, 46ch);
+`;
+
 function EmptyStateDescription({
   className,
   children,
@@ -113,7 +125,12 @@ function EmptyStateDescription({
 }: EmptyStateDescriptionProps): JSX.Element {
   useEmptyStateContext();
   return (
-    <Text asChild role="body" tone="secondary" className={className}>
+    <Text
+      asChild
+      role="body"
+      tone="secondary"
+      className={cx(descriptionClass, className)}
+    >
       <p {...props}>{children}</p>
     </Text>
   );
@@ -143,15 +160,22 @@ function EmptyStateConvenience({
   description,
   media,
   action,
+  size,
   ...props
 }: EmptyStateProps): JSX.Element {
+  const defaults = useComponentDefaults('EmptyState');
+  const resolvedSize = size ?? defaults.size ?? emptyStateRecipe.defaults.size;
+
   return (
-    <EmptyStateRoot {...props}>
+    <EmptyStateRoot {...props} size={resolvedSize}>
       {media !== undefined ? <EmptyStateMedia>{media}</EmptyStateMedia> : null}
-      <EmptyStateTitle>{title}</EmptyStateTitle>
-      {description !== undefined ? (
-        <EmptyStateDescription>{description}</EmptyStateDescription>
-      ) : null}
+      {/* Title and description are one unit; the action is a separate one. */}
+      <Stack gap={copyGapBySize[resolvedSize]} align="center">
+        <EmptyStateTitle>{title}</EmptyStateTitle>
+        {description !== undefined ? (
+          <EmptyStateDescription>{description}</EmptyStateDescription>
+        ) : null}
+      </Stack>
       {action !== undefined ? (
         <EmptyStateAction>{action}</EmptyStateAction>
       ) : null}

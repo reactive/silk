@@ -1,5 +1,7 @@
+import { css, cx } from '@linaria/core';
 import {
   commentRecipe,
+  mediaScale,
   type CommentModel,
   type CommentVariantProps,
 } from '@reactive/silk-core';
@@ -101,11 +103,50 @@ function CommentActions(props: CommentActionsProps): JSX.Element {
   return <div {...props} />;
 }
 
+export type CommentRepliesProps = ComponentPropsWithoutRef<'div'> & {
+  readonly ref?: Ref<HTMLDivElement>;
+  readonly children?: ReactNode;
+};
+
+/*
+ * A reply block is a coarser boundary than the lines within one comment, so it
+ * gets more room than the content column's own rhythm.
+ */
+const repliesClass: string = css`
+  padding-block-start: var(--silk-space-1);
+`;
+
+/**
+ * Replies live in the comment's content column, so nesting indents by the
+ * media column on its own — no depth arithmetic, and the rail lands under the
+ * byline it belongs to.
+ */
+function CommentReplies({
+  className,
+  children,
+  ...props
+}: CommentRepliesProps): JSX.Element {
+  useCommentContext();
+  return (
+    <Stack
+      gap="3"
+      align="stretch"
+      rail="start"
+      className={cx(repliesClass, className)}
+      {...props}
+    >
+      {children}
+    </Stack>
+  );
+}
+
 export interface CommentProps
   extends Omit<CommentRootProps, 'children'>, CommentVariantProps {
   readonly model: CommentModel;
   readonly timestampLabel?: ReactNode;
   readonly onAction?: (actionId: string) => void;
+  /** Nested replies, rendered railed inside this comment's content column. */
+  readonly replies?: ReactNode;
 }
 
 function CommentConvenience({
@@ -113,6 +154,7 @@ function CommentConvenience({
   timestampLabel,
   onAction,
   size,
+  replies,
   ...props
 }: CommentProps): JSX.Element {
   const defaults = useComponentDefaults('Comment');
@@ -122,7 +164,7 @@ function CommentConvenience({
   return (
     <CommentRoot {...props} size={resolvedSize}>
       <MediaObject
-        gap="2"
+        size={resolvedSize}
         align="start"
         media={
           <Avatar
@@ -140,11 +182,11 @@ function CommentConvenience({
         }
       >
         <CommentHeader>
-          <Text role="label" tone="primary">
+          <Text role={mediaScale[resolvedSize].primaryRole} tone="primary">
             {model.author.name}
           </Text>
           {model.author.meta !== undefined ? (
-            <Text role="caption" tone="secondary">
+            <Text role={mediaScale[resolvedSize].metaRole} tone="secondary">
               {model.author.meta}
             </Text>
           ) : null}
@@ -172,6 +214,9 @@ function CommentConvenience({
             </ActionBar.Root>
           </CommentActions>
         ) : null}
+        {replies !== undefined ? (
+          <CommentReplies>{replies}</CommentReplies>
+        ) : null}
       </MediaObject>
     </CommentRoot>
   );
@@ -183,6 +228,7 @@ export interface CommentComponent {
   Header: typeof CommentHeader;
   Body: typeof CommentBody;
   Actions: typeof CommentActions;
+  Replies: typeof CommentReplies;
 }
 
 export const Comment: CommentComponent = Object.assign(CommentConvenience, {
@@ -190,4 +236,5 @@ export const Comment: CommentComponent = Object.assign(CommentConvenience, {
   Header: CommentHeader,
   Body: CommentBody,
   Actions: CommentActions,
+  Replies: CommentReplies,
 });
