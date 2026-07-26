@@ -113,6 +113,11 @@ const rootClass: string = css`
    * A grid rather than a row: the control auto-places into column 1, and
    * pinning the three known slots to column 2 keeps the description and error
    * under the label they explain instead of under the control.
+   *
+   * The :has() arm matches the layout wrappers Field already treats as
+   * transparent when wiring aria — a Stack around the description would
+   * otherwise auto-place into the control column. Pinning the label's row
+   * keeps the control beside it whichever one comes first in the DOM.
    */
   &:where([data-orientation='horizontal']) {
     display: grid;
@@ -124,9 +129,14 @@ const rootClass: string = css`
     > :where(
       [data-field-label],
       [data-field-description],
-      [data-field-error]
+      [data-field-error],
+      :has([data-field-label], [data-field-description], [data-field-error])
     ) {
       grid-column: 2;
+    }
+
+    > :where([data-field-label], :has([data-field-label])) {
+      grid-row: 1;
     }
   }
 `;

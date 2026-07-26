@@ -85,3 +85,17 @@ export const MixedControls: Story = {
     </Stack>
   ),
 };
+
+/** A wrapper around the supporting copy stays in the label column. */
+export const HorizontalWrappedSlots: Story = {
+  render: () => (
+    <Field.Root controlId="digest" orientation="horizontal" invalid>
+      <Checkbox defaultChecked />
+      <Field.Label>Subscribe</Field.Label>
+      <Stack gap="1">
+        <Field.Description>Weekly digest of new activity.</Field.Description>
+        <Field.Error>Confirm your email to subscribe.</Field.Error>
+      </Stack>
+    </Field.Root>
+  ),
+};
