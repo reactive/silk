@@ -1,10 +1,17 @@
 {
-  "notes": "Bundleless per-file ESM: isolatedGzip is the real consumer cost of importing one named export (esbuild minify+gzip, react external). sharedBaselineGzip is createTheme alone. CSS is still the package-wide aggregate (styles.css). SSR median is informational only. A reversion to the bundled monolith fails these budgets loudly.",
+  "notes": "Bundleless per-file ESM: isolatedGzip is the real consumer cost of importing one named export (esbuild minify+gzip, react external). sharedBaselineGzip is createTheme alone. CSS is still the package-wide aggregate (styles.css). nativeIsolatedGzip is @reactive/silk-native with react + react-native external (no CSS). SSR median is informational only; native runtime SSR is N/A. A reversion to the bundled monolith fails these budgets loudly.",
   "budgets": {
     "cssRaw": 130000,
     "cssGzip": 15000,
     "sharedBaselineGzip": 3300,
     "ssrMedianMsSoft": 5,
+    "nativeIsolatedGzip": {
+      "Box": 1300,
+      "Stack": 1700,
+      "Inline": 1700,
+      "Text": 1200,
+      "Button": 2300
+    },
     "isolatedGzip": {
       "Button": 3200,
       "Dialog": 19300,
@@ -34,8 +41,8 @@
     }
   },
   "measured": {
-    "generatedAt": "2026-07-26T20:07:57.945Z",
-    "sharedBaselineGzip": 2601,
+    "generatedAt": "2026-07-26T22:26:32.738Z",
+    "sharedBaselineGzip": 2682,
     "css": {
       "raw": 107123,
       "gzip": 11663
@@ -43,27 +50,27 @@
     "isolated": {
       "Button": {
         "raw": 5802,
-        "gzip": 2554
+        "gzip": 2553
       },
       "Dialog": {
-        "raw": 44492,
-        "gzip": 15378
+        "raw": 44590,
+        "gzip": 15422
       },
       "Tooltip": {
-        "raw": 56890,
-        "gzip": 20333
+        "raw": 56988,
+        "gzip": 20366
       },
       "Popover": {
-        "raw": 72923,
-        "gzip": 25815
+        "raw": 73021,
+        "gzip": 25858
       },
       "DropdownMenu": {
-        "raw": 99947,
-        "gzip": 33370
+        "raw": 100045,
+        "gzip": 33415
       },
       "Select": {
-        "raw": 99472,
-        "gzip": 34293
+        "raw": 99570,
+        "gzip": 34346
       },
       "Tabs": {
         "raw": 29173,
@@ -75,19 +82,19 @@
       },
       "Toggle": {
         "raw": 9433,
-        "gzip": 3794
+        "gzip": 3793
       },
       "ToggleGroup": {
         "raw": 26300,
-        "gzip": 9345
+        "gzip": 9346
       },
       "ScrollArea": {
         "raw": 26255,
         "gzip": 8611
       },
       "Toast": {
-        "raw": 41080,
-        "gzip": 13694
+        "raw": 41178,
+        "gzip": 13738
       },
       "Identity": {
         "raw": 13119,
@@ -95,7 +102,7 @@
       },
       "MediaObject": {
         "raw": 10276,
-        "gzip": 4107
+        "gzip": 4106
       },
       "ActionBar": {
         "raw": 34741,
@@ -111,7 +118,7 @@
       },
       "PostCard": {
         "raw": 47808,
-        "gzip": 15780
+        "gzip": 15781
       },
       "Comment": {
         "raw": 44755,
@@ -119,7 +126,7 @@
       },
       "CommentThread": {
         "raw": 46904,
-        "gzip": 15750
+        "gzip": 15751
       },
       "Notification": {
         "raw": 17138,
@@ -142,8 +149,30 @@
         "gzip": 736
       }
     },
+    "nativeIsolated": {
+      "Box": {
+        "raw": 1848,
+        "gzip": 943
+      },
+      "Stack": {
+        "raw": 2555,
+        "gzip": 1206
+      },
+      "Inline": {
+        "raw": 2607,
+        "gzip": 1198
+      },
+      "Text": {
+        "raw": 1880,
+        "gzip": 860
+      },
+      "Button": {
+        "raw": 3883,
+        "gzip": 1671
+      }
+    },
     "ssr": {
-      "medianMs": 0.848
+      "medianMs": 0.682
     }
   }
 }

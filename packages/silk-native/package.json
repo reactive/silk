@@ -1,0 +1,54 @@
+{
+  "name": "@reactive/silk-native",
+  "version": "0.0.0",
+  "description": "React Native renderer for Silk — semantic themes and recipe contracts without CSS variables",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:watch": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "rstest run"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-native": ">=0.83.0"
+  },
+  "dependencies": {
+    "@reactive/silk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@rsbuild/plugin-react": "^2.1.0",
+    "@rstest/core": "^0.11.4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.7",
+    "jsdom": "^29.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-native": "0.83.10",
+    "react-native-web": "~0.21.0",
+    "typescript": "^7.0.2"
+  }
+}

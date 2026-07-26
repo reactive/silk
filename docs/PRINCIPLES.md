@@ -69,7 +69,7 @@ Consumers should prefer **`styled(Component)`** when they want a reusable named 
 | Visual language, variants, theming                                                                     | Silk                                                         |
 | Component API shape                                                                                    | Silk (never mirrored from another library)                   |
 | Tokens, recipes, contracts, types                                                                      | `silk-core` (platform-neutral)                               |
-| Rendering                                                                                              | Platform packages (`silk` web; `silk-native` later)          |
+| Rendering                                                                                              | Platform packages (`silk` web; `silk-native` React Native)   |
 
 ## Theming is architectural, not a feature
 

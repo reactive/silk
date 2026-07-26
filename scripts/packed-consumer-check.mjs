@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Packed-consumer check: pack both packages, install into a temp fixture,
+ * Packed-consumer check: pack packages, install into a temp fixture,
  * verify CSS lands, ESM import works, and no runtime style-generation markers ship.
+ * Also packs @reactive/silk-native and verifies an RNW-aliased esbuild consumer.
  */
 import { execSync } from 'node:child_process';
 import {
@@ -15,6 +16,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import * as esbuild from 'esbuild';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const fixture = mkdtempSync(join(tmpdir(), 'silk-packed-'));
@@ -23,10 +25,42 @@ function run(cmd, cwd = root) {
   execSync(cmd, { cwd, stdio: 'inherit' });
 }
 
-function listJsFiles(dir) {
+function listFiles(dir, matches = () => true) {
   return readdirSync(dir, { withFileTypes: true, recursive: true })
-    .filter((e) => e.isFile() && e.name.endsWith('.js'))
+    .filter((e) => e.isFile() && matches(e.name))
     .map((e) => join(e.parentPath ?? e.path, e.name));
+}
+
+const isJs = (name) => name.endsWith('.js');
+const isTest = (name) => /\.test\./.test(name);
+
+/**
+ * Typecheck `<name>.tsx` against the packed .d.ts so missing prop types or
+ * compound parts fail CI (runtime export checks alone won't).
+ */
+function checkConsumerTypes(name, compilerOptions) {
+  const config = join(fixture, `tsconfig.${name}.json`);
+  writeFileSync(
+    config,
+    JSON.stringify(
+      {
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          jsx: 'react-jsx',
+          strict: true,
+          skipLibCheck: true,
+          noEmit: true,
+          ...compilerOptions,
+        },
+        include: [`${name}.tsx`],
+      },
+      null,
+      2,
+    ),
+  );
+  run(`npx tsc -p ${config}`, fixture);
 }
 
 /** Linaria class selectors in the aggregate stylesheet. */
@@ -54,7 +88,7 @@ function assertClassNameParity(distDir, css) {
 
   const jsNames = new Set();
   const stringLit = /["']([a-zA-Z_][\w-]{2,})["']/g;
-  for (const file of listJsFiles(distDir)) {
+  for (const file of listFiles(distDir, isJs)) {
     const source = readFileSync(file, 'utf8');
     for (const m of source.matchAll(stringLit)) {
       if (cssNames.has(m[1])) {
@@ -74,9 +108,11 @@ function assertClassNameParity(distDir, css) {
 try {
   run('yarn workspace @reactive/silk-core build');
   run('yarn workspace @reactive/silk build');
+  run('yarn workspace @reactive/silk-native build');
 
   run('yarn workspace @reactive/silk-core pack --out ../../silk-core.tgz');
   run('yarn workspace @reactive/silk pack --out ../../silk.tgz');
+  run('yarn workspace @reactive/silk-native pack --out ../../silk-native.tgz');
 
   writeFileSync(
     join(fixture, 'package.json'),
@@ -88,8 +124,10 @@ try {
         dependencies: {
           '@reactive/silk-core': `file:${join(root, 'silk-core.tgz')}`,
           '@reactive/silk': `file:${join(root, 'silk.tgz')}`,
+          '@reactive/silk-native': `file:${join(root, 'silk-native.tgz')}`,
           react: '^19.0.0',
           'react-dom': '^19.0.0',
+          'react-native-web': '~0.21.0',
           typescript: '~5.9.0',
           '@types/react': '^19.0.0',
           '@types/react-dom': '^19.0.0',
@@ -101,6 +139,23 @@ try {
   );
 
   run('npm install --ignore-scripts', fixture);
+
+  const nativePkg = JSON.parse(
+    readFileSync(
+      join(fixture, 'node_modules/@reactive/silk-native/package.json'),
+      'utf8',
+    ),
+  );
+  const workspaceDeps = Object.entries(nativePkg.dependencies).filter(
+    ([, range]) => range.startsWith('workspace:'),
+  );
+  if (workspaceDeps.length) {
+    throw new Error(
+      `Packed @reactive/silk-native still declares workspace: ranges: ${workspaceDeps
+        .map(([name]) => name)
+        .join(', ')}`,
+    );
+  }
 
   const cssPath = join(
     fixture,
@@ -148,11 +203,11 @@ try {
   }
 
   const distDir = join(fixture, 'node_modules/@reactive/silk/dist');
-  const listing = execSync(`find "${distDir}" -name '*.test.*'`, {
-    encoding: 'utf8',
-  }).trim();
-  if (listing) {
-    throw new Error(`Test artifacts shipped in package:\n${listing}`);
+  const testArtifacts = listFiles(distDir, isTest);
+  if (testArtifacts.length) {
+    throw new Error(
+      `Test artifacts shipped in package:\n${testArtifacts.join('\n')}`,
+    );
   }
 
   const entryUrl = pathToFileURL(
@@ -236,7 +291,7 @@ try {
     'wyw-in-js',
     '__webpack_require__',
   ];
-  for (const file of listJsFiles(distDir)) {
+  for (const file of listFiles(distDir, isJs)) {
     const js = readFileSync(file, 'utf8');
     for (const marker of banned) {
       if (js.includes(marker)) {
@@ -247,29 +302,6 @@ try {
     }
   }
 
-  // Declaration surface: compile a TS consumer against packed .d.ts so missing
-  // prop types / compound parts fail CI (runtime export checks alone won't).
-  writeFileSync(
-    join(fixture, 'tsconfig.json'),
-    JSON.stringify(
-      {
-        compilerOptions: {
-          target: 'ES2022',
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          jsx: 'react-jsx',
-          strict: true,
-          exactOptionalPropertyTypes: true,
-          skipLibCheck: true,
-          noEmit: true,
-          types: ['react', 'react-dom'],
-        },
-        include: ['consumer.tsx'],
-      },
-      null,
-      2,
-    ),
-  );
   writeFileSync(
     join(fixture, 'consumer.tsx'),
     `
@@ -381,12 +413,115 @@ export function Consumer(): JSX.Element {
 }
 `,
   );
-  run(`npx tsc -p ${join(fixture, 'tsconfig.json')}`, fixture);
+  checkConsumerTypes('consumer', {
+    exactOptionalPropertyTypes: true,
+    types: ['react', 'react-dom'],
+  });
+
+  // Native package: declarations + RNW-aliased executed bundle (Node cannot
+  // load react-native directly).
+  const nativeDist = join(fixture, 'node_modules/@reactive/silk-native/dist');
+  if (!existsSync(join(nativeDist, 'index.js'))) {
+    throw new Error('Packed silk-native missing dist/index.js');
+  }
+  const nativeTests = listFiles(nativeDist, isTest);
+  if (nativeTests.length) {
+    throw new Error(`Native test artifacts shipped:\n${nativeTests.join('\n')}`);
+  }
+
+  writeFileSync(
+    join(fixture, 'consumer.native.tsx'),
+    `
+import {
+  Box,
+  Button,
+  Inline,
+  SilkProvider,
+  Stack,
+  Text,
+} from '@reactive/silk-native';
+import type { JSX } from 'react';
+
+export function NativeConsumer(): JSX.Element {
+  return (
+    <SilkProvider colorScheme="light" density="comfortable">
+      <Box padding="2">
+        <Stack gap="2" rail="start">
+          <Text role="heading">Native</Text>
+          <Inline gap="1" direction="row-reverse">
+            <Button tone="accent">Go</Button>
+          </Inline>
+        </Stack>
+      </Box>
+    </SilkProvider>
+  );
+}
+`,
+  );
+  checkConsumerTypes('consumer.native', {
+    types: ['react'],
+    paths: { 'react-native': ['./node_modules/react-native-web'] },
+  });
+
+  const nativeBundleEntry = join(fixture, 'native-bundle-entry.mjs');
+  const nativeBundleOut = join(fixture, 'native-bundle.mjs');
+  writeFileSync(
+    nativeBundleEntry,
+    `
+import { createTheme } from '@reactive/silk-core';
+import {
+  Box,
+  Button,
+  Inline,
+  SilkProvider,
+  Stack,
+  Text,
+  mapButtonStyle,
+} from '@reactive/silk-native';
+
+const theme = createTheme({ colorScheme: 'light' });
+const styles = mapButtonStyle(theme, { variant: 'solid', tone: 'accent' });
+if (!styles.view.backgroundColor) {
+  throw new Error('mapButtonStyle failed in packed native bundle');
+}
+if (
+  typeof Box !== 'function' ||
+  typeof Stack !== 'function' ||
+  typeof Inline !== 'function' ||
+  typeof Text !== 'function' ||
+  typeof Button !== 'function' ||
+  typeof SilkProvider !== 'function'
+) {
+  throw new Error('Packed native missing component exports');
+}
+console.log('packed-native-bundle: OK');
+`,
+  );
+  const rnwEntry = join(
+    fixture,
+    'node_modules/react-native-web/dist/index.js',
+  );
+  if (!existsSync(rnwEntry)) {
+    throw new Error(`react-native-web entry missing at ${rnwEntry}`);
+  }
+  await esbuild.build({
+    entryPoints: [nativeBundleEntry],
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    outfile: nativeBundleOut,
+    external: ['react', 'react-dom', 'react/jsx-runtime'],
+    alias: {
+      'react-native': rnwEntry,
+    },
+    logLevel: 'silent',
+  });
+  run(`node ${nativeBundleOut}`, fixture);
 
   console.log('packed-consumer-check: OK');
 } finally {
   rmSync(fixture, { recursive: true, force: true });
-  for (const f of ['silk-core.tgz', 'silk.tgz']) {
+  for (const f of ['silk-core.tgz', 'silk.tgz', 'silk-native.tgz']) {
     rmSync(join(root, f), { force: true });
   }
 }

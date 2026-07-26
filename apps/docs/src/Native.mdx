@@ -1,0 +1,96 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Native" />
+
+# Native (`@reactive/silk-native`)
+
+React Native renderer for Silk. Same semantic `Theme` object and recipe
+contracts as `@reactive/silk` — delivered through React context, **not** CSS
+variables. Native should feel native; web should feel like the web.
+
+Stories under **Native Components** and the **Fixtures/NativeShell** page render
+these components via `react-native-web` so the docs site can exercise them
+without a simulator. The real-native exit demo is `apps/native-example` (Expo).
+
+## Install
+
+```bash
+yarn add @reactive/silk-native @reactive/silk-core
+# peers: react ^19, react-native >=0.83
+```
+
+```tsx
+import { createTheme } from '@reactive/silk-core';
+import {
+  Box,
+  Button,
+  Inline,
+  SilkProvider,
+  Stack,
+  Text,
+} from '@reactive/silk-native';
+
+const theme = createTheme({ colorScheme: 'light' });
+
+export function Screen() {
+  return (
+    <SilkProvider theme={theme} density="comfortable">
+      <Box padding="4">
+        <Stack gap="3">
+          <Text role="heading">Hello</Text>
+          <Inline gap="2">
+            <Button>Save</Button>
+            <Button variant="outline" tone="neutral">
+              Cancel
+            </Button>
+          </Inline>
+        </Stack>
+      </Box>
+    </SilkProvider>
+  );
+}
+```
+
+## Shared vs divergent
+
+| Concern | Shared (`silk-core`) | Web | Native |
+| --- | --- | --- | --- |
+| Tokens / Theme | `createTheme`, semantic colors, space, radius, typography, measure | CSS vars + `data-theme` | Context `{ theme, density }` |
+| Recipes | `defineRecipe` axes + defaults | `data-*` + Linaria | Style objects via mappers |
+| Density | `compactSpace` export | CSS aliases under `data-density` | Pick scale in mapper |
+| Interaction | Visual axes only | `:hover` / `:focus-visible` | `Pressable` pressed + disabled |
+| Layout extras | — | `asChild`, `collapseBelow`, CQ | Omitted (platform-justified) |
+| Fonts | CSS stacks in `fontFamily` | Full stack | First named face (or system) |
+| Measure | Character count | `max-width: Nch` | `fontSize × N × 0.6` (`ch` ≈ 0.6em) |
+| Escape hatches | — | CSS vars → `className` → `style` | `style` (last) + `ref` + RN props |
+
+## Theme nesting
+
+- Omitted `theme` / `colorScheme` → reuse parent `Theme` identity
+- Explicit `colorScheme` → fresh default theme for that scheme (replaces a parent tenant theme)
+- Explicit `theme` → used as-is; wins over `colorScheme`
+- Density inherits independently; root default is comfortable
+- Nested `SilkProvider` `defaults` **replace** the parent map (no component-level merge)
+
+## Escape hatches (native ladder)
+
+1. Theme / provider defaults / recipe props (same axes as web)
+2. `style` applied **after** Silk styles (Button supports object / array / function `Pressable` styles)
+3. Typed `ref` to the host view / text / pressable
+4. Remaining React Native host props
+
+No public CSS variables or `className` on native.
+
+## Control geometry
+
+Button padding steps and `lineHeight: 1.2` are **renderer-local**, intentionally
+parallel to web `controlGeometry.ts` — not core tokens.
+
+## Stage 1 spike findings (folded forward)
+
+What worked without core changes: numeric dimensions, unitless `lineHeight`,
+recipe contracts, semantic colors, `compactSpace` as a parallel export,
+`createTheme` Theme via context.
+
+Justified divergences remain as in the table above. Nested provider inheritance
+and `Inline` shipped in Stage 6 (they were spike simplifications).

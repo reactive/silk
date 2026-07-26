@@ -17,7 +17,7 @@ yarn docs    # http://localhost:6006
 
 ## Status
 
-Stage 5 (theming maturity): `generatePairedPalette` / `generateScale`, `checkThemeContrast`, nested portal variable channels, TenantGallery + ThemePlayground in docs, frozen public component CSS-var list. Prior stages shipped layout, visual/forms, interaction primitives, and composites. The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
+Stage 6 (`@reactive/silk-native`): React Native renderer for the same Theme object and recipes (Box / Stack / Inline / Text / Button), Expo example app, RNW Storybook stories + NativeShell fixture. Prior stages shipped theming maturity, layout, visual/forms, interaction primitives, and composites. The staged plan is in [docs/ROADMAP.md](docs/ROADMAP.md); the project charter is [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
 
 ## Packages
 
@@ -25,15 +25,16 @@ Stage 5 (theming maturity): `generatePairedPalette` / `generateScale`, `checkThe
 | --- | --- |
 | [`@reactive/silk-core`](packages/silk-core) | Platform-neutral tokens, `createTheme`, recipe contracts |
 | [`@reactive/silk`](packages/silk) | Web design system (Radix + Linaria) |
+| [`@reactive/silk-native`](packages/silk-native) | React Native renderer (context themes, no CSS variables) |
 
 ## Apps
 
 | App | Description |
 | --- | --- |
 | [`@reactive/silk-docs`](apps/docs) | Private Storybook docs site (not published) |
-| [`@reactive/silk-native-spike`](apps/native-spike) | Throwaway Expo spike consuming `silk-core` (Stage 1; not published) |
+| [`@reactive/silk-native-example`](apps/native-example) | Expo example consuming `@reactive/silk-native` (not published) |
 
-Libraries live under `packages/`; runnable consumers (docs, future playgrounds / native examples) live under `apps/`.
+Libraries live under `packages/`; runnable consumers (docs, native examples) live under `apps/`.
 
 ## Requirements
 
@@ -113,7 +114,7 @@ semantic theme
       ↓
 component recipes/contracts
       ↓
-platform renderer (web: Radix + Linaria · native: later)
+platform renderer (web: Radix + Linaria · native: React Native)
 ```
 
 Hard constraints: no Tailwind, no CVA, CSS-first (Linaria), SSR-first (Anansi), accessibility via Radix.

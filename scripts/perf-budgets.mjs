@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Performance budgets for @reactive/silk.
+ * Performance budgets for @reactive/silk and @reactive/silk-native.
  *
  * - JS: virtual consumer entries (one named export each) bundled with esbuild,
  *   minified + gzip. Reports isolated per-component cost and a shared baseline
  *   separately — never sum isolated sizes (shared chunks would double-count).
- * - CSS: package-wide dist/index.css total (hard budget).
+ * - CSS: package-wide dist/index.css total (hard budget). Native has no CSS.
  * - SSR: renderToString median timing — informational only (CI is noisy).
+ *   Native runtime SSR is N/A.
  *
  * Usage: node scripts/perf-budgets.mjs [--write]
  *   --write  overwrite perf-budgets.json measured field from current build
@@ -22,6 +23,7 @@ import { renderToString } from 'react-dom/server';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const silkDist = join(root, 'packages/silk/dist');
 const silkEntry = join(silkDist, 'index.js');
+const nativeEntry = join(root, 'packages/silk-native/dist/index.js');
 const cssPath = join(silkDist, 'index.css');
 const budgetPath = join(root, 'perf-budgets.json');
 const write = process.argv.includes('--write');
@@ -54,35 +56,40 @@ const COMPONENTS = [
   'StatusDot',
 ];
 
+const NATIVE_COMPONENTS = ['Box', 'Stack', 'Inline', 'Text', 'Button'];
+
 function gzipBytes(buf) {
   return gzipSync(buf).length;
 }
 
-async function measureIsolatedJs(exportName, tmpDir) {
-  const entry = join(tmpDir, `${exportName}.entry.mjs`);
+async function measureIsolatedJs(
+  exportName,
+  tmpDir,
+  {
+    entryPath = silkEntry,
+    external = ['react', 'react-dom', 'react/jsx-runtime'],
+    prefix = '',
+  } = {},
+) {
+  const entry = join(tmpDir, `${prefix}${exportName}.entry.mjs`);
   writeFileSync(
     entry,
-    `import { ${exportName} } from ${JSON.stringify(silkEntry)};\nexport { ${exportName} };\n`,
+    `import { ${exportName} } from ${JSON.stringify(entryPath)};\nexport { ${exportName} };\n`,
   );
-  const outfile = join(tmpDir, `${exportName}.bundle.js`);
-  await esbuild.build({
+  const result = await esbuild.build({
     entryPoints: [entry],
     bundle: true,
     format: 'esm',
     platform: 'browser',
     minify: true,
-    outfile,
-    // Keep React external — consumer already has it; we measure Silk cost.
-    external: ['react', 'react-dom', 'react/jsx-runtime'],
+    outfile: join(tmpDir, `${prefix}${exportName}.bundle.js`),
+    write: false,
+    // Keep React (and RN for native) external — consumer already has them.
+    external,
     logLevel: 'silent',
   });
-  const raw = readFileSync(outfile);
+  const raw = result.outputFiles[0].contents;
   return { raw: raw.length, gzip: gzipBytes(raw) };
-}
-
-async function measureBaseline(tmpDir) {
-  // createTheme import measures shared core+theme baseline from the monolith.
-  return measureIsolatedJs('createTheme', tmpDir);
 }
 
 function measureCss() {
@@ -137,14 +144,29 @@ async function main() {
   mkdirSync(tmpDir, { recursive: true });
   try {
     const css = measureCss();
-    const [baseline, ...isolatedEntries] = await Promise.all([
-      measureBaseline(tmpDir),
-      ...COMPONENTS.map(async (name) => [
-        name,
-        await measureIsolatedJs(name, tmpDir),
-      ]),
-    ]);
+    const [baseline, isolatedEntries, nativeIsolatedEntries] =
+      await Promise.all([
+        // createTheme import measures the shared core+theme baseline.
+        measureIsolatedJs('createTheme', tmpDir),
+        Promise.all(
+          COMPONENTS.map(async (name) => [
+            name,
+            await measureIsolatedJs(name, tmpDir),
+          ]),
+        ),
+        Promise.all(
+          NATIVE_COMPONENTS.map(async (name) => [
+            name,
+            await measureIsolatedJs(name, tmpDir, {
+              entryPath: nativeEntry,
+              external: ['react', 'react/jsx-runtime', 'react-native'],
+              prefix: 'native-',
+            }),
+          ]),
+        ),
+      ]);
     const isolated = Object.fromEntries(isolatedEntries);
+    const nativeIsolated = Object.fromEntries(nativeIsolatedEntries);
     const ssr = await measureSsr();
 
     const measured = {
@@ -152,6 +174,7 @@ async function main() {
       sharedBaselineGzip: baseline.gzip,
       css,
       isolated,
+      nativeIsolated,
       ssr,
     };
 
@@ -163,15 +186,17 @@ async function main() {
         `  ${name.padEnd(14)} gzip: ${isolated[name].gzip} B (raw ${isolated[name].raw})`,
       );
     }
+    console.log('  native (react + react-native external; CSS N/A):');
+    for (const name of NATIVE_COMPONENTS) {
+      console.log(
+        `  native ${name.padEnd(8)} gzip: ${nativeIsolated[name].gzip} B (raw ${nativeIsolated[name].raw})`,
+      );
+    }
     console.log(`  SSR median (informational): ${ssr.medianMs} ms`);
 
     if (write) {
       const existing = loadBudgets();
-      const next = {
-        ...existing,
-        measured,
-        budgets: existing.budgets,
-      };
+      const next = { ...existing, measured };
       writeFileSync(budgetPath, `${JSON.stringify(next, null, 2)}\n`);
       console.log(`perf-budgets: wrote ${budgetPath}`);
     } else {
@@ -195,6 +220,16 @@ async function main() {
         }
         if (isolated[name].gzip > max) {
           fail(`${name} gzip ${isolated[name].gzip} > budget ${max}`);
+        }
+      }
+      for (const name of NATIVE_COMPONENTS) {
+        const max = budgets.nativeIsolatedGzip[name];
+        if (max == null) {
+          fail(`missing nativeIsolatedGzip budget for ${name}`);
+          continue;
+        }
+        if (nativeIsolated[name].gzip > max) {
+          fail(`native ${name} gzip ${nativeIsolated[name].gzip} > budget ${max}`);
         }
       }
       if (ssr.medianMs > budgets.ssrMedianMsSoft) {

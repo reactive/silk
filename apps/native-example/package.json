@@ -1,9 +1,9 @@
 {
-  "name": "@reactive/silk-native-spike",
+  "name": "@reactive/silk-native-example",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Throwaway Expo spike: silk-core theme + recipes → React Native styles (Stage 1 native contract)",
+  "description": "Expo example consuming @reactive/silk-native (Stage 6 exit demo)",
   "license": "MIT",
   "main": "index.ts",
   "scripts": {
@@ -11,11 +11,13 @@
     "web": "expo start --web",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "export:web": "expo export --platform web",
     "test": "node --experimental-strip-types scripts/smoke.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@reactive/silk-core": "workspace:*",
+    "@reactive/silk-native": "workspace:*",
     "expo": "~55.0.28",
     "expo-status-bar": "~55.0.6",
     "react": "19.2.0",
