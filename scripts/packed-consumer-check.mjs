@@ -141,6 +141,8 @@ try {
     'ToggleGroup',
     'ScrollArea',
     'Toast',
+    'cssVars',
+    'silkComponentVarNames',
   ]) {
     if (mod[name] === undefined) {
       throw new Error(`Packed ESM missing Stage export: ${name}`);

@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   avatarRecipe,
   badgeRecipe,
@@ -34,15 +31,7 @@ import {
 } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { containerBreakpointNames } from '../layout/containerBreakpoints';
-
-const cssPath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../../dist/index.css',
-);
-
-function loadCss(): string {
-  return readFileSync(cssPath, 'utf8');
-}
+import { loadDistCss as loadCss } from '../test/distCss';
 
 function assertAxisSelectors(
   css: string,

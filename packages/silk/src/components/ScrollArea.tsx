@@ -45,7 +45,7 @@ const scrollbarClass: string = css`
 const thumbClass: string = css`
   flex: 1;
   position: relative;
-  border-radius: var(--silk-radius-full, 999px);
+  border-radius: var(--silk-radius-full);
   background-color: var(
     --silk-scrollarea-thumb,
     var(--silk-color-border-subtle)

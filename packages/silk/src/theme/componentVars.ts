@@ -38,6 +38,10 @@ export const silkComponentVarNames = [
 
 export type SilkComponentVarName = (typeof silkComponentVarNames)[number];
 
+/**
+ * `| undefined` is deliberate under `exactOptionalPropertyTypes`: without it a
+ * conditional value (`cond ? color : undefined`) would not typecheck.
+ */
 export type SilkComponentVars = Partial<
   Record<SilkComponentVarName, string | undefined>
 >;

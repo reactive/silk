@@ -1,15 +1,13 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@rstest/core';
+import { loadDistCss } from '../test/distCss';
 import { silkComponentVarNames } from './componentVars';
 
-const cssPath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../../dist/index.css',
-);
-
-/** Theme-layer namespaces — owned by `themeToCssVars`, not component hooks. */
+/**
+ * Theme-layer namespaces — owned by `themeToCssVars`, not component hooks.
+ * A new namespace added there without a matching entry here fails the first
+ * test below, reported as an undeclared component hook. Fail-loud is the point:
+ * the two lists must be curated together.
+ */
 const tokenNamespaces = new Set([
   'color',
   'focus',
@@ -38,13 +36,13 @@ function extractComponentVars(css: string): Set<string> {
   return found;
 }
 
-test('public component hooks match the extracted stylesheet exactly', () => {
-  const inCss = extractComponentVars(readFileSync(cssPath, 'utf8'));
+test('no undeclared --silk-* hook leaks into the stylesheet', () => {
+  const inCss = extractComponentVars(loadDistCss());
   expect([...inCss].sort()).toEqual([...silkComponentVarNames].sort());
 });
 
 test('every hook is overridable — declared with a fallback, never assigned', () => {
-  const css = readFileSync(cssPath, 'utf8');
+  const css = loadDistCss();
   for (const name of silkComponentVarNames) {
     // `--silk-button-bg: …` on the component itself would shadow the consumer.
     expect(css).not.toMatch(new RegExp(`${name}\\s*:`));

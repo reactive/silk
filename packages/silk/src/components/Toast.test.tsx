@@ -1,16 +1,9 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@rstest/core';
 import { render, screen, waitFor } from '@testing-library/react';
 import { useState, type JSX } from 'react';
 import { ThemeProvider } from '../theme/ThemeProvider';
+import { loadDistCss } from '../test/distCss';
 import { Toast } from './Toast';
-
-const cssPath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../../dist/index.css',
-);
 
 function ToastDemo({
   initialOpen = true,
@@ -52,7 +45,7 @@ test('toast viewport reconstitutes theme and exposes status', () => {
 });
 
 test('toast swipe and close layout use Radix CSS vars and a close grid area', () => {
-  const css = readFileSync(cssPath, 'utf8');
+  const css = loadDistCss();
   expect(css).toContain('--radix-toast-swipe-move-x');
   expect(css).toContain('--radix-toast-swipe-move-y');
   expect(css).toContain('--radix-toast-swipe-end-x');

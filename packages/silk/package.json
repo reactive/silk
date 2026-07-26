@@ -27,7 +27,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rslib build && node ../../scripts/emit-layer-css.mjs",
+    "build": "rslib build",
     "dev": "rslib build --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "rstest run"
