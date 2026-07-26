@@ -46,8 +46,8 @@ Silk exposes three font-family tokens (inspired by Claude Cowork's sans / serif 
 
 | CSS variable | Default stack lead | Used by |
 | --- | --- | --- |
-| `--silk-font-sans` | Inter | `body`, `bodySm`, `headingSm`, `heading`, `label`, `caption` |
-| `--silk-font-serif` | Source Serif 4 | `headingLg`, `headingXl` |
+| `--silk-font-sans` | Inter | `body`, `bodySm`, `headingSm`, `heading`, `headingLg`, `label`, `caption` |
+| `--silk-font-serif` | Source Serif 4 | `headingXl` (display / page H1 — not section or panel headers) |
 | `--silk-font-mono` | JetBrains Mono | (token only today — use for code surfaces) |
 
 Role families are **indirect**: `--silk-typography-body-family` is `var(--silk-font-sans)`, so overriding one `--silk-font-*` retargets every role that uses it:

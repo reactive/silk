@@ -100,7 +100,8 @@ export const defaultTypography: Readonly<
   bodySm: { family: 'sans', size: 14, lineHeight: 1.45, weight: 400 },
   headingSm: { family: 'sans', size: 16, lineHeight: 1.35, weight: 600 },
   heading: { family: 'sans', size: 20, lineHeight: 1.3, weight: 600 },
-  headingLg: { family: 'serif', size: 28, lineHeight: 1.25, weight: 700 },
+  headingLg: { family: 'sans', size: 28, lineHeight: 1.25, weight: 700 },
+  // Display / page H1 — not section or panel headers (those stay sans via headingLg).
   headingXl: { family: 'serif', size: 36, lineHeight: 1.2, weight: 700 },
   label: { family: 'sans', size: 14, lineHeight: 1.3, weight: 500 },
   caption: { family: 'sans', size: 12, lineHeight: 1.35, weight: 400 },

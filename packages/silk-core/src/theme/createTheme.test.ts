@@ -22,7 +22,7 @@ test('createTheme returns light scheme defaults', () => {
   expect(theme.semantic.typography.headingSm.size).toBe(16);
   expect(theme.semantic.typography.headingXl.size).toBe(36);
   expect(theme.semantic.typography.body.family).toBe('sans');
-  expect(theme.semantic.typography.headingLg.family).toBe('serif');
+  expect(theme.semantic.typography.headingLg.family).toBe('sans');
   expect(theme.semantic.typography.headingXl.family).toBe('serif');
   expect(theme.semantic.fontFamily.sans).toContain('Inter');
   expect(theme.semantic.fontFamily.serif).toContain('Source Serif 4');

@@ -20,7 +20,7 @@ test('themeToCssVars emits exhaustive canonical keys as strings', () => {
   expect(vars['--silk-font-mono']).toContain('JetBrains Mono');
   expect(vars['--silk-typography-body-family']).toBe('var(--silk-font-sans)');
   expect(vars['--silk-typography-heading-lg-family']).toBe(
-    'var(--silk-font-serif)',
+    'var(--silk-font-sans)',
   );
   expect(vars['--silk-typography-heading-xl-family']).toBe(
     'var(--silk-font-serif)',
