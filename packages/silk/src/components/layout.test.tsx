@@ -1,5 +1,5 @@
-import { afterEach, expect, test } from '@rstest/core';
-import { cleanup, render, screen } from '@testing-library/react';
+import { expect, test } from '@rstest/core';
+import { render, screen } from '@testing-library/react';
 import { SilkProvider } from '../theme/SilkProvider';
 import { Box } from './Box';
 import { Center } from './Center';
@@ -8,10 +8,6 @@ import { Grid } from './Grid';
 import { Inline } from './Inline';
 import { Separator } from './Separator';
 import { Stack } from './Stack';
-
-afterEach(() => {
-  cleanup();
-});
 
 test('Box renders padding default and respect provider defaults', () => {
   const { container, rerender } = render(<Box data-testid="box">A</Box>);

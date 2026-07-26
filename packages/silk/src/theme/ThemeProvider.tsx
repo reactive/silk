@@ -122,17 +122,22 @@ export function ThemeProvider({
     parent?.cssVars,
   ]);
 
-  const props = {
-    ...themeScopeDomProps(scopeValue, {
-      ...(className !== undefined ? { className } : {}),
-      ...(style !== undefined ? { style } : {}),
-    }),
-    children,
-  };
+  const domProps = useMemo(
+    () =>
+      themeScopeDomProps(scopeValue, {
+        ...(className !== undefined ? { className } : {}),
+        ...(style !== undefined ? { style } : {}),
+      }),
+    [scopeValue, className, style],
+  );
 
   return (
     <ThemeScopeContext.Provider value={scopeValue}>
-      {asChild ? <Slot.Root {...props} /> : createElement('div', props)}
+      {asChild ? (
+        <Slot.Root {...domProps}>{children}</Slot.Root>
+      ) : (
+        createElement('div', { ...domProps, children })
+      )}
     </ThemeScopeContext.Provider>
   );
 }

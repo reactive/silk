@@ -3,6 +3,7 @@ import type { ColorScheme, DensityName } from '@reactive/silk-core';
 import {
   createContext,
   useContext,
+  useMemo,
   type Context,
   type CSSProperties,
   type JSX,
@@ -63,9 +64,16 @@ export function ThemeScopePortal({
   readonly children: ReactNode;
 }): JSX.Element {
   const scope = useContext(ThemeScopeContext);
-  if (scope === null) {
+  // A custom theme puts ~124 CSS variables in `style`; rebuilding that object
+  // per render would re-diff all of them on every dialog animation frame.
+  const domProps = useMemo(
+    () => (scope === null ? null : themeScopeDomProps(scope)),
+    [scope],
+  );
+
+  if (domProps === null) {
     return <>{children}</>;
   }
 
-  return <div {...themeScopeDomProps(scope)}>{children}</div>;
+  return <div {...domProps}>{children}</div>;
 }

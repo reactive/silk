@@ -3,16 +3,29 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   avatarRecipe,
+  badgeRecipe,
   boxRecipe,
   buttonRecipe,
+  cardRecipe,
   centerRecipe,
+  checkboxRecipe,
   containerRecipe,
   dialogRecipe,
   gridRecipe,
+  headingRecipe,
   inlineRecipe,
+  inputRecipe,
+  progressRecipe,
+  radioGroupRecipe,
   separatorRecipe,
+  skeletonRecipe,
+  sliderRecipe,
+  spinnerRecipe,
   stackRecipe,
+  surfaceRecipe,
+  switchRecipe,
   textRecipe,
+  textareaRecipe,
 } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { containerBreakpointNames } from '../layout/containerBreakpoints';
@@ -72,6 +85,54 @@ test('recipe conformance: layout component axes are styled', () => {
     'data-orientation',
     separatorRecipe.variants.orientation,
   );
+});
+
+test('recipe conformance: Stage 2 visual and form axes are styled', () => {
+  const css = loadCss();
+  assertAxisSelectors(css, 'data-elevation', surfaceRecipe.variants.elevation);
+  assertAxisSelectors(css, 'data-radius', surfaceRecipe.variants.radius);
+  assertAxisSelectors(css, 'data-border', surfaceRecipe.variants.border);
+  assertAxisSelectors(css, 'data-elevation', cardRecipe.variants.elevation);
+  assertAxisSelectors(css, 'data-padding', cardRecipe.variants.padding);
+  // Heading `level` selects the HTML tag only — not a CSS axis.
+  assertAxisSelectors(css, 'data-size', headingRecipe.variants.size);
+  assertAxisSelectors(css, 'data-tone', headingRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-variant', badgeRecipe.variants.variant);
+  assertAxisSelectors(css, 'data-tone', badgeRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-shape', skeletonRecipe.variants.shape);
+  assertAxisSelectors(css, 'data-size', spinnerRecipe.variants.size);
+  assertAxisSelectors(css, 'data-tone', spinnerRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-size', progressRecipe.variants.size);
+  assertAxisSelectors(css, 'data-tone', progressRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-size', inputRecipe.variants.size);
+  assertAxisSelectors(css, 'data-size', textareaRecipe.variants.size);
+  assertAxisSelectors(css, 'data-size', checkboxRecipe.variants.size);
+  assertAxisSelectors(css, 'data-tone', checkboxRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-orientation', radioGroupRecipe.variants.orientation);
+  assertAxisSelectors(css, 'data-size', radioGroupRecipe.variants.size);
+  assertAxisSelectors(css, 'data-tone', radioGroupRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-size', switchRecipe.variants.size);
+  assertAxisSelectors(css, 'data-tone', switchRecipe.variants.tone);
+  assertAxisSelectors(css, 'data-size', sliderRecipe.variants.size);
+  assertAxisSelectors(css, 'data-tone', sliderRecipe.variants.tone);
+  expect(css).toContain('--silk-shadow-raised');
+  expect(css).toContain('--silk-color-surface-sunken');
+  expect(css).toContain('--silk-color-overlay');
+  expect(css).toContain('prefers-reduced-motion');
+});
+
+test('looping animations use the loop motion token, not transition durations', () => {
+  const css = loadCss();
+  const infiniteAnimations = css.match(/animation:[^;]*infinite/g) ?? [];
+
+  // Skeleton shimmer, Progress indeterminate shimmer, Spinner rotation.
+  expect(infiniteAnimations.length).toBeGreaterThanOrEqual(3);
+  for (const declaration of infiniteAnimations) {
+    expect(declaration).toContain('--silk-motion-loop-duration-ms');
+    // fast/normal/slow are one-shot transitions; a loop bound to them runs
+    // an order of magnitude too fast.
+    expect(declaration).not.toMatch(/--silk-motion-(fast|normal|slow)-/);
+  }
 });
 
 test('density remaps space vars and collapseBelow container queries exist', () => {

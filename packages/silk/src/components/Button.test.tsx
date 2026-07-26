@@ -1,11 +1,7 @@
-import { afterEach, expect, test } from '@rstest/core';
-import { cleanup, render, screen } from '@testing-library/react';
+import { expect, test } from '@rstest/core';
+import { render, screen } from '@testing-library/react';
 import { Button } from './Button';
 import { SilkProvider } from '../theme/SilkProvider';
-
-afterEach(() => {
-  cleanup();
-});
 
 test('Button renders recipe defaults as data attributes', () => {
   render(<Button>Save</Button>);

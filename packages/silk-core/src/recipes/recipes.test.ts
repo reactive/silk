@@ -1,16 +1,29 @@
 import { expect, test } from '@rstest/core';
 import {
   avatarRecipe,
+  badgeRecipe,
   boxRecipe,
   buttonRecipe,
+  cardRecipe,
   centerRecipe,
+  checkboxRecipe,
   containerRecipe,
   dialogRecipe,
   gridRecipe,
+  headingRecipe,
   inlineRecipe,
+  inputRecipe,
+  progressRecipe,
+  radioGroupRecipe,
   separatorRecipe,
+  skeletonRecipe,
+  sliderRecipe,
+  spinnerRecipe,
   stackRecipe,
+  surfaceRecipe,
+  switchRecipe,
   textRecipe,
+  textareaRecipe,
 } from './index.js';
 
 function assertRecipeDefaults(recipe: {
@@ -38,6 +51,19 @@ test('all recipes provide every axis default', () => {
   assertRecipeDefaults(centerRecipe);
   assertRecipeDefaults(containerRecipe);
   assertRecipeDefaults(separatorRecipe);
+  assertRecipeDefaults(surfaceRecipe);
+  assertRecipeDefaults(cardRecipe);
+  assertRecipeDefaults(headingRecipe);
+  assertRecipeDefaults(badgeRecipe);
+  assertRecipeDefaults(skeletonRecipe);
+  assertRecipeDefaults(spinnerRecipe);
+  assertRecipeDefaults(progressRecipe);
+  assertRecipeDefaults(inputRecipe);
+  assertRecipeDefaults(textareaRecipe);
+  assertRecipeDefaults(checkboxRecipe);
+  assertRecipeDefaults(radioGroupRecipe);
+  assertRecipeDefaults(switchRecipe);
+  assertRecipeDefaults(sliderRecipe);
 });
 
 test('buttonRecipe exposes expected variant axes', () => {
@@ -48,6 +74,7 @@ test('buttonRecipe exposes expected variant axes', () => {
     'ghost',
   ]);
   expect(buttonRecipe.defaults.tone).toBe('accent');
+  expect(buttonRecipe.variants.tone).toContain('success');
 });
 
 test('layout recipes expose expected defaults', () => {
@@ -57,4 +84,14 @@ test('layout recipes expose expected defaults', () => {
   expect(centerRecipe.defaults.axis).toBe('both');
   expect(separatorRecipe.defaults.orientation).toBe('horizontal');
   expect(boxRecipe.defaults.padding).toBe('0');
+});
+
+test('surface elevation pairs background and shadow coherently', () => {
+  expect(surfaceRecipe.variants.elevation).toEqual([
+    'sunken',
+    'flat',
+    'raised',
+    'overlay',
+  ]);
+  expect(cardRecipe.defaults.elevation).toBe('raised');
 });

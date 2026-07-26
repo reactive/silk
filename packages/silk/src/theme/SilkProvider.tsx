@@ -1,15 +1,28 @@
 import type {
   AvatarVariantProps,
+  BadgeVariantProps,
   BoxVariantProps,
   ButtonVariantProps,
+  CardVariantProps,
   CenterVariantProps,
+  CheckboxVariantProps,
   ContainerVariantProps,
   DialogVariantProps,
   GridVariantProps,
+  HeadingVariantProps,
   InlineVariantProps,
+  InputVariantProps,
+  ProgressVariantProps,
+  RadioGroupVariantProps,
   SeparatorVariantProps,
+  SkeletonVariantProps,
+  SliderVariantProps,
+  SpinnerVariantProps,
   StackVariantProps,
+  SurfaceVariantProps,
+  SwitchVariantProps,
   TextVariantProps,
+  TextareaVariantProps,
 } from '@reactive/silk-core';
 import {
   createContext,
@@ -36,6 +49,19 @@ export interface SilkDefaults {
   readonly Dialog?: Partial<DialogVariantProps>;
   readonly Avatar?: Partial<AvatarVariantProps>;
   readonly Identity?: Partial<AvatarVariantProps>;
+  readonly Surface?: Partial<SurfaceVariantProps>;
+  readonly Card?: Partial<CardVariantProps>;
+  readonly Heading?: Partial<HeadingVariantProps>;
+  readonly Badge?: Partial<BadgeVariantProps>;
+  readonly Skeleton?: Partial<SkeletonVariantProps>;
+  readonly Spinner?: Partial<SpinnerVariantProps>;
+  readonly Progress?: Partial<ProgressVariantProps>;
+  readonly Input?: Partial<InputVariantProps>;
+  readonly Textarea?: Partial<TextareaVariantProps>;
+  readonly Checkbox?: Partial<CheckboxVariantProps>;
+  readonly RadioGroup?: Partial<RadioGroupVariantProps>;
+  readonly Switch?: Partial<SwitchVariantProps>;
+  readonly Slider?: Partial<SliderVariantProps>;
 }
 
 export interface SilkProviderProps extends ThemeProviderProps {

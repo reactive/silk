@@ -46,7 +46,7 @@ Complete the layout vocabulary so nothing downstream reaches for ad hoc flex/gri
 
 ---
 
-## Stage 2 — Visual primitives & forms foundation
+## Stage 2 — Visual primitives & forms foundation ✅ (done)
 
 Establish the full visual language and the accessibility-critical form layer.
 
@@ -56,7 +56,7 @@ Establish the full visual language and the accessibility-critical form layer.
 - Audit semantic tokens against real usage: interaction tones, focus rings, disabled states, elevation/`surfaceRaised`. Fix the semantic layer rather than adding component one-offs.
 - **Theming acceptance tests** (pulled forward from Stage 5): nested themes (including portal reconstitution), `createTheme` partial overrides, and contrast checks in both color schemes run as tests against the growing component set — validating the theme architecture while it is still cheap to change. Stage 5 keeps ergonomics and tooling.
 
-**Exit criteria:** a committed settings-form fixture (including error, disabled, and loading states) composes accessibly from Silk primitives; token audit results folded back into core; theming acceptance tests pass under nesting, partial overrides, and both color schemes.
+**Exit criteria (met):** a committed settings-form fixture (including error, disabled, loading, reduced-motion, and narrow/long-content states) composes accessibly from Silk primitives; token audit results folded back into core (`success` tone, `surfaceSunken`, `overlay`, shadow elevation levels, `text` tone slot, WCAG-safe solid/focus mappings); theming acceptance tests pass under nesting, partial overrides, and both color schemes.
 
 ---
 
@@ -133,7 +133,7 @@ Tracked from the founding brief; each has a home stage where it must be resolved
 | Question | Resolved in | Status |
 | --- | --- | --- |
 | Recipes: shared model vs. per-renderer | Stage 0 | ✅ Shared contracts in core; renderers own styling |
-| Semantic vs. component tokens, how many | Stage 2/5 | Partially — sparse component tokens; audit pending |
+| Semantic vs. component tokens, how many | Stage 2/5 | Partially — Stage 2 audit landed (`success`, surfaces, shadows, tone `text`); Stage 5 freezes public CSS-var list |
 | Responsive strategy | Stage 1 | ✅ Intrinsic-first + container queries; `collapseBelow` web-only |
 | Slot architecture for composites | Stage 4 | Open — `Identity`'s pattern is provisional, not yet the standard |
 | Variant expression (typed, tree-shakeable, RN-friendly) | Stage 0/1 | ✅ Proven on web; native spike validates in Stage 1 |

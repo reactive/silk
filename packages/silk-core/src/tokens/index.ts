@@ -2,6 +2,8 @@ export type {
   ColorScheme,
   DeepPartial,
   DensityName,
+  ElevationName,
+  FocusRingGeometry,
   InteractionToneColors,
   MotionName,
   MotionRecord,
@@ -10,6 +12,7 @@ export type {
   PaletteStep,
   RadiusName,
   SemanticTokens,
+  ShadowLayer,
   SpaceStep,
   Theme,
   ToneName,
@@ -32,11 +35,15 @@ export {
 
 export {
   compactSpace,
-  createSharedSemanticScales,
+  defaultFocusRing,
   defaultMotion,
   defaultRadius,
+  defaultShadow,
   defaultSpace,
   defaultTypography,
+  motionNames,
+  sharedSemanticScales,
   spaceSteps,
   spaceVariantSteps,
+  toneNames,
 } from './scales.js';

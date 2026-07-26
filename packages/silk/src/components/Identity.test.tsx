@@ -1,10 +1,6 @@
-import { afterEach, expect, test } from '@rstest/core';
-import { cleanup, render, screen } from '@testing-library/react';
+import { expect, test } from '@rstest/core';
+import { render, screen } from '@testing-library/react';
 import { Identity } from './Identity';
-
-afterEach(() => {
-  cleanup();
-});
 
 test('Identity convenience form renders name and meta', () => {
   render(

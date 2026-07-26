@@ -1,11 +1,7 @@
-import { afterEach, expect, test } from '@rstest/core';
-import { cleanup, render, within } from '@testing-library/react';
+import { expect, test } from '@rstest/core';
+import { render, within } from '@testing-library/react';
 import { SilkProvider } from '@reactive/silk';
 import { AppSkeleton, type AppSkeletonState } from './AppSkeleton';
-
-afterEach(() => {
-  cleanup();
-});
 
 const states: AppSkeletonState[] = [
   'normal',

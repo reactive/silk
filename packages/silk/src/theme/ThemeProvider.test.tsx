@@ -1,11 +1,7 @@
 import { createTheme } from '@reactive/silk-core';
-import { afterEach, expect, test } from '@rstest/core';
-import { cleanup, render } from '@testing-library/react';
+import { expect, test } from '@rstest/core';
+import { render } from '@testing-library/react';
 import { ThemeProvider } from './ThemeProvider';
-
-afterEach(() => {
-  cleanup();
-});
 
 test('named provider emits data-theme without inline CSS variables', () => {
   const { container } = render(

@@ -8,12 +8,14 @@ const textVariants = {
   role: [
     'body',
     'bodySm',
+    'headingSm',
     'heading',
     'headingLg',
+    'headingXl',
     'label',
     'caption',
   ] as const,
-  tone: ['primary', 'secondary', 'accent', 'danger'] as const,
+  tone: ['primary', 'secondary', 'accent', 'danger', 'success'] as const,
 };
 
 export const textRecipe: Recipe<typeof textVariants> = defineRecipe({
