@@ -54,8 +54,14 @@ assert(
   'text accent tone',
 );
 assert(
-  resolveNativeFontFamily(heading.family) === undefined,
-  'web font stack falls back to platform default',
+  resolveNativeFontFamily(theme.semantic.fontFamily[heading.family]) ===
+    'Inter',
+  'sans role resolves first face from fontFamily stack',
+);
+assert(
+  resolveNativeFontFamily(theme.semantic.fontFamily.serif) ===
+    'Source Serif 4',
+  'serif family resolves Source Serif 4',
 );
 
 const button = mapButtonStyle(theme, {

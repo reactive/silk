@@ -20,4 +20,6 @@ body {
   box-sizing: border-box;
   min-height: 4rem;
   padding: 0.25rem;
+  /* Inside SilkProvider — reuse the theme token rather than restating the stack. */
+  font-family: var(--silk-font-sans);
 }

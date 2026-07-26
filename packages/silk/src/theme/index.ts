@@ -3,6 +3,7 @@ export type {
   ColorScheme,
   CreateThemeOptions,
   DensityName,
+  FontFamilyName,
   Palette,
   SemanticTokens,
   Theme,

@@ -2,7 +2,9 @@ import { css } from '@linaria/core';
 import {
   Badge,
   Button,
+  Heading,
   Inline,
+  Stack,
   Surface,
   Text,
   badgeRecipe,
@@ -15,6 +17,13 @@ import { VariantMatrix } from '../VariantMatrix';
 const auditSurfaceClass: string = css`
   padding: var(--silk-space-4);
   min-width: 7rem;
+`;
+
+const monoSampleClass: string = css`
+  margin: 0;
+  font-family: var(--silk-font-mono);
+  font-size: var(--silk-typography-body-sm-size);
+  line-height: var(--silk-typography-body-sm-line-height);
 `;
 
 const meta = {
@@ -72,5 +81,33 @@ export const ElevationSurfaces: Story = {
         </Surface>
       ))}
     </Inline>
+  ),
+};
+
+export const FontFamilies: Story = {
+  tags: ['!test'],
+  render: (): JSX.Element => (
+    <Stack gap="3">
+      <Stack gap="1">
+        <Text role="caption" tone="secondary">
+          --silk-font-sans
+        </Text>
+        <Text>The quick brown fox jumps over the lazy dog.</Text>
+      </Stack>
+      <Stack gap="1">
+        <Text role="caption" tone="secondary">
+          --silk-font-serif
+        </Text>
+        <Heading level="1">The quick brown fox jumps over the lazy dog.</Heading>
+      </Stack>
+      <Stack gap="1">
+        <Text role="caption" tone="secondary">
+          --silk-font-mono
+        </Text>
+        <p className={monoSampleClass}>
+          The quick brown fox jumps over the lazy dog.
+        </p>
+      </Stack>
+    </Stack>
   ),
 };

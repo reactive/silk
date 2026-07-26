@@ -26,11 +26,14 @@ yarn add @reactive/silk
 
 ## Quick start
 
-Consumers must import the extracted stylesheet once:
+Consumers must import the extracted stylesheet once. Fonts are optional — see **Theming → Typography and fonts**:
 
 ```tsx
 import { Button, Identity, SilkProvider, createTheme } from "@reactive/silk";
 import "@reactive/silk/styles.css";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/source-serif-4";
+import "@fontsource-variable/jetbrains-mono";
 
 export function App() {
   return (

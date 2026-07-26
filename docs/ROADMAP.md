@@ -123,6 +123,7 @@ Make Silk consumable and evolvable over years.
 - Versioning maturity: deprecation policy, codemod strategy for breaking changes, and the 1.0 stability commitment — building on the pre-1.0 API policy defined in Stage 1.
 - Docs completeness: theming guide, customization-ladder guide, contribution guide, per-component API docs.
 - Adoption: migration guidance for consuming apps (Anansi SSR integration recipe included).
+- **Setup / init**: a consumer setup command that installs the default font packages (`@fontsource-variable/inter`, `@fontsource-variable/source-serif-4`, `@fontsource-variable/jetbrains-mono`) and emits the import lines alongside `@reactive/silk/styles.css`, with an explicit opt-out that falls through to the system faces already in each `--silk-font-*` stack. Silk itself never ships font files.
 
 **Exit criteria:** a new consumer can go from `yarn add` to a themed, SSR-rendered page using only public docs; registry install of a composite works against a pinned release.
 

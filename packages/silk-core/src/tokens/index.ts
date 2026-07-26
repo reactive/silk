@@ -4,6 +4,7 @@ export type {
   DensityName,
   ElevationName,
   FocusRingGeometry,
+  FontFamilyName,
   InteractionToneColors,
   MeasureName,
   MotionName,
@@ -37,8 +38,10 @@ export {
 export {
   compactSpace,
   defaultFocusRing,
+  defaultFontFamily,
   defaultMeasure,
   defaultMotion,
+  fontFamilyNames,
   measureNames,
   defaultRadius,
   defaultShadow,

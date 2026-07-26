@@ -223,6 +223,7 @@ export type {
   CreateThemeOptions,
   CssVarMap,
   DensityName,
+  FontFamilyName,
   Palette,
   SemanticTokens,
   SilkComponentVarName,

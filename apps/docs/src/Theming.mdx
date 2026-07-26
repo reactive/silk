@@ -40,6 +40,36 @@ const theme = createTheme({
 
 Prefer **either** `theme` **or** `colorScheme`. If both are passed, `theme` wins for `data-theme` and inline variables.
 
+## Typography and fonts
+
+Silk exposes three font-family tokens (inspired by Claude Cowork's sans / serif / mono roles) and maps typography roles onto them:
+
+| CSS variable | Default stack lead | Used by |
+| --- | --- | --- |
+| `--silk-font-sans` | Inter | `body`, `bodySm`, `headingSm`, `heading`, `label`, `caption` |
+| `--silk-font-serif` | Source Serif 4 | `headingLg`, `headingXl` |
+| `--silk-font-mono` | JetBrains Mono | (token only today — use for code surfaces) |
+
+Role families are **indirect**: `--silk-typography-body-family` is `var(--silk-font-sans)`, so overriding one `--silk-font-*` retargets every role that uses it:
+
+```tsx
+const theme = createTheme({
+  semantic: {
+    fontFamily: {
+      sans: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+    },
+  },
+});
+```
+
+Or set the CSS variables directly on a theme scope:
+
+```css
+--silk-font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+```
+
+**Silk ships no font files.** Load Inter, Source Serif 4, and JetBrains Mono yourself (for example `@fontsource-variable/inter`, `@fontsource-variable/source-serif-4`, `@fontsource-variable/jetbrains-mono`), or fall through to the system faces already in each stack. This Storybook loads the variable packages for docs and examples only.
+
 ## Provider defaults (level 2)
 
 ```tsx

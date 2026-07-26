@@ -15,6 +15,16 @@ test('themeToCssVars emits exhaustive canonical keys as strings', () => {
   expect(vars['--silk-space-compact-2']).toBe('6px');
   expect(vars['--silk-space-2']).toBeUndefined();
   expect(vars['--silk-radius-md']).toBe('8px');
+  expect(vars['--silk-font-sans']).toContain('Inter');
+  expect(vars['--silk-font-serif']).toContain('Source Serif 4');
+  expect(vars['--silk-font-mono']).toContain('JetBrains Mono');
+  expect(vars['--silk-typography-body-family']).toBe('var(--silk-font-sans)');
+  expect(vars['--silk-typography-heading-lg-family']).toBe(
+    'var(--silk-font-serif)',
+  );
+  expect(vars['--silk-typography-heading-xl-family']).toBe(
+    'var(--silk-font-serif)',
+  );
   expect(vars['--silk-typography-body-size']).toBe('16px');
   expect(vars['--silk-typography-body-line-height']).toBe('1.5');
   expect(vars['--silk-typography-body-sm-size']).toBe('14px');

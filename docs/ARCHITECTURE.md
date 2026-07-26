@@ -23,7 +23,7 @@ Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/mode
 ## Theme model
 
 1. **Palette** — 12-step color scales. Never referenced by components.
-2. **Semantic tokens** — surfaces, text, borders, interaction tone contracts, space, radius, typography, motion. Canonical values are platform-neutral (numbers for dimensions; typography `lineHeight` is unitless).
+2. **Semantic tokens** — surfaces, text, borders, interaction tone contracts, space, radius, `fontFamily` (sans/serif/mono stacks), typography roles, motion. Canonical values are platform-neutral (numbers for dimensions; typography `lineHeight` is unitless; typography `family` is a `FontFamilyName` that references `fontFamily`).
 3. **Component tokens** — sparse public CSS variables (`--silk-button-bg`) resolved via private vars:
 
 ```css

@@ -5,6 +5,9 @@ import {
   type DensityName,
 } from '@reactive/silk';
 import type { JSX } from 'react';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/source-serif-4';
+import '@fontsource-variable/jetbrains-mono';
 import './preview.css';
 
 const withSilkProvider: Decorator = (Story, context): JSX.Element => {

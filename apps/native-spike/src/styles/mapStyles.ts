@@ -94,9 +94,9 @@ function resolveSpaceStep(
   return Number(raw) as SpaceStep;
 }
 
-/** Web default stacks are CSS font-family lists; RN needs a single face. */
-export function resolveNativeFontFamily(family: string): string | undefined {
-  const primary = family.split(',')[0]?.trim();
+/** Peel a CSS font-family stack to a single face for RN. */
+export function resolveNativeFontFamily(stack: string): string | undefined {
+  const primary = stack.split(',')[0]?.trim();
   if (!primary || primary === 'ui-sans-serif' || primary === 'system-ui') {
     // Let RN pick the platform default (omit fontFamily).
     return undefined;
@@ -157,7 +157,9 @@ export function mapTextStyle(
 
   return {
     color: toneColor,
-    fontFamily: resolveNativeFontFamily(typo.family),
+    fontFamily: resolveNativeFontFamily(
+      theme.semantic.fontFamily[typo.family],
+    ),
     fontSize: typo.size,
     lineHeight: typo.lineHeight * typo.size,
     fontWeight: weight,
@@ -236,7 +238,9 @@ export function mapButtonStyle(
     },
     text: {
       color,
-      fontFamily: resolveNativeFontFamily(label.family),
+      fontFamily: resolveNativeFontFamily(
+        theme.semantic.fontFamily[label.family],
+      ),
       fontSize,
       lineHeight: 1.2 * fontSize,
       fontWeight: String(label.weight) as NonNullable<RnTextStyle['fontWeight']>,

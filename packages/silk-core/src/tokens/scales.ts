@@ -1,6 +1,7 @@
 import type {
   ElevationName,
   FocusRingGeometry,
+  FontFamilyName,
   MeasureName,
   MotionName,
   MotionRecord,
@@ -76,20 +77,33 @@ export const defaultRadius: Readonly<Record<RadiusName, number>> = {
   full: 9999,
 };
 
-const sans =
-  'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+/**
+ * Default CSS stacks. Design names first; `* Variable` aliases match
+ * `@fontsource-variable` packages. Silk ships no font files.
+ */
+export const defaultFontFamily: Readonly<Record<FontFamilyName, string>> = {
+  sans: "Inter, 'Inter Variable', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+  serif:
+    "'Source Serif 4', 'Source Serif 4 Variable', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif",
+  mono: "'JetBrains Mono', 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+};
+
+/** Every font-family name — renderers iterate this instead of restating the keys. */
+export const fontFamilyNames: readonly FontFamilyName[] = Object.keys(
+  defaultFontFamily,
+) as FontFamilyName[];
 
 export const defaultTypography: Readonly<
   Record<TypographyRole, TypographyRecord>
 > = {
-  body: { family: sans, size: 16, lineHeight: 1.5, weight: 400 },
-  bodySm: { family: sans, size: 14, lineHeight: 1.45, weight: 400 },
-  headingSm: { family: sans, size: 16, lineHeight: 1.35, weight: 600 },
-  heading: { family: sans, size: 20, lineHeight: 1.3, weight: 600 },
-  headingLg: { family: sans, size: 28, lineHeight: 1.25, weight: 700 },
-  headingXl: { family: sans, size: 36, lineHeight: 1.2, weight: 700 },
-  label: { family: sans, size: 14, lineHeight: 1.3, weight: 500 },
-  caption: { family: sans, size: 12, lineHeight: 1.35, weight: 400 },
+  body: { family: 'sans', size: 16, lineHeight: 1.5, weight: 400 },
+  bodySm: { family: 'sans', size: 14, lineHeight: 1.45, weight: 400 },
+  headingSm: { family: 'sans', size: 16, lineHeight: 1.35, weight: 600 },
+  heading: { family: 'sans', size: 20, lineHeight: 1.3, weight: 600 },
+  headingLg: { family: 'serif', size: 28, lineHeight: 1.25, weight: 700 },
+  headingXl: { family: 'serif', size: 36, lineHeight: 1.2, weight: 700 },
+  label: { family: 'sans', size: 14, lineHeight: 1.3, weight: 500 },
+  caption: { family: 'sans', size: 12, lineHeight: 1.35, weight: 400 },
 };
 
 /**
@@ -162,6 +176,7 @@ export const sharedSemanticScales: Pick<
   SemanticTokens,
   | 'space'
   | 'radius'
+  | 'fontFamily'
   | 'typography'
   | 'measure'
   | 'motion'
@@ -170,6 +185,7 @@ export const sharedSemanticScales: Pick<
 > = {
   space: defaultSpace,
   radius: defaultRadius,
+  fontFamily: defaultFontFamily,
   typography: defaultTypography,
   measure: defaultMeasure,
   motion: defaultMotion,
