@@ -7,12 +7,28 @@ import {
   type DensityName,
 } from '@reactive/silk-core';
 import {
+  Avatar,
+  Badge,
   Box,
   Button,
+  Card,
+  Checkbox,
+  Field,
+  Heading,
   Inline,
+  Input,
+  Progress,
+  RadioGroup,
+  Separator,
   SilkProvider,
+  Skeleton,
+  Spinner,
   Stack,
+  StatusDot,
+  Surface,
+  Switch,
   Text,
+  Textarea,
 } from '@reactive/silk-native';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState, type JSX } from 'react';
@@ -157,6 +173,50 @@ export function App(): JSX.Element {
                   <Text>a</Text>
                   <Text>b</Text>
                 </Inline>
+              </Stack>
+
+              <Stack gap="2">
+                <Heading level="2">Visual</Heading>
+                <Surface elevation="raised" border="subtle" style={{ padding: 12 }}>
+                  <Inline gap="2" align="center" wrap="wrap">
+                    <Avatar fallback="SK" size="md" />
+                    <Badge tone="accent">native</Badge>
+                    <StatusDot tone="success" />
+                    <Spinner size="sm" label="Loading" />
+                  </Inline>
+                  <Separator style={{ marginVertical: 12 }} />
+                  <Skeleton shape="text" />
+                  <Progress value={55} label="Demo progress" style={{ marginTop: 12 }} />
+                </Surface>
+                <Card padding="3" elevation="flat">
+                  <Heading level="3" size="sm">
+                    Card
+                  </Heading>
+                  <Text tone="secondary">Column + gap + subtle border</Text>
+                </Card>
+              </Stack>
+
+              <Stack gap="2">
+                <Heading level="2">Forms</Heading>
+                <Field.Root>
+                  <Field.Label>Display name</Field.Label>
+                  <Input placeholder="Ada" />
+                  <Field.Description>Shown on your profile.</Field.Description>
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label>Bio</Field.Label>
+                  <Textarea placeholder="A short bio…" />
+                </Field.Root>
+                <Inline gap="3" align="center">
+                  <Checkbox accessibilityLabel="Agree" />
+                  <Text role="label">Agree</Text>
+                  <Switch accessibilityLabel="Notify" />
+                  <Text role="label">Notify</Text>
+                </Inline>
+                <RadioGroup.Root defaultValue="pro" orientation="horizontal">
+                  <RadioGroup.Item value="free">Free</RadioGroup.Item>
+                  <RadioGroup.Item value="pro">Pro</RadioGroup.Item>
+                </RadioGroup.Root>
               </Stack>
 
               <Stack gap="2">
