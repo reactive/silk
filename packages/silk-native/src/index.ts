@@ -113,4 +113,8 @@ export type {
   A11yValueProps,
   AriaChecked,
 } from './styles/a11yProps.js';
-export { useReducedMotion } from './styles/useReducedMotion.js';
+export {
+  useMotionPreference,
+  useReducedMotion,
+} from './styles/useReducedMotion.js';
+export type { MotionPreference } from './styles/useReducedMotion.js';

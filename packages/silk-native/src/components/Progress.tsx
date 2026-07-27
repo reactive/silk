@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { a11yValue } from '../styles/a11yProps.js';
 import { mapProgressStyle } from '../styles/mapStyles.js';
-import { useReducedMotion } from '../styles/useReducedMotion.js';
+import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
@@ -53,7 +53,8 @@ export function Progress({
     tone: tone ?? defaults.tone ?? progressRecipe.defaults.tone,
   };
   const { track, indicator } = mapProgressStyle(theme, resolved, density);
-  const reduced = useReducedMotion();
+  const preference = useMotionPreference();
+  const reduced = preference === 'reduced';
 
   // Match web Progress normalization (safeMax + Radix-like indeterminate).
   const safeMax = max > 0 ? max : 100;
@@ -75,7 +76,7 @@ export function Progress({
   };
 
   useEffect(() => {
-    if (!indeterminate || reduced || trackWidth === 0) {
+    if (!indeterminate || preference !== 'full' || trackWidth === 0) {
       translate.setValue(0);
       return;
     }
@@ -106,7 +107,7 @@ export function Progress({
     };
   }, [
     indeterminate,
-    reduced,
+    preference,
     trackWidth,
     translate,
     rtl,

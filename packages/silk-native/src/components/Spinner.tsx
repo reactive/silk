@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { mapSpinnerStyle } from '../styles/mapStyles.js';
-import { useReducedMotion } from '../styles/useReducedMotion.js';
+import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
@@ -36,12 +36,17 @@ export function Spinner({
     size: size ?? defaults.size ?? spinnerRecipe.defaults.size,
     tone: tone ?? defaults.tone ?? spinnerRecipe.defaults.tone,
   };
-  const reduced = useReducedMotion();
-  const mapped = mapSpinnerStyle(theme, resolved, density, reduced);
+  const preference = useMotionPreference();
+  const mapped = mapSpinnerStyle(
+    theme,
+    resolved,
+    density,
+    preference === 'reduced',
+  );
   const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (reduced) {
+    if (preference !== 'full') {
       rotation.setValue(0);
       return;
     }
@@ -58,7 +63,7 @@ export function Spinner({
     return () => {
       animation.stop();
     };
-  }, [reduced, rotation, theme.semantic.motion.loop.durationMs]);
+  }, [preference, rotation, theme.semantic.motion.loop.durationMs]);
 
   const rotate = rotation.interpolate({
     inputRange: [0, 1],

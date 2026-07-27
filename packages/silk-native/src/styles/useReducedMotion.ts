@@ -22,22 +22,65 @@ function getMatchMedia(): MatchMedia | undefined {
   return typeof matchMedia === 'function' ? matchMedia : undefined;
 }
 
-function initialReducedMotion(): boolean {
+/**
+ * OS reduce-motion preference.
+ * `'unresolved'` only occurs on real React Native before async
+ * `AccessibilityInfo` answers.
+ */
+export type MotionPreference = 'full' | 'reduced' | 'unresolved';
+
+let nativePreference: MotionPreference = 'unresolved';
+let nativeQuery: Promise<MotionPreference> | undefined;
+/** Bumped by live OS events so an in-flight bootstrap cannot clobber them. */
+let nativeEpoch = 0;
+
+function toPreference(reduced: boolean): MotionPreference {
+  return reduced ? 'reduced' : 'full';
+}
+
+/** Shared in-flight query; settled answers refresh `nativePreference`. */
+function queryNative(): Promise<MotionPreference> {
+  if (!nativeQuery) {
+    const epoch = nativeEpoch;
+    nativeQuery = AccessibilityInfo.isReduceMotionEnabled()
+      // Preference unreadable — fail open to full motion rather than sticking
+      // on `'unresolved'`.
+      .catch(() => false)
+      .then((enabled) => {
+        nativeQuery = undefined;
+        if (epoch !== nativeEpoch) {
+          return nativePreference;
+        }
+        nativePreference = toPreference(enabled);
+        return nativePreference;
+      });
+  }
+  return nativeQuery;
+}
+
+/** Test-only: drop the cached native answer. Not part of the public API. */
+export function resetNativeMotionPreference(): void {
+  nativePreference = 'unresolved';
+  nativeQuery = undefined;
+  nativeEpoch = 0;
+}
+
+function initialPreference(): MotionPreference {
   const matchMedia = getMatchMedia();
   if (matchMedia) {
-    return matchMedia(REDUCED_MOTION_QUERY).matches;
+    return toPreference(matchMedia(REDUCED_MOTION_QUERY).matches);
   }
-  // Native exposes the preference only via async AccessibilityInfo — stay static
-  // until resolved so motion effects never flash before the OS answer arrives.
-  return true;
+  return nativePreference;
 }
 
 /**
  * Subscribe to the OS reduce-motion preference.
- * On react-native-web this resolves from `prefers-reduced-motion`.
+ * On react-native-web this resolves synchronously from `prefers-reduced-motion`;
+ * on React Native the first mount reports `'unresolved'` until
+ * `AccessibilityInfo` answers.
  */
-export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(initialReducedMotion);
+export function useMotionPreference(): MotionPreference {
+  const [preference, setPreference] = useState(initialPreference);
 
   useEffect(() => {
     const matchMedia = getMatchMedia();
@@ -46,9 +89,9 @@ export function useReducedMotion(): boolean {
       // matchMedia is mocked/emulated after RNW captures its MediaQueryList.
       const mql = matchMedia(REDUCED_MOTION_QUERY);
       const onChange = (event: { matches: boolean }) => {
-        setReduced(event.matches);
+        setPreference(toPreference(event.matches));
       };
-      setReduced(mql.matches);
+      setPreference(toPreference(mql.matches));
       mql.addEventListener('change', onChange);
       return () => {
         mql.removeEventListener('change', onChange);
@@ -56,18 +99,17 @@ export function useReducedMotion(): boolean {
     }
 
     let mounted = true;
-    void AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => {
-        if (mounted) setReduced(enabled);
-      })
-      .catch(() => {
-        // Preference unreadable — allow motion instead of staying stuck on the
-        // optimistic reduced-motion default used to avoid a first-frame flash.
-        if (mounted) setReduced(false);
-      });
+    void queryNative().then((next) => {
+      if (mounted) setPreference(next);
+    });
+    const onNativeChange = (enabled: boolean) => {
+      nativeEpoch += 1;
+      nativePreference = toPreference(enabled);
+      setPreference(nativePreference);
+    };
     const subscription = AccessibilityInfo.addEventListener(
       'reduceMotionChanged',
-      setReduced,
+      onNativeChange,
     );
     return () => {
       mounted = false;
@@ -75,5 +117,15 @@ export function useReducedMotion(): boolean {
     };
   }, []);
 
-  return reduced;
+  return preference;
+}
+
+/**
+ * `true` whenever motion must be suppressed, including the brief native
+ * window before the OS preference resolves. Components that also swap in a
+ * distinct reduced-motion *appearance* should use {@link useMotionPreference}
+ * so those visuals wait for a confirmed `'reduced'`.
+ */
+export function useReducedMotion(): boolean {
+  return useMotionPreference() !== 'full';
 }
