@@ -293,8 +293,9 @@ test('conformance: Checkbox / Switch / RadioGroup axes', () => {
         'comfortable',
         { checked: true },
       );
-      expect(unchecked.width).toBeTypeOf('number');
-      expect(checked.backgroundColor).not.toBe(unchecked.backgroundColor);
+      expect(unchecked.box.width).toBeTypeOf('number');
+      expect(unchecked.row.flexDirection).toBe('row');
+      expect(checked.box.backgroundColor).not.toBe(unchecked.box.backgroundColor);
     }
   }
   for (const size of switchRecipe.variants.size) {

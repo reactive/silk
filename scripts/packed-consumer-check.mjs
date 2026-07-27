@@ -539,7 +539,7 @@ if (surface.backgroundColor !== theme.semantic.color.surfaceRaised) {
   throw new Error('overlay elevation must use surfaceRaised');
 }
 const checked = mapCheckboxStyle(theme, {}, 'comfortable', { checked: 'indeterminate' });
-if (!checked.backgroundColor) {
+if (!checked.box.backgroundColor) {
   throw new Error('mapCheckboxStyle indeterminate failed');
 }
 const a11y = a11yState({ checked: 'mixed' });

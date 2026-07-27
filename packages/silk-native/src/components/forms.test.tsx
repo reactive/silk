@@ -2,6 +2,7 @@ import { compactSpace } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState, type JSX } from 'react';
+import { toggleBoxStep } from '../styles/controlGeometry.js';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Checkbox } from './Checkbox.js';
 import { Field } from './Field.js';
@@ -160,6 +161,21 @@ test('RadioGroup.Item gap honors compact density', () => {
   );
   const radio = screen.getByRole('radio', { name: 'Free' });
   expect(getComputedStyle(radio).gap).toBe(`${compactSpace[2]}px`);
+});
+
+test('Checkbox children sit beside the control, not inside the box', () => {
+  render(
+    <SilkProvider density="compact">
+      <Checkbox accessibilityLabel="Agree">Notify me</Checkbox>
+    </SilkProvider>,
+  );
+  const control = screen.getByRole('checkbox', { name: 'Agree' });
+  const boxEdge = compactSpace[toggleBoxStep.md];
+  expect(getComputedStyle(control).flexDirection).toBe('row');
+  expect(getComputedStyle(control).gap).toBe(`${compactSpace[2]}px`);
+  // Fixed box size must not clamp the Pressable that holds the label.
+  expect(getComputedStyle(control).width).not.toBe(`${boxEdge}px`);
+  expect(screen.getByText('Notify me')).toBeTruthy();
 });
 
 test('disabled Checkbox suppresses press', () => {

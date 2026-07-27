@@ -856,12 +856,23 @@ export type ToggleVisualState = {
   readonly disabled?: boolean;
 };
 
+/** Shared label row for Checkbox / RadioGroup.Item (control + optional children). */
+function toggleLabelRow(
+  space: Readonly<Record<SpaceStep, number>>,
+): RnViewStyle {
+  return {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+  };
+}
+
 export function mapCheckboxStyle(
   theme: Theme,
   props: CheckboxVariantProps = {},
   density: DensityName = 'comfortable',
   state: ToggleVisualState = {},
-): RnViewStyle {
+): { row: RnViewStyle; box: RnViewStyle } {
   const size = props.size ?? checkboxRecipe.defaults.size;
   const toneName = props.tone ?? checkboxRecipe.defaults.tone;
   const space = spaceScale(theme, density);
@@ -883,16 +894,19 @@ export function mapCheckboxStyle(
   }
 
   return {
-    width: edge,
-    height: edge,
-    borderRadius: theme.semantic.radius.sm,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor,
-    backgroundColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+    row: toggleLabelRow(space),
+    box: {
+      width: edge,
+      height: edge,
+      borderRadius: theme.semantic.radius.sm,
+      borderWidth: 1,
+      borderStyle: 'solid',
+      borderColor,
+      backgroundColor,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
   };
 }
 
@@ -989,11 +1003,7 @@ export function mapRadioItemStyle(
     borderColor = theme.semantic.color.tones.danger.solid;
   }
   return {
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space[2],
-    },
+    row: toggleLabelRow(space),
     item: {
       width: edge,
       height: edge,

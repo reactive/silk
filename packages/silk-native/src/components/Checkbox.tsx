@@ -5,7 +5,6 @@ import {
 import { useState, type JSX, type ReactNode, type Ref } from 'react';
 import {
   Pressable,
-  Text as RNText,
   View,
   type PressableProps,
   type StyleProp,
@@ -19,6 +18,7 @@ import {
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { useFieldControlProps } from './Field.js';
+import { Text } from './Text.js';
 
 export type CheckedState = boolean | 'indeterminate';
 
@@ -111,7 +111,7 @@ export function Checkbox({
   const [uncontrolled, setUncontrolled] = useState<CheckedState>(defaultChecked);
   const checked = isControlled ? checkedProp : uncontrolled;
 
-  const box = mapCheckboxStyle(theme, resolved, density, {
+  const { row, box } = mapCheckboxStyle(theme, resolved, density, {
     checked,
     invalid: isInvalid,
     disabled: isDisabled,
@@ -141,13 +141,6 @@ export function Checkbox({
     onCheckedChange?.(next);
   };
 
-  const content =
-    typeof children === 'string' || typeof children === 'number' ? (
-      <RNText>{children}</RNText>
-    ) : (
-      children
-    );
-
   return (
     <Pressable
       ref={ref}
@@ -161,7 +154,7 @@ export function Checkbox({
       disabled={isDisabled}
       hitSlop={hitSlop}
       onPress={toggle}
-      style={[box, style]}
+      style={[row, style]}
       {...({
         'aria-invalid': fieldProps['aria-invalid'],
         'aria-required': fieldProps['aria-required'],
@@ -174,11 +167,17 @@ export function Checkbox({
               : 'unchecked',
       } as object)}
     >
-      {checked === true ? <CheckGlyph color={glyphColor} size={edge} /> : null}
-      {checked === 'indeterminate' ? (
-        <DashGlyph color={glyphColor} size={edge} />
-      ) : null}
-      {content}
+      <View style={box}>
+        {checked === true ? <CheckGlyph color={glyphColor} size={edge} /> : null}
+        {checked === 'indeterminate' ? (
+          <DashGlyph color={glyphColor} size={edge} />
+        ) : null}
+      </View>
+      {typeof children === 'string' || typeof children === 'number' ? (
+        <Text role="label">{children}</Text>
+      ) : (
+        children
+      )}
     </Pressable>
   );
 }
