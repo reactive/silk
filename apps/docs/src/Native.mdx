@@ -8,9 +8,10 @@ React Native renderer for Silk. Same semantic `Theme` object and recipe
 contracts as `@reactive/silk` — delivered through React context, **not** CSS
 variables. Native should feel native; web should feel like the web.
 
-Stories under **Native Components** and the **Fixtures/NativeShell** page render
-these components via `react-native-web` so the docs site can exercise them
-without a simulator. The real-native exit demo is `apps/native-example` (Expo).
+Stories under **Native Components** and the **Fixtures/NativeShell** /
+**Fixtures/NativeSettingsForm** pages render these components via
+`react-native-web` so the docs site can exercise them without a simulator. The
+real-native exit demo is `apps/native-example` (Expo).
 
 ## Install
 
@@ -24,10 +25,14 @@ import { createTheme } from '@reactive/silk-core';
 import {
   Box,
   Button,
+  Card,
+  Field,
+  Heading,
   Inline,
+  Input,
   SilkProvider,
   Stack,
-  Text,
+  Switch,
 } from '@reactive/silk-native';
 
 const theme = createTheme({ colorScheme: 'light' });
@@ -36,15 +41,19 @@ export function Screen() {
   return (
     <SilkProvider theme={theme} density="comfortable">
       <Box padding="4">
-        <Stack gap="3">
-          <Text role="heading">Hello</Text>
-          <Inline gap="2">
-            <Button>Save</Button>
-            <Button variant="outline" tone="neutral">
-              Cancel
-            </Button>
-          </Inline>
-        </Stack>
+        <Card padding="4">
+          <Stack gap="3">
+            <Heading level="2">Hello</Heading>
+            <Field.Root>
+              <Field.Label>Name</Field.Label>
+              <Input />
+            </Field.Root>
+            <Inline gap="2" align="center">
+              <Switch accessibilityLabel="Notify" />
+              <Button>Save</Button>
+            </Inline>
+          </Stack>
+        </Card>
       </Box>
     </SilkProvider>
   );
@@ -83,8 +92,29 @@ No public CSS variables or `className` on native.
 
 ## Control geometry
 
-Button padding steps and `lineHeight: 1.2` are **renderer-local**, intentionally
-parallel to web `controlGeometry.ts` — not core tokens.
+Button / Input / Checkbox / Switch / Spinner geometry is **renderer-local**,
+expressed as density-aware space steps (parallel to web `controlGeometry.ts`) —
+not core tokens. Avatar `mediaScale` sizes stay density-independent (content).
+
+## Native adaptations (documented)
+
+| Web | Native |
+| --- | --- |
+| Skeleton shimmer gradient | Opacity pulse (plain RN views) |
+| Indeterminate Progress 35% solid-over-sunken mix | Static `tone.subtle` fill under reduced motion |
+| Spinner 25% `color-mix` ring | `tone.subtle` + `tone.solid` (no color-string parsing) |
+| `accessibilityLiveRegion` | Android-only enhancement; use roles + labels cross-platform |
+| Slider (Radix array multi-thumb) | **Deferred** — do not ship a scalar fork |
+| Roving keyboard focus (RadioGroup) | Screen readers navigate elements directly |
+
+RNW tests assert ARIA aliases (`aria-checked`, `aria-valuenow`, …) via the
+`a11yState` / `a11yValue` helpers — RN object props alone are dropped by RNW.
+
+## Shipped components
+
+**Layout:** Box, Stack, Inline · **Visual:** Text, Button, Surface, Card,
+Heading, Badge, Separator, Avatar, StatusDot, Skeleton, Spinner, Progress ·
+**Forms:** Input, Textarea, Field, Checkbox, Switch, RadioGroup
 
 ## Stage 1 spike findings (folded forward)
 

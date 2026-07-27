@@ -10,7 +10,23 @@
       "Stack": 1700,
       "Inline": 1700,
       "Text": 1200,
-      "Button": 2300
+      "Button": 2300,
+      "Surface": 1300,
+      "Card": 1900,
+      "Heading": 1300,
+      "Badge": 1900,
+      "Separator": 900,
+      "Avatar": 1600,
+      "StatusDot": 1400,
+      "Skeleton": 1800,
+      "Spinner": 1900,
+      "Progress": 2300,
+      "Input": 2800,
+      "Textarea": 2900,
+      "Checkbox": 2900,
+      "Switch": 3200,
+      "RadioGroup": 3800,
+      "Field": 3200
     },
     "isolatedGzip": {
       "Button": 3200,
@@ -41,7 +57,7 @@
     }
   },
   "measured": {
-    "generatedAt": "2026-07-26T22:26:32.738Z",
+    "generatedAt": "2026-07-26T23:39:11.782Z",
     "sharedBaselineGzip": 2682,
     "css": {
       "raw": 107123,
@@ -151,28 +167,92 @@
     },
     "nativeIsolated": {
       "Box": {
-        "raw": 1848,
-        "gzip": 943
+        "raw": 1858,
+        "gzip": 937
       },
       "Stack": {
-        "raw": 2555,
-        "gzip": 1206
+        "raw": 2591,
+        "gzip": 1208
       },
       "Inline": {
-        "raw": 2607,
-        "gzip": 1198
+        "raw": 2619,
+        "gzip": 1190
       },
       "Text": {
-        "raw": 1880,
-        "gzip": 860
+        "raw": 1920,
+        "gzip": 896
       },
       "Button": {
-        "raw": 3883,
-        "gzip": 1671
+        "raw": 3707,
+        "gzip": 1687
+      },
+      "Surface": {
+        "raw": 2163,
+        "gzip": 921
+      },
+      "Card": {
+        "raw": 3145,
+        "gzip": 1419
+      },
+      "Heading": {
+        "raw": 1995,
+        "gzip": 964
+      },
+      "Badge": {
+        "raw": 2996,
+        "gzip": 1433
+      },
+      "Separator": {
+        "raw": 1194,
+        "gzip": 583
+      },
+      "Avatar": {
+        "raw": 2265,
+        "gzip": 1148
+      },
+      "StatusDot": {
+        "raw": 2022,
+        "gzip": 1007
+      },
+      "Skeleton": {
+        "raw": 2720,
+        "gzip": 1293
+      },
+      "Spinner": {
+        "raw": 2893,
+        "gzip": 1424
+      },
+      "Progress": {
+        "raw": 3702,
+        "gzip": 1761
+      },
+      "Input": {
+        "raw": 4944,
+        "gzip": 2074
+      },
+      "Textarea": {
+        "raw": 5300,
+        "gzip": 2161
+      },
+      "Checkbox": {
+        "raw": 5451,
+        "gzip": 2183
+      },
+      "Switch": {
+        "raw": 5918,
+        "gzip": 2473
+      },
+      "RadioGroup": {
+        "raw": 7710,
+        "gzip": 2960
+      },
+      "Field": {
+        "raw": 5623,
+        "gzip": 2423
       }
     },
     "ssr": {
-      "medianMs": 0.682
+      "medianMs": 0.613
     }
   }
 }

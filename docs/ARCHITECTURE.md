@@ -66,7 +66,7 @@ Nesting (native analog of web semantic-var replacement):
 
 Density selects `compactSpace` vs `theme.semantic.space` in the mapper — still off the Theme object. Interaction states use `Pressable` pressed + disabled (no hover/focus-visible). Button control padding and `lineHeight: 1.2` are renderer-local, intentionally parallel to web `controlGeometry.ts`. Text `measure="prose"` approximates CSS `ch` as `fontSize × measure.prose × 0.6`.
 
-Native `SilkDefaults` is keyed only by the shipped exemplars (`Box` / `Stack` / `Inline` / `Text` / `Button`). Nested defaults replace the entire map.
+Native `SilkDefaults` is keyed by recipe-bearing components (`Box` / `Stack` / `Inline` / `Text` / `Button` / visual primitives / form controls — not `Field`). Nested defaults replace the entire map. Form interaction uses `Pressable` (RN has no checkbox/radio primitives); roving keyboard focus is a web-only concern. Native `Slider` is deferred so the array-valued web contract is not forked. Animated geometry uses measured widths; RNW a11y object props are paired with ARIA aliases via `a11yState` / `a11yValue`.
 
 Escape hatches (native ladder): recipe props → `style` applied **last** (Button composes object/array/function `Pressable` styles) → typed `ref` → remaining RN host props. No `className` or public CSS variables.
 

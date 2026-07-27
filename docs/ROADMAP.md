@@ -105,10 +105,11 @@ Harden theming from "works" to "product-grade multi-tenant".
 
 Prove the shared layer is actually shared. Meaningful sharing, not pixel parity — native should feel native.
 
-- New package consuming `silk-core` tokens, themes, recipes directly (no CSS variables): `ThemeProvider` / `SilkProvider`, `Box` / `Stack` / `Inline` / `Text` / `Button`.
+- New package consuming `silk-core` tokens, themes, recipes directly (no CSS variables): `ThemeProvider` / `SilkProvider`, layout (`Box` / `Stack` / `Inline`), visual (`Text` / `Button` / `Surface` / `Card` / `Heading` / `Badge` / `Separator` / `Avatar` / `StatusDot` / `Skeleton` / `Spinner` / `Progress`), forms (`Input` / `Textarea` / `Field` / `Checkbox` / `Switch` / `RadioGroup`).
+- **Deferred:** native `Slider` (preserve array-valued shared contract; vetted binding follow-up).
 - Graduated the Stage 1 native contract spike; spike replaced by `apps/native-example` (Expo).
-- Docs: RNW Storybook stories + Native guide + NativeShell fixture (state matrix + tests).
-- Packaging: packed-consumer-check + hard JS perf budgets for the five native exports. Metro consumability verified locally via `yarn workspace @reactive/silk-native-example export:web` (not a CI gate — Expo export is slow/flaky in headless CI).
+- Docs: RNW Storybook stories + Native guide + NativeShell / NativeSettingsForm fixtures (state matrix + tests).
+- Packaging: packed-consumer-check + hard JS perf budgets for native exports. Metro consumability verified locally via `yarn workspace @reactive/silk-native-example export:web` (not a CI gate — Expo export is slow/flaky in headless CI).
 
 **Exit criteria (met):** a native screen (Expo example + docs NativeShell fixture) renders using the same semantic theme object and recipe contracts as web; core stayed free of React Native views (control geometry remains renderer-local on both platforms).
 
