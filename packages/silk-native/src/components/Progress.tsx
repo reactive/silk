@@ -147,7 +147,7 @@ export function Progress({
           style={[
             indicator,
             {
-              width: indicatorWidth || 1,
+              width: indicatorWidth,
               backgroundColor: indicatorBg,
               transform:
                 indeterminate && !reduced
