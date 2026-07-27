@@ -23,7 +23,7 @@
       "Progress": 2300,
       "Input": 2800,
       "Textarea": 2900,
-      "Checkbox": 2900,
+      "Checkbox": 3100,
       "Switch": 3200,
       "RadioGroup": 3800,
       "Field": 3200
@@ -57,7 +57,7 @@
     }
   },
   "measured": {
-    "generatedAt": "2026-07-26T23:39:11.782Z",
+    "generatedAt": "2026-07-27T01:33:59.527Z",
     "sharedBaselineGzip": 2682,
     "css": {
       "raw": 107123,
@@ -179,80 +179,80 @@
         "gzip": 1190
       },
       "Text": {
-        "raw": 1920,
-        "gzip": 896
+        "raw": 1981,
+        "gzip": 914
       },
       "Button": {
-        "raw": 3707,
-        "gzip": 1687
+        "raw": 3797,
+        "gzip": 1713
       },
       "Surface": {
-        "raw": 2163,
-        "gzip": 921
+        "raw": 2239,
+        "gzip": 949
       },
       "Card": {
-        "raw": 3145,
-        "gzip": 1419
+        "raw": 3217,
+        "gzip": 1450
       },
       "Heading": {
-        "raw": 1995,
-        "gzip": 964
+        "raw": 2018,
+        "gzip": 977
       },
       "Badge": {
-        "raw": 2996,
-        "gzip": 1433
+        "raw": 3036,
+        "gzip": 1448
       },
       "Separator": {
         "raw": 1194,
         "gzip": 583
       },
       "Avatar": {
-        "raw": 2265,
-        "gzip": 1148
+        "raw": 2395,
+        "gzip": 1200
       },
       "StatusDot": {
         "raw": 2022,
         "gzip": 1007
       },
       "Skeleton": {
-        "raw": 2720,
-        "gzip": 1293
+        "raw": 2861,
+        "gzip": 1362
       },
       "Spinner": {
-        "raw": 2893,
-        "gzip": 1424
+        "raw": 3034,
+        "gzip": 1492
       },
       "Progress": {
-        "raw": 3702,
-        "gzip": 1761
+        "raw": 3921,
+        "gzip": 1882
       },
       "Input": {
-        "raw": 4944,
-        "gzip": 2074
+        "raw": 5462,
+        "gzip": 2192
       },
       "Textarea": {
-        "raw": 5300,
-        "gzip": 2161
+        "raw": 5820,
+        "gzip": 2279
       },
       "Checkbox": {
-        "raw": 5451,
-        "gzip": 2183
+        "raw": 7675,
+        "gzip": 2919
       },
       "Switch": {
-        "raw": 5918,
-        "gzip": 2473
+        "raw": 6552,
+        "gzip": 2650
       },
       "RadioGroup": {
-        "raw": 7710,
-        "gzip": 2960
+        "raw": 8177,
+        "gzip": 3069
       },
       "Field": {
-        "raw": 5623,
-        "gzip": 2423
+        "raw": 5728,
+        "gzip": 2457
       }
     },
     "ssr": {
-      "medianMs": 0.613
+      "medianMs": 0.65
     }
   }
 }
