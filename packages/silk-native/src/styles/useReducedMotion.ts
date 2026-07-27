@@ -3,20 +3,16 @@ import { AccessibilityInfo } from 'react-native';
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
-type MediaQueryChangeEvent = { matches: boolean };
-
 type MediaQueryListLike = {
   matches: boolean;
-  addEventListener?: (
+  addEventListener: (
     type: 'change',
-    listener: (event: MediaQueryChangeEvent) => void,
+    listener: (event: { matches: boolean }) => void,
   ) => void;
-  removeEventListener?: (
+  removeEventListener: (
     type: 'change',
-    listener: (event: MediaQueryChangeEvent) => void,
+    listener: (event: { matches: boolean }) => void,
   ) => void;
-  addListener?: (listener: (event: MediaQueryChangeEvent) => void) => void;
-  removeListener?: (listener: (event: MediaQueryChangeEvent) => void) => void;
 };
 
 type MatchMedia = (query: string) => MediaQueryListLike;
@@ -49,19 +45,13 @@ export function useReducedMotion(): boolean {
       // Prefer live matchMedia on web/RNW — AccessibilityInfo may disagree when
       // matchMedia is mocked/emulated after RNW captures its MediaQueryList.
       const mql = matchMedia(REDUCED_MOTION_QUERY);
-      const onChange = (event: MediaQueryChangeEvent) => {
+      const onChange = (event: { matches: boolean }) => {
         setReduced(event.matches);
       };
       setReduced(mql.matches);
-      if (typeof mql.addEventListener === 'function') {
-        mql.addEventListener('change', onChange);
-        return () => {
-          mql.removeEventListener?.('change', onChange);
-        };
-      }
-      mql.addListener?.(onChange);
+      mql.addEventListener('change', onChange);
       return () => {
-        mql.removeListener?.(onChange);
+        mql.removeEventListener('change', onChange);
       };
     }
 

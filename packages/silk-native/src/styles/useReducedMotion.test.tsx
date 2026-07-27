@@ -9,24 +9,21 @@ function Probe() {
   return <div data-testid="reduced">{String(reduced)}</div>;
 }
 
-test('keeps matchMedia reduced-motion when AccessibilityInfo resolves false', async () => {
+test('does not consult AccessibilityInfo when matchMedia is available', async () => {
   setPrefersReducedMotion(true);
-  let resolveAccessibility!: (enabled: boolean) => void;
-  const accessibilityPromise = new Promise<boolean>((resolve) => {
-    resolveAccessibility = resolve;
-  });
   const original = AccessibilityInfo.isReduceMotionEnabled;
-  AccessibilityInfo.isReduceMotionEnabled = () => accessibilityPromise;
+  let called = 0;
+  AccessibilityInfo.isReduceMotionEnabled = () => {
+    called += 1;
+    return Promise.resolve(false);
+  };
 
   try {
     render(<Probe />);
-    expect(screen.getByTestId('reduced').textContent).toBe('true');
-
     await act(async () => {
-      resolveAccessibility(false);
-      await accessibilityPromise;
+      await Promise.resolve();
     });
-
+    expect(called).toBe(0);
     expect(screen.getByTestId('reduced').textContent).toBe('true');
   } finally {
     AccessibilityInfo.isReduceMotionEnabled = original;
