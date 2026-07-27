@@ -108,6 +108,57 @@ function flattenText(node: ReactNode): string {
   return '';
 }
 
+function isFieldSlotElement(child: ReactNode): boolean {
+  return (
+    isElementOfType(child, FieldLabel) ||
+    isElementOfType(child, FieldDescription) ||
+    isElementOfType(child, FieldError)
+  );
+}
+
+/**
+ * True when `node` is (or wraps) a Field slot. Nested Field.Root is opaque so
+ * inner slots stay with the inner field — same boundary as aria wiring.
+ */
+function containsFieldSlot(node: ReactNode): boolean {
+  let found = false;
+  const walk = (nodes: ReactNode): void => {
+    Children.forEach(nodes, (child) => {
+      if (found || !isValidElement(child)) return;
+      if (child.type === FieldRoot) return;
+      if (isFieldSlotElement(child)) {
+        found = true;
+        return;
+      }
+      walk((child.props as { children?: ReactNode }).children);
+    });
+  };
+  walk(node);
+  return found;
+}
+
+/**
+ * Split horizontal Field children into a leading control column and a text
+ * column (label + description + error). Mirrors web’s grid placement so
+ * supporting copy sits under the label, not inline with the control.
+ */
+function partitionHorizontalChildren(children: ReactNode): {
+  control: ReactNode[];
+  labelColumn: ReactNode[];
+} {
+  const control: ReactNode[] = [];
+  const labelColumn: ReactNode[] = [];
+  Children.forEach(children, (child) => {
+    if (child == null || typeof child === 'boolean') return;
+    if (isFieldSlotElement(child) || containsFieldSlot(child)) {
+      labelColumn.push(child);
+    } else {
+      control.push(child);
+    }
+  });
+  return { control, labelColumn };
+}
+
 function ariaFromFieldChildren(
   children: ReactNode,
   mode: FieldMode,
@@ -238,35 +289,67 @@ function FieldRoot({
     ],
   );
 
-  const layoutStyle =
-    orientation === 'horizontal'
-      ? {
-          flexDirection: 'row' as const,
-          alignItems: 'center' as const,
-          flexWrap: 'wrap' as const,
-          gap: space[3],
-          opacity: disabled ? 0.7 : 1,
-        }
-      : {
-          flexDirection: 'column' as const,
-          alignItems: 'stretch' as const,
-          gap: space[1],
-          opacity: disabled ? 0.7 : 1,
-        };
+  const rootDataProps = {
+    'data-invalid': invalid ? 'true' : undefined,
+    'data-disabled': disabled ? 'true' : undefined,
+    'data-mode': mode,
+    'data-orientation': orientation,
+    'data-field-root': '',
+  } as object;
+
+  if (orientation === 'horizontal') {
+    const { control, labelColumn } = partitionHorizontalChildren(children);
+    return (
+      <FieldContext.Provider value={value}>
+        <View
+          ref={ref}
+          {...props}
+          style={[
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: space[2],
+              opacity: disabled ? 0.7 : 1,
+            },
+            style,
+          ]}
+          {...rootDataProps}
+        >
+          {control.length > 0 ? <View>{control}</View> : null}
+          {labelColumn.length > 0 ? (
+            <View
+              style={{
+                flexGrow: 1,
+                flexShrink: 1,
+                minWidth: 0,
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                gap: space[1],
+              }}
+            >
+              {labelColumn}
+            </View>
+          ) : null}
+        </View>
+      </FieldContext.Provider>
+    );
+  }
 
   return (
     <FieldContext.Provider value={value}>
       <View
         ref={ref}
         {...props}
-        style={[layoutStyle, style]}
-        {...({
-          'data-invalid': invalid ? 'true' : undefined,
-          'data-disabled': disabled ? 'true' : undefined,
-          'data-mode': mode,
-          'data-orientation': orientation,
-          'data-field-root': '',
-        } as object)}
+        style={[
+          {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: space[1],
+            opacity: disabled ? 0.7 : 1,
+          },
+          style,
+        ]}
+        {...rootDataProps}
       >
         {children}
       </View>

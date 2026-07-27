@@ -62,6 +62,7 @@ import {
   resolveSpaceSum,
   spinnerGeometry,
   switchThumbInset,
+  switchThumbTravel,
   switchTrackWidthStep,
   toggleBoxStep,
 } from './controlGeometry.js';
@@ -923,7 +924,7 @@ export function mapSwitchStyle(
   const trackWidth = resolveSpaceSum(space, switchTrackWidthStep[size]);
   const tone = theme.semantic.color.tones[toneName];
   const thumbSize = trackHeight - switchThumbInset * 2;
-  const travel = trackWidth - thumbSize - switchThumbInset * 2;
+  const travel = switchThumbTravel(trackWidth, thumbSize);
 
   let trackBg = theme.semantic.color.borderSubtle;
   if (state.disabled) {

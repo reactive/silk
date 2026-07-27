@@ -12,6 +12,8 @@ import {
   chEmApproximation,
   controlLineHeightFactor,
   controlSizePadding,
+  switchThumbInset,
+  switchThumbTravel,
 } from './controlGeometry.js';
 import {
   mapBoxStyle,
@@ -168,6 +170,21 @@ test('mapSwitchStyle keeps the thumb on surface when disabled', () => {
   expect(disabled.thumb.backgroundColor).not.toBe(
     disabled.track.backgroundColor,
   );
+});
+
+test('switchThumbTravel scales with laid-out track width', () => {
+  const { track, thumb, travel: defaultTravel } = mapSwitchStyle(
+    theme,
+    { size: 'md' },
+    'comfortable',
+    {},
+  );
+  const thumbSize = thumb.width as number;
+  expect(defaultTravel).toBe(switchThumbTravel(track.width as number, thumbSize));
+  expect(switchThumbTravel(200, thumbSize)).toBe(
+    200 - thumbSize - switchThumbInset * 2,
+  );
+  expect(switchThumbTravel(thumbSize, thumbSize)).toBe(0);
 });
 
 test('recipe defaults remain the shared contract', () => {

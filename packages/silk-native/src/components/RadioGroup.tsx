@@ -100,6 +100,8 @@ function RadioGroupRoot({
     value,
     onValueChange: (next) => {
       if (isDisabled) return;
+      // Match web/Radix: only emit when the selection actually changes.
+      if (next === value) return;
       if (!isControlled) setUncontrolled(next);
       onValueChange?.(next);
     },

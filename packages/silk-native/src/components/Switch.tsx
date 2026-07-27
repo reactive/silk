@@ -5,12 +5,16 @@ import {
   I18nManager,
   Pressable,
   View,
+  type LayoutChangeEvent,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { a11yState } from '../styles/a11yProps.js';
-import { switchThumbInset } from '../styles/controlGeometry.js';
+import {
+  switchThumbInset,
+  switchThumbTravel,
+} from '../styles/controlGeometry.js';
 import { mapSwitchStyle } from '../styles/mapStyles.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -41,6 +45,7 @@ export function Switch({
   required,
   style,
   ref,
+  onLayout: onLayoutProp,
   nativeID,
   accessibilityLabel,
   accessibilityHint,
@@ -69,14 +74,30 @@ export function Switch({
   const [uncontrolled, setUncontrolled] = useState(defaultChecked);
   const checked = isControlled ? checkedProp : uncontrolled;
 
-  const { track, thumb, travel } = mapSwitchStyle(theme, resolved, density, {
-    checked,
-    invalid: isInvalid,
-    disabled: isDisabled,
-  });
+  const { track, thumb, travel: defaultTravel } = mapSwitchStyle(
+    theme,
+    resolved,
+    density,
+    {
+      checked,
+      invalid: isInvalid,
+      disabled: isDisabled,
+    },
+  );
+  const thumbSize = typeof thumb.width === 'number' ? thumb.width : 0;
+  const [layoutWidth, setLayoutWidth] = useState(0);
+  const travel =
+    layoutWidth > 0
+      ? switchThumbTravel(layoutWidth, thumbSize)
+      : defaultTravel;
   const reduced = useReducedMotion();
   const rtl = I18nManager.isRTL;
   const signedTravel = (rtl ? -1 : 1) * travel;
+
+  const onLayout = (event: LayoutChangeEvent): void => {
+    setLayoutWidth(event.nativeEvent.layout.width);
+    onLayoutProp?.(event);
+  };
   const offset = useRef(new Animated.Value(checked ? signedTravel : 0)).current;
 
   useEffect(() => {
@@ -130,6 +151,7 @@ export function Switch({
       disabled={isDisabled}
       hitSlop={hitSlop}
       onPress={toggle}
+      onLayout={onLayout}
       style={[track, style]}
       {...({
         'aria-invalid': fieldProps['aria-invalid'],

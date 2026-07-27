@@ -86,6 +86,14 @@ export const progressTrackStep: Readonly<Record<ProgressSize, SpaceStep>> = {
 /** Thumb inset on Switch (web: 2px margin each side). */
 export const switchThumbInset = 2;
 
+/** Max translateX for a switch thumb given laid-out track + thumb sizes. */
+export function switchThumbTravel(
+  trackWidth: number,
+  thumbSize: number,
+): number {
+  return Math.max(0, trackWidth - thumbSize - switchThumbInset * 2);
+}
+
 /** Resolve a `{ a, b? }` step pair against a space scale. */
 export function resolveSpaceSum(
   space: Readonly<Record<SpaceStep, number>>,

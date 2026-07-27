@@ -8,6 +8,7 @@ import { Checkbox } from './Checkbox.js';
 import { Field } from './Field.js';
 import { Input } from './Input.js';
 import { RadioGroup } from './RadioGroup.js';
+import { Stack } from './Stack.js';
 import { Switch } from './Switch.js';
 import { Textarea } from './Textarea.js';
 
@@ -170,6 +171,81 @@ test('RadioGroup exclusive selection', () => {
   expect(screen.getByRole('radio', { name: 'Free' }).getAttribute('aria-checked')).toBe(
     'false',
   );
+});
+
+test('RadioGroup does not re-emit onValueChange for the active item', () => {
+  let calls = 0;
+  let last: string | undefined;
+  render(
+    <SilkProvider>
+      <RadioGroup.Root
+        defaultValue="free"
+        onValueChange={(v) => {
+          calls += 1;
+          last = v;
+        }}
+      >
+        <RadioGroup.Item value="free">Free</RadioGroup.Item>
+        <RadioGroup.Item value="pro">Pro</RadioGroup.Item>
+      </RadioGroup.Root>
+    </SilkProvider>,
+  );
+  fireEvent.click(screen.getByRole('radio', { name: 'Free' }));
+  expect(calls).toBe(0);
+  fireEvent.click(screen.getByRole('radio', { name: 'Pro' }));
+  expect(calls).toBe(1);
+  expect(last).toBe('pro');
+});
+
+test('horizontal Field keeps description under the label', () => {
+  render(
+    <SilkProvider>
+      <Field.Root
+        orientation="horizontal"
+        controlId="subscribe"
+        testID="field"
+      >
+        <Checkbox testID="cb" />
+        <Field.Label>Subscribe</Field.Label>
+        <Field.Description>Weekly digest</Field.Description>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const field = screen.getByTestId('field');
+  expect(getComputedStyle(field).flexDirection).toBe('row');
+  const label = screen.getByText('Subscribe');
+  const description = screen.getByText('Weekly digest');
+  expect(description.parentElement).toBe(label.parentElement);
+  expect(getComputedStyle(description.parentElement!).flexDirection).toBe(
+    'column',
+  );
+  expect(screen.getByTestId('cb').parentElement).not.toBe(
+    label.parentElement,
+  );
+});
+
+test('horizontal Field keeps wrapped description and error under the label', () => {
+  render(
+    <SilkProvider>
+      <Field.Root
+        orientation="horizontal"
+        controlId="digest"
+        invalid
+        testID="field"
+      >
+        <Checkbox testID="cb" />
+        <Field.Label>Subscribe</Field.Label>
+        <Stack gap="1" testID="hints">
+          <Field.Description>Weekly digest</Field.Description>
+          <Field.Error>Confirm your email</Field.Error>
+        </Stack>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const label = screen.getByText('Subscribe');
+  const hints = screen.getByTestId('hints');
+  expect(hints.parentElement).toBe(label.parentElement);
+  expect(screen.getByTestId('cb').parentElement).not.toBe(label.parentElement);
 });
 
 test('RadioGroup.Item gap honors compact density', () => {
