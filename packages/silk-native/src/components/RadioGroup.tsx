@@ -158,7 +158,7 @@ function RadioGroupItem({
   const { theme } = useTheme();
   const isDisabled = Boolean(disabled || group.disabled);
   const checked = group.value === value;
-  const { item, indicator } = mapRadioItemStyle(
+  const { row, item, indicator } = mapRadioItemStyle(
     theme,
     { size: group.size, tone: group.tone },
     group.density,
@@ -192,14 +192,7 @@ function RadioGroupItem({
       disabled={isDisabled}
       hitSlop={hitSlop}
       onPress={() => group.onValueChange(value)}
-      style={[
-        {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: theme.semantic.space[2],
-        },
-        style,
-      ]}
+      style={[row, style]}
       {...({
         'data-state': checked ? 'checked' : 'unchecked',
       } as object)}

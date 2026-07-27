@@ -937,9 +937,7 @@ export function mapSwitchStyle(
       width: thumbSize,
       height: thumbSize,
       borderRadius: theme.semantic.radius.full,
-      backgroundColor: state.disabled
-        ? tone.disabledBg
-        : theme.semantic.color.surface,
+      backgroundColor: theme.semantic.color.surface,
       ...mapShadow(theme, 'raised'),
     },
     travel,
@@ -973,7 +971,7 @@ export function mapRadioItemStyle(
   props: RadioGroupVariantProps = {},
   density: DensityName = 'comfortable',
   state: ToggleVisualState = {},
-): { item: RnViewStyle; indicator: RnViewStyle } {
+): { row: RnViewStyle; item: RnViewStyle; indicator: RnViewStyle } {
   const size = props.size ?? radioGroupRecipe.defaults.size;
   const toneName = props.tone ?? radioGroupRecipe.defaults.tone;
   const space = spaceScale(theme, density);
@@ -991,6 +989,11 @@ export function mapRadioItemStyle(
     borderColor = theme.semantic.color.tones.danger.solid;
   }
   return {
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
     item: {
       width: edge,
       height: edge,

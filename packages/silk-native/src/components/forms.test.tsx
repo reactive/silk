@@ -1,3 +1,4 @@
+import { compactSpace } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState, type JSX } from 'react';
@@ -147,6 +148,18 @@ test('RadioGroup exclusive selection', () => {
   expect(screen.getByRole('radio', { name: 'Free' }).getAttribute('aria-checked')).toBe(
     'false',
   );
+});
+
+test('RadioGroup.Item gap honors compact density', () => {
+  render(
+    <SilkProvider density="compact">
+      <RadioGroup.Root accessibilityLabel="Plan">
+        <RadioGroup.Item value="free">Free</RadioGroup.Item>
+      </RadioGroup.Root>
+    </SilkProvider>,
+  );
+  const radio = screen.getByRole('radio', { name: 'Free' });
+  expect(getComputedStyle(radio).gap).toBe(`${compactSpace[2]}px`);
 });
 
 test('disabled Checkbox suppresses press', () => {

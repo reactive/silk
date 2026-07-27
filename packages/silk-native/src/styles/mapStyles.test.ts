@@ -1,6 +1,7 @@
 import {
   boxRecipe,
   buttonRecipe,
+  compactSpace,
   createTheme,
   inlineRecipe,
   stackRecipe,
@@ -16,7 +17,10 @@ import {
   mapBoxStyle,
   mapButtonStyle,
   mapInlineStyle,
+  mapRadioGroupStyle,
+  mapRadioItemStyle,
   mapStackStyle,
+  mapSwitchStyle,
   mapTextStyle,
   resolveNativeFontFamily,
 } from './mapStyles.js';
@@ -136,6 +140,34 @@ test('mapButtonStyle uses control geometry and density', () => {
 
   const compact = mapButtonStyle(theme, { size: 'md', density: 'compact' });
   expect((compact.view.paddingTop ?? 0) < (md.view.paddingTop ?? 0)).toBe(true);
+});
+
+test('mapRadioGroupStyle root gap honors compact density', () => {
+  const comfortable = mapRadioGroupStyle(theme, {}, 'comfortable');
+  const compact = mapRadioGroupStyle(theme, {}, 'compact');
+  expect(comfortable.root.gap).toBe(theme.semantic.space[2]);
+  expect(compact.root.gap).toBe(compactSpace[2]);
+  expect(compact.root.gap).toBeLessThan(theme.semantic.space[2]);
+});
+
+test('mapRadioItemStyle row gap honors compact density', () => {
+  const comfortable = mapRadioItemStyle(theme, {}, 'comfortable');
+  const compact = mapRadioItemStyle(theme, {}, 'compact');
+  expect(comfortable.row.gap).toBe(theme.semantic.space[2]);
+  expect(compact.row.gap).toBe(compactSpace[2]);
+});
+
+test('mapSwitchStyle keeps the thumb on surface when disabled', () => {
+  const disabled = mapSwitchStyle(theme, { tone: 'accent' }, 'comfortable', {
+    disabled: true,
+  });
+  expect(disabled.track.backgroundColor).toBe(
+    theme.semantic.color.tones.accent.disabledBg,
+  );
+  expect(disabled.thumb.backgroundColor).toBe(theme.semantic.color.surface);
+  expect(disabled.thumb.backgroundColor).not.toBe(
+    disabled.track.backgroundColor,
+  );
 });
 
 test('recipe defaults remain the shared contract', () => {
