@@ -22,9 +22,15 @@ export function useReducedMotion(): boolean {
 
   useEffect(() => {
     let mounted = true;
-    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (mounted) setReduced(enabled);
-    });
+    void AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (mounted) setReduced(enabled);
+      })
+      .catch(() => {
+        // Preference unreadable — allow motion instead of staying stuck on the
+        // optimistic reduced-motion default used to avoid a first-frame flash.
+        if (mounted) setReduced(false);
+      });
     const subscription = AccessibilityInfo.addEventListener(
       'reduceMotionChanged',
       setReduced,

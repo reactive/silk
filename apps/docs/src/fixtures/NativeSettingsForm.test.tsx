@@ -73,6 +73,29 @@ test('indeterminate checkbox starts mixed then becomes checked', () => {
   ).toBe('true');
 });
 
+test('changing state without remount reseeds checkbox and field defaults', () => {
+  const { rerender } = render(<NativeSettingsForm state="normal" />);
+  const checkbox = () =>
+    screen.getByRole('checkbox', { name: /Select all/i });
+  const name = () => screen.getByTestId('settings-name');
+  const bio = () => screen.getByTestId('settings-bio');
+
+  expect(checkbox().getAttribute('aria-checked')).toBe('false');
+  expect((name() as HTMLInputElement).value).toBe('');
+  expect((bio() as HTMLTextAreaElement).value).toBe('');
+
+  rerender(<NativeSettingsForm state="indeterminate" />);
+  expect(checkbox().getAttribute('aria-checked')).toBe('mixed');
+
+  rerender(<NativeSettingsForm state="longContent" />);
+  expect(checkbox().getAttribute('aria-checked')).toBe('false');
+  expect((name() as HTMLInputElement).value.length).toBeGreaterThan(0);
+  expect((bio() as HTMLTextAreaElement).value.length).toBeGreaterThan(0);
+  expect(
+    document.querySelector('[data-region="long-content"]'),
+  ).not.toBeNull();
+});
+
 test('progress exposes aria-valuenow', () => {
   renderFixture('normal');
   const bar = screen.getByLabelText('Profile completeness');

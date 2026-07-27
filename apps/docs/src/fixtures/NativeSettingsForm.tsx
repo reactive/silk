@@ -52,10 +52,21 @@ export interface NativeSettingsFormProps {
 /**
  * Native forms fixture — state matrix for docs + tests (RNW).
  * Slider is deferred; Progress stands in for determinate feedback.
+ *
+ * Remounts the body when `state` changes so Storybook's select control
+ * reseeds useState / defaultValue (indeterminate, longContent, etc.).
  */
 export function NativeSettingsForm({
   state = 'normal',
 }: NativeSettingsFormProps): JSX.Element {
+  return <NativeSettingsFormBody key={state} state={state} />;
+}
+
+function NativeSettingsFormBody({
+  state,
+}: {
+  readonly state: NativeSettingsFormState;
+}): JSX.Element {
   const scheme: ColorScheme = state === 'dark' ? 'dark' : 'light';
   const density: DensityName = state === 'compact' ? 'compact' : 'comfortable';
   const disabled = state === 'disabled' || state === 'invalidDisabled';
