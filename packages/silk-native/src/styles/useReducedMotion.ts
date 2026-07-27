@@ -1,12 +1,35 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
-type MatchMedia = (query: string) => { matches: boolean };
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+type MediaQueryChangeEvent = { matches: boolean };
+
+type MediaQueryListLike = {
+  matches: boolean;
+  addEventListener?: (
+    type: 'change',
+    listener: (event: MediaQueryChangeEvent) => void,
+  ) => void;
+  removeEventListener?: (
+    type: 'change',
+    listener: (event: MediaQueryChangeEvent) => void,
+  ) => void;
+  addListener?: (listener: (event: MediaQueryChangeEvent) => void) => void;
+  removeListener?: (listener: (event: MediaQueryChangeEvent) => void) => void;
+};
+
+type MatchMedia = (query: string) => MediaQueryListLike;
+
+function getMatchMedia(): MatchMedia | undefined {
+  const matchMedia = (globalThis as { matchMedia?: MatchMedia }).matchMedia;
+  return typeof matchMedia === 'function' ? matchMedia : undefined;
+}
 
 function initialReducedMotion(): boolean {
-  const matchMedia = (globalThis as { matchMedia?: MatchMedia }).matchMedia;
-  if (typeof matchMedia === 'function') {
-    return matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const matchMedia = getMatchMedia();
+  if (matchMedia) {
+    return matchMedia(REDUCED_MOTION_QUERY).matches;
   }
   // Native exposes the preference only via async AccessibilityInfo — stay static
   // until resolved so motion effects never flash before the OS answer arrives.
@@ -21,6 +44,27 @@ export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(initialReducedMotion);
 
   useEffect(() => {
+    const matchMedia = getMatchMedia();
+    if (matchMedia) {
+      // Prefer live matchMedia on web/RNW — AccessibilityInfo may disagree when
+      // matchMedia is mocked/emulated after RNW captures its MediaQueryList.
+      const mql = matchMedia(REDUCED_MOTION_QUERY);
+      const onChange = (event: MediaQueryChangeEvent) => {
+        setReduced(event.matches);
+      };
+      setReduced(mql.matches);
+      if (typeof mql.addEventListener === 'function') {
+        mql.addEventListener('change', onChange);
+        return () => {
+          mql.removeEventListener?.('change', onChange);
+        };
+      }
+      mql.addListener?.(onChange);
+      return () => {
+        mql.removeListener?.(onChange);
+      };
+    }
+
     let mounted = true;
     void AccessibilityInfo.isReduceMotionEnabled()
       .then((enabled) => {
