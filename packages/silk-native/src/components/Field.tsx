@@ -71,8 +71,20 @@ type FieldSlot =
 function isElementOfType(
   child: ReactNode,
   type: FieldSlot,
-): child is ReactElement<{ id?: string; children?: ReactNode }> {
+): child is ReactElement<{
+  nativeID?: string;
+  id?: string;
+  children?: ReactNode;
+}> {
   return isValidElement(child) && child.type === type;
+}
+
+/** Slot views use nativeID; id is accepted for RNW/web interop. */
+function slotNativeId(
+  props: { nativeID?: string; id?: string },
+  fallback: string,
+): string {
+  return props.nativeID ?? props.id ?? fallback;
 }
 
 function isLabelledByControl(type: unknown): boolean {
@@ -121,18 +133,18 @@ function ariaFromFieldChildren(
       if (!isValidElement(child)) return;
       if (child.type === FieldRoot) return;
       if (isElementOfType(child, FieldLabel)) {
-        labelledBy ??= child.props.id ?? labelId;
+        labelledBy ??= slotNativeId(child.props, labelId);
         labelText ??= flattenText(child.props.children) || undefined;
         return;
       }
       if (isElementOfType(child, FieldDescription)) {
-        describedParts.push(child.props.id ?? descriptionId);
+        describedParts.push(slotNativeId(child.props, descriptionId));
         const text = flattenText(child.props.children);
         if (text) hintParts.push(text);
         return;
       }
       if (isElementOfType(child, FieldError)) {
-        describedParts.push(child.props.id ?? errorId);
+        describedParts.push(slotNativeId(child.props, errorId));
         const text = flattenText(child.props.children);
         if (text) hintParts.push(text);
         return;

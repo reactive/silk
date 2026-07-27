@@ -26,6 +26,27 @@ test('Input wires Field label into accessibilityLabel and controlId', () => {
   expect(screen.getByLabelText('Name')).toBeTruthy();
 });
 
+test('group Field associates custom slot nativeIDs via accessibilityLabelledBy', () => {
+  render(
+    <SilkProvider>
+      <Field.Root mode="group">
+        <Field.Label nativeID="plan-label">Plan</Field.Label>
+        <RadioGroup.Root testID="plan">
+          <RadioGroup.Item value="free">Free</RadioGroup.Item>
+        </RadioGroup.Root>
+        <Field.Description nativeID="plan-hint">Billing cycle</Field.Description>
+        <Field.Error nativeID="plan-error">Pick one</Field.Error>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const group = screen.getByTestId('plan');
+  // RNW maps accessibilityLabelledBy → aria-labelledby.
+  expect(group.getAttribute('aria-labelledby')).toBe('plan-label');
+  expect(screen.getByText('Plan').getAttribute('id')).toBe('plan-label');
+  expect(screen.getByText('Billing cycle').getAttribute('id')).toBe('plan-hint');
+  expect(screen.getByRole('alert').getAttribute('id')).toBe('plan-error');
+});
+
 test('Field Error has alert role; invalid/required emit ARIA aliases', () => {
   render(
     <SilkProvider>
