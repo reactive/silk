@@ -1,17 +1,20 @@
-import { compactSpace } from '@reactive/silk-core';
 import {
   Children,
+  useCallback,
   createContext,
   isValidElement,
   useContext,
+  useEffect,
   useId,
   useMemo,
+  useRef,
   type JSX,
   type ReactElement,
   type ReactNode,
   type Ref,
 } from 'react';
 import { View, type ViewProps } from 'react-native';
+import { spaceScale } from '../styles/mappers/shared.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { Text } from './Text.js';
 
@@ -47,6 +50,12 @@ export interface FieldContextValue {
 }
 
 const FieldContext = createContext<FieldContextValue | null>(null);
+type FieldActivationContextValue = {
+  readonly registerControl: (activate: () => void) => () => void;
+  readonly activateControl: () => void;
+};
+const FieldActivationContext =
+  createContext<FieldActivationContextValue | null>(null);
 
 export function useFieldContext(): FieldContextValue | null {
   return useContext(FieldContext);
@@ -236,7 +245,23 @@ function FieldRoot({
   const descriptionId = `${reactId}-description`;
   const errorId = `${reactId}-error`;
   const { theme, density } = useTheme();
-  const space = density === 'compact' ? compactSpace : theme.semantic.space;
+  const space = spaceScale(theme, density);
+  const controlAction = useRef<(() => void) | null>(null);
+  const registerControl = useCallback((activate: () => void) => {
+    controlAction.current = activate;
+    return () => {
+      if (controlAction.current === activate) {
+        controlAction.current = null;
+      }
+    };
+  }, []);
+  const activateControl = useCallback(() => {
+    controlAction.current?.();
+  }, []);
+  const activation = useMemo<FieldActivationContextValue>(
+    () => ({ registerControl, activateControl }),
+    [registerControl, activateControl],
+  );
 
   const {
     labelledBy,
@@ -301,58 +326,62 @@ function FieldRoot({
     const { control, labelColumn } = partitionHorizontalChildren(children);
     return (
       <FieldContext.Provider value={value}>
-        <View
-          ref={ref}
-          {...props}
-          style={[
-            {
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: space[2],
-              opacity: disabled ? 0.7 : 1,
-            },
-            style,
-          ]}
-          {...rootDataProps}
-        >
-          {control.length > 0 ? <View>{control}</View> : null}
-          {labelColumn.length > 0 ? (
-            <View
-              style={{
-                flexGrow: 1,
-                flexShrink: 1,
-                minWidth: 0,
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                gap: space[1],
-              }}
-            >
-              {labelColumn}
-            </View>
-          ) : null}
-        </View>
+        <FieldActivationContext.Provider value={activation}>
+          <View
+            ref={ref}
+            {...props}
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: space[2],
+                opacity: disabled ? 0.7 : 1,
+              },
+              style,
+            ]}
+            {...rootDataProps}
+          >
+            {control.length > 0 ? <View>{control}</View> : null}
+            {labelColumn.length > 0 ? (
+              <View
+                style={{
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  gap: space[1],
+                }}
+              >
+                {labelColumn}
+              </View>
+            ) : null}
+          </View>
+        </FieldActivationContext.Provider>
       </FieldContext.Provider>
     );
   }
 
   return (
     <FieldContext.Provider value={value}>
-      <View
-        ref={ref}
-        {...props}
-        style={[
-          {
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            gap: space[1],
-            opacity: disabled ? 0.7 : 1,
-          },
-          style,
-        ]}
-        {...rootDataProps}
-      >
-        {children}
-      </View>
+      <FieldActivationContext.Provider value={activation}>
+        <View
+          ref={ref}
+          {...props}
+          style={[
+            {
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              gap: space[1],
+              opacity: disabled ? 0.7 : 1,
+            },
+            style,
+          ]}
+          {...rootDataProps}
+        >
+          {children}
+        </View>
+      </FieldActivationContext.Provider>
     </FieldContext.Provider>
   );
 }
@@ -366,15 +395,27 @@ function FieldLabel({
   children,
   style,
   nativeID,
+  onPress,
   ...props
 }: FieldLabelProps): JSX.Element {
   const field = useFieldContext();
+  const activation = useContext(FieldActivationContext);
   return (
     <Text
       {...props}
       role="label"
       tone={field?.disabled ? 'secondary' : 'primary'}
       nativeID={nativeID ?? field?.labelId}
+      onPress={
+        onPress || activation
+          ? (event) => {
+              onPress?.(event);
+              if (!event.isDefaultPrevented()) {
+                activation?.activateControl();
+              }
+            }
+          : undefined
+      }
       style={style}
       {...({ 'data-field-label': '' } as object)}
     >
@@ -458,7 +499,8 @@ export type FieldControlProps = {
   /** Visual invalid flag for control chrome. */
   invalid?: boolean | undefined;
   /** RNW / ARIA aliases for Field wiring. */
-  'aria-invalid'?: boolean | undefined;
+  'aria-describedby'?: string | undefined;
+  'aria-invalid'?: AriaInvalid | undefined;
   'aria-required'?: boolean | undefined;
 };
 
@@ -490,6 +532,7 @@ export function useFieldControlProps(options?: {
   readonly accessibilityLabel?: string | undefined;
   readonly accessibilityHint?: string | undefined;
   readonly accessibilityLabelledBy?: string | readonly string[] | undefined;
+  readonly 'aria-describedby'?: string | undefined;
   readonly 'aria-invalid'?: AriaInvalid | undefined;
   readonly disabled?: boolean | undefined;
   readonly required?: boolean | undefined;
@@ -511,28 +554,37 @@ export function useFieldControlProps(options?: {
     if (labelledBy !== undefined) {
       result.accessibilityLabelledBy = labelledBy;
     }
+    if (options?.['aria-describedby'] !== undefined) {
+      result['aria-describedby'] = options['aria-describedby'];
+    }
     if (options?.disabled !== undefined) result.disabled = options.disabled;
     if (options?.required !== undefined) {
       result.required = options.required;
       if (options.required) result['aria-required'] = true;
     }
-    if (isVisuallyInvalid(options?.['aria-invalid'])) {
-      result.invalid = true;
-      result['aria-invalid'] = true;
+    if (options?.['aria-invalid'] !== undefined) {
+      result['aria-invalid'] = options['aria-invalid'];
+      if (isVisuallyInvalid(options['aria-invalid'])) {
+        result.invalid = true;
+      }
     }
     return result;
   }
 
-  const invalidFlag =
+  const invalidValue: AriaInvalid | undefined =
     options?.['aria-invalid'] !== undefined
-      ? isVisuallyInvalid(options['aria-invalid'])
-      : field.invalid;
+      ? options['aria-invalid']
+      : field.invalid
+        ? true
+        : undefined;
+  const invalidFlag = isVisuallyInvalid(invalidValue);
   const required = options?.required ?? field.required;
 
   const result: FieldControlProps = {
     disabled: options?.disabled ?? field.disabled,
     required,
-    ...(invalidFlag ? { invalid: true, 'aria-invalid': true } : {}),
+    ...(invalidValue !== undefined ? { 'aria-invalid': invalidValue } : {}),
+    ...(invalidFlag ? { invalid: true } : {}),
     ...(required ? { 'aria-required': true } : {}),
   };
 
@@ -557,6 +609,11 @@ export function useFieldControlProps(options?: {
     result.accessibilityLabelledBy = field.labelledBy;
   }
 
+  const describedBy = options?.['aria-describedby'] ?? field.describedBy;
+  if (describedBy !== undefined) {
+    result['aria-describedby'] = describedBy;
+  }
+
   // Cross-platform name/hint fallback (accessibilityLabelledBy is Android-only).
   if (options?.accessibilityLabel !== undefined) {
     result.accessibilityLabel = options.accessibilityLabel;
@@ -574,6 +631,17 @@ export function useFieldControlProps(options?: {
   }
 
   return result;
+}
+
+/** Register a native control action for Field.Label press activation. */
+export function useFieldControlRegistration(
+  activate: (() => void) | undefined,
+): void {
+  const registerControl = useContext(FieldActivationContext)?.registerControl;
+  useEffect(() => {
+    if (!registerControl || !activate) return;
+    return registerControl(activate);
+  }, [registerControl, activate]);
 }
 
 export interface FieldNamespace {

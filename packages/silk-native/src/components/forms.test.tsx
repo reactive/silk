@@ -23,8 +23,14 @@ test('Input wires Field label into accessibilityLabel and controlId', () => {
     </SilkProvider>,
   );
   const input = screen.getByTestId('input');
+  const description = screen.getByText('Your full name');
   expect(input.getAttribute('id') ?? input.getAttribute('nativeID')).toBeTruthy();
   expect(screen.getByLabelText('Name')).toBeTruthy();
+  expect(input.getAttribute('aria-describedby')).toBe(
+    description.getAttribute('id'),
+  );
+  fireEvent.click(screen.getByText('Name'));
+  expect(document.activeElement).toBe(input);
 });
 
 test('group Field associates custom slot nativeIDs via accessibilityLabelledBy', () => {
@@ -43,6 +49,9 @@ test('group Field associates custom slot nativeIDs via accessibilityLabelledBy',
   const group = screen.getByTestId('plan');
   // RNW maps accessibilityLabelledBy → aria-labelledby.
   expect(group.getAttribute('aria-labelledby')).toBe('plan-label');
+  expect(group.getAttribute('aria-describedby')).toBe(
+    'plan-hint plan-error',
+  );
   expect(screen.getByText('Plan').getAttribute('id')).toBe('plan-label');
   expect(screen.getByText('Billing cycle').getAttribute('id')).toBe('plan-hint');
   expect(screen.getByRole('alert').getAttribute('id')).toBe('plan-error');
@@ -62,6 +71,9 @@ test('Field Error has alert role; invalid/required emit ARIA aliases', () => {
   const input = screen.getByTestId('email');
   expect(input.getAttribute('aria-invalid')).toBe('true');
   expect(input.getAttribute('aria-required')).toBe('true');
+  expect(input.getAttribute('aria-describedby')).toBe(
+    screen.getByRole('alert').getAttribute('id'),
+  );
   expect(screen.getByLabelText(/Email/)).toBeTruthy();
 });
 
@@ -82,6 +94,17 @@ test('explicit disabled on Input wins over Field', () => {
       input.readOnly === true ||
       input.disabled === true,
   ).toBe(true);
+});
+
+test('explicit aria-invalid overrides the visual invalid shorthand', () => {
+  render(
+    <SilkProvider>
+      <Input invalid aria-invalid={false} testID="valid-override" />
+    </SilkProvider>,
+  );
+  const input = screen.getByTestId('valid-override');
+  expect(input.getAttribute('aria-invalid')).toBe('false');
+  expect(input.getAttribute('data-invalid')).toBeNull();
 });
 
 test('Textarea is multiline', () => {
@@ -115,6 +138,29 @@ test('Checkbox toggles and emits aria-checked', () => {
   );
 });
 
+test('Field.Label activates a native boolean control', () => {
+  let labelPresses = 0;
+  render(
+    <SilkProvider>
+      <Field.Root mode="group" orientation="horizontal">
+        <Checkbox />
+        <Field.Label
+          onPress={() => {
+            labelPresses += 1;
+          }}
+        >
+          Notify me
+        </Field.Label>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const box = screen.getByRole('checkbox', { name: 'Notify me' });
+  expect(box.getAttribute('aria-checked')).toBe('false');
+  fireEvent.click(screen.getByText('Notify me'));
+  expect(labelPresses).toBe(1);
+  expect(box.getAttribute('aria-checked')).toBe('true');
+});
+
 test('Checkbox indeterminate → checked transition', () => {
   function Harness(): JSX.Element {
     const [checked, setChecked] = useState<boolean | 'indeterminate'>(
@@ -139,6 +185,21 @@ test('Checkbox indeterminate → checked transition', () => {
   expect(screen.getByRole('checkbox').getAttribute('aria-checked')).toBe(
     'true',
   );
+});
+
+test('Checkbox supports an uncontrolled indeterminate default', () => {
+  render(
+    <SilkProvider>
+      <Checkbox
+        defaultChecked="indeterminate"
+        accessibilityLabel="Partial"
+      />
+    </SilkProvider>,
+  );
+  const box = screen.getByRole('checkbox', { name: 'Partial' });
+  expect(box.getAttribute('aria-checked')).toBe('mixed');
+  fireEvent.click(box);
+  expect(box.getAttribute('aria-checked')).toBe('true');
 });
 
 test('Switch toggles with aria-checked', () => {

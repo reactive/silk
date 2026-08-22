@@ -4,7 +4,7 @@ import {
   Text as RNText,
   type TextProps as RNTextProps,
 } from 'react-native';
-import { mapTextStyle } from '../styles/mapStyles.js';
+import { mapTextStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 

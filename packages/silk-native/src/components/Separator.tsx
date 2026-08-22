@@ -4,7 +4,7 @@ import {
 } from '@reactive/silk-core';
 import type { JSX, Ref } from 'react';
 import { View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
-import { mapSeparatorStyle } from '../styles/mapStyles.js';
+import { mapSeparatorStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 

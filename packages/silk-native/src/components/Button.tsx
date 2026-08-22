@@ -6,7 +6,7 @@ import {
   type PressableProps,
   type View,
 } from 'react-native';
-import { mapButtonStyle } from '../styles/mapStyles.js';
+import { mapButtonStyle } from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 

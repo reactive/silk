@@ -8,7 +8,7 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { mapSurfaceStyle } from '../styles/mapStyles.js';
+import { mapSurfaceStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 

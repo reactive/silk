@@ -111,9 +111,11 @@ test('Spinner exposes status role and label', () => {
   render(
     <SilkProvider>
       <Spinner label="Fetching" testID="spin" />
+      <Spinner accessibilityLabel="Syncing" />
     </SilkProvider>,
   );
   expect(screen.getByLabelText('Fetching')).toBeTruthy();
+  expect(screen.getByLabelText('Syncing')).toBeTruthy();
 });
 
 test('Progress determinate emits aria-valuenow via compat helper', () => {
@@ -126,6 +128,27 @@ test('Progress determinate emits aria-valuenow via compat helper', () => {
   expect(el.getAttribute('aria-valuenow')).toBe('40');
   expect(el.getAttribute('aria-valuemin')).toBe('0');
   expect(el.getAttribute('aria-valuemax')).toBe('100');
+  expect((el.firstElementChild as HTMLElement).style.width).toBe('40%');
+});
+
+test('Progress honors the standard accessibilityLabel prop', () => {
+  render(
+    <SilkProvider>
+      <Progress value={20} accessibilityLabel="Upload status" />
+    </SilkProvider>,
+  );
+  expect(screen.getByLabelText('Upload status')).toBeTruthy();
+});
+
+test('Progress renders zero without a first-frame sliver', () => {
+  render(
+    <SilkProvider>
+      <Progress value={0} label="Empty" />
+    </SilkProvider>,
+  );
+  const indicator = screen.getByLabelText('Empty')
+    .firstElementChild as HTMLElement;
+  expect(indicator.style.width).toBe('0%');
 });
 
 test('Progress clamps value to max and treats negative as indeterminate', () => {

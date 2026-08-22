@@ -14,7 +14,7 @@
  */
 import { gzipSync } from 'node:zlib';
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as esbuild from 'esbuild';
 import { createElement } from 'react';
@@ -24,6 +24,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const silkDist = join(root, 'packages/silk/dist');
 const silkEntry = join(silkDist, 'index.js');
 const nativeEntry = join(root, 'packages/silk-native/dist/index.js');
+const nativeSourceEntry = join(root, 'packages/silk-native/src/index.ts');
 const cssPath = join(silkDist, 'index.css');
 const budgetPath = join(root, 'perf-budgets.json');
 const write = process.argv.includes('--write');
@@ -104,6 +105,49 @@ function loadBudgets() {
   return JSON.parse(readFileSync(budgetPath, 'utf8'));
 }
 
+/**
+ * Component exports are the source of truth. A new native component must add a
+ * budget in the same PR; stale budgets must be removed with deleted exports.
+ */
+function nativeComponentExports() {
+  const source = readFileSync(nativeSourceEntry, 'utf8');
+  const names = new Set();
+  const componentExport =
+    /export\s*\{([\s\S]*?)\}\s*from\s*['"]\.\/components\/([^'"]+)\.js['"];?/g;
+  for (const match of source.matchAll(componentExport)) {
+    const componentName = basename(match[2]);
+    const exportedNames = match[1]
+      .split(',')
+      .map((name) => name.trim().split(/\s+as\s+/).at(-1));
+    if (!exportedNames.includes(componentName)) {
+      throw new Error(
+        `Native component module ${componentName} does not export ${componentName}`,
+      );
+    }
+    names.add(componentName);
+  }
+  return [...names].sort();
+}
+
+function assertNativeBudgetCoverage(nativeBudgets) {
+  const components = nativeComponentExports();
+  const budgetNames = Object.keys(nativeBudgets).sort();
+  const missing = components.filter((name) => !nativeBudgets[name]);
+  const stale = budgetNames.filter((name) => !components.includes(name));
+  if (missing.length || stale.length) {
+    throw new Error(
+      [
+        missing.length
+          ? `missing native component budgets: ${missing.join(', ')}`
+          : '',
+        stale.length ? `stale native component budgets: ${stale.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join('; '),
+    );
+  }
+}
+
 function fail(msg) {
   console.error(`perf-budgets: FAIL — ${msg}`);
   process.exitCode = 1;
@@ -114,6 +158,7 @@ async function main() {
   const budgetFile = loadBudgets();
   const { budgets } = budgetFile;
   const components = Object.keys(budgets.isolatedGzip);
+  assertNativeBudgetCoverage(budgets.nativeIsolatedGzip);
   const nativeComponents = Object.keys(budgets.nativeIsolatedGzip);
   mkdirSync(tmpDir, { recursive: true });
   try {

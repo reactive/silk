@@ -9,7 +9,7 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { mapAvatarStyle } from '../styles/mapStyles.js';
+import { mapAvatarStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 

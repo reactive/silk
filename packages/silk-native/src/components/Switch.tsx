@@ -1,5 +1,12 @@
 import { switchRecipe, type SwitchVariantProps } from '@reactive/silk-core';
-import { useEffect, useRef, useState, type JSX, type Ref } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type JSX,
+  type Ref,
+} from 'react';
 import {
   Animated,
   I18nManager,
@@ -15,11 +22,15 @@ import {
   switchThumbInset,
   switchThumbTravel,
 } from '../styles/controlGeometry.js';
-import { mapSwitchStyle } from '../styles/mapStyles.js';
+import { mapSwitchStyle } from '../styles/mappers/controls.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { useFieldControlProps } from './Field.js';
+import {
+  useFieldControlProps,
+  useFieldControlRegistration,
+} from './Field.js';
+import { useControllableValue } from './useControllableValue.js';
 
 export interface SwitchProps
   extends SwitchVariantProps,
@@ -32,6 +43,7 @@ export interface SwitchProps
   readonly disabled?: boolean;
   readonly invalid?: boolean;
   readonly required?: boolean;
+  readonly 'aria-describedby'?: string;
 }
 
 export function Switch({
@@ -51,6 +63,7 @@ export function Switch({
   accessibilityHint,
   accessibilityLabelledBy,
   accessibilityState,
+  'aria-describedby': ariaDescribedBy,
   ...rest
 }: SwitchProps): JSX.Element {
   const { theme, density } = useTheme();
@@ -67,12 +80,14 @@ export function Switch({
     accessibilityLabel,
     accessibilityHint,
     accessibilityLabelledBy,
+    'aria-describedby': ariaDescribedBy,
   });
   const isDisabled = Boolean(fieldProps.disabled);
   const isInvalid = Boolean(fieldProps.invalid || invalid);
-  const isControlled = checkedProp !== undefined;
-  const [uncontrolled, setUncontrolled] = useState(defaultChecked);
-  const checked = isControlled ? checkedProp : uncontrolled;
+  const [checked, setUncontrolled] = useControllableValue(
+    checkedProp,
+    defaultChecked,
+  );
 
   const { track, thumb, travel: defaultTravel } = mapSwitchStyle(
     theme,
@@ -131,12 +146,13 @@ export function Switch({
     disabled: isDisabled,
   });
 
-  const toggle = (): void => {
+  const toggle = useCallback((): void => {
     if (isDisabled) return;
     const next = !checked;
-    if (!isControlled) setUncontrolled(next);
+    setUncontrolled(next);
     onCheckedChange?.(next);
-  };
+  }, [checked, isDisabled, onCheckedChange, setUncontrolled]);
+  useFieldControlRegistration(toggle);
 
   return (
     <Pressable
@@ -154,6 +170,7 @@ export function Switch({
       onLayout={onLayout}
       style={[track, style]}
       {...({
+        'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],
         'aria-required': fieldProps['aria-required'],
         'data-invalid': isInvalid ? 'true' : undefined,

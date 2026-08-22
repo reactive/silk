@@ -7,7 +7,7 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { mapSpinnerStyle } from '../styles/mapStyles.js';
+import { mapSpinnerStyle } from '../styles/mappers/visual.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -26,7 +26,8 @@ export interface SpinnerProps
 export function Spinner({
   size,
   tone,
-  label = 'Loading',
+  label,
+  accessibilityLabel,
   style,
   ...rest
 }: SpinnerProps): JSX.Element {
@@ -37,6 +38,7 @@ export function Spinner({
     tone: tone ?? defaults.tone ?? spinnerRecipe.defaults.tone,
   };
   const preference = useMotionPreference();
+  const resolvedLabel = label ?? accessibilityLabel ?? 'Loading';
   const mapped = mapSpinnerStyle(
     theme,
     resolved,
@@ -73,7 +75,7 @@ export function Spinner({
   return (
     <Animated.View
       {...rest}
-      accessibilityLabel={label}
+      accessibilityLabel={resolvedLabel}
       // Broader role for RNW `role="status"` mapping.
       role="status"
       // Android-only live region enhancement.

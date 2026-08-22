@@ -9,7 +9,7 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { mapSkeletonStyle } from '../styles/mapStyles.js';
+import { mapSkeletonStyle } from '../styles/mappers/visual.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';

@@ -187,6 +187,17 @@ test('switchThumbTravel scales with laid-out track width', () => {
   expect(switchThumbTravel(thumbSize, thumbSize)).toBe(0);
 });
 
+test('invalid Switch uses an outline without changing thumb geometry', () => {
+  const valid = mapSwitchStyle(theme);
+  const invalid = mapSwitchStyle(theme, {}, 'comfortable', { invalid: true });
+  expect(invalid.track.outlineWidth).toBe(1);
+  expect(invalid.track.outlineColor).toBe(
+    theme.semantic.color.tones.danger.solid,
+  );
+  expect(invalid.travel).toBe(valid.travel);
+  expect(invalid.track.width).toBe(valid.track.width);
+});
+
 test('recipe defaults remain the shared contract', () => {
   expect(boxRecipe.defaults.padding).toBe('0');
   expect(stackRecipe.defaults.align).toBe('stretch');

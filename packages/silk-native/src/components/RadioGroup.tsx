@@ -5,7 +5,6 @@ import {
 import {
   createContext,
   useContext,
-  useState,
   type JSX,
   type ReactNode,
   type Ref,
@@ -19,11 +18,15 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { a11yState } from '../styles/a11yProps.js';
-import { mapRadioGroupStyle, mapRadioItemStyle } from '../styles/mapStyles.js';
+import {
+  mapRadioGroupStyle,
+  mapRadioItemStyle,
+} from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { useFieldControlProps } from './Field.js';
 import { Text } from './Text.js';
+import { useControllableValue } from './useControllableValue.js';
 
 interface RadioGroupContextValue {
   readonly value: string | undefined;
@@ -48,6 +51,7 @@ export interface RadioGroupRootProps
   readonly disabled?: boolean;
   readonly invalid?: boolean;
   readonly required?: boolean;
+  readonly 'aria-describedby'?: string;
 }
 
 function RadioGroupRoot({
@@ -67,6 +71,7 @@ function RadioGroupRoot({
   accessibilityLabel,
   accessibilityHint,
   accessibilityLabelledBy,
+  'aria-describedby': ariaDescribedBy,
   ...rest
 }: RadioGroupRootProps): JSX.Element {
   const { theme, density } = useTheme();
@@ -87,12 +92,13 @@ function RadioGroupRoot({
     accessibilityLabel,
     accessibilityHint,
     accessibilityLabelledBy,
+    'aria-describedby': ariaDescribedBy,
   });
   const isDisabled = Boolean(fieldProps.disabled);
   const isInvalid = Boolean(fieldProps.invalid || invalid);
-  const isControlled = valueProp !== undefined;
-  const [uncontrolled, setUncontrolled] = useState(defaultValue);
-  const value = isControlled ? valueProp : uncontrolled;
+  const [value, setUncontrolled] = useControllableValue<
+    string | undefined
+  >(valueProp, defaultValue);
 
   const { root } = mapRadioGroupStyle(theme, resolved, density);
 
@@ -102,7 +108,7 @@ function RadioGroupRoot({
       if (isDisabled) return;
       // Match web/Radix: only emit when the selection actually changes.
       if (next === value) return;
-      if (!isControlled) setUncontrolled(next);
+      setUncontrolled(next);
       onValueChange?.(next);
     },
     disabled: isDisabled,
@@ -124,6 +130,7 @@ function RadioGroupRoot({
         nativeID={fieldProps.nativeID}
         style={[root, style]}
         {...({
+          'aria-describedby': fieldProps['aria-describedby'],
           'aria-invalid': fieldProps['aria-invalid'],
           'aria-required': fieldProps['aria-required'],
           'data-invalid': isInvalid ? 'true' : undefined,

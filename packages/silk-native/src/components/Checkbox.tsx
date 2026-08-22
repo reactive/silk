@@ -2,7 +2,7 @@ import {
   checkboxRecipe,
   type CheckboxVariantProps,
 } from '@reactive/silk-core';
-import { useState, type JSX, type ReactNode, type Ref } from 'react';
+import { useCallback, type JSX, type ReactNode, type Ref } from 'react';
 import {
   Pressable,
   View,
@@ -14,11 +14,15 @@ import { a11yState } from '../styles/a11yProps.js';
 import {
   checkboxIndicatorColor,
   mapCheckboxStyle,
-} from '../styles/mapStyles.js';
+} from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { useFieldControlProps } from './Field.js';
+import {
+  useFieldControlProps,
+  useFieldControlRegistration,
+} from './Field.js';
 import { Text } from './Text.js';
+import { useControllableValue } from './useControllableValue.js';
 
 export type CheckedState = boolean | 'indeterminate';
 
@@ -30,11 +34,12 @@ export interface CheckboxProps
   readonly style?: StyleProp<ViewStyle>;
   /** Controlled — matches web/Radix tri-state. */
   readonly checked?: CheckedState;
-  readonly defaultChecked?: boolean;
+  readonly defaultChecked?: CheckedState;
   readonly onCheckedChange?: (checked: CheckedState) => void;
   readonly disabled?: boolean;
   readonly invalid?: boolean;
   readonly required?: boolean;
+  readonly 'aria-describedby'?: string;
 }
 
 function CheckGlyph({ color, size }: { color: string; size: number }): JSX.Element {
@@ -87,6 +92,7 @@ export function Checkbox({
   accessibilityHint,
   accessibilityLabelledBy,
   accessibilityState,
+  'aria-describedby': ariaDescribedBy,
   ...rest
 }: CheckboxProps): JSX.Element {
   const { theme, density } = useTheme();
@@ -103,13 +109,15 @@ export function Checkbox({
     accessibilityLabel,
     accessibilityHint,
     accessibilityLabelledBy,
+    'aria-describedby': ariaDescribedBy,
   });
   const isDisabled = Boolean(fieldProps.disabled);
   const isInvalid = Boolean(fieldProps.invalid || invalid);
 
-  const isControlled = checkedProp !== undefined;
-  const [uncontrolled, setUncontrolled] = useState<CheckedState>(defaultChecked);
-  const checked = isControlled ? checkedProp : uncontrolled;
+  const [checked, setUncontrolled] = useControllableValue(
+    checkedProp,
+    defaultChecked,
+  );
 
   const { row, box } = mapCheckboxStyle(theme, resolved, density, {
     checked,
@@ -133,13 +141,14 @@ export function Checkbox({
 
   const hitSlop = Math.max(0, Math.ceil((44 - edge) / 2));
 
-  const toggle = (): void => {
+  const toggle = useCallback((): void => {
     if (isDisabled) return;
     const next: CheckedState =
       checked === 'indeterminate' ? true : !checked;
-    if (!isControlled) setUncontrolled(next);
+    setUncontrolled(next);
     onCheckedChange?.(next);
-  };
+  }, [checked, isDisabled, onCheckedChange, setUncontrolled]);
+  useFieldControlRegistration(toggle);
 
   return (
     <Pressable
@@ -156,6 +165,7 @@ export function Checkbox({
       onPress={toggle}
       style={[row, style]}
       {...({
+        'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],
         'aria-required': fieldProps['aria-required'],
         'data-invalid': isInvalid ? 'true' : undefined,

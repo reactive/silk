@@ -14,7 +14,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { a11yValue } from '../styles/a11yProps.js';
-import { mapProgressStyle } from '../styles/mapStyles.js';
+import { mapProgressStyle } from '../styles/mappers/visual.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -40,7 +40,8 @@ export function Progress({
   tone,
   value,
   max = 100,
-  label = 'Progress',
+  label,
+  accessibilityLabel,
   style,
   ref,
   onLayout: onLayoutProp,
@@ -55,6 +56,7 @@ export function Progress({
   const { track, indicator } = mapProgressStyle(theme, resolved, density);
   const preference = useMotionPreference();
   const reduced = preference === 'reduced';
+  const resolvedLabel = label ?? accessibilityLabel ?? 'Progress';
 
   // Match web Progress normalization (safeMax + Radix-like indeterminate).
   const safeMax = max > 0 ? max : 100;
@@ -114,11 +116,13 @@ export function Progress({
     theme.semantic.motion.loop.durationMs,
   ]);
 
-  const indicatorWidth = indeterminate
+  // Percentage widths render correctly on the first frame. Track measurement
+  // is needed only for the indeterminate transform distance.
+  const indicatorWidth: `${number}%` = indeterminate
     ? reduced
-      ? trackWidth
-      : trackWidth * 0.4
-    : trackWidth * pct;
+      ? '100%'
+      : '40%'
+    : `${pct * 100}%`;
 
   const valueProps = a11yValue(
     indeterminate
@@ -139,25 +143,23 @@ export function Progress({
       {...rest}
       {...valueProps}
       accessibilityRole="progressbar"
-      accessibilityLabel={label}
+      accessibilityLabel={resolvedLabel}
       onLayout={onLayout}
       style={[track, style]}
     >
-      {trackWidth > 0 ? (
-        <Animated.View
-          style={[
-            indicator,
-            {
-              width: indicatorWidth,
-              backgroundColor: indicatorBg,
-              transform:
-                indeterminate && !reduced
-                  ? [{ translateX: translate }]
-                  : undefined,
-            },
-          ]}
-        />
-      ) : null}
+      <Animated.View
+        style={[
+          indicator,
+          {
+            width: indicatorWidth,
+            backgroundColor: indicatorBg,
+            transform:
+              indeterminate && preference === 'full'
+                ? [{ translateX: translate }]
+                : undefined,
+          },
+        ]}
+      />
     </View>
   );
 }

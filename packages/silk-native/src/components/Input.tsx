@@ -1,23 +1,30 @@
 import { inputRecipe, type InputVariantProps } from '@reactive/silk-core';
-import { useState, type JSX, type Ref } from 'react';
+import type { JSX, Ref } from 'react';
 import {
   TextInput,
   type StyleProp,
   type TextInputProps,
   type TextStyle,
 } from 'react-native';
-import { mapInputStyle } from '../styles/mapStyles.js';
+import { mapInputStyle } from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { useFieldControlProps } from './Field.js';
+import type { AriaInvalid } from './Field.js';
+import { useTextControl } from './useTextControl.js';
 
 export interface InputProps
   extends InputVariantProps,
-    Omit<TextInputProps, 'style' | 'editable'> {
+    Omit<
+      TextInputProps,
+      'style' | 'editable' | 'aria-describedby' | 'aria-invalid'
+    > {
   readonly ref?: Ref<TextInput>;
   readonly style?: StyleProp<TextStyle>;
   readonly disabled?: boolean;
   readonly invalid?: boolean;
+  readonly required?: boolean;
+  readonly 'aria-describedby'?: string;
+  readonly 'aria-invalid'?: AriaInvalid;
 }
 
 export function Input({
@@ -27,12 +34,16 @@ export function Input({
   ref,
   disabled,
   invalid,
+  required,
   onFocus,
   onBlur,
   nativeID,
   accessibilityLabel,
   accessibilityHint,
   accessibilityLabelledBy,
+  accessibilityState,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
   ...rest
 }: InputProps): JSX.Element {
   const { theme, density: themeDensity } = useTheme();
@@ -41,47 +52,47 @@ export function Input({
     size: size ?? defaults.size ?? inputRecipe.defaults.size,
     density: density ?? defaults.density ?? themeDensity,
   };
-  const fieldProps = useFieldControlProps({
+  const control = useTextControl({
+    ref,
     nativeID,
     accessibilityLabel,
     accessibilityHint,
     accessibilityLabelledBy,
+    accessibilityState,
+    ariaDescribedBy,
+    ariaInvalid,
     disabled,
-    'aria-invalid': invalid,
+    invalid,
+    required,
+    onFocus,
+    onBlur,
   });
-  const [focused, setFocused] = useState(false);
-  const isDisabled = Boolean(fieldProps.disabled);
-  const isInvalid = Boolean(fieldProps.invalid || invalid);
   const mapped = mapInputStyle(theme, resolved, themeDensity, {
-    focused,
-    invalid: isInvalid,
-    disabled: isDisabled,
+    focused: control.focused,
+    invalid: control.invalid,
+    disabled: control.disabled,
   });
 
   return (
     <TextInput
-      ref={ref}
+      ref={control.ref}
       {...rest}
-      nativeID={fieldProps.nativeID}
-      accessibilityLabel={fieldProps.accessibilityLabel}
-      accessibilityHint={fieldProps.accessibilityHint}
-      accessibilityLabelledBy={fieldProps.accessibilityLabelledBy}
-      editable={!isDisabled}
+      {...control.stateProps}
+      nativeID={control.fieldProps.nativeID}
+      accessibilityLabel={control.fieldProps.accessibilityLabel}
+      accessibilityHint={control.fieldProps.accessibilityHint}
+      accessibilityLabelledBy={control.fieldProps.accessibilityLabelledBy}
+      editable={!control.disabled}
       placeholderTextColor={theme.semantic.color.textSecondary}
-      onFocus={(event) => {
-        setFocused(true);
-        onFocus?.(event);
-      }}
-      onBlur={(event) => {
-        setFocused(false);
-        onBlur?.(event);
-      }}
+      onFocus={control.onFocus}
+      onBlur={control.onBlur}
       style={[mapped, style]}
       {...({
-        'aria-invalid': fieldProps['aria-invalid'],
-        'aria-required': fieldProps['aria-required'],
-        'data-invalid': isInvalid ? 'true' : undefined,
-        'data-disabled': isDisabled ? 'true' : undefined,
+        'aria-describedby': control.fieldProps['aria-describedby'],
+        'aria-invalid': control.fieldProps['aria-invalid'],
+        'aria-required': control.fieldProps['aria-required'],
+        'data-invalid': control.invalid ? 'true' : undefined,
+        'data-disabled': control.disabled ? 'true' : undefined,
       } as object)}
     />
   );
