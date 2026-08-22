@@ -433,12 +433,28 @@ export function Consumer(): JSX.Element {
     join(fixture, 'consumer.native.tsx'),
     `
 import {
+  Avatar,
+  Badge,
   Box,
   Button,
+  Card,
+  Checkbox,
+  Field,
+  Heading,
   Inline,
+  Input,
+  Progress,
+  RadioGroup,
+  Separator,
   SilkProvider,
+  Skeleton,
+  Spinner,
   Stack,
+  StatusDot,
+  Surface,
+  Switch,
   Text,
+  Textarea,
 } from '@reactive/silk-native';
 import type { JSX } from 'react';
 
@@ -447,10 +463,32 @@ export function NativeConsumer(): JSX.Element {
     <SilkProvider colorScheme="light" density="comfortable">
       <Box padding="2">
         <Stack gap="2" rail="start">
-          <Text role="heading">Native</Text>
-          <Inline gap="1" direction="row-reverse">
-            <Button tone="accent">Go</Button>
-          </Inline>
+          <Heading level="2">Native</Heading>
+          <Surface elevation="raised" border="subtle">
+            <Card padding="3">
+              <Inline gap="1" direction="row-reverse">
+                <Button tone="accent">Go</Button>
+                <Badge tone="success">ok</Badge>
+                <StatusDot tone="accent" />
+                <Avatar fallback="NT" size="sm" />
+              </Inline>
+              <Separator />
+              <Skeleton shape="text" />
+              <Spinner size="sm" />
+              <Progress value={40} />
+              <Field.Root>
+                <Field.Label>Name</Field.Label>
+                <Input />
+                <Textarea />
+                <Checkbox accessibilityLabel="Agree" />
+                <Switch accessibilityLabel="Notify" />
+                <RadioGroup.Root>
+                  <RadioGroup.Item value="a">A</RadioGroup.Item>
+                </RadioGroup.Root>
+                <Field.Error>Required</Field.Error>
+              </Field.Root>
+            </Card>
+          </Surface>
         </Stack>
       </Box>
     </SilkProvider>
@@ -472,11 +510,23 @@ import { createTheme } from '@reactive/silk-core';
 import {
   Box,
   Button,
+  Card,
+  Checkbox,
+  Field,
+  Heading,
   Inline,
+  Input,
+  Progress,
+  RadioGroup,
   SilkProvider,
   Stack,
+  Surface,
+  Switch,
   Text,
   mapButtonStyle,
+  mapSurfaceStyle,
+  mapCheckboxStyle,
+  a11yState,
 } from '@reactive/silk-native';
 
 const theme = createTheme({ colorScheme: 'light' });
@@ -484,15 +534,27 @@ const styles = mapButtonStyle(theme, { variant: 'solid', tone: 'accent' });
 if (!styles.view.backgroundColor) {
   throw new Error('mapButtonStyle failed in packed native bundle');
 }
-if (
-  typeof Box !== 'function' ||
-  typeof Stack !== 'function' ||
-  typeof Inline !== 'function' ||
-  typeof Text !== 'function' ||
-  typeof Button !== 'function' ||
-  typeof SilkProvider !== 'function'
-) {
+const surface = mapSurfaceStyle(theme, { elevation: 'overlay' });
+if (surface.backgroundColor !== theme.semantic.color.surfaceRaised) {
+  throw new Error('overlay elevation must use surfaceRaised');
+}
+const checked = mapCheckboxStyle(theme, {}, 'comfortable', { checked: 'indeterminate' });
+if (!checked.box.backgroundColor) {
+  throw new Error('mapCheckboxStyle indeterminate failed');
+}
+const a11y = a11yState({ checked: 'mixed' });
+if (a11y['aria-checked'] !== 'mixed') {
+  throw new Error('a11yState compat helper failed');
+}
+const required = [
+  Box, Stack, Inline, Text, Button, Surface, Card, Heading,
+  Checkbox, Switch, RadioGroup, Field, Input, Progress, SilkProvider,
+];
+if (required.some((fn) => typeof fn !== 'function' && typeof fn !== 'object')) {
   throw new Error('Packed native missing component exports');
+}
+if (typeof Field.Root !== 'function' || typeof RadioGroup.Item !== 'function') {
+  throw new Error('Packed native missing compound exports');
 }
 console.log('packed-native-bundle: OK');
 `,

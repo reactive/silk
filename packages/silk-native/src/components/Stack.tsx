@@ -1,7 +1,7 @@
 import { stackRecipe, type StackVariantProps } from '@reactive/silk-core';
 import type { JSX, ReactNode, Ref } from 'react';
 import { View, type ViewProps } from 'react-native';
-import { mapStackStyle } from '../styles/mapStyles.js';
+import { mapStackStyle } from '../styles/mappers/layout.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 

@@ -14,7 +14,7 @@
  */
 import { gzipSync } from 'node:zlib';
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as esbuild from 'esbuild';
 import { createElement } from 'react';
@@ -24,39 +24,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const silkDist = join(root, 'packages/silk/dist');
 const silkEntry = join(silkDist, 'index.js');
 const nativeEntry = join(root, 'packages/silk-native/dist/index.js');
+const nativeSourceEntry = join(root, 'packages/silk-native/src/index.ts');
 const cssPath = join(silkDist, 'index.css');
 const budgetPath = join(root, 'perf-budgets.json');
 const write = process.argv.includes('--write');
-
-const COMPONENTS = [
-  'Button',
-  'Dialog',
-  'Tooltip',
-  'Popover',
-  'DropdownMenu',
-  'Select',
-  'Tabs',
-  'Accordion',
-  'Toggle',
-  'ToggleGroup',
-  'ScrollArea',
-  'Toast',
-  'Identity',
-  'MediaObject',
-  'ActionBar',
-  'StatGroup',
-  'EmptyState',
-  'PostCard',
-  'Comment',
-  'CommentThread',
-  'Notification',
-  'FeedItem',
-  'ProfileCard',
-  'SettingsPanel',
-  'StatusDot',
-];
-
-const NATIVE_COMPONENTS = ['Box', 'Stack', 'Inline', 'Text', 'Button'];
 
 function gzipBytes(buf) {
   return gzipSync(buf).length;
@@ -134,6 +105,49 @@ function loadBudgets() {
   return JSON.parse(readFileSync(budgetPath, 'utf8'));
 }
 
+/**
+ * Component exports are the source of truth. A new native component must add a
+ * budget in the same PR; stale budgets must be removed with deleted exports.
+ */
+function nativeComponentExports() {
+  const source = readFileSync(nativeSourceEntry, 'utf8');
+  const names = new Set();
+  const componentExport =
+    /export\s*\{([\s\S]*?)\}\s*from\s*['"]\.\/components\/([^'"]+)\.js['"];?/g;
+  for (const match of source.matchAll(componentExport)) {
+    const componentName = basename(match[2]);
+    const exportedNames = match[1]
+      .split(',')
+      .map((name) => name.trim().split(/\s+as\s+/).at(-1));
+    if (!exportedNames.includes(componentName)) {
+      throw new Error(
+        `Native component module ${componentName} does not export ${componentName}`,
+      );
+    }
+    names.add(componentName);
+  }
+  return [...names].sort();
+}
+
+function assertNativeBudgetCoverage(nativeBudgets) {
+  const components = nativeComponentExports();
+  const budgetNames = Object.keys(nativeBudgets).sort();
+  const missing = components.filter((name) => !nativeBudgets[name]);
+  const stale = budgetNames.filter((name) => !components.includes(name));
+  if (missing.length || stale.length) {
+    throw new Error(
+      [
+        missing.length
+          ? `missing native component budgets: ${missing.join(', ')}`
+          : '',
+        stale.length ? `stale native component budgets: ${stale.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join('; '),
+    );
+  }
+}
+
 function fail(msg) {
   console.error(`perf-budgets: FAIL — ${msg}`);
   process.exitCode = 1;
@@ -141,6 +155,11 @@ function fail(msg) {
 
 async function main() {
   const tmpDir = join(root, 'scripts/.perf-tmp');
+  const budgetFile = loadBudgets();
+  const { budgets } = budgetFile;
+  const components = Object.keys(budgets.isolatedGzip);
+  assertNativeBudgetCoverage(budgets.nativeIsolatedGzip);
+  const nativeComponents = Object.keys(budgets.nativeIsolatedGzip);
   mkdirSync(tmpDir, { recursive: true });
   try {
     const css = measureCss();
@@ -149,13 +168,13 @@ async function main() {
         // createTheme import measures the shared core+theme baseline.
         measureIsolatedJs('createTheme', tmpDir),
         Promise.all(
-          COMPONENTS.map(async (name) => [
+          components.map(async (name) => [
             name,
             await measureIsolatedJs(name, tmpDir),
           ]),
         ),
         Promise.all(
-          NATIVE_COMPONENTS.map(async (name) => [
+          nativeComponents.map(async (name) => [
             name,
             await measureIsolatedJs(name, tmpDir, {
               entryPath: nativeEntry,
@@ -181,13 +200,13 @@ async function main() {
     console.log('perf-budgets: measured');
     console.log(`  shared baseline (createTheme) gzip: ${baseline.gzip} B`);
     console.log(`  CSS raw/gzip: ${css.raw} / ${css.gzip} B`);
-    for (const name of COMPONENTS) {
+    for (const name of components) {
       console.log(
         `  ${name.padEnd(14)} gzip: ${isolated[name].gzip} B (raw ${isolated[name].raw})`,
       );
     }
     console.log('  native (react + react-native external; CSS N/A):');
-    for (const name of NATIVE_COMPONENTS) {
+    for (const name of nativeComponents) {
       console.log(
         `  native ${name.padEnd(8)} gzip: ${nativeIsolated[name].gzip} B (raw ${nativeIsolated[name].raw})`,
       );
@@ -195,12 +214,10 @@ async function main() {
     console.log(`  SSR median (informational): ${ssr.medianMs} ms`);
 
     if (write) {
-      const existing = loadBudgets();
-      const next = { ...existing, measured };
+      const next = { ...budgetFile, measured };
       writeFileSync(budgetPath, `${JSON.stringify(next, null, 2)}\n`);
       console.log(`perf-budgets: wrote ${budgetPath}`);
     } else {
-      const { budgets } = loadBudgets();
       if (css.gzip > budgets.cssGzip) {
         fail(`CSS gzip ${css.gzip} > budget ${budgets.cssGzip}`);
       }
@@ -212,7 +229,7 @@ async function main() {
           `shared baseline gzip ${baseline.gzip} > budget ${budgets.sharedBaselineGzip}`,
         );
       }
-      for (const name of COMPONENTS) {
+      for (const name of components) {
         const max = budgets.isolatedGzip[name];
         if (max == null) {
           fail(`missing isolatedGzip budget for ${name}`);
@@ -222,7 +239,7 @@ async function main() {
           fail(`${name} gzip ${isolated[name].gzip} > budget ${max}`);
         }
       }
-      for (const name of NATIVE_COMPONENTS) {
+      for (const name of nativeComponents) {
         const max = budgets.nativeIsolatedGzip[name];
         if (max == null) {
           fail(`missing nativeIsolatedGzip budget for ${name}`);

@@ -1,16 +1,32 @@
 import type {
+  AvatarVariantProps,
+  BadgeVariantProps,
   BoxVariantProps,
   ButtonVariantProps,
+  CardVariantProps,
+  CheckboxVariantProps,
+  HeadingVariantProps,
   InlineVariantProps,
+  InputVariantProps,
+  ProgressVariantProps,
+  RadioGroupVariantProps,
+  SeparatorVariantProps,
+  SkeletonVariantProps,
+  SpinnerVariantProps,
   StackVariantProps,
+  StatusDotVariantProps,
+  SurfaceVariantProps,
+  SwitchVariantProps,
   TextVariantProps,
+  TextareaVariantProps,
 } from '@reactive/silk-core';
 import { createContext, useContext, type JSX, type ReactNode } from 'react';
 import { ThemeProvider, type ThemeProviderProps } from './ThemeProvider.js';
 
 /**
- * Typed per-component defaults for native exemplars only.
+ * Typed per-component defaults for recipe-bearing native components.
  * Nested SilkProviders replace the entire map (no component-level merge).
+ * Field has no recipe — excluded (matches web).
  */
 export interface SilkDefaults {
   readonly Box?: Partial<BoxVariantProps>;
@@ -18,6 +34,21 @@ export interface SilkDefaults {
   readonly Inline?: Partial<InlineVariantProps>;
   readonly Text?: Partial<TextVariantProps>;
   readonly Button?: Partial<ButtonVariantProps>;
+  readonly Surface?: Partial<SurfaceVariantProps>;
+  readonly Card?: Partial<CardVariantProps>;
+  readonly Heading?: Partial<HeadingVariantProps>;
+  readonly Badge?: Partial<BadgeVariantProps>;
+  readonly Separator?: Partial<SeparatorVariantProps>;
+  readonly Avatar?: Partial<AvatarVariantProps>;
+  readonly StatusDot?: Partial<StatusDotVariantProps>;
+  readonly Skeleton?: Partial<SkeletonVariantProps>;
+  readonly Spinner?: Partial<SpinnerVariantProps>;
+  readonly Progress?: Partial<ProgressVariantProps>;
+  readonly Input?: Partial<InputVariantProps>;
+  readonly Textarea?: Partial<TextareaVariantProps>;
+  readonly Checkbox?: Partial<CheckboxVariantProps>;
+  readonly Switch?: Partial<SwitchVariantProps>;
+  readonly RadioGroup?: Partial<RadioGroupVariantProps>;
 }
 
 export interface SilkProviderProps extends ThemeProviderProps {

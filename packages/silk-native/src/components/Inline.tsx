@@ -1,7 +1,7 @@
 import { inlineRecipe, type InlineVariantProps } from '@reactive/silk-core';
 import type { JSX, ReactNode, Ref } from 'react';
 import { View, type ViewProps } from 'react-native';
-import { mapInlineStyle } from '../styles/mapStyles.js';
+import { mapInlineStyle } from '../styles/mappers/layout.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
