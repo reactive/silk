@@ -34,6 +34,8 @@ import {
   type RnViewStyle,
 } from './shared.js';
 
+type SizedViewStyle = RnViewStyle & { width: number; height: number };
+
 const sizeFontRole = {
   sm: 'label',
   md: 'label',
@@ -218,7 +220,7 @@ export function mapCheckboxStyle(
   props: CheckboxVariantProps = {},
   density: DensityName = 'comfortable',
   state: ToggleVisualState = {},
-): { row: RnViewStyle; box: RnViewStyle } {
+): { row: RnViewStyle; box: SizedViewStyle } {
   const size = props.size ?? checkboxRecipe.defaults.size;
   const toneName = props.tone ?? checkboxRecipe.defaults.tone;
   const space = spaceScale(theme, density);
@@ -265,7 +267,7 @@ export function mapSwitchStyle(
     readonly invalid?: boolean;
     readonly disabled?: boolean;
   } = {},
-): { track: RnViewStyle; thumb: RnViewStyle; travel: number } {
+): { track: SizedViewStyle; thumb: SizedViewStyle; travel: number } {
   const size = props.size ?? switchRecipe.defaults.size;
   const toneName = props.tone ?? switchRecipe.defaults.tone;
   const space = spaceScale(theme, density);
@@ -312,11 +314,10 @@ export function mapRadioGroupStyle(
   theme: Theme,
   props: RadioGroupVariantProps = {},
   density: DensityName = 'comfortable',
-): { root: RnViewStyle; item: RnViewStyle; indicator: RnViewStyle } {
+): { root: RnViewStyle } {
   const orientation =
     props.orientation ?? radioGroupRecipe.defaults.orientation;
   const space = spaceScale(theme, density);
-  const { item, indicator } = mapRadioItemStyle(theme, props, density);
 
   return {
     root: {
@@ -325,8 +326,6 @@ export function mapRadioGroupStyle(
       alignItems: orientation === 'horizontal' ? 'center' : 'stretch',
       gap: space[2],
     },
-    item,
-    indicator,
   };
 }
 
@@ -335,7 +334,7 @@ export function mapRadioItemStyle(
   props: RadioGroupVariantProps = {},
   density: DensityName = 'comfortable',
   state: ToggleVisualState = {},
-): { row: RnViewStyle; item: RnViewStyle; indicator: RnViewStyle } {
+): { row: RnViewStyle; item: SizedViewStyle; indicator: SizedViewStyle } {
   const size = props.size ?? radioGroupRecipe.defaults.size;
   const toneName = props.tone ?? radioGroupRecipe.defaults.tone;
   const space = spaceScale(theme, density);

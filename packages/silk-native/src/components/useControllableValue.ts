@@ -1,9 +1,5 @@
 import { useCallback, useState } from 'react';
 
-/**
- * Keep controlled/uncontrolled storage semantics consistent without owning a
- * component's transition rules or callback timing.
- */
 export function useControllableValue<T>(
   controlledValue: T | undefined,
   defaultValue: T,

@@ -14,6 +14,7 @@ import {
   type Ref,
 } from 'react';
 import { View, type ViewProps } from 'react-native';
+import { rnwAttrs } from '../styles/a11yProps.js';
 import { spaceScale } from '../styles/mappers/shared.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { Text } from './Text.js';
@@ -314,72 +315,59 @@ function FieldRoot({
     ],
   );
 
-  const rootDataProps = {
+  const rootDataProps = rnwAttrs({
     'data-invalid': invalid ? 'true' : undefined,
     'data-disabled': disabled ? 'true' : undefined,
     'data-mode': mode,
     'data-orientation': orientation,
     'data-field-root': '',
-  } as object;
+  });
 
+  const opacity = disabled ? 0.7 : 1;
+  const layoutStyle =
+    orientation === 'horizontal'
+      ? {
+          flexDirection: 'row' as const,
+          alignItems: 'center' as const,
+          gap: space[2],
+          opacity,
+        }
+      : {
+          flexDirection: 'column' as const,
+          alignItems: 'stretch' as const,
+          gap: space[1],
+          opacity,
+        };
+
+  let content = children;
   if (orientation === 'horizontal') {
     const { control, labelColumn } = partitionHorizontalChildren(children);
-    return (
-      <FieldContext.Provider value={value}>
-        <FieldActivationContext.Provider value={activation}>
+    content = (
+      <>
+        {control.length > 0 ? <View>{control}</View> : null}
+        {labelColumn.length > 0 ? (
           <View
-            ref={ref}
-            {...props}
-            style={[
-              {
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: space[2],
-                opacity: disabled ? 0.7 : 1,
-              },
-              style,
-            ]}
-            {...rootDataProps}
+            style={{
+              flexGrow: 1,
+              flexShrink: 1,
+              minWidth: 0,
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              gap: space[1],
+            }}
           >
-            {control.length > 0 ? <View>{control}</View> : null}
-            {labelColumn.length > 0 ? (
-              <View
-                style={{
-                  flexGrow: 1,
-                  flexShrink: 1,
-                  minWidth: 0,
-                  flexDirection: 'column',
-                  alignItems: 'stretch',
-                  gap: space[1],
-                }}
-              >
-                {labelColumn}
-              </View>
-            ) : null}
+            {labelColumn}
           </View>
-        </FieldActivationContext.Provider>
-      </FieldContext.Provider>
+        ) : null}
+      </>
     );
   }
 
   return (
     <FieldContext.Provider value={value}>
       <FieldActivationContext.Provider value={activation}>
-        <View
-          ref={ref}
-          {...props}
-          style={[
-            {
-              flexDirection: 'column',
-              alignItems: 'stretch',
-              gap: space[1],
-              opacity: disabled ? 0.7 : 1,
-            },
-            style,
-          ]}
-          {...rootDataProps}
-        >
-          {children}
+        <View ref={ref} {...props} style={[layoutStyle, style]} {...rootDataProps}>
+          {content}
         </View>
       </FieldActivationContext.Provider>
     </FieldContext.Provider>
@@ -417,7 +405,7 @@ function FieldLabel({
           : undefined
       }
       style={style}
-      {...({ 'data-field-label': '' } as object)}
+      {...rnwAttrs({ 'data-field-label': '' })}
     >
       {children}
       {field?.required ? (
@@ -448,7 +436,7 @@ function FieldDescription({
       tone="secondary"
       nativeID={nativeID ?? field?.descriptionId}
       style={style}
-      {...({ 'data-field-description': '' } as object)}
+      {...rnwAttrs({ 'data-field-description': '' })}
     >
       {children}
     </Text>
@@ -478,7 +466,7 @@ function FieldError({
       // Android-only live region enhancement — not an iOS status solution.
       accessibilityLiveRegion="polite"
       style={style}
-      {...({ 'data-field-error': '' } as object)}
+      {...rnwAttrs({ 'data-field-error': '' })}
     >
       {children}
     </Text>
@@ -491,9 +479,6 @@ export type FieldControlProps = {
   accessibilityLabelledBy?: string | undefined;
   accessibilityLabel?: string | undefined;
   accessibilityHint?: string | undefined;
-  accessibilityState?:
-    | { disabled?: boolean; checked?: boolean | 'mixed' }
-    | undefined;
   disabled?: boolean | undefined;
   required?: boolean | undefined;
   /** Visual invalid flag for control chrome. */
@@ -624,10 +609,6 @@ export function useFieldControlProps(options?: {
     result.accessibilityHint = options.accessibilityHint;
   } else if (field.hintText !== undefined) {
     result.accessibilityHint = field.hintText;
-  }
-
-  if (result.disabled) {
-    result.accessibilityState = { disabled: true };
   }
 
   return result;

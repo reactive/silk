@@ -5,15 +5,11 @@ import {
   type Ref,
 } from 'react';
 import type { TextInput, TextInputProps } from 'react-native';
-import {
-  a11yState,
-  type A11yStateProps,
-} from '../styles/a11yProps.js';
+import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
 import {
   useFieldControlProps,
   useFieldControlRegistration,
   type AriaInvalid,
-  type FieldControlProps,
 } from './Field.js';
 
 type TextControlOptions = {
@@ -32,15 +28,15 @@ type TextControlOptions = {
   readonly onBlur?: TextInputProps['onBlur'];
 };
 
+type TextControlHostProps = TextInputProps & {
+  readonly ref: (instance: TextInput | null) => void;
+};
+
 type TextControlResult = {
-  readonly fieldProps: FieldControlProps;
-  readonly stateProps: A11yStateProps;
   readonly focused: boolean;
   readonly disabled: boolean;
   readonly invalid: boolean;
-  readonly ref: (instance: TextInput | null) => void;
-  readonly onFocus: NonNullable<TextInputProps['onFocus']>;
-  readonly onBlur: NonNullable<TextInputProps['onBlur']>;
+  readonly inputProps: TextControlHostProps;
 };
 
 /** Shared Field, accessibility, and focus plumbing for Input and Textarea. */
@@ -59,6 +55,7 @@ export function useTextControl(
   });
   const [focused, setFocused] = useState(false);
   const disabled = Boolean(fieldProps.disabled);
+  const invalid = Boolean(fieldProps.invalid);
   const controlRef = useRef<TextInput | null>(null);
   const setRef = useCallback(
     (instance: TextInput | null) => {
@@ -77,26 +74,38 @@ export function useTextControl(
     }
   }, [disabled]);
   useFieldControlRegistration(focus);
-  const invalid = Boolean(fieldProps.invalid);
   const stateProps = a11yState({
     ...options.accessibilityState,
     disabled,
   });
 
   return {
-    fieldProps,
-    stateProps,
     focused,
     disabled,
     invalid,
-    ref: setRef,
-    onFocus: ((event) => {
-      setFocused(true);
-      options.onFocus?.(event);
-    }) satisfies NonNullable<TextInputProps['onFocus']>,
-    onBlur: ((event) => {
-      setFocused(false);
-      options.onBlur?.(event);
-    }) satisfies NonNullable<TextInputProps['onBlur']>,
+    inputProps: {
+      ref: setRef,
+      ...stateProps,
+      nativeID: fieldProps.nativeID,
+      accessibilityLabel: fieldProps.accessibilityLabel,
+      accessibilityHint: fieldProps.accessibilityHint,
+      accessibilityLabelledBy: fieldProps.accessibilityLabelledBy,
+      editable: !disabled,
+      onFocus: (event) => {
+        setFocused(true);
+        options.onFocus?.(event);
+      },
+      onBlur: (event) => {
+        setFocused(false);
+        options.onBlur?.(event);
+      },
+      ...rnwAttrs({
+        'aria-describedby': fieldProps['aria-describedby'],
+        'aria-invalid': fieldProps['aria-invalid'],
+        'aria-required': fieldProps['aria-required'],
+        'data-invalid': invalid ? 'true' : undefined,
+        'data-disabled': disabled ? 'true' : undefined,
+      }),
+    } as TextControlHostProps,
   };
 }

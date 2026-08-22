@@ -10,7 +10,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { a11yState } from '../styles/a11yProps.js';
+import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
+import { minTouchHitSlop } from '../styles/controlGeometry.js';
 import {
   checkboxIndicatorColor,
   mapCheckboxStyle,
@@ -97,9 +98,10 @@ export function Checkbox({
 }: CheckboxProps): JSX.Element {
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('Checkbox');
+  const resolvedTone = tone ?? defaults.tone ?? checkboxRecipe.defaults.tone;
   const resolved: CheckboxVariantProps = {
     size: size ?? defaults.size ?? checkboxRecipe.defaults.size,
-    tone: tone ?? defaults.tone ?? checkboxRecipe.defaults.tone,
+    tone: resolvedTone,
   };
   const fieldProps = useFieldControlProps({
     disabled,
@@ -112,7 +114,7 @@ export function Checkbox({
     'aria-describedby': ariaDescribedBy,
   });
   const isDisabled = Boolean(fieldProps.disabled);
-  const isInvalid = Boolean(fieldProps.invalid || invalid);
+  const isInvalid = Boolean(fieldProps.invalid);
 
   const [checked, setUncontrolled] = useControllableValue(
     checkedProp,
@@ -124,12 +126,7 @@ export function Checkbox({
     invalid: isInvalid,
     disabled: isDisabled,
   });
-  const edge = typeof box.width === 'number' ? box.width : 20;
-  const glyphColor = checkboxIndicatorColor(
-    theme,
-    resolved.tone ?? checkboxRecipe.defaults.tone,
-    isDisabled,
-  );
+  const glyphColor = checkboxIndicatorColor(theme, resolvedTone, isDisabled);
 
   const a11yChecked: boolean | 'mixed' =
     checked === 'indeterminate' ? 'mixed' : Boolean(checked);
@@ -139,7 +136,7 @@ export function Checkbox({
     disabled: isDisabled,
   });
 
-  const hitSlop = Math.max(0, Math.ceil((44 - edge) / 2));
+  const hitSlop = minTouchHitSlop(box.width);
 
   const toggle = useCallback((): void => {
     if (isDisabled) return;
@@ -156,15 +153,15 @@ export function Checkbox({
       {...rest}
       {...stateProps}
       accessibilityRole="checkbox"
-      accessibilityLabel={fieldProps.accessibilityLabel ?? accessibilityLabel}
-      accessibilityHint={fieldProps.accessibilityHint ?? accessibilityHint}
+      accessibilityLabel={fieldProps.accessibilityLabel}
+      accessibilityHint={fieldProps.accessibilityHint}
       accessibilityLabelledBy={fieldProps.accessibilityLabelledBy}
       nativeID={fieldProps.nativeID}
       disabled={isDisabled}
       hitSlop={hitSlop}
       onPress={toggle}
       style={[row, style]}
-      {...({
+      {...rnwAttrs({
         'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],
         'aria-required': fieldProps['aria-required'],
@@ -175,12 +172,12 @@ export function Checkbox({
             : checked
               ? 'checked'
               : 'unchecked',
-      } as object)}
+      })}
     >
       <View style={box}>
-        {checked === true ? <CheckGlyph color={glyphColor} size={edge} /> : null}
+        {checked === true ? <CheckGlyph color={glyphColor} size={box.width} /> : null}
         {checked === 'indeterminate' ? (
-          <DashGlyph color={glyphColor} size={edge} />
+          <DashGlyph color={glyphColor} size={box.width} />
         ) : null}
       </View>
       {typeof children === 'string' || typeof children === 'number' ? (

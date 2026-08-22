@@ -75,25 +75,10 @@ export function Input({
 
   return (
     <TextInput
-      ref={control.ref}
       {...rest}
-      {...control.stateProps}
-      nativeID={control.fieldProps.nativeID}
-      accessibilityLabel={control.fieldProps.accessibilityLabel}
-      accessibilityHint={control.fieldProps.accessibilityHint}
-      accessibilityLabelledBy={control.fieldProps.accessibilityLabelledBy}
-      editable={!control.disabled}
+      {...control.inputProps}
       placeholderTextColor={theme.semantic.color.textSecondary}
-      onFocus={control.onFocus}
-      onBlur={control.onBlur}
       style={[mapped, style]}
-      {...({
-        'aria-describedby': control.fieldProps['aria-describedby'],
-        'aria-invalid': control.fieldProps['aria-invalid'],
-        'aria-required': control.fieldProps['aria-required'],
-        'data-invalid': control.invalid ? 'true' : undefined,
-        'data-disabled': control.disabled ? 'true' : undefined,
-      } as object)}
     />
   );
 }

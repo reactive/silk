@@ -45,7 +45,16 @@ export interface A11yValueProps {
   readonly 'aria-valuetext'?: string;
 }
 
-/** Pair `accessibilityState` with ARIA aliases for RNW. */
+/**
+ * RN typings omit attrs RNW and native a11y still read at runtime
+ * (`data-*`, `aria-*`, `accessibilityLevel`).
+ */
+export function rnwAttrs(
+  attrs: Record<string, string | number | boolean | undefined>,
+): object {
+  return attrs;
+}
+
 export function a11yState(
   state: AccessibilityStateCompat,
 ): A11yStateProps {
@@ -65,7 +74,6 @@ export function a11yState(
   };
 }
 
-/** Pair `accessibilityValue` with flattened + ARIA aliases for RNW. */
 export function a11yValue(value: AccessibilityValueCompat): A11yValueProps {
   return {
     accessibilityValue: value,

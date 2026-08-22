@@ -4,6 +4,7 @@ import {
   Text as RNText,
   type TextProps as RNTextProps,
 } from 'react-native';
+import { rnwAttrs } from '../styles/a11yProps.js';
 import { mapHeadingStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -42,10 +43,10 @@ export function Heading({
       {...rest}
       accessibilityRole={accessibilityRole}
       // iOS VoiceOver uses accessibilityLevel; RNW maps aria-level.
-      {...({
+      {...rnwAttrs({
         accessibilityLevel: headingLevel,
         'aria-level': headingLevel,
-      } as object)}
+      })}
       style={[mapped, style]}
     >
       {children}

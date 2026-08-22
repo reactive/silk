@@ -144,22 +144,17 @@ export function mapCardStyle(
   const radius = props.radius ?? cardRecipe.defaults.radius;
   const interactive = props.interactive ?? cardRecipe.defaults.interactive;
   const space = spaceScale(theme, density);
-  const shadowLevel =
-    pressed && interactive === 'true'
-      ? pressedShadowLevel(elevation)
-      : elevationShadowLevel(elevation);
 
   return {
+    ...mapSurfaceStyle(
+      theme,
+      { elevation, radius, border: 'subtle', interactive },
+      pressed,
+    ),
     flexDirection: 'column',
     alignItems: 'stretch',
     gap: space[2],
     padding: space[padding],
-    backgroundColor: elevationBackground(theme, elevation),
-    borderRadius: theme.semantic.radius[radius],
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: theme.semantic.color.borderSubtle,
-    ...mapShadow(theme, shadowLevel),
   };
 }
 

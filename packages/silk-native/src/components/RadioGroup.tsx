@@ -4,7 +4,9 @@ import {
 } from '@reactive/silk-core';
 import {
   createContext,
+  useCallback,
   useContext,
+  useMemo,
   type JSX,
   type ReactNode,
   type Ref,
@@ -17,7 +19,8 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { a11yState } from '../styles/a11yProps.js';
+import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
+import { minTouchHitSlop } from '../styles/controlGeometry.js';
 import {
   mapRadioGroupStyle,
   mapRadioItemStyle,
@@ -76,9 +79,11 @@ function RadioGroupRoot({
 }: RadioGroupRootProps): JSX.Element {
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('RadioGroup');
+  const resolvedSize = size ?? defaults.size ?? radioGroupRecipe.defaults.size;
+  const resolvedTone = tone ?? defaults.tone ?? radioGroupRecipe.defaults.tone;
   const resolved: RadioGroupVariantProps = {
-    size: size ?? defaults.size ?? radioGroupRecipe.defaults.size,
-    tone: tone ?? defaults.tone ?? radioGroupRecipe.defaults.tone,
+    size: resolvedSize,
+    tone: resolvedTone,
     orientation:
       orientation ??
       defaults.orientation ??
@@ -95,28 +100,42 @@ function RadioGroupRoot({
     'aria-describedby': ariaDescribedBy,
   });
   const isDisabled = Boolean(fieldProps.disabled);
-  const isInvalid = Boolean(fieldProps.invalid || invalid);
+  const isInvalid = Boolean(fieldProps.invalid);
   const [value, setUncontrolled] = useControllableValue<
     string | undefined
   >(valueProp, defaultValue);
 
   const { root } = mapRadioGroupStyle(theme, resolved, density);
-
-  const ctx: RadioGroupContextValue = {
-    value,
-    onValueChange: (next) => {
+  const handleValueChange = useCallback(
+    (next: string) => {
       if (isDisabled) return;
       // Match web/Radix: only emit when the selection actually changes.
       if (next === value) return;
       setUncontrolled(next);
       onValueChange?.(next);
     },
-    disabled: isDisabled,
-    invalid: isInvalid,
-    size: resolved.size ?? radioGroupRecipe.defaults.size,
-    tone: resolved.tone ?? radioGroupRecipe.defaults.tone,
-    density,
-  };
+    [isDisabled, value, setUncontrolled, onValueChange],
+  );
+  const ctx = useMemo<RadioGroupContextValue>(
+    () => ({
+      value,
+      onValueChange: handleValueChange,
+      disabled: isDisabled,
+      invalid: isInvalid,
+      size: resolvedSize,
+      tone: resolvedTone,
+      density,
+    }),
+    [
+      value,
+      handleValueChange,
+      isDisabled,
+      isInvalid,
+      resolvedSize,
+      resolvedTone,
+      density,
+    ],
+  );
 
   return (
     <RadioGroupContext.Provider value={ctx}>
@@ -129,13 +148,13 @@ function RadioGroupRoot({
         accessibilityLabelledBy={fieldProps.accessibilityLabelledBy}
         nativeID={fieldProps.nativeID}
         style={[root, style]}
-        {...({
+        {...rnwAttrs({
           'aria-describedby': fieldProps['aria-describedby'],
           'aria-invalid': fieldProps['aria-invalid'],
           'aria-required': fieldProps['aria-required'],
           'data-invalid': isInvalid ? 'true' : undefined,
           'data-orientation': resolved.orientation,
-        } as object)}
+        })}
       >
         {children}
       </View>
@@ -173,24 +192,7 @@ function RadioGroupItem({
     group.density,
     { checked, invalid: group.invalid, disabled: isDisabled },
   );
-  const edge = typeof item.width === 'number' ? item.width : 20;
-  const hitSlop = Math.max(0, Math.ceil((44 - edge) / 2));
   const stateProps = a11yState({ checked, disabled: isDisabled });
-
-  const content = (
-    <>
-      <View style={item}>
-        {checked ? <View style={indicator} /> : null}
-      </View>
-      {children !== undefined && children !== null ? (
-        typeof children === 'string' || typeof children === 'number' ? (
-          <Text role="label">{children}</Text>
-        ) : (
-          children
-        )
-      ) : null}
-    </>
-  );
 
   return (
     <Pressable
@@ -199,14 +201,21 @@ function RadioGroupItem({
       {...stateProps}
       accessibilityRole="radio"
       disabled={isDisabled}
-      hitSlop={hitSlop}
+      hitSlop={minTouchHitSlop(item.width)}
       onPress={() => group.onValueChange(value)}
       style={[row, style]}
-      {...({
+      {...rnwAttrs({
         'data-state': checked ? 'checked' : 'unchecked',
-      } as object)}
+      })}
     >
-      {content}
+      <View style={item}>
+        {checked ? <View style={indicator} /> : null}
+      </View>
+      {typeof children === 'string' || typeof children === 'number' ? (
+        <Text role="label">{children}</Text>
+      ) : (
+        children
+      )}
     </Pressable>
   );
 }

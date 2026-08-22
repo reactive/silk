@@ -4,6 +4,7 @@ import {
 } from '@reactive/silk-core';
 import type { JSX, Ref } from 'react';
 import { View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { rnwAttrs } from '../styles/a11yProps.js';
 import { mapSeparatorStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -25,13 +26,12 @@ export function Separator({
 }: SeparatorProps): JSX.Element {
   const { theme } = useTheme();
   const defaults = useComponentDefaults('Separator');
+  const resolvedOrientation =
+    orientation ?? defaults.orientation ?? separatorRecipe.defaults.orientation;
   const resolved: SeparatorVariantProps = {
-    orientation:
-      orientation ?? defaults.orientation ?? separatorRecipe.defaults.orientation,
+    orientation: resolvedOrientation,
   };
   const mapped = mapSeparatorStyle(theme, resolved);
-  const resolvedOrientation =
-    resolved.orientation ?? separatorRecipe.defaults.orientation;
 
   if (decorative) {
     return (
@@ -49,9 +49,8 @@ export function Separator({
     <View
       ref={ref}
       {...rest}
-      // Broader `role` prop — RN + RNW map "separator".
       role="separator"
-      {...({ 'aria-orientation': resolvedOrientation } as object)}
+      {...rnwAttrs({ 'aria-orientation': resolvedOrientation })}
       style={[mapped, style]}
     />
   );

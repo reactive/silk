@@ -17,8 +17,9 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { a11yState } from '../styles/a11yProps.js';
+import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
 import {
+  minTouchHitSlop,
   switchThumbInset,
   switchThumbTravel,
 } from '../styles/controlGeometry.js';
@@ -83,7 +84,7 @@ export function Switch({
     'aria-describedby': ariaDescribedBy,
   });
   const isDisabled = Boolean(fieldProps.disabled);
-  const isInvalid = Boolean(fieldProps.invalid || invalid);
+  const isInvalid = Boolean(fieldProps.invalid);
   const [checked, setUncontrolled] = useControllableValue(
     checkedProp,
     defaultChecked,
@@ -99,7 +100,7 @@ export function Switch({
       disabled: isDisabled,
     },
   );
-  const thumbSize = typeof thumb.width === 'number' ? thumb.width : 0;
+  const thumbSize = thumb.width;
   const [layoutWidth, setLayoutWidth] = useState(0);
   const travel =
     layoutWidth > 0
@@ -138,8 +139,7 @@ export function Switch({
     theme.semantic.motion.fast.durationMs,
   ]);
 
-  const trackHeight = typeof track.height === 'number' ? track.height : 20;
-  const hitSlop = Math.max(0, Math.ceil((44 - trackHeight) / 2));
+  const hitSlop = minTouchHitSlop(track.height);
   const stateProps = a11yState({
     ...accessibilityState,
     checked: Boolean(checked),
@@ -160,8 +160,8 @@ export function Switch({
       {...rest}
       {...stateProps}
       accessibilityRole="switch"
-      accessibilityLabel={fieldProps.accessibilityLabel ?? accessibilityLabel}
-      accessibilityHint={fieldProps.accessibilityHint ?? accessibilityHint}
+      accessibilityLabel={fieldProps.accessibilityLabel}
+      accessibilityHint={fieldProps.accessibilityHint}
       accessibilityLabelledBy={fieldProps.accessibilityLabelledBy}
       nativeID={fieldProps.nativeID}
       disabled={isDisabled}
@@ -169,13 +169,13 @@ export function Switch({
       onPress={toggle}
       onLayout={onLayout}
       style={[track, style]}
-      {...({
+      {...rnwAttrs({
         'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],
         'aria-required': fieldProps['aria-required'],
         'data-invalid': isInvalid ? 'true' : undefined,
         'data-state': checked ? 'checked' : 'unchecked',
-      } as object)}
+      })}
     >
       <Animated.View
         style={[

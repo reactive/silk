@@ -83,6 +83,13 @@ export const progressTrackStep: Readonly<Record<ProgressSize, SpaceStep>> = {
   lg: 3,
 };
 
+/** Smallest tap target expanded via hitSlop (Apple HIG 44pt). */
+export const minTouchTarget = 44;
+
+export function minTouchHitSlop(extent: number): number {
+  return Math.max(0, Math.ceil((minTouchTarget - extent) / 2));
+}
+
 /** Thumb inset on Switch (web: 2px margin each side). */
 export const switchThumbInset = 2;
 

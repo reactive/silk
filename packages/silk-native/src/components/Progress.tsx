@@ -49,9 +49,10 @@ export function Progress({
 }: ProgressProps): JSX.Element {
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('Progress');
+  const resolvedTone = tone ?? defaults.tone ?? progressRecipe.defaults.tone;
   const resolved: ProgressVariantProps = {
     size: size ?? defaults.size ?? progressRecipe.defaults.size,
-    tone: tone ?? defaults.tone ?? progressRecipe.defaults.tone,
+    tone: resolvedTone,
   };
   const { track, indicator } = mapProgressStyle(theme, resolved, density);
   const preference = useMotionPreference();
@@ -124,17 +125,15 @@ export function Progress({
       : '40%'
     : `${pct * 100}%`;
 
-  const valueProps = a11yValue(
-    indeterminate
-      ? { min: 0, max: safeMax }
-      : { min: 0, max: safeMax, now: resolvedValue as number },
-  );
+  const valueProps = a11yValue({
+    min: 0,
+    max: safeMax,
+    ...(resolvedValue != null ? { now: resolvedValue } : {}),
+  });
 
   const indicatorBg =
     indeterminate && reduced
-      ? theme.semantic.color.tones[
-          resolved.tone ?? progressRecipe.defaults.tone
-        ].subtle
+      ? theme.semantic.color.tones[resolvedTone].subtle
       : indicator.backgroundColor;
 
   return (
