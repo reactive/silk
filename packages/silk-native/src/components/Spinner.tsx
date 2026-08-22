@@ -1,5 +1,5 @@
 import { spinnerRecipe, type SpinnerVariantProps } from '@reactive/silk-core';
-import { useEffect, useRef, type JSX } from 'react';
+import { useEffect, useMemo, useRef, type JSX } from 'react';
 import {
   Animated,
   Easing,
@@ -67,10 +67,14 @@ export function Spinner({
     };
   }, [preference, rotation, theme.semantic.motion.loop.durationMs]);
 
-  const rotate = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const rotate = useMemo(
+    () =>
+      rotation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg'],
+      }),
+    [rotation],
+  );
 
   return (
     <Animated.View

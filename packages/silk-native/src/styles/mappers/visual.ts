@@ -188,10 +188,7 @@ export function mapHeadingStyle(
   const size = props.size ?? levelToDefaultSize[level];
   const tone = props.tone ?? headingRecipe.defaults.tone;
   const role = headingSizeToRole[size];
-  return {
-    color: textToneColor[tone](theme),
-    ...typographyStyle(theme, role),
-  };
+  return mapTextStyle(theme, { role, tone, measure: 'none' });
 }
 
 export function mapBadgeStyle(

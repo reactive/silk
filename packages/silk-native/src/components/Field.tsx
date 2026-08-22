@@ -524,91 +524,58 @@ export function useFieldControlProps(options?: {
   readonly labelledBy?: boolean | undefined;
 }): FieldControlProps {
   const field = useContext(FieldContext);
-
-  if (!field) {
-    const result: FieldControlProps = {};
-    const id = options?.nativeID ?? options?.id;
-    if (id !== undefined) result.nativeID = id;
-    if (options?.accessibilityLabel !== undefined) {
-      result.accessibilityLabel = options.accessibilityLabel;
-    }
-    if (options?.accessibilityHint !== undefined) {
-      result.accessibilityHint = options.accessibilityHint;
-    }
-    const labelledBy = normalizeLabelledBy(options?.accessibilityLabelledBy);
-    if (labelledBy !== undefined) {
-      result.accessibilityLabelledBy = labelledBy;
-    }
-    if (options?.['aria-describedby'] !== undefined) {
-      result['aria-describedby'] = options['aria-describedby'];
-    }
-    if (options?.disabled !== undefined) result.disabled = options.disabled;
-    if (options?.required !== undefined) {
-      result.required = options.required;
-      if (options.required) result['aria-required'] = true;
-    }
-    if (options?.['aria-invalid'] !== undefined) {
-      result['aria-invalid'] = options['aria-invalid'];
-      if (isVisuallyInvalid(options['aria-invalid'])) {
-        result.invalid = true;
-      }
-    }
-    return result;
-  }
-
-  const invalidValue: AriaInvalid | undefined =
-    options?.['aria-invalid'] !== undefined
-      ? options['aria-invalid']
-      : field.invalid
-        ? true
-        : undefined;
+  const disabled = options?.disabled ?? field?.disabled;
+  const required = options?.required ?? field?.required;
+  const invalidValue =
+    options?.['aria-invalid'] ?? (field?.invalid ? true : undefined);
   const invalidFlag = isVisuallyInvalid(invalidValue);
-  const required = options?.required ?? field.required;
+  const result: FieldControlProps = {};
 
-  const result: FieldControlProps = {
-    disabled: options?.disabled ?? field.disabled,
-    required,
-    ...(invalidValue !== undefined ? { 'aria-invalid': invalidValue } : {}),
-    ...(invalidFlag ? { invalid: true } : {}),
-    ...(required ? { 'aria-required': true } : {}),
-  };
+  if (disabled !== undefined) result.disabled = disabled;
+  if (required !== undefined) result.required = required;
+  if (required) result['aria-required'] = true;
+  if (invalidValue !== undefined) result['aria-invalid'] = invalidValue;
+  if (invalidFlag) result.invalid = true;
 
-  const useLabelledBy =
-    field.mode === 'group' ||
-    field.labelAssociation === 'labelledby' ||
-    options?.labelledBy === true;
-
-  if (field.mode === 'single' && !useLabelledBy) {
-    result.nativeID = options?.nativeID ?? options?.id ?? field.inputId;
-  } else if (options?.nativeID !== undefined || options?.id !== undefined) {
-    result.nativeID = options.nativeID ?? options.id;
+  const explicitId = options?.nativeID ?? options?.id;
+  let useLabelledBy = false;
+  if (field) {
+    useLabelledBy =
+      field.mode === 'group' ||
+      field.labelAssociation === 'labelledby' ||
+      options?.labelledBy === true;
+    if (field.mode === 'single' && !useLabelledBy) {
+      result.nativeID = explicitId ?? field.inputId;
+    } else if (explicitId !== undefined) {
+      result.nativeID = explicitId;
+    }
+  } else if (explicitId !== undefined) {
+    result.nativeID = explicitId;
   }
 
-  // Explicit labelledBy always wins (including outside useLabelledBy mode).
   const explicitLabelledBy = normalizeLabelledBy(
     options?.accessibilityLabelledBy,
   );
   if (explicitLabelledBy !== undefined) {
     result.accessibilityLabelledBy = explicitLabelledBy;
-  } else if (useLabelledBy && field.labelledBy !== undefined) {
+  } else if (field && useLabelledBy && field.labelledBy !== undefined) {
     result.accessibilityLabelledBy = field.labelledBy;
   }
 
-  const describedBy = options?.['aria-describedby'] ?? field.describedBy;
+  const describedBy = options?.['aria-describedby'] ?? field?.describedBy;
   if (describedBy !== undefined) {
     result['aria-describedby'] = describedBy;
   }
 
   // Cross-platform name/hint fallback (accessibilityLabelledBy is Android-only).
-  if (options?.accessibilityLabel !== undefined) {
-    result.accessibilityLabel = options.accessibilityLabel;
-  } else if (field.labelText !== undefined) {
-    result.accessibilityLabel = field.labelText;
+  const accessibilityLabel =
+    options?.accessibilityLabel ?? field?.labelText;
+  if (accessibilityLabel !== undefined) {
+    result.accessibilityLabel = accessibilityLabel;
   }
-  if (options?.accessibilityHint !== undefined) {
-    result.accessibilityHint = options.accessibilityHint;
-  } else if (field.hintText !== undefined) {
-    result.accessibilityHint = field.hintText;
+  const accessibilityHint = options?.accessibilityHint ?? field?.hintText;
+  if (accessibilityHint !== undefined) {
+    result.accessibilityHint = accessibilityHint;
   }
 
   return result;
