@@ -15,14 +15,20 @@ import { StatusDot } from './StatusDot.js';
 import { Surface } from './Surface.js';
 import { Text } from './Text.js';
 
-test('Heading exposes header role and aria-level', () => {
+test('Heading exposes header role and heading level', () => {
   render(
     <SilkProvider>
-      <Heading level="1">Title</Heading>
+      <Heading level="2">Section</Heading>
+      <Heading level="3">Subsection</Heading>
     </SilkProvider>,
   );
-  const heading = screen.getByRole('heading', { name: 'Title' });
-  expect(heading.getAttribute('aria-level')).toBe('1');
+  const section = screen.getByRole('heading', { name: 'Section', level: 2 });
+  const subsection = screen.getByRole('heading', {
+    name: 'Subsection',
+    level: 3,
+  });
+  expect(section.getAttribute('aria-level')).toBe('2');
+  expect(subsection.getAttribute('aria-level')).toBe('3');
 });
 
 test('Surface with onPress is pressable button; interactive alone is not', () => {

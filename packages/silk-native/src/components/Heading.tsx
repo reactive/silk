@@ -34,15 +34,18 @@ export function Heading({
     tone: tone ?? defaults.tone ?? headingRecipe.defaults.tone,
   };
   const mapped = mapHeadingStyle(theme, resolved);
-  const ariaLevel = Number(resolvedLevel);
+  const headingLevel = Number(resolvedLevel);
 
   return (
     <RNText
       ref={ref}
       {...rest}
       accessibilityRole={accessibilityRole}
-      // RNW maps aria-level for heading semantics.
-      {...({ 'aria-level': ariaLevel } as object)}
+      // iOS VoiceOver uses accessibilityLevel; RNW maps aria-level.
+      {...({
+        accessibilityLevel: headingLevel,
+        'aria-level': headingLevel,
+      } as object)}
       style={[mapped, style]}
     >
       {children}
