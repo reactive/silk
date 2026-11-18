@@ -122,6 +122,8 @@ export function Pressable({
       {...rest}
       onFocus={(event) => {
         if (Platform.OS === 'web') {
+          // react-native-web calls onFocus only for this element's own focus,
+          // not a focused child's.
           const target = event.target as unknown as FocusTarget;
           setFocusVisible(matchesFocusVisible(target));
           watchKeys(target);

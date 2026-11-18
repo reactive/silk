@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Button } from './Button.js';
 import { Card } from './Card.js';
@@ -176,15 +176,48 @@ test('pressable Card and Surface ring too', () => {
   }
 });
 
-test("no component uses React Native's Pressable directly", () => {
-  const dir = path.dirname(fileURLToPath(import.meta.url));
-  const offenders = readdirSync(dir)
-    .filter((f) => f.endsWith('.tsx') && !f.endsWith('.test.tsx') && f !== 'Pressable.tsx')
-    .filter((f) =>
-      /import\s*\{[^}]*\bPressable\b[^}]*\}\s*from\s*'react-native'/.test(
-        readFileSync(path.join(dir, f), 'utf8'),
-      ),
+test('a focused child rings itself, not the pressable around it', () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Card testID="card" onPress={() => {}}>
+        <Checkbox testID="box">Agree</Checkbox>
+      </Card>
+    </SilkProvider>,
+  );
+  const card = screen.getByTestId('card');
+  const box = screen.getByTestId('box');
+  focus(box, true);
+  fireEvent.focusIn(box);
+  expect(outlineColor(box)).toBe(ring('accent'));
+  expect(outlineColor(card)).toBe('');
+});
+
+test('on native, every focus rings', () => {
+  const os = Platform.OS;
+  Object.assign(Platform, { OS: 'android' });
+  try {
+    render(
+      <SilkProvider theme={theme}>
+        <Pressable accessibilityRole="button" testID="p" />
+      </SilkProvider>,
     );
+    const el = screen.getByTestId('p');
+    focus(el, false);
+    expect(outlineColor(el)).toBe(ring('accent'));
+  } finally {
+    Object.assign(Platform, { OS: os });
+  }
+});
+
+test("no source file uses React Native's Pressable or Touchables directly", () => {
+  const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const files = (readdirSync(src, { recursive: true }) as string[]).filter(
+    (f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f) && !f.endsWith('Pressable.tsx'),
+  );
+  // Any import of these names from react-native, or a namespace import of it.
+  const bypass =
+    /(?:import|export)\s*(?:type\s*)?\{[^}]*\b(?:Pressable|Touchable\w*)\b[^}]*\}\s*from\s*['"]react-native['"]|import\s*\*\s*as\s*\w+\s*from\s*['"]react-native['"]|require\(\s*['"]react-native['"]\s*\)/;
+  const offenders = files.filter((f) => bypass.test(readFileSync(path.join(src, f), 'utf8')));
   // Import Silk's Pressable ('./Pressable.js') so every pressable rings on focus.
   expect(offenders).toEqual([]);
 });
