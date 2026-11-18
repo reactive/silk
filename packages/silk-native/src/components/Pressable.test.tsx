@@ -1,12 +1,17 @@
 import { createTheme, type ToneName } from '@reactive/silk-core';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Button } from './Button.js';
+import { Card } from './Card.js';
 import { Checkbox } from './Checkbox.js';
 import { Pressable } from './Pressable.js';
 import { RadioGroup } from './RadioGroup.js';
+import { Surface } from './Surface.js';
 import { Switch } from './Switch.js';
 
 const theme = createTheme({ colorScheme: 'dark' });
@@ -137,4 +142,31 @@ test('Silk controls ring in their tone, and in danger when invalid', () => {
   expect(outlineColor(button)).toBe(ring('success'));
   expect(outlineColor(box)).toBe(ring('danger'));
   expect(outlineColor(radio)).toBe(ring('accent'));
+});
+
+test('pressable Card and Surface ring too', () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Card testID="card" onPress={() => {}} />
+      <Surface testID="surface" onPress={() => {}} />
+    </SilkProvider>,
+  );
+  for (const id of ['card', 'surface']) {
+    const el = screen.getByTestId(id);
+    focus(el, true);
+    expect(outlineColor(el)).toBe(ring('accent'));
+  }
+});
+
+test("no component uses React Native's Pressable directly", () => {
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+  const offenders = readdirSync(dir)
+    .filter((f) => f.endsWith('.tsx') && !f.endsWith('.test.tsx') && f !== 'Pressable.tsx')
+    .filter((f) =>
+      /import\s*\{[^}]*\bPressable\b[^}]*\}\s*from\s*'react-native'/.test(
+        readFileSync(path.join(dir, f), 'utf8'),
+      ),
+    );
+  // Import Silk's Pressable ('./Pressable.js') so every pressable rings on focus.
+  expect(offenders).toEqual([]);
 });
