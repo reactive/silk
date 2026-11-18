@@ -168,7 +168,10 @@ export function Switch({
       onPress={toggle}
       onLayout={onLayout}
       // The ring replaces the invalid outline while focused (web parity).
-      style={({ focusVisible }) => [focusVisible ? trackWithoutOutline : track, style]}
+      style={({ focusVisible }) => [
+        focusVisible ? trackWithoutOutline : track,
+        style,
+      ]}
       {...rnwAttrs({
         'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],

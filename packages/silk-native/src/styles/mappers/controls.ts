@@ -290,7 +290,8 @@ export function mapSwitchStyle(
       height: trackHeight,
       borderRadius: theme.semantic.radius.full,
       backgroundColor: trackBg,
-      // Outline keys only when drawn: they would override Pressable's ring.
+      // Outline keys only when drawn, since they override Pressable's ring;
+      // Switch drops these while its ring shows.
       ...(state.invalid && !state.disabled
         ? {
             outlineWidth: 1,
