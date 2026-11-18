@@ -6,6 +6,8 @@ export { Inline } from './components/Inline.js';
 export type { InlineProps } from './components/Inline.js';
 export { Text } from './components/Text.js';
 export type { TextProps } from './components/Text.js';
+export { Pressable } from './components/Pressable.js';
+export type { PressableProps, PressableState } from './components/Pressable.js';
 export { Button } from './components/Button.js';
 export type { ButtonProps } from './components/Button.js';
 export { Surface } from './components/Surface.js';
@@ -80,6 +82,7 @@ export {
   mapButtonStyle,
   mapCardStyle,
   mapCheckboxStyle,
+  mapFocusRingStyle,
   mapHeadingStyle,
   mapInlineStyle,
   mapInputStyle,

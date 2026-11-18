@@ -198,6 +198,11 @@ test('invalid Switch uses an outline without changing thumb geometry', () => {
   expect(invalid.track.width).toBe(valid.track.width);
 });
 
+test('valid Switch track has no outline keys to hide the focus ring', () => {
+  // Pressable composes the track after its ring, so any outline key would hide it.
+  expect('outlineWidth' in mapSwitchStyle(theme).track).toBe(false);
+});
+
 test('recipe defaults remain the shared contract', () => {
   expect(boxRecipe.defaults.padding).toBe('0');
   expect(stackRecipe.defaults.align).toBe('stretch');

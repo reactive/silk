@@ -5,15 +5,11 @@ import {
   useRef,
   useState,
   type JSX,
-  type Ref,
 } from 'react';
 import {
   Animated,
   I18nManager,
-  Pressable,
-  View,
   type LayoutChangeEvent,
-  type PressableProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -27,6 +23,7 @@ import { mapSwitchStyle } from '../styles/mappers/controls.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { Pressable, type PressableProps } from './Pressable.js';
 import {
   useFieldControlProps,
   useFieldControlRegistration,
@@ -35,8 +32,7 @@ import { useControllableValue } from './useControllableValue.js';
 
 export interface SwitchProps
   extends SwitchVariantProps,
-    Omit<PressableProps, 'children' | 'style' | 'onPress'> {
-  readonly ref?: Ref<View>;
+    Omit<PressableProps, 'children' | 'style' | 'onPress' | 'focusRing'> {
   readonly style?: StyleProp<ViewStyle>;
   readonly checked?: boolean;
   readonly defaultChecked?: boolean;
@@ -100,6 +96,8 @@ export function Switch({
       disabled: isDisabled,
     },
   );
+  const { outlineWidth, outlineStyle, outlineColor, ...trackWithoutOutline } =
+    track;
   const thumbSize = thumb.width;
   const [layoutWidth, setLayoutWidth] = useState(0);
   const travel =
@@ -166,9 +164,14 @@ export function Switch({
       nativeID={fieldProps.nativeID}
       disabled={isDisabled}
       hitSlop={hitSlop}
+      focusRing={isInvalid ? 'danger' : resolved.tone}
       onPress={toggle}
       onLayout={onLayout}
-      style={[track, style]}
+      // The ring replaces the invalid outline while focused (web parity).
+      style={({ focusVisible }) => [
+        focusVisible ? trackWithoutOutline : track,
+        style,
+      ]}
       {...rnwAttrs({
         'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],

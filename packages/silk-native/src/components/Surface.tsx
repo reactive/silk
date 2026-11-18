@@ -1,9 +1,7 @@
 import { surfaceRecipe, type SurfaceVariantProps } from '@reactive/silk-core';
 import type { JSX, ReactNode, Ref } from 'react';
 import {
-  Pressable,
   View,
-  type PressableProps,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
@@ -11,6 +9,7 @@ import {
 import { mapSurfaceStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { Pressable, type PressableProps } from './Pressable.js';
 
 export interface SurfaceProps
   extends SurfaceVariantProps, Omit<ViewProps, 'children' | 'style'> {

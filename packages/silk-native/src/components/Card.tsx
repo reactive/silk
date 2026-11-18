@@ -1,9 +1,7 @@
 import { cardRecipe, type CardVariantProps } from '@reactive/silk-core';
 import type { JSX, ReactNode, Ref } from 'react';
 import {
-  Pressable,
   View,
-  type PressableProps,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
@@ -11,6 +9,7 @@ import {
 import { mapCardStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { Pressable, type PressableProps } from './Pressable.js';
 
 export interface CardProps
   extends CardVariantProps, Omit<ViewProps, 'children' | 'style'> {

@@ -12,9 +12,7 @@ import {
   type Ref,
 } from 'react';
 import {
-  Pressable,
   View,
-  type PressableProps,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
@@ -28,6 +26,7 @@ import {
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { useFieldControlProps } from './Field.js';
+import { Pressable, type PressableProps } from './Pressable.js';
 import { Text } from './Text.js';
 import { useControllableValue } from './useControllableValue.js';
 
@@ -163,8 +162,7 @@ function RadioGroupRoot({
 }
 
 export interface RadioGroupItemProps
-  extends Omit<PressableProps, 'children' | 'style' | 'onPress'> {
-  readonly ref?: Ref<View>;
+  extends Omit<PressableProps, 'children' | 'style' | 'onPress' | 'focusRing'> {
   readonly value: string;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
@@ -202,6 +200,7 @@ function RadioGroupItem({
       accessibilityRole="radio"
       disabled={isDisabled}
       hitSlop={minTouchHitSlop(item.width)}
+      focusRing={group.invalid ? 'danger' : group.tone}
       onPress={() => group.onValueChange(value)}
       style={[row, style]}
       {...rnwAttrs({

@@ -48,6 +48,8 @@ export type RnViewStyle = {
   outlineWidth?: number | undefined;
   outlineColor?: string | undefined;
   outlineStyle?: 'solid' | 'dotted' | 'dashed' | undefined;
+  outlineOffset?: number | undefined;
+  zIndex?: number | undefined;
   alignSelf?: 'flex-start' | 'stretch' | undefined;
   width?: number | `${number}%` | undefined;
   height?: number | `${number}%` | undefined;

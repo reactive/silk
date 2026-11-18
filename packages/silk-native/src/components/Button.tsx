@@ -1,23 +1,18 @@
 import { buttonRecipe, type ButtonVariantProps } from '@reactive/silk-core';
-import type { JSX, ReactNode, Ref } from 'react';
-import {
-  Pressable,
-  Text as RNText,
-  type PressableProps,
-  type View,
-} from 'react-native';
+import type { JSX, ReactNode } from 'react';
+import { Text as RNText } from 'react-native';
 import { mapButtonStyle } from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { Pressable, type PressableProps } from './Pressable.js';
 
 export interface ButtonProps
   extends ButtonVariantProps,
-    Omit<PressableProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+    Omit<PressableProps, 'children' | 'style' | 'focusRing'> {
   readonly children?: ReactNode;
   /**
    * Escape hatch — composed after Silk styles (object, array, or function).
-   * Function styles receive the full Pressable state.
+   * Function styles receive the full Pressable state, `focusVisible` included.
    */
   readonly style?: PressableProps['style'];
 }
@@ -54,6 +49,7 @@ export function Button({
       accessibilityRole={accessibilityRole}
       accessibilityState={{ ...accessibilityState, disabled: isDisabled }}
       disabled={disabled}
+      focusRing={resolved.tone}
       style={(state) => {
         const view =
           state.pressed && !isDisabled

@@ -290,12 +290,15 @@ export function mapSwitchStyle(
       height: trackHeight,
       borderRadius: theme.semantic.radius.full,
       backgroundColor: trackBg,
-      outlineWidth: state.invalid && !state.disabled ? 1 : 0,
-      outlineStyle: 'solid',
-      outlineColor:
-        state.invalid && !state.disabled
-          ? theme.semantic.color.tones.danger.solid
-          : 'transparent',
+      // Outline keys only when drawn, since they override Pressable's ring;
+      // Switch drops these while its ring shows.
+      ...(state.invalid && !state.disabled
+        ? {
+            outlineWidth: 1,
+            outlineStyle: 'solid' as const,
+            outlineColor: theme.semantic.color.tones.danger.solid,
+          }
+        : {}),
       justifyContent: 'center',
       flexShrink: 0,
     },

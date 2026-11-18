@@ -50,13 +50,19 @@ omitted values. An explicit theme or color scheme replaces the parent theme.
 ## Components
 
 The native renderer includes layout, typography, visual, and form primitives:
-`Box`, `Stack`, `Inline`, `Text`, `Heading`, `Button`, `Surface`, `Card`, `Badge`,
+`Box`, `Stack`, `Inline`, `Text`, `Heading`, `Pressable`, `Button`, `Surface`, `Card`, `Badge`,
 `Separator`, `Avatar`, `StatusDot`, `Skeleton`, `Spinner`, `Progress`, `Input`,
 `Textarea`, `Field`, `Checkbox`, `Switch`, and `RadioGroup`.
 
 Native components expose recipe props plus React Native host props. Consumer
 `style` values are composed last, followed by refs and the remaining native
 escape hatches. There are no CSS imports, class names, or public CSS variables.
+
+`Pressable` and every control built on it draw the theme's focus ring while
+focus is visible: on the web when the browser's `:focus-visible` matches, so
+Tab shows it and a click does not. Use `Pressable` instead of React Native's
+for custom pressables; its `style` can adjust the ring, such as a smaller
+`outlineOffset` in a dense list.
 
 Use `@reactive/silk-core` directly to create tenant themes, generate paired
 palettes, inspect recipes, or share theme and model types with web code.
