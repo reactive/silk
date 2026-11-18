@@ -78,6 +78,27 @@ test('a key pressed after a click turns the ring on', () => {
   expect(outlineColor(el)).toBe('');
 });
 
+test('unmounting while focused stops watching keys', () => {
+  const { unmount } = render(
+    <SilkProvider theme={theme}>
+      <Pressable accessibilityRole="button" testID="p" />
+    </SilkProvider>,
+  );
+  const removed: string[] = [];
+  const remove = document.removeEventListener.bind(document);
+  document.removeEventListener = ((type: string, ...args: [never, never]) => {
+    removed.push(type);
+    remove(type, ...args);
+  }) as typeof document.removeEventListener;
+  try {
+    focus(screen.getByTestId('p'), false);
+    unmount();
+    expect(removed).toEqual(expect.arrayContaining(['keydown', 'keyup']));
+  } finally {
+    document.removeEventListener = remove;
+  }
+});
+
 test('style and children functions receive focusVisible; style can adjust the ring', () => {
   render(
     <SilkProvider theme={theme}>
@@ -211,12 +232,14 @@ test('on native, every focus rings', () => {
 
 test("no source file uses React Native's Pressable or Touchables directly", () => {
   const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const wrapper = path.join('components', 'Pressable.tsx');
   const files = (readdirSync(src, { recursive: true }) as string[]).filter(
-    (f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f) && !f.endsWith('Pressable.tsx'),
+    (f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f) && f !== wrapper,
   );
-  // Any import of these names from react-native, or a namespace import of it.
+  // An import or re-export from react-native that names these components, a
+  // namespace or star import or export of it, or require() / import() of it.
   const bypass =
-    /(?:import|export)\s*(?:type\s*)?\{[^}]*\b(?:Pressable|Touchable\w*)\b[^}]*\}\s*from\s*['"]react-native['"]|import\s*\*\s*as\s*\w+\s*from\s*['"]react-native['"]|require\(\s*['"]react-native['"]\s*\)/;
+    /(?:import|export)\s[^;]*?\b(?:Pressable|Touchable\w*)\b[^;]*?from\s*['"]react-native['"]|(?:import\s*\*\s*as\s*\w+|export\s*\*)\s*from\s*['"]react-native['"]|(?:require|import)\(\s*['"]react-native['"]\s*\)/;
   const offenders = files.filter((f) => bypass.test(readFileSync(path.join(src, f), 'utf8')));
   // Import Silk's Pressable ('./Pressable.js') so every pressable rings on focus.
   expect(offenders).toEqual([]);

@@ -10,11 +10,9 @@ import {
 import {
   Platform,
   Pressable as RNPressable,
-  type NativeSyntheticEvent,
   type PressableProps as RNPressableProps,
   type PressableStateCallbackType,
   type StyleProp,
-  type TargetedEvent,
   type View,
   type ViewStyle,
 } from 'react-native';
@@ -48,7 +46,6 @@ export interface PressableProps
   readonly focusRing?: ToneName | false | undefined;
 }
 
-type FocusEvent = NativeSyntheticEvent<TargetedEvent>;
 /** The DOM element react-native-web focuses (silk-native doesn't load DOM types). */
 interface FocusTarget {
   matches?: (selector: string) => boolean;
@@ -72,6 +69,47 @@ function matchesFocusVisible(target: FocusTarget): boolean {
 }
 
 /**
+ * Whether focus should show, with the focus and blur handlers that track it.
+ * Web: the browser's `:focus-visible`, checked again on each key while
+ * focused, since a key can turn it on without a new focus event (click a
+ * control, then press Space). Native: every focus, since only a keyboard,
+ * D-pad or assistive technology focuses a Pressable.
+ */
+function useFocusVisible(): {
+  focusVisible: boolean;
+  onFocus: (target: FocusTarget) => void;
+  onBlur: () => void;
+} {
+  const [focusVisible, setFocusVisible] = useState(false);
+  const stopWatchingKeys = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => stopWatchingKeys.current?.(), []);
+
+  const onFocus = (target: FocusTarget): void => {
+    if (Platform.OS !== 'web') {
+      setFocusVisible(true);
+      return;
+    }
+    setFocusVisible(matchesFocusVisible(target));
+    stopWatchingKeys.current?.();
+    const doc = target.ownerDocument;
+    if (!doc) return;
+    const check = (): void => setFocusVisible(matchesFocusVisible(target));
+    doc.addEventListener('keydown', check, true);
+    doc.addEventListener('keyup', check, true);
+    stopWatchingKeys.current = () => {
+      doc.removeEventListener('keydown', check, true);
+      doc.removeEventListener('keyup', check, true);
+      stopWatchingKeys.current = undefined;
+    };
+  };
+  const onBlur = (): void => {
+    stopWatchingKeys.current?.();
+    setFocusVisible(false);
+  };
+  return { focusVisible, onFocus, onBlur };
+}
+
+/**
  * React Native's Pressable with Silk's keyboard focus ring: a drop-in
  * replacement that outlines it in the theme's focus color while it has
  * visible focus. Use it for any custom pressable; Silk's own controls use it
@@ -88,24 +126,8 @@ export function Pressable({
   ...rest
 }: PressableProps): JSX.Element {
   const { theme } = useTheme();
-  const [focusVisible, setFocusVisible] = useState(false);
-  // Web: while focused, keys can turn :focus-visible on without a new focus
-  // event (click a control, then press Space), so check again on each key.
-  const stopWatchingKeys = useRef<(() => void) | undefined>(undefined);
-  useEffect(() => () => stopWatchingKeys.current?.(), []);
-  const watchKeys = (target: FocusTarget): void => {
-    stopWatchingKeys.current?.();
-    const doc = target.ownerDocument;
-    if (!doc) return;
-    const check = (): void => setFocusVisible(matchesFocusVisible(target));
-    doc.addEventListener('keydown', check, true);
-    doc.addEventListener('keyup', check, true);
-    stopWatchingKeys.current = () => {
-      doc.removeEventListener('keydown', check, true);
-      doc.removeEventListener('keyup', check, true);
-      stopWatchingKeys.current = undefined;
-    };
-  };
+  const focus = useFocusVisible();
+  const { focusVisible } = focus;
   const ring =
     focusVisible && focusRing !== false
       ? mapFocusRingStyle(theme, focusRing)
@@ -121,22 +143,13 @@ export function Pressable({
       ref={ref}
       {...rest}
       onFocus={(event) => {
-        if (Platform.OS === 'web') {
-          // react-native-web calls onFocus only for this element's own focus,
-          // not a focused child's.
-          const target = event.target as unknown as FocusTarget;
-          setFocusVisible(matchesFocusVisible(target));
-          watchKeys(target);
-        } else {
-          // Native Pressables take focus only from a keyboard, D-pad or
-          // assistive technology, so every focus shows.
-          setFocusVisible(true);
-        }
+        // react-native-web calls this only for this element's own focus, not
+        // a focused child's; on the web the target is that DOM element.
+        focus.onFocus(event.target as unknown as FocusTarget);
         onFocus?.(event);
       }}
       onBlur={(event) => {
-        stopWatchingKeys.current?.();
-        setFocusVisible(false);
+        focus.onBlur();
         onBlur?.(event);
       }}
       style={(state) => [
