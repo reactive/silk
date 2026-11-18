@@ -2,7 +2,7 @@ import {
   checkboxRecipe,
   type CheckboxVariantProps,
 } from '@reactive/silk-core';
-import { useCallback, type JSX, type ReactNode, type Ref } from 'react';
+import { useCallback, type JSX, type ReactNode } from 'react';
 import {
   View,
   type StyleProp,
@@ -29,7 +29,6 @@ export type CheckedState = boolean | 'indeterminate';
 export interface CheckboxProps
   extends CheckboxVariantProps,
     Omit<PressableProps, 'children' | 'style' | 'onPress' | 'focusRing'> {
-  readonly ref?: Ref<View>;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
   /** Controlled — matches web/Radix tri-state. */

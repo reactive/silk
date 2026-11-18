@@ -31,15 +31,17 @@ function focus(el: HTMLElement, visible: boolean) {
 
 const outlineColor = (el: HTMLElement) => el.style.outlineColor;
 
-test('keyboard focus draws the accent ring; blur removes it', () => {
-  render(
+function renderPressable() {
+  const result = render(
     <SilkProvider theme={theme}>
-      <Pressable accessibilityRole="button" testID="p">
-        <Text>Go</Text>
-      </Pressable>
+      <Pressable accessibilityRole="button" testID="p" />
     </SilkProvider>,
   );
-  const el = screen.getByTestId('p');
+  return { ...result, el: screen.getByTestId('p') };
+}
+
+test('keyboard focus draws the accent ring; blur removes it', () => {
+  const { el } = renderPressable();
   expect(outlineColor(el)).toBe('');
   focus(el, true);
   expect(el.style.outlineWidth).toBe(`${theme.semantic.focusRing.width}px`);
@@ -50,23 +52,13 @@ test('keyboard focus draws the accent ring; blur removes it', () => {
 });
 
 test('focus from a click draws no ring', () => {
-  render(
-    <SilkProvider theme={theme}>
-      <Pressable accessibilityRole="button" testID="p" />
-    </SilkProvider>,
-  );
-  const el = screen.getByTestId('p');
+  const { el } = renderPressable();
   focus(el, false);
   expect(outlineColor(el)).toBe('');
 });
 
 test('a key pressed after a click turns the ring on', () => {
-  render(
-    <SilkProvider theme={theme}>
-      <Pressable accessibilityRole="button" testID="p" />
-    </SilkProvider>,
-  );
-  const el = screen.getByTestId('p');
+  const { el } = renderPressable();
   focus(el, false);
   expect(outlineColor(el)).toBe('');
   // The browser now matches :focus-visible because the keyboard is in use.
@@ -79,11 +71,7 @@ test('a key pressed after a click turns the ring on', () => {
 });
 
 test('unmounting while focused stops watching keys', () => {
-  const { unmount } = render(
-    <SilkProvider theme={theme}>
-      <Pressable accessibilityRole="button" testID="p" />
-    </SilkProvider>,
-  );
+  const { el, unmount } = renderPressable();
   const removed: string[] = [];
   const remove = document.removeEventListener.bind(document);
   document.removeEventListener = ((type: string, ...args: [never, never]) => {
@@ -91,7 +79,7 @@ test('unmounting while focused stops watching keys', () => {
     remove(type, ...args);
   }) as typeof document.removeEventListener;
   try {
-    focus(screen.getByTestId('p'), false);
+    focus(el, false);
     unmount();
     expect(removed).toEqual(expect.arrayContaining(['keydown', 'keyup']));
   } finally {
@@ -217,12 +205,7 @@ test('on native, every focus rings', () => {
   const os = Platform.OS;
   Object.assign(Platform, { OS: 'android' });
   try {
-    render(
-      <SilkProvider theme={theme}>
-        <Pressable accessibilityRole="button" testID="p" />
-      </SilkProvider>,
-    );
-    const el = screen.getByTestId('p');
+    const { el } = renderPressable();
     focus(el, false);
     expect(outlineColor(el)).toBe(ring('accent'));
   } finally {

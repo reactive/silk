@@ -266,6 +266,8 @@ export function mapSwitchStyle(
     readonly checked?: boolean;
     readonly invalid?: boolean;
     readonly disabled?: boolean;
+    /** Pressable's focus ring takes the invalid outline's place (web parity). */
+    readonly focusVisible?: boolean;
   } = {},
 ): { track: SizedViewStyle; thumb: SizedViewStyle; travel: number } {
   const size = props.size ?? switchRecipe.defaults.size;
@@ -290,12 +292,14 @@ export function mapSwitchStyle(
       height: trackHeight,
       borderRadius: theme.semantic.radius.full,
       backgroundColor: trackBg,
-      outlineWidth: state.invalid && !state.disabled ? 1 : 0,
-      outlineStyle: 'solid',
-      outlineColor:
-        state.invalid && !state.disabled
-          ? theme.semantic.color.tones.danger.solid
-          : 'transparent',
+      // Outline keys only when drawn: they would override Pressable's ring.
+      ...(state.invalid && !state.disabled && !state.focusVisible
+        ? {
+            outlineWidth: 1,
+            outlineStyle: 'solid' as const,
+            outlineColor: theme.semantic.color.tones.danger.solid,
+          }
+        : {}),
       justifyContent: 'center',
       flexShrink: 0,
     },

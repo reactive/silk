@@ -163,7 +163,6 @@ function RadioGroupRoot({
 
 export interface RadioGroupItemProps
   extends Omit<PressableProps, 'children' | 'style' | 'onPress' | 'focusRing'> {
-  readonly ref?: Ref<View>;
   readonly value: string;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;

@@ -1,5 +1,6 @@
 import type { ToneName } from '@reactive/silk-core';
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -70,8 +71,8 @@ function matchesFocusVisible(target: FocusTarget): boolean {
 
 /**
  * Whether focus should show, with the focus and blur handlers that track it.
- * Web: the browser's `:focus-visible`, checked again on each key while
- * focused, since a key can turn it on without a new focus event (click a
+ * Web: the browser's `:focus-visible`, checked again on each key until it
+ * matches, since a key can turn it on without a new focus event (click a
  * control, then press Space). Native: every focus, since only a keyboard,
  * D-pad or assistive technology focuses a Pressable.
  */
@@ -84,16 +85,18 @@ function useFocusVisible(): {
   const stopWatchingKeys = useRef<(() => void) | undefined>(undefined);
   useEffect(() => () => stopWatchingKeys.current?.(), []);
 
-  const onFocus = (target: FocusTarget): void => {
-    if (Platform.OS !== 'web') {
-      setFocusVisible(true);
-      return;
-    }
-    setFocusVisible(matchesFocusVisible(target));
+  const onFocus = useCallback((target: FocusTarget): void => {
     stopWatchingKeys.current?.();
+    const visible = Platform.OS !== 'web' || matchesFocusVisible(target);
+    setFocusVisible(visible);
     const doc = target.ownerDocument;
-    if (!doc) return;
-    const check = (): void => setFocusVisible(matchesFocusVisible(target));
+    if (visible || !doc) return;
+    // Watch keys only until the ring shows; it then stays until blur.
+    const check = (): void => {
+      if (!matchesFocusVisible(target)) return;
+      setFocusVisible(true);
+      stopWatchingKeys.current?.();
+    };
     doc.addEventListener('keydown', check, true);
     doc.addEventListener('keyup', check, true);
     stopWatchingKeys.current = () => {
@@ -101,11 +104,11 @@ function useFocusVisible(): {
       doc.removeEventListener('keyup', check, true);
       stopWatchingKeys.current = undefined;
     };
-  };
-  const onBlur = (): void => {
+  }, []);
+  const onBlur = useCallback((): void => {
     stopWatchingKeys.current?.();
     setFocusVisible(false);
-  };
+  }, []);
   return { focusVisible, onFocus, onBlur };
 }
 
@@ -117,7 +120,7 @@ function useFocusVisible(): {
  * a smaller `outlineOffset` in a dense list).
  */
 export function Pressable({
-  focusRing = 'accent',
+  focusRing,
   style,
   children,
   onFocus,
@@ -126,8 +129,24 @@ export function Pressable({
   ...rest
 }: PressableProps): JSX.Element {
   const { theme } = useTheme();
-  const focus = useFocusVisible();
-  const { focusVisible } = focus;
+  const { focusVisible, onFocus: trackFocus, onBlur: trackBlur } =
+    useFocusVisible();
+  const handleFocus = useCallback<NonNullable<RNPressableProps['onFocus']>>(
+    (event) => {
+      // react-native-web calls this only for this element's own focus, not
+      // a focused child's; on the web the target is that DOM element.
+      trackFocus(event.target as unknown as FocusTarget);
+      onFocus?.(event);
+    },
+    [trackFocus, onFocus],
+  );
+  const handleBlur = useCallback<NonNullable<RNPressableProps['onBlur']>>(
+    (event) => {
+      trackBlur();
+      onBlur?.(event);
+    },
+    [trackBlur, onBlur],
+  );
   const ring =
     focusVisible && focusRing !== false
       ? mapFocusRingStyle(theme, focusRing)
@@ -142,16 +161,8 @@ export function Pressable({
     <RNPressable
       ref={ref}
       {...rest}
-      onFocus={(event) => {
-        // react-native-web calls this only for this element's own focus, not
-        // a focused child's; on the web the target is that DOM element.
-        focus.onFocus(event.target as unknown as FocusTarget);
-        onFocus?.(event);
-      }}
-      onBlur={(event) => {
-        focus.onBlur();
-        onBlur?.(event);
-      }}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       style={(state) => [
         ring,
         typeof style === 'function' ? style(withFocus(state)) : style,

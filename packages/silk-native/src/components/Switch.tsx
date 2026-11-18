@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
   type JSX,
-  type Ref,
 } from 'react';
 import {
   Animated,
@@ -22,7 +21,6 @@ import {
   switchThumbTravel,
 } from '../styles/controlGeometry.js';
 import { mapSwitchStyle } from '../styles/mappers/controls.js';
-import { mapFocusRingStyle } from '../styles/mappers/focus.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -36,7 +34,6 @@ import { useControllableValue } from './useControllableValue.js';
 export interface SwitchProps
   extends SwitchVariantProps,
     Omit<PressableProps, 'children' | 'style' | 'onPress' | 'focusRing'> {
-  readonly ref?: Ref<View>;
   readonly style?: StyleProp<ViewStyle>;
   readonly checked?: boolean;
   readonly defaultChecked?: boolean;
@@ -166,14 +163,19 @@ export function Switch({
       nativeID={fieldProps.nativeID}
       disabled={isDisabled}
       hitSlop={hitSlop}
-      // The track's own outline marks it invalid, so draw the ring after it.
-      focusRing={false}
+      focusRing={isInvalid ? 'danger' : resolved.tone}
       onPress={toggle}
       onLayout={onLayout}
       style={({ focusVisible }) => [
-        track,
-        focusVisible &&
-          mapFocusRingStyle(theme, isInvalid ? 'danger' : resolved.tone),
+        // The ring replaces the invalid outline while focused.
+        focusVisible && isInvalid
+          ? mapSwitchStyle(theme, resolved, density, {
+              checked,
+              invalid: true,
+              disabled: isDisabled,
+              focusVisible,
+            }).track
+          : track,
         style,
       ]}
       {...rnwAttrs({
