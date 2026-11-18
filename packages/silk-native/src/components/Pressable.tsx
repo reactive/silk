@@ -1,5 +1,12 @@
 import type { ToneName } from '@reactive/silk-core';
-import { useState, type JSX, type ReactNode, type Ref } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type JSX,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import {
   Platform,
   Pressable as RNPressable,
@@ -42,15 +49,20 @@ export interface PressableProps
 }
 
 type FocusEvent = NativeSyntheticEvent<TargetedEvent>;
+/** The DOM element react-native-web focuses (silk-native doesn't load DOM types). */
+interface FocusTarget {
+  matches?: (selector: string) => boolean;
+  ownerDocument?: {
+    addEventListener(type: string, listener: () => void, capture: boolean): void;
+    removeEventListener(type: string, listener: () => void, capture: boolean): void;
+  };
+}
 
 /**
  * The browser decides whether focus should show (`:focus-visible`), so a click
- * doesn't ring a button but Tab does. Native Pressables take focus only from a
- * keyboard, D-pad or assistive technology, so every focus shows.
+ * doesn't ring a button but Tab does.
  */
-function showsFocus(event: FocusEvent): boolean {
-  if (Platform.OS !== 'web') return true;
-  const target = event.target as unknown as { matches?: (s: string) => boolean };
+function matchesFocusVisible(target: FocusTarget): boolean {
   try {
     return target.matches?.(':focus-visible') ?? true;
   } catch {
@@ -77,6 +89,23 @@ export function Pressable({
 }: PressableProps): JSX.Element {
   const { theme } = useTheme();
   const [focusVisible, setFocusVisible] = useState(false);
+  // Web: while focused, keys can turn :focus-visible on without a new focus
+  // event (click a control, then press Space), so check again on each key.
+  const stopWatchingKeys = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => stopWatchingKeys.current?.(), []);
+  const watchKeys = (target: FocusTarget): void => {
+    stopWatchingKeys.current?.();
+    const doc = target.ownerDocument;
+    if (!doc) return;
+    const check = (): void => setFocusVisible(matchesFocusVisible(target));
+    doc.addEventListener('keydown', check, true);
+    doc.addEventListener('keyup', check, true);
+    stopWatchingKeys.current = () => {
+      doc.removeEventListener('keydown', check, true);
+      doc.removeEventListener('keyup', check, true);
+      stopWatchingKeys.current = undefined;
+    };
+  };
   const ring =
     focusVisible && focusRing !== false
       ? mapFocusRingStyle(theme, focusRing)
@@ -92,10 +121,19 @@ export function Pressable({
       ref={ref}
       {...rest}
       onFocus={(event) => {
-        setFocusVisible(showsFocus(event));
+        if (Platform.OS === 'web') {
+          const target = event.target as unknown as FocusTarget;
+          setFocusVisible(matchesFocusVisible(target));
+          watchKeys(target);
+        } else {
+          // Native Pressables take focus only from a keyboard, D-pad or
+          // assistive technology, so every focus shows.
+          setFocusVisible(true);
+        }
         onFocus?.(event);
       }}
       onBlur={(event) => {
+        stopWatchingKeys.current?.();
         setFocusVisible(false);
         onBlur?.(event);
       }}

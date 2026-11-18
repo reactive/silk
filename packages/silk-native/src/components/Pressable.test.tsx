@@ -60,6 +60,24 @@ test('focus from a click draws no ring', () => {
   expect(outlineColor(el)).toBe('');
 });
 
+test('a key pressed after a click turns the ring on', () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Pressable accessibilityRole="button" testID="p" />
+    </SilkProvider>,
+  );
+  const el = screen.getByTestId('p');
+  focus(el, false);
+  expect(outlineColor(el)).toBe('');
+  // The browser now matches :focus-visible because the keyboard is in use.
+  el.matches = (selector: string) => selector === ':focus-visible';
+  fireEvent.keyDown(el, { key: ' ' });
+  expect(outlineColor(el)).toBe(ring('accent'));
+  fireEvent.blur(el);
+  fireEvent.keyDown(document, { key: 'a' });
+  expect(outlineColor(el)).toBe('');
+});
+
 test('style and children functions receive focusVisible; style can adjust the ring', () => {
   render(
     <SilkProvider theme={theme}>
