@@ -10,10 +10,8 @@ import {
 import {
   Animated,
   I18nManager,
-  Pressable,
   View,
   type LayoutChangeEvent,
-  type PressableProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -24,9 +22,11 @@ import {
   switchThumbTravel,
 } from '../styles/controlGeometry.js';
 import { mapSwitchStyle } from '../styles/mappers/controls.js';
+import { mapFocusRingStyle } from '../styles/mappers/focus.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { Pressable, type PressableProps } from './Pressable.js';
 import {
   useFieldControlProps,
   useFieldControlRegistration,
@@ -35,7 +35,7 @@ import { useControllableValue } from './useControllableValue.js';
 
 export interface SwitchProps
   extends SwitchVariantProps,
-    Omit<PressableProps, 'children' | 'style' | 'onPress'> {
+    Omit<PressableProps, 'children' | 'style' | 'onPress' | 'focusRing'> {
   readonly ref?: Ref<View>;
   readonly style?: StyleProp<ViewStyle>;
   readonly checked?: boolean;
@@ -166,9 +166,16 @@ export function Switch({
       nativeID={fieldProps.nativeID}
       disabled={isDisabled}
       hitSlop={hitSlop}
+      // The track's own outline marks it invalid, so draw the ring after it.
+      focusRing={false}
       onPress={toggle}
       onLayout={onLayout}
-      style={[track, style]}
+      style={({ focusVisible }) => [
+        track,
+        focusVisible &&
+          mapFocusRingStyle(theme, isInvalid ? 'danger' : resolved.tone),
+        style,
+      ]}
       {...rnwAttrs({
         'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],

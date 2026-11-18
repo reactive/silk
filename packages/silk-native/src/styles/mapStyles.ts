@@ -24,6 +24,7 @@ export type {
   TextControlState,
   ToggleVisualState,
 } from './mappers/controls.js';
+export { mapFocusRingStyle } from './mappers/focus.js';
 export {
   elevationBackground,
   mapAvatarStyle,
