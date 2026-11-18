@@ -4,10 +4,10 @@ import type { RnViewStyle } from './shared.js';
 /**
  * The keyboard focus ring: the tone's `focusRing` color at the theme's
  * `semantic.focusRing` width and offset, drawn as an outline so it never
- * changes layout (web parity with `focusRingCss`). Other mappers emit no
- * outline keys unless they draw one, since a component's style would override
- * the ring. `zIndex` lifts the focused
- * control so later siblings don't paint over the part of the ring outside it.
+ * changes layout (web parity with `focusRingCss`). `zIndex` lifts the
+ * focused control so later siblings don't paint over the part of the ring
+ * outside it. A component's own outline keys would override the ring, so other
+ * mappers emit them only when they draw an outline.
  */
 export function mapFocusRingStyle(
   theme: Theme,

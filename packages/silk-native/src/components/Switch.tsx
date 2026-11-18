@@ -9,7 +9,6 @@ import {
 import {
   Animated,
   I18nManager,
-  View,
   type LayoutChangeEvent,
   type StyleProp,
   type ViewStyle,
@@ -97,6 +96,8 @@ export function Switch({
       disabled: isDisabled,
     },
   );
+  const { outlineWidth, outlineStyle, outlineColor, ...trackWithoutOutline } =
+    track;
   const thumbSize = thumb.width;
   const [layoutWidth, setLayoutWidth] = useState(0);
   const travel =
@@ -166,18 +167,8 @@ export function Switch({
       focusRing={isInvalid ? 'danger' : resolved.tone}
       onPress={toggle}
       onLayout={onLayout}
-      style={({ focusVisible }) => [
-        // The ring replaces the invalid outline while focused.
-        focusVisible && isInvalid
-          ? mapSwitchStyle(theme, resolved, density, {
-              checked,
-              invalid: true,
-              disabled: isDisabled,
-              focusVisible,
-            }).track
-          : track,
-        style,
-      ]}
+      // The ring replaces the invalid outline while focused (web parity).
+      style={({ focusVisible }) => [focusVisible ? trackWithoutOutline : track, style]}
       {...rnwAttrs({
         'aria-describedby': fieldProps['aria-describedby'],
         'aria-invalid': fieldProps['aria-invalid'],

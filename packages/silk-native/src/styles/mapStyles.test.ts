@@ -198,15 +198,9 @@ test('invalid Switch uses an outline without changing thumb geometry', () => {
   expect(invalid.track.width).toBe(valid.track.width);
 });
 
-test('Switch track leaves outline keys to the focus ring unless invalid', () => {
+test('valid Switch track has no outline keys to hide the focus ring', () => {
   // Pressable composes the track after its ring, so any outline key would hide it.
-  const valid = mapSwitchStyle(theme);
-  const focused = mapSwitchStyle(theme, {}, 'comfortable', {
-    invalid: true,
-    focusVisible: true,
-  });
-  expect('outlineWidth' in valid.track).toBe(false);
-  expect('outlineWidth' in focused.track).toBe(false);
+  expect('outlineWidth' in mapSwitchStyle(theme).track).toBe(false);
 });
 
 test('recipe defaults remain the shared contract', () => {
