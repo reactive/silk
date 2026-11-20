@@ -59,7 +59,7 @@ export function useTextControl(
   const invalid = Boolean(fieldProps.invalid);
   const controlRef = useRef<ComponentRef<typeof TextInput> | null>(null);
   const setRef = useCallback(
-    (instance: TextInput | null) => {
+    (instance: ComponentRef<typeof TextInput> | null) => {
       controlRef.current = instance;
       if (typeof options.ref === 'function') {
         options.ref(instance);

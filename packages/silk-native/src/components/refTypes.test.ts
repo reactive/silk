@@ -13,7 +13,8 @@ test('refs are typed as the host element, not the component', () => {
   // Ref<View> is a ref to the function and hides .focus() and .measureInWindow().
   // CI type-checks against an older React Native, where the old spelling still
   // passes, so this guard catches it. Write ComponentRef<typeof View> instead.
-  const component = /\b(?:Ref|RefObject|useRef|createRef)<\s*(?:View|RNText|Text|TextInput)\b/;
+  const component =
+    /\b(?:Ref|RefObject|useRef|createRef)<\s*(?:View|RNText|Text|TextInput)\b|\b(?:View|RNText|Text|TextInput)\s*\|\s*null\b/;
   const offenders = files.filter((f) => component.test(readFileSync(path.join(src, f), 'utf8')));
   expect(offenders).toEqual([]);
 });
