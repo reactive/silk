@@ -1,5 +1,6 @@
 import type { ToneName } from '@reactive/silk-core';
 import {
+  type ComponentRef,
   useCallback,
   useEffect,
   useRef,
@@ -34,7 +35,7 @@ export interface PressableState extends PressableStateCallbackType {
 
 export interface PressableProps
   extends Omit<RNPressableProps, 'children' | 'style'> {
-  readonly ref?: Ref<View> | undefined;
+  readonly ref?: Ref<ComponentRef<typeof View>> | undefined;
   readonly children?: ReactNode | ((state: PressableState) => ReactNode);
   readonly style?:
     | StyleProp<ViewStyle>

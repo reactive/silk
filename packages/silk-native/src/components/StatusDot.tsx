@@ -2,7 +2,7 @@ import {
   statusDotRecipe,
   type StatusDotVariantProps,
 } from '@reactive/silk-core';
-import type { JSX, Ref } from 'react';
+import type { ComponentRef, JSX, Ref } from 'react';
 import { View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { mapStatusDotStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -10,7 +10,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 
 export interface StatusDotProps
   extends StatusDotVariantProps, Omit<ViewProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly style?: StyleProp<ViewStyle>;
 }
 

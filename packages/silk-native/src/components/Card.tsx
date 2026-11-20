@@ -1,5 +1,5 @@
 import { cardRecipe, type CardVariantProps } from '@reactive/silk-core';
-import type { JSX, ReactNode, Ref } from 'react';
+import type { ComponentRef, JSX, ReactNode, Ref } from 'react';
 import {
   View,
   type StyleProp,
@@ -13,7 +13,7 @@ import { Pressable, type PressableProps } from './Pressable.js';
 
 export interface CardProps
   extends CardVariantProps, Omit<ViewProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
   /** When provided, host becomes Pressable. `interactive` alone is styling-only. */

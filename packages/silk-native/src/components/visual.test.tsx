@@ -1,6 +1,6 @@
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { createRef } from 'react';
+import { type ComponentRef, createRef } from 'react';
 import type { View } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Avatar } from './Avatar.js';
@@ -61,7 +61,7 @@ test('Surface with onPress is pressable button; interactive alone is not', () =>
 });
 
 test('Card ref and Badge render children', () => {
-  const ref = createRef<View>();
+  const ref = createRef<ComponentRef<typeof View>>();
   render(
     <SilkProvider>
       <Card ref={ref} testID="card">

@@ -3,6 +3,7 @@ import {
   type RadioGroupVariantProps,
 } from '@reactive/silk-core';
 import {
+  type ComponentRef,
   createContext,
   useCallback,
   useContext,
@@ -44,7 +45,7 @@ const RadioGroupContext = createContext<RadioGroupContextValue | null>(null);
 
 export interface RadioGroupRootProps
   extends RadioGroupVariantProps, Omit<ViewProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
   readonly value?: string;

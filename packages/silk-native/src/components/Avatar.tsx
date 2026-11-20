@@ -1,5 +1,12 @@
 import { avatarRecipe, type AvatarVariantProps } from '@reactive/silk-core';
-import { useEffect, useState, type JSX, type ReactNode, type Ref } from 'react';
+import {
+  type ComponentRef,
+  useEffect,
+  useState,
+  type JSX,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import {
   Image,
   Text as RNText,
@@ -15,7 +22,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 
 export interface AvatarProps
   extends AvatarVariantProps, Omit<ViewProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
   readonly src?: string | ImageSourcePropType;
