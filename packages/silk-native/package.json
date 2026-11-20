@@ -1,6 +1,6 @@
 {
   "name": "@reactive/silk-native",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React Native renderer for Silk — semantic themes and recipe contracts without CSS variables",
   "license": "MIT",
   "type": "module",
