@@ -1,7 +1,8 @@
 import { compactSpace } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { useState, type JSX } from 'react';
+import { createRef, useState, type ComponentRef, type JSX } from 'react';
+import type { TextInput } from 'react-native';
 import { toggleBoxStep } from '../styles/controlGeometry.js';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Checkbox } from './Checkbox.js';
@@ -354,4 +355,19 @@ test('disabled Checkbox suppresses press', () => {
   expect(
     screen.getByRole('checkbox').getAttribute('aria-disabled'),
   ).toBe('true');
+});
+
+test('Input and Textarea refs reach the text input host, which focuses', () => {
+  const input = createRef<ComponentRef<typeof TextInput>>();
+  const area = createRef<ComponentRef<typeof TextInput>>();
+  render(
+    <SilkProvider>
+      <Input ref={input} accessibilityLabel="Name" />
+      <Textarea ref={area} accessibilityLabel="Notes" />
+    </SilkProvider>,
+  );
+  input.current?.focus();
+  expect(document.activeElement).toBe(screen.getByLabelText('Name'));
+  area.current?.focus();
+  expect(document.activeElement).toBe(screen.getByLabelText('Notes'));
 });

@@ -1,5 +1,5 @@
 import { textRecipe, type TextVariantProps } from '@reactive/silk-core';
-import type { JSX, ReactNode, Ref } from 'react';
+import type { ComponentRef, JSX, ReactNode, Ref } from 'react';
 import {
   Text as RNText,
   type TextProps as RNTextProps,
@@ -10,7 +10,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 
 export interface TextProps
   extends TextVariantProps, Omit<RNTextProps, 'children' | 'role'> {
-  readonly ref?: Ref<RNText>;
+  readonly ref?: Ref<ComponentRef<typeof RNText>>;
   readonly children?: ReactNode;
 }
 
