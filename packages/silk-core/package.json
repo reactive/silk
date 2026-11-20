@@ -1,6 +1,6 @@
 {
   "name": "@reactive/silk-core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Platform-neutral tokens, themes, and recipe contracts for Silk",
   "license": "MIT",
   "type": "module",
