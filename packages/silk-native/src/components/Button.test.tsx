@@ -1,6 +1,6 @@
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { createRef } from 'react';
+import { type ComponentRef, createRef } from 'react';
 import type { View } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Button } from './Button.js';
@@ -41,7 +41,7 @@ test('Button press activation fires onPress', () => {
 });
 
 test('Button ref targets the host', () => {
-  const ref = createRef<View>();
+  const ref = createRef<ComponentRef<typeof View>>();
   render(
     <SilkProvider>
       <Button ref={ref}>Ref</Button>

@@ -2,7 +2,7 @@ import {
   textareaRecipe,
   type TextareaVariantProps,
 } from '@reactive/silk-core';
-import type { JSX, Ref } from 'react';
+import type { ComponentRef, JSX, Ref } from 'react';
 import {
   TextInput,
   type StyleProp,
@@ -25,7 +25,7 @@ export interface TextareaProps
       | 'aria-describedby'
       | 'aria-invalid'
     > {
-  readonly ref?: Ref<TextInput>;
+  readonly ref?: Ref<ComponentRef<typeof TextInput>>;
   readonly style?: StyleProp<TextStyle>;
   readonly disabled?: boolean;
   readonly invalid?: boolean;

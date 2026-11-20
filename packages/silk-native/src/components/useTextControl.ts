@@ -1,4 +1,5 @@
 import {
+  type ComponentRef,
   useCallback,
   useRef,
   useState,
@@ -14,7 +15,7 @@ import {
 
 type TextControlOptions = {
   readonly nativeID?: string | undefined;
-  readonly ref?: Ref<TextInput> | undefined;
+  readonly ref?: Ref<ComponentRef<typeof TextInput>> | undefined;
   readonly accessibilityLabel?: string | undefined;
   readonly accessibilityHint?: string | undefined;
   readonly accessibilityLabelledBy?: string | readonly string[] | undefined;
@@ -29,7 +30,7 @@ type TextControlOptions = {
 };
 
 type TextControlHostProps = TextInputProps & {
-  readonly ref: (instance: TextInput | null) => void;
+  readonly ref: (instance: ComponentRef<typeof TextInput> | null) => void;
 };
 
 type TextControlResult = {
@@ -56,9 +57,9 @@ export function useTextControl(
   const [focused, setFocused] = useState(false);
   const disabled = Boolean(fieldProps.disabled);
   const invalid = Boolean(fieldProps.invalid);
-  const controlRef = useRef<TextInput | null>(null);
+  const controlRef = useRef<ComponentRef<typeof TextInput> | null>(null);
   const setRef = useCallback(
-    (instance: TextInput | null) => {
+    (instance: ComponentRef<typeof TextInput> | null) => {
       controlRef.current = instance;
       if (typeof options.ref === 'function') {
         options.ref(instance);

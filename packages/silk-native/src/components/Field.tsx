@@ -1,4 +1,5 @@
 import {
+  type ComponentRef,
   Children,
   useCallback,
   createContext,
@@ -69,7 +70,7 @@ export interface FieldRootProps extends Omit<ViewProps, 'children'> {
   readonly invalid?: boolean;
   readonly disabled?: boolean;
   readonly required?: boolean;
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
 }
 

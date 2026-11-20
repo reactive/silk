@@ -1,5 +1,5 @@
 import { inputRecipe, type InputVariantProps } from '@reactive/silk-core';
-import type { JSX, Ref } from 'react';
+import type { ComponentRef, JSX, Ref } from 'react';
 import {
   TextInput,
   type StyleProp,
@@ -18,7 +18,7 @@ export interface InputProps
       TextInputProps,
       'style' | 'editable' | 'aria-describedby' | 'aria-invalid'
     > {
-  readonly ref?: Ref<TextInput>;
+  readonly ref?: Ref<ComponentRef<typeof TextInput>>;
   readonly style?: StyleProp<TextStyle>;
   readonly disabled?: boolean;
   readonly invalid?: boolean;

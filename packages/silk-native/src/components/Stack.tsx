@@ -1,5 +1,5 @@
 import { stackRecipe, type StackVariantProps } from '@reactive/silk-core';
-import type { JSX, ReactNode, Ref } from 'react';
+import type { ComponentRef, JSX, ReactNode, Ref } from 'react';
 import { View, type ViewProps } from 'react-native';
 import { mapStackStyle } from '../styles/mappers/layout.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -7,7 +7,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 
 export interface StackProps
   extends StackVariantProps, Omit<ViewProps, 'children'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
 }
 

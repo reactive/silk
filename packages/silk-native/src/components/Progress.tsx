@@ -2,7 +2,14 @@ import {
   progressRecipe,
   type ProgressVariantProps,
 } from '@reactive/silk-core';
-import { useEffect, useRef, useState, type JSX, type Ref } from 'react';
+import {
+  type ComponentRef,
+  useEffect,
+  useRef,
+  useState,
+  type JSX,
+  type Ref,
+} from 'react';
 import {
   Animated,
   Easing,
@@ -21,7 +28,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 
 export interface ProgressProps
   extends ProgressVariantProps, Omit<ViewProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly style?: StyleProp<ViewStyle>;
   /** Omit / null → indeterminate. */
   readonly value?: number | null;

@@ -1,6 +1,6 @@
 import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
-import { createRef } from 'react';
+import { type ComponentRef, createRef } from 'react';
 import type { View } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Box } from './Box.js';
@@ -29,8 +29,8 @@ test('Box/Stack/Inline/Text render children and accept style escape hatch', () =
 });
 
 test('layout refs target View hosts', () => {
-  const boxRef = createRef<View>();
-  const stackRef = createRef<View>();
+  const boxRef = createRef<ComponentRef<typeof View>>();
+  const stackRef = createRef<ComponentRef<typeof View>>();
   render(
     <SilkProvider>
       <Box ref={boxRef}>

@@ -1,5 +1,5 @@
 import { badgeRecipe, type BadgeVariantProps } from '@reactive/silk-core';
-import type { JSX, ReactNode, Ref } from 'react';
+import type { ComponentRef, JSX, ReactNode, Ref } from 'react';
 import {
   Text as RNText,
   View,
@@ -13,7 +13,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 
 export interface BadgeProps
   extends BadgeVariantProps, Omit<ViewProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
 }

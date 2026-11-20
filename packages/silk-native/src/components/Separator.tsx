@@ -2,7 +2,7 @@ import {
   separatorRecipe,
   type SeparatorVariantProps,
 } from '@reactive/silk-core';
-import type { JSX, Ref } from 'react';
+import type { ComponentRef, JSX, Ref } from 'react';
 import { View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { rnwAttrs } from '../styles/a11yProps.js';
 import { mapSeparatorStyle } from '../styles/mappers/visual.js';
@@ -11,7 +11,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 
 export interface SeparatorProps
   extends SeparatorVariantProps, Omit<ViewProps, 'children' | 'style'> {
-  readonly ref?: Ref<View>;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly style?: StyleProp<ViewStyle>;
   /** When true (default), hidden from the accessibility tree. */
   readonly decorative?: boolean;
