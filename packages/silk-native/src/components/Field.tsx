@@ -349,7 +349,9 @@ function FieldRoot({
         {labelColumn.length > 0 ? (
           <View
             style={{
-              flexGrow: 1,
+              // No flexGrow: React Native's Yoga stretches a content-sized row
+              // to all the room it has when a child grows, so a horizontal
+              // Field beside other content would take that content's space.
               flexShrink: 1,
               minWidth: 0,
               flexDirection: 'column',
