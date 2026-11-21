@@ -256,8 +256,9 @@ function ListboxItem({
         ? rnwAttrs({ 'aria-selected': selected, 'aria-disabled': disabled || undefined })
         : a11yState({ checked: selected, disabled }))}
       disabled={disabled}
-      // One Tab stop for the list: the arrows move between the items.
-      tabIndex={isTabStop ? 0 : -1}
+      // One Tab stop for the list (web): the arrows move between the items.
+      // Not on native, where -1 makes a view unclickable to TalkBack.
+      tabIndex={WEB ? (isTabStop ? 0 : -1) : undefined}
       // A move, not an enter: items scrolling under a still pointer as the
       // arrows move focus don't take it back. A finger never highlights.
       onPointerMove={(event) => {

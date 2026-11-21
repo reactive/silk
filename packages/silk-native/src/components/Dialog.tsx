@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import { rnwAttrs } from '../styles/a11yProps.js';
 import { mapDialogStyle } from '../styles/mappers/overlay.js';
-import { useReducedMotion } from '../styles/useReducedMotion.js';
+import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { Heading, type HeadingProps } from './Heading.js';
@@ -93,7 +93,7 @@ function DialogContent({
   const { open, onOpenChange, titleId, titled } = useDialogContext('Content');
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('Dialog');
-  const reducedMotion = useReducedMotion();
+  const motionPreference = useMotionPreference();
   const { veil, panel } = mapDialogStyle(
     theme,
     {
@@ -103,9 +103,10 @@ function DialogContent({
     density,
   );
   const close = () => onOpenChange(false);
-  // Android recreates its dialog when animationType changes, and reduced
-  // motion resolves a moment after mount, so it is set only while closed.
-  const motion: 'none' | 'fade' = reducedMotion ? 'none' : 'fade';
+  // Android recreates its dialog when animationType changes, so it is set
+  // only while closed. Fading until the preference is known (it resolves a
+  // moment after mount) keeps a dialog mounted open from losing its fade.
+  const motion: 'none' | 'fade' = motionPreference === 'reduced' ? 'none' : 'fade';
   const [animationType, setAnimationType] = useState(motion);
   if (!open && animationType !== motion) setAnimationType(motion);
   return (
