@@ -9,6 +9,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useReducer,
   useRef,
   useState,
 } from 'react';
@@ -109,12 +110,13 @@ function ListboxRoot({
     inTreeOrder(items.current)
       .filter(([, item]) => !item.disabled)
       .map(([itemValue]) => itemValue);
-  // Bumped as items register, leave or change `disabled`, which happens in
-  // whichever component renders them, so this list renders again then too.
-  const [, setItemChanges] = useState(0);
-  // The enabled items' values in order, recounted after each commit of this
-  // list: an item filtered out or disabled can't hold the Tab stop or take a
-  // key. Unknown until the items commit.
+  // Renders this list again as items register, leave or change `disabled`,
+  // which happens in whichever component renders them.
+  const [, itemsChanged] = useReducer((count: number) => count + 1, 0);
+  // The enabled items' values, recounted after each commit of Listbox.Root:
+  // an item filtered out or disabled can't hold the Tab stop or take a key.
+  // Keys read the page order afresh, since a child can reorder its items
+  // without this list rendering. Unknown until the items commit.
   const [enabledItems, setEnabledItems] = useState<readonly string[]>();
   useLayoutEffect(() => {
     const now = enabled();
@@ -189,7 +191,7 @@ function ListboxRoot({
       if (!was) return;
       items.current.delete(itemValue);
     }
-    setItemChanges((count) => count + 1);
+    itemsChanged();
   }, []);
 
   return (
