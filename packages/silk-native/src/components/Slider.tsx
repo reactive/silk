@@ -144,10 +144,11 @@ export function moveThumb(
   // `+ 0` turns a -0 from the rounding into 0, which compares as the same value.
   const value = Math.min(max, Math.max(min, snapped)) + 0;
   const moved = values.map((each, i) => (i === index ? value : each)).sort((a, b) => a - b);
-  // With a hair's slack, so a float difference (0.3 - 0.2) doesn't fall short of a step; a
-  // half step to an off-grid `max` still does.
-  const gap = minSteps * step - step * 1e-9;
-  const apart = moved.every((each, i) => i === 0 || each - moved[i - 1]! >= gap);
+  // Counted in steps with a hair's slack, so float error (0.3 - 0.2, or values near 1e7)
+  // doesn't fall short of a step; a half step to an off-grid `max` still does.
+  const apart = moved.every(
+    (each, i) => i === 0 || (each - moved[i - 1]!) / step >= minSteps - 1e-6,
+  );
   return apart ? { values: moved, index: moved.indexOf(value) } : undefined;
 }
 

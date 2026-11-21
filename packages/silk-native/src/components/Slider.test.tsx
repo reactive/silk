@@ -197,6 +197,11 @@ test('moveThumb keeps a full step apart at an off-grid max, and snaps steps writ
   expect(moveThumb([80, 95], 90, 0, offGrid)).toBeUndefined();
   const tiny = { min: 0, max: 0.000001, step: 0.0000001, minSteps: 0 };
   expect(moveThumb([0], 0.00000031, 0, tiny)?.values).toEqual([0.0000003]);
+  // Near a million, subtracting loses more than a billionth of a step: a step still counts.
+  const large = { min: 1e6, max: 1e6 + 10, step: 0.01, minSteps: 1 };
+  expect(moveThumb([1000000.06, 1000001.06], 1000000.07, 1, large)?.values).toEqual([
+    1000000.06, 1000000.07,
+  ]);
 });
 
 test('a thumb sits by percent less a share of its size, so its center stays in bounds', () => {
