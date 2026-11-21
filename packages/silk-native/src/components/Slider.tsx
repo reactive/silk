@@ -2,6 +2,7 @@ import { sliderRecipe, type SliderVariantProps } from '@reactive/silk-core';
 import {
   type ComponentRef,
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
   type JSX,
@@ -11,6 +12,7 @@ import {
 import {
   I18nManager,
   Platform,
+  StyleSheet,
   View,
   type AccessibilityActionEvent,
   type GestureResponderEvent,
@@ -24,17 +26,24 @@ import { minTouchHitSlop } from '../styles/controlGeometry.js';
 import { mapSliderStyle } from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { fieldLabelAssociation, type FieldLabelAssociation, useFieldControlProps, useFieldControlRegistration } from './Field.js';
+import {
+  fieldLabelAssociation,
+  type FieldLabelAssociation,
+  useFieldControlProps,
+  useFieldControlRegistration,
+} from './Field.js';
+import type { ListboxKeyDownEvent } from './Listbox.js';
 import { Pressable } from './Pressable.js';
 import { useControllableValue } from './useControllableValue.js';
 
 const WEB = Platform.OS === 'web';
 
-/** A key pressed on a thumb: react-native-web's `onKeyDown`, which React Native's types lack. */
-interface ThumbKeyEvent {
+/** A key pressed on a thumb (react-native-web's `onKeyDown`), with Shift. */
+interface ThumbKeyEvent extends ListboxKeyDownEvent {
   readonly nativeEvent: { readonly key: string; readonly shiftKey?: boolean };
-  preventDefault(): void;
 }
+
+type Thumb = ComponentRef<typeof View> & { focus?: () => void };
 
 export interface SliderProps
   extends SliderVariantProps,
@@ -58,7 +67,7 @@ export interface SliderProps
   readonly min?: number;
   /** @default 100 */
   readonly max?: number;
-  /** @default 1 */
+  /** Greater than 0. @default 1 */
   readonly step?: number;
   /** How many steps apart neighboring thumbs stay. @default 0 */
   readonly minStepsBetweenThumbs?: number;
@@ -90,74 +99,86 @@ const BACK_KEYS: Record<SlideFrom, readonly string[]> = {
 const PAGE_KEYS = ['PageUp', 'PageDown'];
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
-const decimals = (n: number): number => (String(n).split('.')[1] ?? '').length;
+/** The far edge from each slide edge, and the margin property of each edge. */
+const FAR: Record<SlideFrom, SlideFrom> = { left: 'right', right: 'left', bottom: 'top', top: 'bottom' };
+const MARGIN = {
+  left: 'marginLeft',
+  right: 'marginRight',
+  bottom: 'marginBottom',
+  top: 'marginTop',
+} as const satisfies Record<SlideFrom, keyof ViewStyle>;
 
-/** `value` on the step grid from `min`, within bounds. */
-function snap(value: number, min: number, max: number, step: number): number {
-  const snapped = Math.round((value - min) / step) * step + min;
-  const rounded = Number(snapped.toFixed(Math.max(decimals(step), decimals(min))));
-  return Math.min(max, Math.max(min, rounded));
+export interface SliderBounds {
+  readonly min: number;
+  readonly max: number;
+  readonly step: number;
+  /** The smallest gap between neighboring thumbs, in steps. */
+  readonly minSteps: number;
 }
 
-/** `values` with the one at `index` replaced by `next`, sorted. */
-const replaced = (values: readonly number[], next: number, index: number): number[] =>
-  values.map((value, i) => (i === index ? next : value)).sort((a, b) => a - b);
+const decimals = (n: number): number => (String(n).split('.')[1] ?? '').length;
 
-const keepsApart = (values: readonly number[], gap: number): boolean =>
-  values.every((value, i) => i === 0 || value - values[i - 1]! >= gap);
+/**
+ * The values after moving thumb `index` to `next` (snapped to the step grid
+ * from `min`, within bounds, then sorted), and where that thumb ended up; or
+ * undefined if neighbors would come closer than `minSteps` steps. Pure.
+ */
+export function moveThumb(
+  values: readonly number[],
+  next: number,
+  index: number,
+  { min, max, step, minSteps }: SliderBounds,
+): { values: number[]; index: number } | undefined {
+  const places = Math.max(decimals(step), decimals(min));
+  const snapped = Number((Math.round((next - min) / step) * step + min).toFixed(places));
+  const value = Math.min(max, Math.max(min, snapped));
+  const moved = values.map((each, i) => (i === index ? value : each)).sort((a, b) => a - b);
+  // Counted in whole steps, so a float difference (0.3 - 0.2) doesn't fall short of one.
+  const apart = moved.every(
+    (each, i) => i === 0 || Math.round((each - moved[i - 1]!) / step) >= minSteps,
+  );
+  return apart ? { values: moved, index: moved.indexOf(value) } : undefined;
+}
 
-/** The thumb nearest `value`, the first on a tie. */
-function nearest(values: readonly number[], value: number): number {
+/** The thumb nearest `value`, the first on a tie (Radix's). */
+export function nearestThumb(values: readonly number[], value: number): number {
   const distances = values.map((each) => Math.abs(each - value));
   return distances.indexOf(Math.min(...distances));
 }
 
 /**
- * Where a part `size` long sits along the slider, `fraction` of the way from
- * `min`'s edge: its center runs from `thumbSize / 2` to `thumbSize / 2` before
- * the far edge, so no thumb overhangs the slider (Radix's in-bounds offset).
- * Percent plus a fixed margin, so it needs no measured size, as on a server.
+ * How far a thumb's center sits along a slider `length` long, `fraction` of
+ * the way from `min`'s edge: from half a thumb in to half a thumb before the
+ * far edge, so no thumb overhangs (Radix's in-bounds offset). Its inverse is
+ * `fractionAt`.
  */
-function along(from: SlideFrom, fraction: number, thumbSize: number, size: number): ViewStyle {
-  const margin = thumbSize / 2 - fraction * thumbSize - size / 2;
-  const position = `${fraction * 100}%` as const;
-  switch (from) {
-    case 'left':
-      return { left: position, marginLeft: margin };
-    case 'right':
-      return { right: position, marginRight: margin };
-    case 'bottom':
-      return { bottom: position, marginBottom: margin };
-    case 'top':
-      return { top: position, marginTop: margin };
-  }
+export const thumbCenter = (fraction: number, length: number, thumbSize: number): number =>
+  thumbSize / 2 + fraction * (length - thumbSize);
+
+/** The fraction of the way from `min`'s edge at `offset` along the slider (clamped). */
+export function fractionAt(offset: number, length: number, thumbSize: number): number {
+  const travel = length - thumbSize;
+  return travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
 }
 
-/** The range's two ends: from `start` to `end`, fractions of the way from `min`'s edge. */
-function span(from: SlideFrom, start: number, end: number, thumbSize: number): ViewStyle {
-  const near = (fraction: number) => thumbSize / 2 - fraction * thumbSize;
-  const [startEdge, endEdge] = {
-    left: ['left', 'right'],
-    right: ['right', 'left'],
-    bottom: ['bottom', 'top'],
-    top: ['top', 'bottom'],
-  }[from] as [SlideFrom, SlideFrom];
-  const margin = (edge: SlideFrom) => `margin${edge[0]!.toUpperCase()}${edge.slice(1)}`;
-  return {
-    [startEdge]: `${start * 100}%`,
-    [margin(startEdge)]: start === 0 ? 0 : near(start),
-    [endEdge]: `${(1 - end) * 100}%`,
-    [margin(endEdge)]: near(1 - end),
-  };
-}
+/**
+ * `thumbCenter` as an edge offset: percent plus a fixed margin, so it needs
+ * no measured size, as on a server. `inset` moves it back toward the edge (a
+ * thumb's half-width, so its box centers on the point).
+ */
+const atFraction = (edge: SlideFrom, fraction: number, thumbSize: number, inset = 0): ViewStyle => ({
+  [edge]: `${fraction * 100}%`,
+  [MARGIN[edge]]: thumbSize / 2 - fraction * thumbSize - inset,
+});
 
 /**
  * Picks one number, or several (a range), by sliding a thumb along a track:
  * web `Slider`'s contract (Radix's), with one number per thumb. Drag a thumb,
  * or press the track to bring the nearest thumb there; on the web, the arrow
  * keys move a focused thumb a step (ten with Shift, or Page Up and Page
- * Down), Home and End send the first thumb to `min` and the last to `max`.
- * Assistive technology adjusts each thumb a step at a time.
+ * Down), and Home and End send the first thumb to `min` and the last to
+ * `max`, as Radix does. Assistive technology adjusts each thumb a step at a
+ * time.
  */
 export function Slider({
   size,
@@ -168,7 +189,7 @@ export function Slider({
   onValueCommit,
   min = 0,
   max = 100,
-  step = 1,
+  step: stepProp = 1,
   minStepsBetweenThumbs = 0,
   orientation = 'horizontal',
   dir,
@@ -209,6 +230,8 @@ export function Slider({
     valueProp,
     defaultValue ?? [min],
   );
+  const step = stepProp > 0 ? stepProp : 1;
+  const bounds: SliderBounds = { min, max, step, minSteps: minStepsBetweenThumbs };
   const vertical = orientation === 'vertical';
   const rtl = (dir ?? (I18nManager.isRTL ? 'rtl' : 'ltr')) === 'rtl';
   const from: SlideFrom = vertical
@@ -218,103 +241,54 @@ export function Slider({
     : rtl !== inverted
       ? 'right'
       : 'left';
-  const { root, track, range, thumb, thumbSize } = mapSliderStyle(theme, resolved, density, {
-    orientation,
-    invalid: isInvalid,
-    disabled: isDisabled,
-  });
-
-  // Read by gestures and keys that outlive the render that set them up.
-  const latest = useRef(values);
-  latest.current = values;
-  const extent = useRef(0);
-  const thumbs = useRef<(ComponentRef<typeof View> | null)[]>([]);
-  const sliding = useRef<{ index: number; before: readonly number[]; start: number; page: number }>(
-    undefined,
+  const { root, track, range, thumb, thumbSize, crossSize } = mapSliderStyle(
+    theme,
+    resolved,
+    density,
+    { orientation, invalid: isInvalid, disabled: isDisabled },
   );
-  const [active, setActive] = useState<number>();
 
-  const fractionOf = (value: number) => (max > min ? (value - min) / (max - min) : 0);
+  // The values as last rendered, for gestures and keys that outlive a render.
+  // Never ahead of the render: a controlled slider whose owner turns a change
+  // down stays where it is, and the next change starts from there.
+  const latest = useRef(values);
+  useLayoutEffect(() => {
+    latest.current = values;
+  });
+  const thumbs = useRef<(Thumb | null)[]>([]);
+  const focusThumb = (index: number) => thumbs.current[index]?.focus?.();
 
-  /** Puts `next` at thumb `index`; returns where that thumb is after sorting, or undefined if refused. */
-  const update = (next: number, index: number, commit: boolean): number | undefined => {
-    const before = latest.current;
-    const snapped = snap(next, min, max, step);
-    const after = replaced(before, snapped, index);
-    if (!keepsApart(after, minStepsBetweenThumbs * step)) return undefined;
-    const at = after.indexOf(snapped);
-    if (String(after) === String(before)) return at;
-    latest.current = after;
-    setUncontrolled(after);
-    onValueChange?.(after);
-    if (commit) onValueCommit?.(after);
-    return at;
-  };
-
-  /** The value at `offset` along the slider from its top-left corner. */
-  const valueAt = (offset: number): number => {
-    const travel = extent.current - thumbSize;
-    const fraction = travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
-    const fromMin = from === 'right' || from === 'bottom' ? 1 - fraction : fraction;
-    return min + fromMin * (max - min);
-  };
-
-  const onLayout = (event: LayoutChangeEvent): void => {
-    const { width, height } = event.nativeEvent.layout;
-    extent.current = vertical ? height : width;
-    onLayoutProp?.(event);
-  };
-
-  const offsetOf = ({ nativeEvent }: GestureResponderEvent) =>
-    vertical
-      ? { location: nativeEvent.locationY, page: nativeEvent.pageY }
-      : { location: nativeEvent.locationX, page: nativeEvent.pageX };
-
-  const onGrant = (event: GestureResponderEvent) => {
-    // The slider is the target (its parts take no touches), so the location is its own.
-    const { location, page } = offsetOf(event);
-    const value = valueAt(location);
-    const before = latest.current;
-    const index = update(value, nearest(before, value), false) ?? nearest(before, value);
-    sliding.current = { index, before, start: location, page };
-    setActive(index);
-    if (WEB) (thumbs.current[index] as { focus?: () => void } | null)?.focus?.();
-  };
-  const onMove = (event: GestureResponderEvent) => {
-    const slide = sliding.current;
-    if (!slide) return;
-    // From the page, as the pointer may now be over something else.
-    const { page } = offsetOf(event);
-    const at = update(valueAt(slide.start + page - slide.page), slide.index, false);
-    if (at !== undefined && at !== slide.index) {
-      slide.index = at;
-      setActive(at);
+  /** Moves thumb `index` to `next` and reports it; returns where it is now, or undefined if refused. */
+  const setThumb = (next: number, index: number, commit: boolean): number | undefined => {
+    const moved = moveThumb(latest.current, next, index, bounds);
+    if (!moved) return undefined;
+    if (String(moved.values) !== String(latest.current)) {
+      setUncontrolled(moved.values);
+      onValueChange?.(moved.values);
+      if (commit) onValueCommit?.(moved.values);
     }
-  };
-  const onEnd = () => {
-    const slide = sliding.current;
-    sliding.current = undefined;
-    setActive(undefined);
-    if (slide && String(latest.current) !== String(slide.before)) onValueCommit?.([...latest.current]);
+    return moved.index;
   };
 
-  const nudge = (index: number, steps: number) =>
-    update(latest.current[index]! + steps * step, index, true);
+  const slide = useSlide({ vertical, from, thumbSize, bounds, latest, setThumb, focusThumb, onValueCommit });
 
+  const nudge = (index: number, steps: number) => {
+    if (isDisabled) return;
+    const at = setThumb(latest.current[index]! + steps * step, index, true);
+    // A thumb pushed past its neighbor takes its place; focus follows it.
+    if (at !== undefined && at !== index) focusThumb(at);
+  };
   const onThumbKey = (index: number) => (event: ThumbKeyEvent) => {
     const { key, shiftKey } = event.nativeEvent;
-    if (key === 'Home') update(min, 0, true);
-    else if (key === 'End') update(max, latest.current.length - 1, true);
+    if (isDisabled) return;
+    if (key === 'Home') setThumb(min, 0, true);
+    else if (key === 'End') setThumb(max, latest.current.length - 1, true);
     else if (PAGE_KEYS.includes(key) || ARROW_KEYS.includes(key)) {
-      const times = PAGE_KEYS.includes(key) || (shiftKey && ARROW_KEYS.includes(key)) ? 10 : 1;
-      const at = nudge(index, BACK_KEYS[from].includes(key) ? -times : times);
-      if (at !== undefined && at !== index) focusThumb(at);
+      const times = PAGE_KEYS.includes(key) || shiftKey ? 10 : 1;
+      nudge(index, BACK_KEYS[from].includes(key) ? -times : times);
     } else return;
     event.preventDefault();
   };
-  const focusThumb = (index: number) =>
-    (thumbs.current[index] as { focus?: () => void } | null)?.focus?.();
-
   const onAction = (index: number) => (event: AccessibilityActionEvent) => {
     const { actionName } = event.nativeEvent;
     if (actionName === 'increment') nudge(index, 1);
@@ -322,24 +296,31 @@ export function Slider({
   };
 
   // A Field label focuses the first thumb.
-  const focusFirst = useCallback(() => focusThumb(0), []);
+  const focusFirst = useCallback(() => {
+    if (!isDisabled) thumbs.current[0]?.focus?.();
+  }, [isDisabled]);
   useFieldControlRegistration(focusFirst);
 
-  const fractions = values.map(fractionOf);
+  const fractions = values.map((value) => (max > min ? (value - min) / (max - min) : 0));
   const single = values.length === 1;
-  const hitSlop = minTouchHitSlop(vertical ? Number(root.width) : Number(root.minHeight));
+  const hitSlop = minTouchHitSlop(crossSize);
+  const rangeStart = fractions[0]!;
+  const rangeEnd = fractions[fractions.length - 1]!;
   return (
     <View
       ref={ref}
       {...rest}
-      onLayout={onLayout}
+      onLayout={(event: LayoutChangeEvent) => {
+        slide.measure(event);
+        onLayoutProp?.(event);
+      }}
       hitSlop={vertical ? { left: hitSlop, right: hitSlop } : { top: hitSlop, bottom: hitSlop }}
       onStartShouldSetResponder={() => !isDisabled}
       onResponderTerminationRequest={() => false}
-      onResponderGrant={onGrant}
-      onResponderMove={onMove}
-      onResponderRelease={onEnd}
-      onResponderTerminate={onEnd}
+      onResponderGrant={slide.start}
+      onResponderMove={slide.move}
+      onResponderRelease={slide.end}
+      onResponderTerminate={slide.end}
       style={[root, WEB && !isDisabled ? WEB_SLIDER : undefined, style]}
       {...rnwAttrs(
         {
@@ -354,12 +335,14 @@ export function Slider({
         <View
           style={[
             range,
-            span(from, single ? 0 : fractions[0]!, fractions[fractions.length - 1]!, thumbSize),
+            // A single thumb's range starts at the track's edge, not at a thumb center.
+            single ? { [from]: 0 } : atFraction(from, rangeStart, thumbSize),
+            atFraction(FAR[from], 1 - rangeEnd, thumbSize),
           ]}
         />
       </View>
       {children === undefined ? null : (
-        <View pointerEvents="none" style={FILL}>
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           {children}
         </View>
       )}
@@ -369,6 +352,8 @@ export function Slider({
           (single
             ? fieldProps.accessibilityLabel
             : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
+        // react-native-web's key handler, which React Native's Pressable doesn't type.
+        const keys = { onKeyDown: onThumbKey(index) } as object;
         return (
           <Pressable
             key={index}
@@ -392,19 +377,19 @@ export function Slider({
             onAccessibilityAction={onAction(index)}
             {...a11yState({ disabled: isDisabled })}
             {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
-            {...({ onKeyDown: onThumbKey(index) } as object)}
+            {...keys}
             {...rnwAttrs({
               'aria-orientation': orientation,
               'aria-describedby': fieldProps['aria-describedby'],
               'aria-invalid': fieldProps['aria-invalid'],
-              'data-active': active === index ? '' : undefined,
+              'data-active': slide.active === index ? '' : undefined,
             })}
             style={[
               thumb,
               vertical
                 ? { left: '50%', marginLeft: -thumbSize / 2 }
                 : { top: '50%', marginTop: -thumbSize / 2 },
-              along(from, fractions[index]!, thumbSize, thumbSize),
+              atFraction(from, fractions[index]!, thumbSize, thumbSize / 2),
             ]}
           />
         );
@@ -417,9 +402,77 @@ export function Slider({
   fieldLabelAssociation
 ] = 'labelledby';
 
-const ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const;
+interface SlideOptions {
+  readonly vertical: boolean;
+  readonly from: SlideFrom;
+  readonly thumbSize: number;
+  readonly bounds: SliderBounds;
+  readonly latest: { readonly current: readonly number[] };
+  readonly setThumb: (next: number, index: number, commit: boolean) => number | undefined;
+  readonly focusThumb: (index: number) => void;
+  readonly onValueCommit: ((value: number[]) => void) | undefined;
+}
 
-const FILL: ViewStyle = { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 };
+/**
+ * Dragging, through the responder system: a press brings the nearest thumb
+ * there and focuses it (on the web), a move slides it, and the end commits
+ * once if anything changed. The slider's parts take no touches, so the
+ * press's location is the slider's own; moves add the page distance from
+ * the press, so a pointer that wanders off the slider keeps sliding.
+ */
+function useSlide({ vertical, from, thumbSize, bounds, latest, setThumb, focusThumb, onValueCommit }: SlideOptions) {
+  const length = useRef(0);
+  const sliding = useRef<{ index: number; before: readonly number[]; start: number; page: number }>(
+    undefined,
+  );
+  const [active, setActive] = useState<number>();
+
+  const offsetOf = ({ nativeEvent }: GestureResponderEvent) =>
+    vertical
+      ? { location: nativeEvent.locationY, page: nativeEvent.pageY }
+      : { location: nativeEvent.locationX, page: nativeEvent.pageX };
+  const valueAt = (offset: number) => {
+    const fraction = fractionAt(offset, length.current, thumbSize);
+    // Offsets run from the top-left corner; the slide may start at the other edge.
+    const fromMin = from === 'right' || from === 'bottom' ? 1 - fraction : fraction;
+    return bounds.min + fromMin * (bounds.max - bounds.min);
+  };
+
+  return {
+    active,
+    measure: (event: LayoutChangeEvent) => {
+      const { width, height } = event.nativeEvent.layout;
+      length.current = vertical ? height : width;
+    },
+    start: (event: GestureResponderEvent) => {
+      const { location, page } = offsetOf(event);
+      const value = valueAt(location);
+      const before = latest.current;
+      const nearest = nearestThumb(before, value);
+      const index = setThumb(value, nearest, false) ?? nearest;
+      sliding.current = { index, before, start: location, page };
+      setActive(index);
+      if (WEB) focusThumb(index);
+    },
+    move: (event: GestureResponderEvent) => {
+      const slide = sliding.current;
+      if (!slide) return;
+      const at = setThumb(valueAt(slide.start + offsetOf(event).page - slide.page), slide.index, false);
+      if (at !== undefined && at !== slide.index) {
+        slide.index = at;
+        setActive(at);
+      }
+    },
+    end: () => {
+      const slide = sliding.current;
+      sliding.current = undefined;
+      setActive(undefined);
+      if (slide && String(latest.current) !== String(slide.before)) onValueCommit?.([...latest.current]);
+    },
+  };
+}
+
+const ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const;
 
 /** Web only: a pointer over it, no text selected or page scrolled by a drag. */
 const WEB_SLIDER = { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as ViewStyle;

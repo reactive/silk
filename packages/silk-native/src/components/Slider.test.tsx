@@ -3,7 +3,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useState, type JSX } from 'react';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Field } from './Field.js';
-import { Slider, type SliderProps } from './Slider.js';
+import {
+  fractionAt,
+  moveThumb,
+  nearestThumb,
+  Slider,
+  type SliderProps,
+  thumbCenter,
+} from './Slider.js';
 
 function Controlled(props: Omit<SliderProps, 'value' | 'onValueChange'> & { initial: number[] }): JSX.Element {
   const { initial, ...rest } = props;
@@ -124,10 +131,52 @@ test('values snap to the step grid from min', () => {
 });
 
 test('a disabled slider ignores keys and leaves the Tab order', () => {
-  render(<Controlled accessibilityLabel="Off" initial={[5]} disabled />);
+  const changes: number[][] = [];
+  render(
+    <SilkProvider>
+      <Slider accessibilityLabel="Off" defaultValue={[5]} disabled onValueChange={(v) => changes.push(v)} />
+    </SilkProvider>,
+  );
   const thumb = screen.getByRole('slider');
   expect(thumb.getAttribute('aria-disabled')).toBe('true');
   expect(thumb.getAttribute('tabindex')).not.toBe('0');
+  fireEvent.keyDown(thumb, { key: 'ArrowRight' });
+  fireEvent.keyDown(thumb, { key: 'End' });
+  expect(changes).toEqual([]);
+  expect(now(thumb)).toBe(5);
+});
+
+test('a controlled slider whose owner turns a change down starts the next from where it shows', () => {
+  const changes: number[][] = [];
+  render(
+    <SilkProvider>
+      <Slider accessibilityLabel="Stuck" value={[50]} onValueChange={(v) => changes.push(v)} />
+    </SilkProvider>,
+  );
+  const thumb = screen.getByRole('slider');
+  fireEvent.keyDown(thumb, { key: 'ArrowRight' });
+  fireEvent.keyDown(thumb, { key: 'ArrowRight' });
+  expect(changes).toEqual([[51], [51]]);
+  expect(now(thumb)).toBe(50);
+});
+
+test('moveThumb snaps, clamps, sorts, and keeps whole steps apart despite float error', () => {
+  const bounds = { min: 0, max: 1, step: 0.1, minSteps: 1 };
+  expect(moveThumb([0.1, 0.3], 0.2, 0, bounds)).toEqual({ values: [0.2, 0.3], index: 0 });
+  expect(moveThumb([0.2, 0.3], 0.3, 0, bounds)).toBeUndefined();
+  expect(moveThumb([0.2, 0.5], 0.93, 0, bounds)).toEqual({ values: [0.5, 0.9], index: 1 });
+  expect(moveThumb([0.5], 7, 0, bounds)).toEqual({ values: [1], index: 0 });
+});
+
+test('thumbs stay in bounds: a center runs from half a thumb in to half a thumb before the end', () => {
+  expect(thumbCenter(0, 200, 20)).toBe(10);
+  expect(thumbCenter(1, 200, 20)).toBe(190);
+  expect(thumbCenter(0.5, 200, 20)).toBe(100);
+  expect(fractionAt(100, 200, 20)).toBe(0.5);
+  expect(fractionAt(-50, 200, 20)).toBe(0);
+  expect(fractionAt(500, 200, 20)).toBe(1);
+  expect(nearestThumb([10, 20], 15)).toBe(0);
+  expect(nearestThumb([10, 20], 16)).toBe(1);
 });
 
 test('a Field names the thumb, describes it, and its label focuses it', () => {

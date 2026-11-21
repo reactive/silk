@@ -322,6 +322,7 @@ export function mapSwitchStyle(
  * is the thumb's diameter: a thumb's center runs from `thumbSize / 2` past
  * the track's start to `thumbSize / 2` before its end, as Radix keeps web
  * thumbs in bounds, so marks laid out along the slider can line up with it.
+ * `crossSize` is the slider's size across its track.
  */
 export function mapSliderStyle(
   theme: Theme,
@@ -338,6 +339,7 @@ export function mapSliderStyle(
   range: RnViewStyle;
   thumb: SizedViewStyle;
   thumbSize: number;
+  crossSize: number;
 } {
   const size = props.size ?? sliderRecipe.defaults.size;
   const toneName = props.tone ?? sliderRecipe.defaults.tone;
@@ -348,22 +350,17 @@ export function mapSliderStyle(
   const tone = theme.semantic.color.tones[toneName];
   const vertical = state.orientation === 'vertical';
   const ring = state.invalid ? theme.semantic.color.tones.danger.solid : tone.solid;
+  // Across the slider: a thumb's width, or a row as tall as a small control.
+  const crossSize = vertical ? thumbSize : space[6];
+  const layout: RnViewStyle = vertical
+    ? { flexDirection: 'column', width: crossSize, minHeight: space[10] * 2 }
+    : { flexDirection: 'row', alignSelf: 'stretch', minHeight: crossSize };
   return {
-    root: vertical
-      ? {
-          flexDirection: 'column',
-          alignItems: 'center',
-          width: thumbSize,
-          minHeight: space[10] * 2,
-          ...(state.disabled ? { opacity: 0.55 } : {}),
-        }
-      : {
-          flexDirection: 'row',
-          alignItems: 'center',
-          alignSelf: 'stretch',
-          minHeight: space[6],
-          ...(state.disabled ? { opacity: 0.55 } : {}),
-        },
+    root: {
+      ...layout,
+      alignItems: 'center',
+      ...(state.disabled ? { opacity: 0.55 } : {}),
+    },
     track: {
       ...(vertical
         ? { width: trackThickness, flexGrow: 1 }
@@ -388,6 +385,7 @@ export function mapSliderStyle(
       ...mapShadow(theme, 'raised'),
     },
     thumbSize,
+    crossSize,
   };
 }
 
