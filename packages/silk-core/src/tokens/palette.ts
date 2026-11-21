@@ -2,7 +2,7 @@ import { oklch } from '../color/oklch.js';
 import type { Palette, PaletteScale } from './types.js';
 
 /** The light scheme's surface, and the ink on its solid fills. */
-export const white = oklch(1, 0, 0);
+export const white: string = oklch(1, 0, 0);
 
 /** Radix-Colors-inspired 12-step gray scale (light-friendly). */
 export const grayScale: PaletteScale = {
