@@ -19,6 +19,7 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
+import { FloatingHostContext } from '../overlay/layer.js';
 import { rnwAttrs } from '../styles/a11yProps.js';
 import { mapDialogStyle } from '../styles/mappers/overlay.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
@@ -79,7 +80,8 @@ export interface DialogContentProps
  * react-native-web renders as an `aria-modal` dialog that traps focus, hands
  * it back on close, and closes on Escape). Centered, or risen from the bottom
  * edge as a sheet (`placement="bottom"`). Its children lay out in the panel;
- * wrap long content in a ScrollView.
+ * wrap long content in a ScrollView. A popover or tooltip opened inside it
+ * opens over it (`FloatingHostContext`).
  */
 function DialogContent({
   size,
@@ -110,6 +112,8 @@ function DialogContent({
   const motion: 'none' | 'fade' = motionPreference === 'reduced' ? 'none' : 'fade';
   const [animationType, setAnimationType] = useState(motion);
   if (!open && animationType !== motion) setAnimationType(motion);
+  // State, not a ref, so a layer already open inside re-renders into it once it mounts.
+  const [floatingHost, setFloatingHost] = useState<ComponentRef<typeof View> | null>(null);
   return (
     <Modal
       visible={open}
@@ -130,9 +134,11 @@ function DialogContent({
           onResponderRelease={close}
         />
         <View ref={ref} {...rest} style={[panel, styles.overVeil, style]}>
-          {children}
+          <FloatingHostContext.Provider value={floatingHost}>{children}</FloatingHostContext.Provider>
         </View>
       </View>
+      {/* After the veil, so the layers in it paint over the panel. */}
+      <View ref={setFloatingHost} pointerEvents="box-none" style={styles.floatingHost} />
     </Modal>
   );
 }
@@ -152,6 +158,8 @@ function DialogTitle({ level = '2', size = 'md', ...props }: DialogTitleProps): 
 const styles = StyleSheet.create({
   // The veil's press catcher is positioned, so it would cover the panel otherwise.
   overVeil: { zIndex: 1 },
+  // Takes no room and no presses; the layers in it are fixed to the window.
+  floatingHost: { position: 'absolute', top: 0, left: 0, width: 0, height: 0 },
 });
 
 export interface DialogNamespace {

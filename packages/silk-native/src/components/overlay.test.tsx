@@ -100,6 +100,34 @@ dialogTest('Dialog placement comes from the prop, else SilkDefaults, else center
   expect(sheet({ placement: 'center', defaults: { Dialog: { placement: 'bottom' } } })).toBe(false);
 });
 
+function DialogWithPopover() {
+  const anchor = useRef<ComponentRef<typeof View>>(null);
+  return (
+    <SilkProvider theme={theme}>
+      <Dialog.Root open onOpenChange={() => {}}>
+        <Dialog.Content>
+          <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
+          <Popover.Root open onOpenChange={() => {}} anchor={anchor}>
+            <Popover.Content testID="popover" onOpenAutoFocus={(event) => event.preventDefault()}>
+              <Text>1500</Text>
+            </Popover.Content>
+          </Popover.Root>
+        </Dialog.Content>
+      </Dialog.Root>
+    </SilkProvider>
+  );
+}
+
+dialogTest('A popover opened inside a Dialog renders in its Modal, over the panel', () => {
+  render(<DialogWithPopover />);
+  const dialog = document.querySelector('[aria-modal="true"]')!;
+  const popover = screen.getByTestId('popover');
+  // Inside the Modal, so react-native-web's z-index 9999 doesn't cover it and its focus trap holds it.
+  expect(dialog.contains(popover)).toBe(true);
+  // Not inside the panel, whose box would clip it.
+  expect(screen.getByLabelText('Strength').parentElement?.contains(popover)).toBe(false);
+});
+
 // --- Popover + Listbox ---
 
 const STEPS = ['1100', '1300', '1500', '1700'] as const;

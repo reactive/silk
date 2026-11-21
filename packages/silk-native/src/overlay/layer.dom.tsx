@@ -8,17 +8,24 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useContext,
   useState,
   useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { View } from 'react-native';
-import { FLOATING_Z_INDEX, type FloatingLayerProps, withAnchor } from './layer.js';
+import {
+  FLOATING_Z_INDEX,
+  FloatingHostContext,
+  type FloatingLayerProps,
+  withAnchor,
+} from './layer.js';
 import { type FloatingSide, type Placement, placeFloating, placedStyle } from './place.js';
 
 /**
  * The web's floating layer (react-native-web): a non-modal layer in a portal
- * at the end of the page, so no box around the anchor clips it and the page
+ * at the end of the page (inside a Dialog, at the end of the dialog:
+ * `FloatingHostContext`), so no box around the anchor clips it and the page
  * stays live under it (a pointer can still hover the anchor). Radix's
  * DismissableLayer closes it on a press or focus outside it and its anchor
  * and on Escape (the topmost layer only; it listens in the capture phase,
@@ -39,6 +46,7 @@ export function FloatingLayer({
   onOpenAutoFocus,
 }: FloatingLayerProps): JSX.Element | null {
   const layer = useRef<HTMLDivElement>(null);
+  const host = useContext(FloatingHostContext);
   const [place, setPlace] = useState<Placement>();
   // False on a server and while hydrating, which have no page to portal into.
   // The effects below depend on it to run once the layer exists.
@@ -153,7 +161,7 @@ export function FloatingLayer({
         {children}
       </DismissableLayer>
     </FocusScope>,
-    document.body,
+    host ? element(host) : document.body,
   );
 }
 
