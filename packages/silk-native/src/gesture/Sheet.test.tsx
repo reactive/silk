@@ -204,7 +204,7 @@ test('on the web, a pop-up opened in a sheet opens over it, as in a centered dia
   expect(hosts.at(-1)).toBeTruthy();
 });
 
-test('on the web, an Escape a pop-up in the sheet takes leaves the sheet open', () => {
+test('on the web, an Escape that something in the sheet took (prevented) leaves the sheet open', () => {
   render(<Harness />);
   const key = (type: 'keydown' | 'keyup', taken = false) => {
     const event = new KeyboardEvent(type, { key: 'Escape', bubbles: true, cancelable: true });
@@ -216,6 +216,7 @@ test('on the web, an Escape a pop-up in the sheet takes leaves the sheet open', 
   key('keydown', true);
   key('keyup');
   expect(asks()).toBe('0');
+  expect(screen.getByTestId('sheet')).toBeTruthy();
   key('keydown');
   key('keyup');
   expect(asks()).toBe('1');
