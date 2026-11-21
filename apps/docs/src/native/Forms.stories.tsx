@@ -201,16 +201,17 @@ export const SliderPadded: Story = {
     </View>
   ),
   play: async ({ canvas }) => {
-    for (const padded of PADDED) {
-      const { name } = padded;
-      for (const value of [0, 50, 100]) {
+    for (const row of PADDED) {
+      const { name } = row;
+      for (const value of [100, 0, 50]) {
         // Pressed until it shows: under the test runner, the story's first
         // presses can come before the slider takes them. A press that lands
-        // off the thumb's point never shows, so this still fails.
+        // off the thumb's point never shows, so this still fails. 100 comes
+        // first because a slider pressed before it measures reads every press as 0.
         await waitFor(() => {
           const slider = canvas.getByTestId(name);
           const thumb = canvas.getByRole('slider', { name });
-          const point = pressPoint(slider, thumb, value, padded);
+          const point = pressPoint(slider, thumb, value, row);
           fireEvent.mouseDown(slider, { ...point, buttons: 1 });
           fireEvent.mouseUp(document);
           expect(thumb).toHaveAttribute('aria-valuenow', String(value));

@@ -260,9 +260,7 @@ test('useSliderMarkStyle places a mark where the thumb centers, in the slider\'s
 });
 
 test('its parts lay out left to right in any direction, so their left and right stay physical', () => {
-  // A right-to-left React Native app turns `left` / `right` into `start` / `end`
-  // (swapLeftAndRightInRTL), resolved by the parent's direction. The slider's own
-  // box keeps the direction it is given, so its margins still flip with the app.
+  // See `mapSliderStyle`'s `parts`.
   render(
     <SilkProvider>
       <Slider accessibilityLabel="Rating" dir="rtl" testID="root" style={{ direction: 'rtl' }} />

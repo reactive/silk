@@ -365,6 +365,7 @@ export function mapSliderStyle(
   return {
     root: {
       ...layout,
+      alignItems: 'center',
       ...(state.disabled ? { opacity: 0.55 } : {}),
     },
     parts: {
@@ -372,7 +373,6 @@ export function mapSliderStyle(
       flexGrow: 1,
       alignSelf: 'stretch',
       alignItems: 'center',
-      // Keeps the parts' left and right physical under React Native's RTL swap.
       direction: 'ltr',
     },
     track: {

@@ -336,7 +336,7 @@ export function Slider({
       )}
     >
       <View pointerEvents="none" style={parts} onLayout={slide.measure}>
-        <View pointerEvents="none" style={track}>
+        <View style={track}>
           <View
             style={[
               range,
@@ -347,7 +347,7 @@ export function Slider({
           />
         </View>
         {children === undefined ? null : (
-          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <View style={StyleSheet.absoluteFill}>
             <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
           </View>
         )}
