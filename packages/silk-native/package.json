@@ -20,6 +20,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./gesture": {
+      "types": "./dist/gesture/index.d.ts",
+      "import": "./dist/gesture/index.js",
+      "default": "./dist/gesture/index.js"
+    },
     "./package.json": "./package.json"
   },
   "imports": {
@@ -40,10 +45,22 @@
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-native": ">=0.83.0"
+    "react-native": ">=0.83.0",
+    "react-native-gesture-handler": ">=3.3.0 <4",
+    "react-native-reanimated": ">=4.7.0 <5",
+    "react-native-worklets": ">=0.13.0"
   },
   "peerDependenciesMeta": {
     "react-dom": {
+      "optional": true
+    },
+    "react-native-gesture-handler": {
+      "optional": true
+    },
+    "react-native-reanimated": {
+      "optional": true
+    },
+    "react-native-worklets": {
       "optional": true
     }
   },
@@ -63,7 +80,10 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-native": "0.83.10",
+    "react-native-gesture-handler": "3.3.0",
+    "react-native-reanimated": "4.7.1",
     "react-native-web": "~0.21.0",
+    "react-native-worklets": "0.13.0",
     "typescript": "^7.0.2"
   }
 }

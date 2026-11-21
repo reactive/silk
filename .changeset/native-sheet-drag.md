@@ -1,5 +1,5 @@
 ---
-'@reactive/silk-native': patch
+'@reactive/silk-native': minor
 ---
 
-A bottom-placed `Dialog` (a sheet) shows a drag handle at its top and closes when dragged down: let go past a third of its height or flung down, it slides off and calls `onOpenChange(false)`; otherwise it settles back. With reduced motion it closes or settles at once.
+Add the `@reactive/silk-native/gesture` entry: the same `Dialog`, whose bottom sheet drags on native. The sheet follows the finger on the UI thread (Gesture Handler and Reanimated, optional peers), springs with the release speed, closes when flicked down or thrown past half its height, and settles back otherwise. `Dialog.ScrollView` hands a pull-down at the top of the sheet's content to the sheet. Off native the entry is the root `Dialog`.
