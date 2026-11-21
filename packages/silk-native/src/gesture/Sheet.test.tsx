@@ -219,6 +219,19 @@ test("a centered dialog opened from a sheet scrolls on its own, not as the sheet
   expect(mocked.scrolls).toEqual([]);
 });
 
+test("a sheet's overlayStyle lays out the panel, as the root dialog's does", () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Dialog.Root open onOpenChange={() => {}}>
+        <Dialog.Content placement="bottom" overlayStyle={{ paddingTop: 37 }} testID="panel" />
+      </Dialog.Root>
+    </SilkProvider>,
+  );
+  const veil = screen.getByTestId('panel').parentElement!;
+  expect(getComputedStyle(veil).paddingTop).toBe('37px');
+  expect(getComputedStyle(veil).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+});
+
 test('on the web, a sheet gives pop-ups inside it the dialog host they open into', () => {
   const hosts: unknown[] = [];
   function Layer() {

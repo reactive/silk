@@ -48,7 +48,7 @@ import { mapDialogStyle } from '../styles/mappers/overlay.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { dragStep, releaseCloses, releaseSpeed, SHEET_SPRING } from './physics.js';
+import { dragStep, pressIn, releaseCloses, releaseSpeed, SHEET_SPRING } from './physics.js';
 import type { SheetScrollViewProps } from './types.js';
 
 /** How far a press moves (Android's touch slop) before it is taken as dragging. */
@@ -191,9 +191,7 @@ function DraggableSheet({
     maxPointers: 1,
     onBegin: (event) => {
       'worklet';
-      const box = measure(scrollRef);
-      inScroll.value =
-        box !== null && event.absoluteY >= box.pageY && event.absoluteY <= box.pageY + box.height;
+      inScroll.value = pressIn(measure(scrollRef), event.absoluteX, event.absoluteY);
     },
     onActivate: () => {
       'worklet';
@@ -236,7 +234,7 @@ function DraggableSheet({
       visible={presented}
       animationType="none"
       onClose={requestClose}
-      veil={[veil, styles.clearVeil]}
+      veil={[veil, overlayStyle, styles.clearVeil]}
       catcher={[veil, overlayStyle, veilMotion]}
       Catcher={Animated.View}
       Root={GestureRoot}
@@ -312,7 +310,8 @@ const HANDLE = { width: 32, height: 4 } as const;
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  // The veil's color fades with the sheet's offset, on its own layer.
+  // The veil lays out the panel, with the caller's overlayStyle; its color
+  // fades with the sheet's offset, on the press catcher.
   clearVeil: { backgroundColor: 'transparent' },
   // Over the panel's padding, centered at its top.
   handle: {

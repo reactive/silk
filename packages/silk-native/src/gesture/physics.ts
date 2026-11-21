@@ -84,3 +84,23 @@ export function dragStep(
   if (!sheetMoves) return { offset, pinScroll: false };
   return { offset: Math.max(0, offset + changeY), pinScroll: inScroll };
 }
+
+/** A view's box on the page, as Reanimated's `measure` gives it. */
+export interface PageBox {
+  readonly pageX: number;
+  readonly pageY: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Whether a press at (`x`, `y`) on the page lands in `box` (none: no view). */
+export function pressIn(box: PageBox | null, x: number, y: number): boolean {
+  'worklet';
+  return (
+    box !== null &&
+    x >= box.pageX &&
+    x <= box.pageX + box.width &&
+    y >= box.pageY &&
+    y <= box.pageY + box.height
+  );
+}
