@@ -24,6 +24,8 @@ const mocked = rs.hoisted(() => ({
   scrolls: [] as unknown[],
   /** The sheet's scroll view's box on the page, as `measure` reports it. */
   box: null as Pick<MeasuredDimensions, 'pageX' | 'pageY' | 'width' | 'height'> | null,
+  /** Where a spring is when it doesn't finish (default: its target), as if caught on the way. */
+  caughtAt: undefined as number | undefined,
   /** How far the sheet's content is scrolled. */
   scrollY: 0,
 }));
@@ -58,7 +60,7 @@ rs.mock('react-native-reanimated', () => ({
     mocked.springs.push(to);
     mocked.speeds.push(config.velocity);
     if (mocked.finish) done?.(true);
-    return to;
+    return mocked.finish ? to : mocked.caughtAt ?? to;
   },
 }));
 
@@ -134,6 +136,7 @@ beforeEach(() => {
   mocked.scrolls.length = 0;
   mocked.finish = true;
   mocked.box = null;
+  mocked.caughtAt = undefined;
   mocked.scrollY = 0;
   now = 1000;
   rs.spyOn(Date, 'now').mockImplementation(() => now);
@@ -219,6 +222,15 @@ test('flung shut and caught before its owner answers, a sheet goes on out', () =
 test('a sheet drags either way, so one caught sliding can be pushed back up', () => {
   render(<Harness />);
   expect(mocked.pan!.activeOffsetY).toEqual([-8, 8]);
+});
+
+test('caught as it opens and pushed up, a sheet stays open, though still past half its height', () => {
+  mocked.finish = false;
+  mocked.caughtAt = 400;
+  render(<Harness />);
+  fling(-50, -200);
+  expect(asks()).toBe('0');
+  expect(mocked.springs.at(-1)).toBe(0);
 });
 
 test('a short, slow drag settles back without asking to close', () => {

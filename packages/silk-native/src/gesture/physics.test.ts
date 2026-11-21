@@ -7,6 +7,10 @@ test('a sheet let go of closes when flicked down or thrown past half its height'
   expect(releaseCloses(300, -600, height)).toBe(false);
   expect(releaseCloses(260, 0, height)).toBe(true);
   expect(releaseCloses(100, 300, height)).toBe(false);
+  // Caught at 400 as it opened and pushed up to 350: kept, though past half.
+  expect(releaseCloses(350, -200, height, 400)).toBe(false);
+  // Caught at 200 as it settled and pulled down to 400: closes.
+  expect(releaseCloses(400, 0, height, 200)).toBe(true);
 });
 
 test('a drag moves the sheet, or scrolls its content, and hands off between them', () => {

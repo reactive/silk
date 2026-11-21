@@ -120,12 +120,15 @@ function DraggableSheet({
   const height = useSharedValue(screen.height);
   const sliding = useSharedValue(false);
   const reduceMotion = useSharedValue(reduced);
-  // Closed by its owner: a release slides it out, however short.
+  // Closed by its owner, or by a release until the owner answers: a release
+  // then slides it out, however short.
   const shut = useSharedValue(!open);
   const inScroll = useSharedValue(false);
   const scrollY = useSharedValue(0);
   // When the drag started or last moved (ms, on the UI thread): a held finger lets go at rest.
   const lastMoveAt = useSharedValue(0);
+  // Where the drag caught the sheet, so one that ends no lower keeps it open.
+  const dragFrom = useSharedValue(0);
   const scrollRef = useAnimatedRef<ComponentRef<typeof RNScrollView>>();
 
   // The gesture is made once; these keep its calls into React current.
@@ -200,6 +203,7 @@ function DraggableSheet({
       cancelAnimation(offset);
       sliding.value = false;
       lastMoveAt.value = Date.now();
+      dragFrom.value = offset.value;
     },
     onUpdate: (event) => {
       'worklet';
@@ -219,7 +223,7 @@ function DraggableSheet({
         return;
       }
       if (offset.value <= 0) return;
-      if (!event.canceled && releaseCloses(offset.value, velocity, height.value)) {
+      if (!event.canceled && releaseCloses(offset.value, velocity, height.value, dragFrom.value)) {
         // Shut now, not once React answers, so a catch before then still goes on out.
         shut.value = true;
         slideOut(velocity);

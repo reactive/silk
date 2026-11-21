@@ -38,13 +38,15 @@ export const SHEET_SPRING: {
 
 /**
  * Whether a sheet let go of `offset` points below its rest, moving down at
- * `velocity`, closes: flicked down, or thrown past half its `height`;
- * an upward fling keeps it.
+ * `velocity`, closes: flicked down, or thrown past half its `height`; an
+ * upward fling keeps it, and so does a drag that ends no lower than it began
+ * (`from`), such as one that caught the sheet as it opened and pushed it up.
  */
-export function releaseCloses(offset: number, velocity: number, height: number): boolean {
+export function releaseCloses(offset: number, velocity: number, height: number, from = 0): boolean {
   'worklet';
   if (velocity <= -FLING) return false;
   if (velocity >= FLICK) return true;
+  if (offset <= from) return false;
   return offset + HIDE_FRICTION * velocity > height / 2;
 }
 
