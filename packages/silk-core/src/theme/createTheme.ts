@@ -14,10 +14,10 @@ import type {
   Theme,
   ToneName,
 } from '../tokens/index.js';
-// Not re-exported from tokens/index.js, which is the public /tokens subpath.
 import { white } from '../tokens/palette.js';
-import { oklabToSrgb, rgbToOklab } from '../color/oklab.js';
+import { mixOklab, oklabToRgb, rgbToOklab } from '../color/oklab.js';
 import { oklch } from '../color/oklch.js';
+import { formatRgb } from '../color/srgb.js';
 import { parseHexChannels } from './colorMath.js';
 
 export interface CreateThemeOptions {
@@ -83,13 +83,8 @@ function mixHex(from: string, to: string, amount: number): string {
   if (!start || !end) {
     return to;
   }
-  const a = rgbToOklab(...start);
-  const b = rgbToOklab(...end);
-  return oklabToSrgb([
-    a[0] + (b[0] - a[0]) * amount,
-    a[1] + (b[1] - a[1]) * amount,
-    a[2] + (b[2] - a[2]) * amount,
-  ]);
+  const mix = mixOklab(rgbToOklab(start), rgbToOklab(end), amount);
+  return formatRgb(oklabToRgb(mix));
 }
 
 /**

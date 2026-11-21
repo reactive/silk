@@ -1,4 +1,3 @@
-import { oklch } from 'culori';
 import {
   defaultPalette,
   defaultPaletteDark,
@@ -11,7 +10,7 @@ import {
   requireFiniteNonNegative,
 } from './colorMath.js';
 import { generateScale } from './generateScale.js';
-import { nudgeLUntil, oklchChannelsToHex } from './oklchUtil.js';
+import { hexToOklch, nudgeLUntil, oklchToHexInGamut } from './gamutOklch.js';
 
 export interface PairedPaletteOptions {
   /** Optional danger seed; defaults to Silk's built-in red scales. */
@@ -53,14 +52,19 @@ function repairChromaticAgainstGray(
       maxIters: 48,
     });
     // Keep hover (10) / active (11) above solid for distinctness.
-    const solid = oklch(next[9]);
-    const solidL = solid?.l ?? 0.65;
-    const c10 = oklch(next[10])?.c ?? 0;
-    const h10 = oklch(next[10])?.h ?? 0;
-    next[10] = oklchChannelsToHex(Math.min(0.92, solidL + 0.04), c10, h10);
-    const c11 = oklch(next[11])?.c ?? 0;
-    const h11 = oklch(next[11])?.h ?? 0;
-    next[11] = oklchChannelsToHex(Math.min(0.94, solidL + 0.1), c11, h11);
+    const solidL = hexToOklch(next[9]).l;
+    const step10 = hexToOklch(next[10]);
+    next[10] = oklchToHexInGamut(
+      Math.min(0.92, solidL + 0.04),
+      step10.c,
+      step10.h,
+    );
+    const step11 = hexToOklch(next[11]);
+    next[11] = oklchToHexInGamut(
+      Math.min(0.94, solidL + 0.1),
+      step11.c,
+      step11.h,
+    );
   } else {
     next[10] = nudgeLUntil(next[10], gray[3], 3, {
       direction: -1,

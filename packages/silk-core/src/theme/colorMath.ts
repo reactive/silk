@@ -1,4 +1,4 @@
-import { linearize } from '../color/oklab.js';
+import { linearize } from '../color/srgb.js';
 
 /**
  * sRGB hex contrast utilities (WCAG 2.x relative luminance).

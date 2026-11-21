@@ -4,6 +4,7 @@ export {
   createTheme,
   generatePairedPalette,
   generateScale,
+  oklch,
   relativeLuminance,
 } from '@reactive/silk-core';
 export type {

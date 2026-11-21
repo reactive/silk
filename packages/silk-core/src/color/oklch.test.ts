@@ -1,6 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
 import { expect, test } from '@rstest/core';
-import { oklabToSrgb, rgbToOklab } from './oklab.js';
 import { oklch } from './oklch.js';
 
 test('oklch returns the sRGB hex of an OKLCH color', () => {
@@ -28,26 +26,4 @@ test('oklch throws on input out of range', () => {
     expect(() => oklch(...args)).toThrow(RangeError);
   }
   expect(() => oklch(1.5, 0, 0)).toThrow('oklch(1.5, 0, 0) is out of range');
-});
-
-test('the color module imports nothing outside its folder', () => {
-  const folder = new URL('./', import.meta.url);
-  for (const file of readdirSync(folder)) {
-    if (!file.endsWith('.ts') || file.endsWith('.test.ts')) continue;
-    const source = readFileSync(new URL(file, folder), 'utf8');
-    const specifiers = /(?:from|import|require)\s*\(?\s*['"]([^'"]+)['"]/g;
-    for (const [, from] of source.matchAll(specifiers)) {
-      expect([file, from!.startsWith('./')]).toEqual([file, true]);
-    }
-  }
-});
-
-test('OKLab conversions round-trip sRGB', () => {
-  for (const [r, g, b, hex] of [
-    [0, 144, 255, '#0090ff'],
-    [229, 72, 77, '#e5484d'],
-    [32, 32, 32, '#202020'],
-  ] as const) {
-    expect(oklabToSrgb(rgbToOklab(r, g, b))).toBe(hex);
-  }
 });

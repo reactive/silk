@@ -63,11 +63,11 @@
     }
   },
   "measured": {
-    "generatedAt": "2026-11-21T19:30:03.766Z",
-    "sharedBaselineGzip": 3506,
+    "generatedAt": "2026-11-21T19:46:09.439Z",
+    "sharedBaselineGzip": 3520,
     "css": {
-      "raw": 108365,
-      "gzip": 11833
+      "raw": 108402,
+      "gzip": 11825
     },
     "isolated": {
       "Button": {
@@ -144,7 +144,7 @@
       },
       "Comment": {
         "raw": 44755,
-        "gzip": 15085
+        "gzip": 15084
       },
       "CommentThread": {
         "raw": 46904,
@@ -186,23 +186,23 @@
       },
       "Text": {
         "raw": 1981,
-        "gzip": 911
+        "gzip": 910
       },
       "Pressable": {
-        "raw": 1585,
-        "gzip": 802
+        "raw": 1644,
+        "gzip": 815
       },
       "Button": {
-        "raw": 5096,
-        "gzip": 2231
+        "raw": 5158,
+        "gzip": 2249
       },
       "Surface": {
-        "raw": 3520,
-        "gzip": 1473
+        "raw": 3582,
+        "gzip": 1493
       },
       "Card": {
-        "raw": 4995,
-        "gzip": 2103
+        "raw": 5057,
+        "gzip": 2122
       },
       "Heading": {
         "raw": 2760,
@@ -234,31 +234,31 @@
       },
       "Progress": {
         "raw": 4349,
-        "gzip": 2084
+        "gzip": 2083
       },
       "Input": {
-        "raw": 6473,
-        "gzip": 2617
+        "raw": 6484,
+        "gzip": 2621
       },
       "Textarea": {
-        "raw": 6827,
-        "gzip": 2705
+        "raw": 6838,
+        "gzip": 2710
       },
       "Checkbox": {
-        "raw": 9184,
-        "gzip": 3632
+        "raw": 9246,
+        "gzip": 3649
       },
       "Switch": {
-        "raw": 8622,
-        "gzip": 3616
+        "raw": 8683,
+        "gzip": 3636
       },
       "RadioGroup": {
-        "raw": 9462,
-        "gzip": 3723
+        "raw": 9523,
+        "gzip": 3744
       },
       "Field": {
         "raw": 6955,
-        "gzip": 2980
+        "gzip": 2979
       },
       "Dialog": {
         "raw": 7069,
@@ -266,15 +266,23 @@
       },
       "Popover": {
         "raw": 28858,
-        "gzip": 9578
+        "gzip": 9577
       },
       "Listbox": {
-        "raw": 10084,
-        "gzip": 4263
+        "raw": 10172,
+        "gzip": 4293
+      },
+      "Slider": {
+        "raw": 12373,
+        "gzip": 5261
+      },
+      "Tooltip": {
+        "raw": 32665,
+        "gzip": 10912
       }
     },
     "ssr": {
-      "medianMs": 0.929
+      "medianMs": 0.915
     }
   }
 }

@@ -1,4 +1,3 @@
-import { oklch as parseOklch } from 'culori';
 import {
   grayScale,
   grayScaleDark,
@@ -6,24 +5,19 @@ import {
   type PaletteScale,
   type PaletteStep,
 } from '../tokens/index.js';
+import { white } from '../tokens/palette.js';
 import {
   blueScaleDarkOklch,
   blueScaleOklch,
   grayScaleDarkOklch,
   grayScaleOklch,
-  white,
   type OklchScale,
-} from '../tokens/palette.js';
+} from '../tokens/paletteOklch.js';
 import {
   requireCanonicalHex,
   requireFiniteNonNegative,
 } from './colorMath.js';
-import {
-  nudgeLUntil,
-  oklchAt,
-  oklchChannelsToHex,
-  oklchToHex,
-} from './oklchUtil.js';
+import { hexToOklch, nudgeLUntil, oklchToHexInGamut } from './gamutOklch.js';
 
 /**
  * Lightness and relative-chroma curves, read from Silk's default blue and gray
@@ -31,10 +25,12 @@ import {
  * Relative chroma is C / C₉, so a seed's chroma can scale the whole ramp while
  * keeping the same shape.
  */
+/** Index of step 9, a chromatic scale's solid and its chroma peak. */
+const SOLID = 8;
 const lightness = (scale: OklchScale): readonly number[] =>
   scale.map(([l]) => l);
 const relativeChroma = (scale: OklchScale): readonly number[] =>
-  scale.map(([, c]) => c / scale[8]![1]);
+  scale.map(([, c]) => c / scale[SOLID][1]);
 
 const CHROMATIC_LIGHT_L = lightness(blueScaleOklch);
 const CHROMATIC_LIGHT_C_REL = relativeChroma(blueScaleOklch);
@@ -69,11 +65,11 @@ function ensureDistinctSteps(
     if (scale[step] !== scale[prev]) {
       continue;
     }
-    const prevL = parseOklch(scale[prev])?.l ?? 0.5;
+    const prevL = hexToOklch(scale[prev]).l;
     const direction = i < 8 ? -1 : 1;
     for (let n = 1; n <= 20; n += 1) {
       const l = Math.min(0.995, Math.max(0.12, prevL + direction * 0.01 * n));
-      const next = oklchChannelsToHex(l, peakC * (cRels[i] ?? 0), hue);
+      const next = oklchToHexInGamut(l, peakC * (cRels[i] ?? 0), hue);
       if (next !== scale[prev]) {
         scale[step] = next;
         break;
@@ -108,18 +104,13 @@ export function generateScale(
   options: GenerateScaleOptions = {},
 ): PaletteScale {
   const seed = requireCanonicalHex(seedHex, 'seedHex');
-  const seedOklch = parseOklch(seed);
-  if (!seedOklch) {
-    throw new Error(`Unable to parse seedHex: ${seed}`);
-  }
+  const { l: seedL, c: seedC, h: hue } = hexToOklch(seed);
 
   const chromaCap = options.chromaCap;
   const isNeutral = chromaCap !== undefined;
   if (chromaCap !== undefined) {
     requireFiniteNonNegative(chromaCap, 'chromaCap');
   }
-  const hue = seedOklch.h ?? 0;
-  const seedC = seedOklch.c ?? 0;
   const peakC =
     chromaCap !== undefined
       ? chromaCap
@@ -137,16 +128,15 @@ export function generateScale(
 
   // Only shift chromatic mid-tones toward the seed's lightness; neutrals and
   // extreme seeds keep the template so surfaces/text stay on-contract.
-  const seedL = seedOklch.l ?? Ls[8]!;
   const lShift =
-    isNeutral || seedL < 0.25 || seedL > 0.9 ? 0 : seedL - Ls[8]!;
+    isNeutral || seedL < 0.25 || seedL > 0.9 ? 0 : seedL - Ls[SOLID]!;
 
   const out = {} as Record<PaletteStep, string>;
   for (let i = 0; i < 12; i += 1) {
     const step = STEPS[i]!;
-    let l = Ls[i]! + lShift * (1 - Math.abs(i - 8) / 11);
+    let l = Ls[i]! + lShift * (1 - Math.abs(i - SOLID) / 11);
     l = Math.min(0.995, Math.max(0.12, l));
-    out[step] = oklchChannelsToHex(l, peakC * Crels[i]!, hue);
+    out[step] = oklchToHexInGamut(l, peakC * Crels[i]!, hue);
   }
 
   if (colorScheme === 'light') {
@@ -154,15 +144,17 @@ export function generateScale(
       // textSecondary = step 11 must clear 4.5:1 on surfaceSunken (step 3).
       out[11] = nudgeLUntil(out[11], out[3], 4.5, { direction: -1 });
       out[12] = nudgeLUntil(out[12], out[3], 7, { direction: -1 });
-      if ((parseOklch(out[12])?.l ?? 1) >= (parseOklch(out[11])?.l ?? 0)) {
+      if (hexToOklch(out[12]).l >= hexToOklch(out[11]).l) {
         out[12] = nudgeLUntil(out[12], out[11], 1.2, { direction: -1 });
       }
     } else {
       out[11] = nudgeLUntil(out[11], white, 4.5, { direction: -1 });
       out[10] = nudgeLUntil(out[10], SUNKEN_PROXY, 3, { direction: -1 });
-      const l11 = parseOklch(out[11])?.l ?? 0.5;
-      out[12] = oklchToHex(
-        oklchAt(Math.min(l11 - 0.14, 0.35), peakC * Crels[11]!, hue),
+      const l11 = hexToOklch(out[11]).l;
+      out[12] = oklchToHexInGamut(
+        Math.min(l11 - 0.14, 0.35),
+        peakC * Crels[11]!,
+        hue,
       );
       out[12] = nudgeLUntil(out[12], SUNKEN_PROXY, 4.5, { direction: -1 });
     }
