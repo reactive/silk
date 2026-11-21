@@ -83,7 +83,9 @@ export interface WebKeyDownEvent {
  * `handler` as react-native-web's `onKeyDown` prop, typed here once so the
  * components that take keys don't each cast it.
  */
-export function webKeyHandler(handler: (event: WebKeyDownEvent) => void): object {
+export function webKeyHandler(handler: (event: WebKeyDownEvent) => void): {
+  readonly onKeyDown: (event: WebKeyDownEvent) => void;
+} {
   return { onKeyDown: handler };
 }
 

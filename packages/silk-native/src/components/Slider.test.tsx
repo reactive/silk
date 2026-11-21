@@ -9,7 +9,6 @@ import {
   nearestThumb,
   Slider,
   type SliderProps,
-  thumbCenter,
 } from './Slider.js';
 
 function Controlled(props: Omit<SliderProps, 'value' | 'onValueChange'> & { initial: number[] }): JSX.Element {
@@ -123,6 +122,20 @@ test('without a gap, a thumb crossing another swaps places and keeps focus', () 
   expect(document.activeElement).toBe(second);
 });
 
+test('a step of 0 or less steps by 1', () => {
+  render(
+    <>
+      <Controlled accessibilityLabel="zero" initial={[5]} step={0} />
+      <Controlled accessibilityLabel="negative" initial={[5]} step={-2} />
+    </>,
+  );
+  for (const name of ['zero', 'negative']) {
+    const thumb = screen.getByRole('slider', { name });
+    fireEvent.keyDown(thumb, { key: 'ArrowRight' });
+    expect(now(thumb)).toBe(6);
+  }
+});
+
 test('values snap to the step grid from min', () => {
   render(<Controlled accessibilityLabel="Price" initial={[0.3]} min={0.1} max={1} step={0.2} />);
   const thumb = screen.getByRole('slider');
@@ -169,9 +182,8 @@ test('moveThumb snaps, clamps, sorts, and keeps whole steps apart despite float 
 });
 
 test('thumbs stay in bounds: a center runs from half a thumb in to half a thumb before the end', () => {
-  expect(thumbCenter(0, 200, 20)).toBe(10);
-  expect(thumbCenter(1, 200, 20)).toBe(190);
-  expect(thumbCenter(0.5, 200, 20)).toBe(100);
+  expect(fractionAt(10, 200, 20)).toBe(0);
+  expect(fractionAt(190, 200, 20)).toBe(1);
   expect(fractionAt(100, 200, 20)).toBe(0.5);
   expect(fractionAt(-50, 200, 20)).toBe(0);
   expect(fractionAt(500, 200, 20)).toBe(1);

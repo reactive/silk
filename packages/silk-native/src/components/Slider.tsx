@@ -116,6 +116,16 @@ export interface SliderBounds {
   readonly minSteps: number;
 }
 
+const sameValues = (a: readonly number[], b: readonly number[]): boolean =>
+  a.length === b.length && a.every((value, i) => value === b[i]);
+
+/** Which edge `min` sits at. */
+function slideFrom(vertical: boolean, rtl: boolean, inverted: boolean): SlideFrom {
+  if (vertical) return inverted ? 'top' : 'bottom';
+  // Right to left and inverted cancel out.
+  return rtl !== inverted ? 'right' : 'left';
+}
+
 const decimals = (n: number): number => (String(n).split('.')[1] ?? '').length;
 
 /**
@@ -147,23 +157,20 @@ export function nearestThumb(values: readonly number[], value: number): number {
 }
 
 /**
- * How far a thumb's center sits along a slider `length` long, `fraction` of
- * the way from `min`'s edge: from half a thumb in to half a thumb before the
- * far edge, so no thumb overhangs (Radix's in-bounds offset). Its inverse is
- * `fractionAt`.
+ * The fraction of the way from `min`'s edge at `offset` along a slider
+ * `length` long (clamped). A thumb's center runs from half a thumb in to half
+ * a thumb before the far edge, so no thumb overhangs (Radix's in-bounds
+ * offset); `atFraction` places it there.
  */
-export const thumbCenter = (fraction: number, length: number, thumbSize: number): number =>
-  thumbSize / 2 + fraction * (length - thumbSize);
-
-/** The fraction of the way from `min`'s edge at `offset` along the slider (clamped). */
 export function fractionAt(offset: number, length: number, thumbSize: number): number {
   const travel = length - thumbSize;
   return travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
 }
 
 /**
- * `thumbCenter` as an edge offset: percent plus a fixed margin, so it needs
- * no measured size, as on a server. `inset` moves it back toward the edge (a
+ * Where `fraction` puts a thumb's center (`fractionAt`'s inverse), as an
+ * edge offset: percent plus a fixed margin, so it needs no measured size, as
+ * on a server. `inset` moves it back toward the edge (a
  * thumb's half-width, so its box centers on the point).
  */
 const atFraction = (edge: SlideFrom, fraction: number, thumbSize: number, inset = 0): ViewStyle => ({
@@ -178,7 +185,9 @@ const atFraction = (edge: SlideFrom, fraction: number, thumbSize: number, inset 
  * keys move a focused thumb a step (ten with Shift, or Page Up and Page
  * Down), and Home and End send the first thumb to `min` and the last to
  * `max`, as Radix does. Assistive technology adjusts each thumb a step at a
- * time.
+ * time. While dragging, the thumb follows the pointer from the values it
+ * last reported, and commits those on release; a controlled `value` that
+ * differs applies again once the drag ends.
  */
 export function Slider({
   size,
@@ -234,13 +243,7 @@ export function Slider({
   const bounds: SliderBounds = { min, max, step, minSteps: minStepsBetweenThumbs };
   const vertical = orientation === 'vertical';
   const rtl = (dir ?? (I18nManager.isRTL ? 'rtl' : 'ltr')) === 'rtl';
-  const from: SlideFrom = vertical
-    ? inverted
-      ? 'top'
-      : 'bottom'
-    : rtl !== inverted
-      ? 'right'
-      : 'left';
+  const from = slideFrom(vertical, rtl, inverted);
   const { root, track, range, thumb, thumbSize, crossSize } = mapSliderStyle(
     theme,
     resolved,
@@ -266,7 +269,7 @@ export function Slider({
   const setThumb: SetThumb = (next, index, commit, base = latest.current) => {
     const moved = moveThumb(base, next, index, bounds);
     if (!moved) return undefined;
-    if (String(moved.values) !== String(base)) {
+    if (!sameValues(moved.values, base)) {
       setUncontrolled(moved.values);
       onValueChange?.(moved.values);
       if (commit) onValueCommit?.(moved.values);
@@ -504,7 +507,7 @@ function useSlide({
       const slide = sliding.current;
       sliding.current = undefined;
       setActive(undefined);
-      if (slide && String(slide.values) !== String(slide.before)) onValueCommit?.([...slide.values]);
+      if (slide && !sameValues(slide.values, slide.before)) onValueCommit?.([...slide.values]);
     },
   };
 }
