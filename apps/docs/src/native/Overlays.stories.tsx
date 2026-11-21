@@ -3,8 +3,11 @@ import {
   Dialog,
   Listbox,
   Popover,
+  Inline,
   Stack,
+  Switch,
   Text,
+  Tooltip,
 } from '@reactive/silk-native';
 import { type ComponentRef, type JSX, useRef, useState } from 'react';
 import type { View } from 'react-native';
@@ -79,3 +82,38 @@ function PopoverListboxDemo(): JSX.Element {
 
 /** A Popover holding a Listbox: arrows move, Space or Enter picks, a pick closes it. */
 export const PopoverWithListbox: Story = { render: () => <PopoverListboxDemo /> };
+
+function TooltipDemo(): JSX.Element {
+  return (
+    <Inline gap="3" align="center">
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <Switch accessibilityLabel="Hints" accessibilityHint="Only in Explore" disabled checked={false} />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Only in Explore</Tooltip.Content>
+      </Tooltip.Root>
+      <Text tone="secondary">Rest the pointer on the disabled switch, or tap it.</Text>
+    </Inline>
+  );
+}
+
+export const TooltipOnDisabledControl: Story = { render: () => <TooltipDemo /> };
+
+function TooltipPlacementDemo(): JSX.Element {
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger style={{ alignSelf: 'flex-start' }}>
+        <Button>Engine</Button>
+      </Tooltip.Trigger>
+      <Tooltip.Content side="bottom" align="start" style={{ maxWidth: 200 }}>
+        <Stack gap="1">
+          <Text role="label">Stockfish 19</Text>
+          <Text tone="secondary">Plays the move it judges best.</Text>
+        </Stack>
+      </Tooltip.Content>
+    </Tooltip.Root>
+  );
+}
+
+/** Below and start-aligned, with its own children and a narrower surface. */
+export const TooltipPlacementAndContent: Story = { render: () => <TooltipPlacementDemo /> };

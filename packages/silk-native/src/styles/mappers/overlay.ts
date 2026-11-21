@@ -85,6 +85,24 @@ export function mapPopoverStyle(
   };
 }
 
+const TOOLTIP_WIDTH = 240;
+
+/**
+ * Tooltip: the floating surface, compact, around a line or two at the label
+ * role (web: `floatingSurfaceCompactClass`); the text is a `Text` with that role.
+ */
+export function mapTooltipStyle(theme: Theme): RnViewStyle {
+  const { space } = theme.semantic;
+  return {
+    ...floatingSurface(theme),
+    paddingTop: space[1],
+    paddingBottom: space[1],
+    paddingLeft: space[2],
+    paddingRight: space[2],
+    maxWidth: TOOLTIP_WIDTH,
+  };
+}
+
 /** What a listbox item shows about itself. */
 export interface ListboxItemState {
   /** Pointed at, or focused last: the one the keys act on. */

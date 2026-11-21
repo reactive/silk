@@ -18,6 +18,7 @@ import {
   type View,
   type ViewStyle,
 } from 'react-native';
+import { matchesFocusVisible, type WebNode } from '../web/host.js';
 import { mapFocusRingStyle } from '../styles/mappers/focus.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
@@ -48,28 +49,6 @@ export interface PressableProps
   readonly focusRing?: ToneName | false | undefined;
 }
 
-/** The DOM element react-native-web focuses (silk-native doesn't load DOM types). */
-interface FocusTarget {
-  matches?: (selector: string) => boolean;
-  ownerDocument?: {
-    addEventListener(type: string, listener: () => void, capture: boolean): void;
-    removeEventListener(type: string, listener: () => void, capture: boolean): void;
-  };
-}
-
-/**
- * The browser decides whether focus should show (`:focus-visible`), so a click
- * doesn't ring a button but Tab does.
- */
-function matchesFocusVisible(target: FocusTarget): boolean {
-  try {
-    return target.matches?.(':focus-visible') ?? true;
-  } catch {
-    // A browser too old for :focus-visible: show every focus.
-    return true;
-  }
-}
-
 /**
  * Whether focus should show, with the focus and blur handlers that track it.
  * Web: the browser's `:focus-visible`, checked again on each key until it
@@ -79,14 +58,14 @@ function matchesFocusVisible(target: FocusTarget): boolean {
  */
 function useFocusVisible(): {
   focusVisible: boolean;
-  onFocus: (target: FocusTarget) => void;
+  onFocus: (target: WebNode) => void;
   onBlur: () => void;
 } {
   const [focusVisible, setFocusVisible] = useState(false);
   const stopWatchingKeys = useRef<(() => void) | undefined>(undefined);
   useEffect(() => () => stopWatchingKeys.current?.(), []);
 
-  const onFocus = useCallback((target: FocusTarget): void => {
+  const onFocus = useCallback((target: WebNode): void => {
     stopWatchingKeys.current?.();
     const visible = Platform.OS !== 'web' || matchesFocusVisible(target);
     setFocusVisible(visible);
@@ -136,7 +115,7 @@ export function Pressable({
     (event) => {
       // react-native-web calls this only for this element's own focus, not
       // a focused child's; on the web the target is that DOM element.
-      trackFocus(event.target as unknown as FocusTarget);
+      trackFocus(event.target as unknown as WebNode);
       onFocus?.(event);
     },
     [trackFocus, onFocus],

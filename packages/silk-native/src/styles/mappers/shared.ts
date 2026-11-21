@@ -69,6 +69,12 @@ export type RnViewStyle = {
   shadowRadius?: number | undefined;
   elevation?: number | undefined;
   flexShrink?: number | undefined;
+  flexGrow?: number | undefined;
+  position?: 'absolute' | 'relative' | undefined;
+  top?: number | undefined;
+  right?: number | undefined;
+  bottom?: number | undefined;
+  left?: number | undefined;
 };
 
 export type RnTextStyle = {

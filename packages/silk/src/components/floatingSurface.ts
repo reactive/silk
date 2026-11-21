@@ -1,5 +1,7 @@
 import { css } from '@linaria/core';
 
+import { typographyRoleCss } from '../theme/typographyCss';
+
 /**
  * Stacking for body-portaled layers. Dialog sits *below* the anchored surfaces
  * so overlays opened from inside a dialog — siblings of the panel, not
@@ -31,10 +33,7 @@ export const floatingSurfaceClass: string = css`
 /** Compact floating surface (Tooltip). */
 export const floatingSurfaceCompactClass: string = css`
   padding: var(--silk-space-1) var(--silk-space-2);
-  font-family: var(--silk-typography-label-family);
-  font-size: var(--silk-typography-label-size);
-  font-weight: var(--silk-typography-label-weight);
-  line-height: 1.3;
+  ${typographyRoleCss('label')}
   max-width: 240px;
 `;
 
