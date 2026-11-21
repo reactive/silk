@@ -30,7 +30,11 @@ import {
   type WebKeyDownEvent,
 } from '../styles/a11yProps.js';
 import { minTouchHitSlop } from '../styles/controlGeometry.js';
-import { mapSliderStyle } from '../styles/mappers/controls.js';
+import {
+  mapSliderStyle,
+  type SliderEdge,
+  sliderMarkStyle,
+} from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import {
@@ -89,7 +93,7 @@ export interface SliderProps
 }
 
 /** Which edge a value of `min` sits at. */
-type SlideFrom = 'left' | 'right' | 'bottom' | 'top';
+type SlideFrom = SliderEdge;
 
 function slideFrom(vertical: boolean, rtl: boolean, inverted: boolean): SlideFrom {
   if (vertical) return inverted ? 'top' : 'bottom';
@@ -107,14 +111,8 @@ const BACK_KEYS: Record<SlideFrom, readonly string[]> = {
 const PAGE_KEYS = ['PageUp', 'PageDown'];
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
-/** The far edge from each slide edge, and the margin property of each edge. */
+/** The far edge from each slide edge. */
 const FAR: Record<SlideFrom, SlideFrom> = { left: 'right', right: 'left', bottom: 'top', top: 'bottom' };
-const MARGIN = {
-  left: 'marginLeft',
-  right: 'marginRight',
-  bottom: 'marginBottom',
-  top: 'marginTop',
-} as const satisfies Record<SlideFrom, keyof ViewStyle>;
 
 export interface SliderBounds {
   readonly min: number;
@@ -157,24 +155,12 @@ export function nearestThumb(values: readonly number[], value: number): number {
 
 /**
  * The fraction of the way from `min`'s edge at `offset` along a slider
- * `length` long, clamped: `atFraction`'s inverse.
+ * `length` long, clamped: `sliderMarkStyle`'s inverse.
  */
 export function fractionAt(offset: number, length: number, thumbSize: number): number {
   const travel = length - thumbSize;
   return travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
 }
-
-/**
- * Where `fraction` puts a thumb's center: from half a thumb in to half a
- * thumb before the far edge, so no thumb overhangs (Radix's in-bounds
- * offset). As an edge offset: percent plus a fixed margin, so it needs no
- * measured size, as on a server. `inset` moves it back toward the edge (a
- * thumb's half-width, so its box centers on the point).
- */
-const atFraction = (edge: SlideFrom, fraction: number, thumbSize: number, inset = 0): ViewStyle => ({
-  [edge]: `${fraction * 100}%`,
-  [MARGIN[edge]]: thumbSize / 2 - fraction * thumbSize - inset,
-});
 
 /**
  * Picks one number, or several (a range), by sliding a thumb along a track:
@@ -353,8 +339,8 @@ export function Slider({
           style={[
             range,
             // A single thumb's range starts at the track's edge, not at a thumb center.
-            single ? { [from]: 0 } : atFraction(from, rangeStart, thumbSize),
-            atFraction(FAR[from], 1 - rangeEnd, thumbSize),
+            single ? { [from]: 0 } : sliderMarkStyle(rangeStart, thumbSize, 0, from),
+            sliderMarkStyle(1 - rangeEnd, thumbSize, 0, FAR[from]),
           ]}
         />
       </View>
@@ -404,7 +390,8 @@ export function Slider({
               vertical
                 ? { left: '50%', marginLeft: -thumbSize / 2 }
                 : { top: '50%', marginTop: -thumbSize / 2 },
-              atFraction(from, fractions[index]!, thumbSize, thumbSize / 2),
+              // Its box centered on the point.
+              sliderMarkStyle(fractions[index]!, thumbSize, -thumbSize / 2, from),
             ]}
           />
         );

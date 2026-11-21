@@ -126,6 +126,7 @@ export {
   mapSurfaceStyle,
   mapSwitchStyle,
   mapSliderStyle,
+  sliderMarkStyle,
   mapTextStyle,
   mapTextareaStyle,
   mapTooltipStyle,
@@ -136,6 +137,8 @@ export type {
   ListboxItemState,
   RnTextStyle,
   RnViewStyle,
+  SliderEdge,
+  SliderMarkStyle,
   TextControlState,
   ToggleVisualState,
 } from './styles/mapStyles.js';

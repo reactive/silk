@@ -1,6 +1,7 @@
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState, type JSX } from 'react';
+import { sliderMarkStyle } from '../styles/mappers/controls.js';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Field } from './Field.js';
 import {
@@ -225,6 +226,13 @@ test('fractionAt inverts the placement: half a thumb in is min, half a thumb bef
   expect(fractionAt(500, 200, 20)).toBe(1);
   expect(nearestThumb([10, 20], 15)).toBe(0);
   expect(nearestThumb([10, 20], 16)).toBe(1);
+});
+
+test('sliderMarkStyle puts a mark where the thumb centers at a fraction, offset from it', () => {
+  // A 20px thumb at 50%: center at 50%; an 8-wide dot centered there starts 4px before it.
+  expect(sliderMarkStyle(0.5, 20, -4)).toEqual({ left: '50%', marginLeft: -4 });
+  expect(sliderMarkStyle(0, 20)).toEqual({ left: '0%', marginLeft: 10 });
+  expect(sliderMarkStyle(1, 20, 0, 'bottom')).toEqual({ bottom: '100%', marginBottom: -10 });
 });
 
 test('a Field names the thumb, describes it, and its label focuses it', () => {
