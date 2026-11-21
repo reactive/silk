@@ -10,7 +10,7 @@ import {
   requireFiniteNonNegative,
 } from './colorMath.js';
 import { generateScale } from './generateScale.js';
-import { hexToOklch, nudgeLUntil, oklchToHexInGamut } from './gamutOklch.js';
+import { hexToOklch, nudgeLUntil, withLightness } from './gamutOklch.js';
 
 export interface PairedPaletteOptions {
   /** Optional danger seed; defaults to Silk's built-in red scales. */
@@ -52,19 +52,9 @@ function repairChromaticAgainstGray(
       maxIters: 48,
     });
     // Keep hover (10) / active (11) above solid for distinctness.
-    const solidL = hexToOklch(next[9]).l;
-    const step10 = hexToOklch(next[10]);
-    next[10] = oklchToHexInGamut(
-      Math.min(0.92, solidL + 0.04),
-      step10.c,
-      step10.h,
-    );
-    const step11 = hexToOklch(next[11]);
-    next[11] = oklchToHexInGamut(
-      Math.min(0.94, solidL + 0.1),
-      step11.c,
-      step11.h,
-    );
+    const [solidL] = hexToOklch(next[9]);
+    next[10] = withLightness(next[10], Math.min(0.92, solidL + 0.04));
+    next[11] = withLightness(next[11], Math.min(0.94, solidL + 0.1));
   } else {
     next[10] = nudgeLUntil(next[10], gray[3], 3, {
       direction: -1,

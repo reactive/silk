@@ -63,8 +63,8 @@
     }
   },
   "measured": {
-    "generatedAt": "2026-11-21T19:46:09.439Z",
-    "sharedBaselineGzip": 3520,
+    "generatedAt": "2026-11-21T19:52:31.249Z",
+    "sharedBaselineGzip": 3398,
     "css": {
       "raw": 108402,
       "gzip": 11825
@@ -282,7 +282,7 @@
       }
     },
     "ssr": {
-      "medianMs": 0.915
+      "medianMs": 0.91
     }
   }
 }

@@ -1,7 +1,5 @@
 import { expect, test } from '@rstest/core';
-import { inGamut } from 'culori';
 import * as palette from './palette.js';
-import * as coordinates from './paletteOklch.js';
 
 // The built-in palettes as they resolve, pinned so a retuned coordinate is a
 // deliberate change.
@@ -45,19 +43,4 @@ test('the built-in palettes resolve to their pinned sRGB values', () => {
     expect(Object.values(palette[name as keyof typeof resolved])).toEqual(hexes);
   }
   expect(palette.white).toBe('#ffffff');
-});
-
-test('every built-in coordinate is inside sRGB', () => {
-  const inRgb = inGamut('rgb');
-  for (const [name, scale] of Object.entries(coordinates)) {
-    for (const [l, c, h] of scale) {
-      expect([name, l, c, h, inRgb({ mode: 'oklch', l, c, h })]).toEqual([
-        name,
-        l,
-        c,
-        h,
-        true,
-      ]);
-    }
-  }
 });

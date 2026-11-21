@@ -9,6 +9,21 @@ import { formatRgb } from './srgb.js';
 export type Oklch = readonly [l: number, c: number, h: number];
 
 /**
+ * `oklch()` without its input checks, for Silk's own trusted constants (the
+ * built-in palettes), which skips the checks' bytes in every theme bundle.
+ * Not exported from the `/color` entry.
+ */
+export function resolveOklch(
+  l: number,
+  c: number,
+  h: number,
+  alpha?: number,
+): string {
+  const hue = ((h % 360) * Math.PI) / 180;
+  return formatRgb(oklabToRgb([l, c * Math.cos(hue), c * Math.sin(hue)]), alpha);
+}
+
+/**
  * A color written in OKLCH, whose lightness `l` (0–1) is perceptual: two colors
  * with the same `l` look equally light whatever their chroma `c` (0 or more)
  * and hue `h` (degrees). Returns the sRGB form, `#rrggbb`, or
@@ -26,6 +41,5 @@ export function oklch(l: number, c: number, h: number, alpha?: number): string {
     const args = alpha === undefined ? [l, c, h] : [l, c, h, alpha];
     throw new RangeError(`oklch(${args.join(', ')}) is out of range`);
   }
-  const hue = ((h % 360) * Math.PI) / 180;
-  return formatRgb(oklabToRgb([l, c * Math.cos(hue), c * Math.sin(hue)]), alpha);
+  return resolveOklch(l, c, h, alpha);
 }

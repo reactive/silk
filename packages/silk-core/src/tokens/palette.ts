@@ -1,4 +1,4 @@
-import { oklch } from '../color/oklch.js';
+import { resolveOklch } from '../color/oklch.js';
 import {
   blueScaleDarkOklch,
   blueScaleOklch,
@@ -16,13 +16,13 @@ import type { Palette, PaletteScale, PaletteStep } from './types.js';
 function toScale(source: OklchScale): PaletteScale {
   const scale = {} as Record<PaletteStep, string>;
   source.forEach(([l, c, h], i) => {
-    scale[(i + 1) as PaletteStep] = oklch(l, c, h);
+    scale[(i + 1) as PaletteStep] = resolveOklch(l, c, h);
   });
   return scale;
 }
 
 /** Pure white. Not re-exported from tokens/index.ts (the public /tokens). */
-export const white: string = /* @__PURE__ */ oklch(1, 0, 0);
+export const white: string = /* @__PURE__ */ resolveOklch(1, 0, 0);
 
 /** Radix-Colors-inspired 12-step gray scale (light-friendly). */
 export const grayScale: PaletteScale = /* @__PURE__ */ toScale(grayScaleOklch);

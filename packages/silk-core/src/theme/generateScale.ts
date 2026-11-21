@@ -1,11 +1,8 @@
-import {
-  grayScale,
-  grayScaleDark,
-  type ColorScheme,
-  type PaletteScale,
-  type PaletteStep,
+import type {
+  ColorScheme,
+  PaletteScale,
+  PaletteStep,
 } from '../tokens/index.js';
-import { white } from '../tokens/palette.js';
 import {
   blueScaleDarkOklch,
   blueScaleOklch,
@@ -21,7 +18,7 @@ import { hexToOklch, nudgeLUntil, oklchToHexInGamut } from './gamutOklch.js';
 
 /**
  * Lightness and relative-chroma curves, read from Silk's default blue and gray
- * scales so the built-in coordinates live in one place (tokens/palette.ts).
+ * scales so the built-in coordinates live in one place (tokens/paletteOklch.ts).
  * Relative chroma is C / C₉, so a seed's chroma can scale the whole ramp while
  * keeping the same shape.
  */
@@ -37,8 +34,9 @@ const CHROMATIC_LIGHT_C_REL = relativeChroma(blueScaleOklch);
 const CHROMATIC_DARK_L = lightness(blueScaleDarkOklch);
 const CHROMATIC_DARK_C_REL = relativeChroma(blueScaleDarkOklch);
 /**
- * Generated neutral light step 11, darker than Silk's own gray (0.503) so a
- * brand-tinted textSecondary still clears 4.5:1 on sunken. Generator-only.
+ * Generated neutral light step 11 (textSecondary), darker than Silk's own gray
+ * (0.503): brand-tinted text keeps a margin above the 4.5:1 floor that
+ * generateScale's nudge enforces. Generator-only.
  */
 const NEUTRAL_LIGHT_STEP_11_L = 0.48;
 const NEUTRAL_LIGHT_L = lightness(grayScaleOklch).map((l, i) =>
@@ -49,8 +47,9 @@ const NEUTRAL_DARK_L = lightness(grayScaleDarkOklch);
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 // Silk's default sunken (light) and surface (dark) grays, as contrast targets,
 // so retuning the default grays moves these targets with them.
-const SUNKEN_PROXY = grayScale[3];
-const SURFACE_PROXY = grayScaleDark[1];
+const SUNKEN_PROXY = oklchToHexInGamut(grayScaleOklch[2]);
+const SURFACE_PROXY = oklchToHexInGamut(grayScaleDarkOklch[0]);
+const WHITE = oklchToHexInGamut([1, 0, 0]);
 
 /** Nudge L so adjacent steps serialize to distinct hex after gamut mapping. */
 function ensureDistinctSteps(
@@ -65,11 +64,11 @@ function ensureDistinctSteps(
     if (scale[step] !== scale[prev]) {
       continue;
     }
-    const prevL = hexToOklch(scale[prev]).l;
-    const direction = i < 8 ? -1 : 1;
+    const prevL = hexToOklch(scale[prev])[0];
+    const direction = i < SOLID ? -1 : 1;
     for (let n = 1; n <= 20; n += 1) {
       const l = Math.min(0.995, Math.max(0.12, prevL + direction * 0.01 * n));
-      const next = oklchToHexInGamut(l, peakC * (cRels[i] ?? 0), hue);
+      const next = oklchToHexInGamut([l, peakC * (cRels[i] ?? 0), hue]);
       if (next !== scale[prev]) {
         scale[step] = next;
         break;
@@ -104,7 +103,7 @@ export function generateScale(
   options: GenerateScaleOptions = {},
 ): PaletteScale {
   const seed = requireCanonicalHex(seedHex, 'seedHex');
-  const { l: seedL, c: seedC, h: hue } = hexToOklch(seed);
+  const [seedL, seedC, hue] = hexToOklch(seed);
 
   const chromaCap = options.chromaCap;
   const isNeutral = chromaCap !== undefined;
@@ -136,7 +135,7 @@ export function generateScale(
     const step = STEPS[i]!;
     let l = Ls[i]! + lShift * (1 - Math.abs(i - SOLID) / 11);
     l = Math.min(0.995, Math.max(0.12, l));
-    out[step] = oklchToHexInGamut(l, peakC * Crels[i]!, hue);
+    out[step] = oklchToHexInGamut([l, peakC * Crels[i]!, hue]);
   }
 
   if (colorScheme === 'light') {
@@ -144,18 +143,18 @@ export function generateScale(
       // textSecondary = step 11 must clear 4.5:1 on surfaceSunken (step 3).
       out[11] = nudgeLUntil(out[11], out[3], 4.5, { direction: -1 });
       out[12] = nudgeLUntil(out[12], out[3], 7, { direction: -1 });
-      if (hexToOklch(out[12]).l >= hexToOklch(out[11]).l) {
+      if (hexToOklch(out[12])[0] >= hexToOklch(out[11])[0]) {
         out[12] = nudgeLUntil(out[12], out[11], 1.2, { direction: -1 });
       }
     } else {
-      out[11] = nudgeLUntil(out[11], white, 4.5, { direction: -1 });
+      out[11] = nudgeLUntil(out[11], WHITE, 4.5, { direction: -1 });
       out[10] = nudgeLUntil(out[10], SUNKEN_PROXY, 3, { direction: -1 });
-      const l11 = hexToOklch(out[11]).l;
-      out[12] = oklchToHexInGamut(
+      const [l11] = hexToOklch(out[11]);
+      out[12] = oklchToHexInGamut([
         Math.min(l11 - 0.14, 0.35),
         peakC * Crels[11]!,
         hue,
-      );
+      ]);
       out[12] = nudgeLUntil(out[12], SUNKEN_PROXY, 4.5, { direction: -1 });
     }
   } else if (!isNeutral) {

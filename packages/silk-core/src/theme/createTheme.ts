@@ -16,7 +16,7 @@ import type {
 } from '../tokens/index.js';
 import { white } from '../tokens/palette.js';
 import { mixOklab, oklabToRgb, rgbToOklab } from '../color/oklab.js';
-import { oklch } from '../color/oklch.js';
+import { resolveOklch } from '../color/oklch.js';
 import { formatRgb } from '../color/srgb.js';
 import { parseHexChannels } from './colorMath.js';
 
@@ -158,7 +158,7 @@ function createSemanticColors(
     textPrimary: gray[12],
     textSecondary: gray[11],
     borderSubtle: gray[6],
-    overlay: oklch(0, 0, 0, isLight ? 0.45 : 0.65),
+    overlay: resolveOklch(0, 0, 0, isLight ? 0.45 : 0.65),
     tones,
   };
 }

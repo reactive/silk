@@ -1,8 +1,7 @@
 // The built-in scales as OKLCH coordinates: the one place they are written.
 // Internal: palette.ts resolves them to the public hex scales, and
-// generateScale reads its curves from the blue and gray ones. Every coordinate
-// sits inside sRGB (palette.test.ts); a few carry an extra decimal so they do
-// and still resolve to the same hex.
+// generateScale reads its curves from the blue and gray ones. Both of Silk's
+// converters resolve every coordinate to the same hex (gamutOklch.test.ts).
 import type { Oklch } from '../color/oklch.js';
 
 /** A scale's twelve steps in OKLCH, step 1 first. */
@@ -30,7 +29,7 @@ export const blueScaleOklch: OklchScale = [
   [0.993, 0.003, 248],
   [0.982, 0.009, 243],
   [0.96, 0.02, 239],
-  [0.938, 0.0349, 235],
+  [0.938, 0.035, 235],
   [0.905, 0.051, 240],
   [0.863, 0.068, 243],
   [0.81, 0.089, 243],
@@ -43,10 +42,10 @@ export const blueScaleOklch: OklchScale = [
 
 export const redScaleOklch: OklchScale = [
   [0.993, 0.003, 17],
-  [0.982, 0.0087, 17],
+  [0.982, 0.009, 17],
   [0.955, 0.021, 14],
-  [0.922, 0.0399, 16],
-  [0.892, 0.056, 17],
+  [0.922, 0.04, 16],
+  [0.892, 0.057, 17],
   [0.857, 0.074, 18],
   [0.807, 0.089, 18],
   [0.744, 0.113, 19],
@@ -91,13 +90,13 @@ export const blueScaleDarkOklch: OklchScale = [
   [0.213, 0.03, 261],
   [0.274, 0.066, 254],
   [0.32, 0.097, 252.5],
-  [0.367, 0.1058, 250.7],
+  [0.367, 0.106, 250.7],
   [0.416, 0.113, 252],
   [0.474, 0.122, 253],
   [0.541, 0.14, 253.2],
   [0.649, 0.193, 251.8],
   [0.688, 0.169, 251.4],
-  [0.764, 0.1258, 249.5],
+  [0.764, 0.126, 249.5],
   [0.907, 0.051, 238],
 ];
 

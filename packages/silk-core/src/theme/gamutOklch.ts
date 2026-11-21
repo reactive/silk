@@ -3,17 +3,11 @@
 // channel, this maps a color outside sRGB into it by lowering chroma, keeping
 // lightness and hue.
 import { clampChroma, formatHex, oklch as parseOklch } from 'culori';
+import type { Oklch } from '../color/oklch.js';
 import { contrastRatio } from './colorMath.js';
 
-/** An OKLCH color as the generators read it. */
-export interface OklchColor {
-  readonly l: number;
-  readonly c: number;
-  readonly h: number;
-}
-
 /** `#rrggbb` for an OKLCH color, lowering chroma until it fits sRGB. */
-export function oklchToHexInGamut(l: number, c: number, h: number): string {
+export function oklchToHexInGamut([l, c, h]: Oklch): string {
   const hex = formatHex(clampChroma({ mode: 'oklch', l, c, h }, 'oklch'));
   if (!hex) {
     throw new Error(`Failed to serialize oklch(${l}, ${c}, ${h}) to hex`);
@@ -22,12 +16,18 @@ export function oklchToHexInGamut(l: number, c: number, h: number): string {
 }
 
 /** A hex color in OKLCH; an achromatic color has hue 0. */
-export function hexToOklch(hex: string): OklchColor {
+export function hexToOklch(hex: string): Oklch {
   const color = parseOklch(hex);
   if (!color) {
     throw new Error(`Unable to parse color: ${hex}`);
   }
-  return { l: color.l, c: color.c ?? 0, h: color.h ?? 0 };
+  return [color.l, color.c ?? 0, color.h ?? 0];
+}
+
+/** `hex` moved to lightness `l`, keeping its chroma and hue. */
+export function withLightness(hex: string, l: number): string {
+  const [, c, h] = hexToOklch(hex);
+  return oklchToHexInGamut([l, c, h]);
 }
 
 /**
@@ -52,20 +52,17 @@ export function nudgeLUntil(
   const maxIters = options.maxIters ?? 40;
 
   for (let i = 0; i < maxIters; i += 1) {
-    const candidate = oklchToHexInGamut(current.l, current.c, current.h);
+    const candidate = oklchToHexInGamut(current);
     const ratio = contrastRatio(candidate, against);
     if (ratio != null && ratio >= threshold) {
       return candidate;
     }
-    const currentL = current.l;
-    const nextL = Math.min(
-      maxL,
-      Math.max(minL, currentL + options.direction * delta),
-    );
-    if (nextL === currentL) {
+    const [l, c, h] = current;
+    const nextL = Math.min(maxL, Math.max(minL, l + options.direction * delta));
+    if (nextL === l) {
       return candidate;
     }
-    current = { ...current, l: nextL };
+    current = [nextL, c, h];
   }
-  return oklchToHexInGamut(current.l, current.c, current.h);
+  return oklchToHexInGamut(current);
 }
