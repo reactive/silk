@@ -309,7 +309,15 @@ function TooltipContent({
   const { theme } = useTheme();
   if (!open) return null;
   const own: Pick<ViewProps, ContentHandlers> = WEB
-    ? { onPointerEnter: openNow, onPointerLeave: closeAfterGrace }
+    ? {
+        // A mouse can rest on it; a touch lifting off it is no leave.
+        onPointerEnter: (event) => {
+          if (event.nativeEvent.pointerType === 'mouse') openNow();
+        },
+        onPointerLeave: (event) => {
+          if (event.nativeEvent.pointerType === 'mouse') closeAfterGrace();
+        },
+      }
     : // A tap that nothing inside takes.
       { onStartShouldSetResponder: () => true, onResponderRelease: closeNow };
   return (

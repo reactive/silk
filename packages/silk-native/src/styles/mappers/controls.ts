@@ -354,7 +354,8 @@ export function mapSliderStyle(
   const crossSize = vertical ? thumbSize : space[6];
   const layout: RnViewStyle = vertical
     ? { flexDirection: 'column', width: crossSize, minHeight: space[10] * 2 }
-    : { flexDirection: 'row', alignSelf: 'stretch', minHeight: crossSize };
+    : // As wide as its container, in a row as in a column (web's is 100% wide).
+      { flexDirection: 'row', width: '100%', flexShrink: 1, minHeight: crossSize };
   return {
     root: {
       ...layout,

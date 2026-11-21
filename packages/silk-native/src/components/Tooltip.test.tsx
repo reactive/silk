@@ -78,6 +78,20 @@ test('a mouse passing over without resting opens nothing; a touch does not hover
   }
 });
 
+test('a touch lifting off a tapped-open tooltip leaves it open', () => {
+  rs.useFakeTimers();
+  try {
+    render(<Harness />);
+    click(screen.getByRole('switch', { name: 'Hints' }));
+    fireEvent.pointerEnter(tip()!, { pointerType: 'touch' });
+    fireEvent.pointerLeave(tip()!, { pointerType: 'touch' });
+    act(() => rs.advanceTimersByTime(500));
+    expect(tip()).not.toBeNull();
+  } finally {
+    rs.useRealTimers();
+  }
+});
+
 test('a press on a disabled control opens it, and a press outside closes it', async () => {
   render(<Harness />);
   const toggle = screen.getByRole('switch', { name: 'Hints' });
