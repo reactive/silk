@@ -171,7 +171,7 @@ export function Checkbox({
             : checked
               ? 'checked'
               : 'unchecked',
-      })}
+      }, rest)}
     >
       <View style={box}>
         {checked === true ? <CheckGlyph color={glyphColor} size={box.width} /> : null}

@@ -30,6 +30,8 @@ export interface Placement {
   readonly top: number;
   /** Its own width, or the window's less the padding on both sides when narrower. */
   readonly width: number;
+  /** The widest it may grow: the window's width less the padding on both sides. */
+  readonly maxWidth: number;
   readonly maxHeight: number;
   /** The side it took; placing it again on this side keeps it there as its size changes. */
   readonly side: FloatingSide;
@@ -60,7 +62,8 @@ export function placeFloating(
     chosen === 'bottom'
       ? anchor.y + anchor.height + sideOffset
       : anchor.y - sideOffset - Math.min(size.height, maxHeight);
-  const width = Math.min(size.width, Math.max(0, window.width - 2 * collisionPadding));
+  const maxWidth = Math.max(0, window.width - 2 * collisionPadding);
+  const width = Math.min(size.width, maxWidth);
   const wanted =
     align === 'start'
       ? anchor.x
@@ -68,15 +71,20 @@ export function placeFloating(
         ? anchor.x + anchor.width - width
         : anchor.x + (anchor.width - width) / 2;
   const left = Math.max(collisionPadding, Math.min(wanted, window.width - width - collisionPadding));
-  return { left, top, width, maxHeight, side: chosen };
+  return { left, top, width, maxWidth, maxHeight, side: chosen };
 }
 
-/** The style that puts a surface where `placement` says, for either platform's layer. */
+/**
+ * The style that puts a surface where `placement` says, for either
+ * platform's layer. It bounds the width rather than fixing it, so a surface
+ * that grows or shrinks (a new `size`) is measured at its new width and
+ * placed again.
+ */
 export function placedStyle({
   left,
   top,
-  width,
+  maxWidth,
   maxHeight,
-}: Placement): Pick<Placement, 'left' | 'top' | 'width' | 'maxHeight'> {
-  return { left, top, width, maxHeight };
+}: Placement): Pick<Placement, 'left' | 'top' | 'maxWidth' | 'maxHeight'> {
+  return { left, top, maxWidth, maxHeight };
 }

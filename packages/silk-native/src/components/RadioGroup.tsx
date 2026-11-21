@@ -154,7 +154,7 @@ function RadioGroupRoot({
           'aria-required': fieldProps['aria-required'],
           'data-invalid': isInvalid ? 'true' : undefined,
           'data-orientation': resolved.orientation,
-        })}
+        }, rest)}
       >
         {children}
       </View>
@@ -206,7 +206,7 @@ function RadioGroupItem({
       style={[row, style]}
       {...rnwAttrs({
         'data-state': checked ? 'checked' : 'unchecked',
-      })}
+      }, rest)}
     >
       <View style={item}>
         {checked ? <View style={indicator} /> : null}

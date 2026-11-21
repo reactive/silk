@@ -178,7 +178,7 @@ export function Switch({
         'aria-required': fieldProps['aria-required'],
         'data-invalid': isInvalid ? 'true' : undefined,
         'data-state': checked ? 'checked' : 'unchecked',
-      })}
+      }, rest)}
     >
       <Animated.View
         style={[

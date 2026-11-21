@@ -246,7 +246,7 @@ function ListboxItem({
       }}
       onPress={() => list.pick(value)}
       style={[row, style]}
-      {...rnwAttrs({ 'data-highlighted': highlighted || undefined })}
+      {...rnwAttrs({ 'data-highlighted': highlighted || undefined }, rest)}
     >
       <ItemLabelContext.Provider value={label}>
         <View style={indicator}>{selected ? <ListboxItemText>✓</ListboxItemText> : null}</View>

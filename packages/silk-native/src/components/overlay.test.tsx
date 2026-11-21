@@ -326,6 +326,7 @@ test('Popover opened on mount is placed even when its anchor comes after it', as
   expect(layer().style.opacity).toBe('0');
   await nextFrame();
   expect(layer().style.opacity).toBe('');
+  expect(layer().style.top).not.toBe('');
 });
 
 test('Popover whose anchor mounts frames later is placed, and closes as it scrolls away', async () => {
@@ -336,11 +337,9 @@ test('Popover whose anchor mounts frames later is placed, and closes as it scrol
   expect(layer().style.opacity).toBe('0');
   rerender(<LateAnchor anchored />);
   await nextFrame();
-  expect(layer().style.opacity).toBe('');
+  expect(layer().style.top).not.toBe('');
   screen.getByLabelText('Strength').getBoundingClientRect = () => new DOMRect(0, -40, 60, 20);
-  act(() => {
-    document.dispatchEvent(new Event('scroll'));
-  });
+  fireEvent.scroll(document);
   expect(popover()).toBeNull();
 });
 
@@ -359,6 +358,23 @@ test('Listbox items take the provider density unless told otherwise', () => {
   };
   expect(rowHeight('compact')).not.toBe(rowHeight());
   expect(rowHeight('compact', 'comfortable')).toBe(rowHeight());
+});
+
+test('Popover bounds its width instead of fixing it, so a new size is measured again', () => {
+  const rect = HTMLElement.prototype.getBoundingClientRect;
+  HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+    if (this.querySelector('[data-testid="popover"]')) return new DOMRect(0, 0, 220, 100);
+    return rect.call(this);
+  };
+  try {
+    render(<PickerHarness />);
+    fireEvent.click(screen.getByLabelText('Strength'));
+    const layer = popover()!.parentElement!;
+    expect(layer.style.width).toBe('');
+    expect(layer.style.maxWidth).toBe(`${Math.max(0, document.documentElement.clientWidth - 16)}px`);
+  } finally {
+    HTMLElement.prototype.getBoundingClientRect = rect;
+  }
 });
 
 test('Popover keeps focus where it is as its placement props change', () => {
@@ -579,6 +595,7 @@ test('placeFloating goes on its preferred side, lined up as asked, when it fits'
     left: 50,
     top: 126,
     width: 200,
+    maxWidth: 384,
     maxHeight: 800 - 120 - 6 - 8,
     side: 'bottom',
   });
@@ -596,6 +613,7 @@ test('placeFloating flips to the other side when only it fits, else takes the ro
     left: 50,
     top: 700 - 6 - 300,
     width: 200,
+    maxWidth: 384,
     maxHeight: 700 - 6 - 8,
     side: 'top',
   });

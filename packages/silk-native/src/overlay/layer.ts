@@ -24,7 +24,8 @@ export const FLOATING_Z_INDEX = 40;
  * Runs `start` with the anchor's node once it is attached, and returns what
  * undoes it. An anchor rendered after the layer, or later still (behind a
  * Suspense boundary), attaches its ref after the layer's effects ran, and
- * a ref never re-renders, so it is looked for again each frame until then.
+ * a ref never re-renders, so it is looked for again each frame until then
+ * (one frame callback each, while the layer waits).
  */
 export function withAnchor<T>(
   anchor: RefObject<T | null>,
@@ -33,8 +34,8 @@ export function withAnchor<T>(
   let stop: (() => void) | void;
   let frame: number | undefined;
   const tryStart = () => {
+    frame = anchor.current ? undefined : requestAnimationFrame(tryStart);
     if (anchor.current) stop = start(anchor.current);
-    else frame = requestAnimationFrame(tryStart);
   };
   tryStart();
   return () => {

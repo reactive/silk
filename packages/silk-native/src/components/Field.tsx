@@ -322,7 +322,7 @@ function FieldRoot({
     'data-mode': mode,
     'data-orientation': orientation,
     'data-field-root': '',
-  });
+  }, props);
 
   const opacity = disabled ? 0.7 : 1;
   const layoutStyle =
@@ -408,7 +408,7 @@ function FieldLabel({
           : undefined
       }
       style={style}
-      {...rnwAttrs({ 'data-field-label': '' })}
+      {...rnwAttrs({ 'data-field-label': '' }, props)}
     >
       {children}
       {field?.required ? (
@@ -439,7 +439,7 @@ function FieldDescription({
       tone="secondary"
       nativeID={nativeID ?? field?.descriptionId}
       style={style}
-      {...rnwAttrs({ 'data-field-description': '' })}
+      {...rnwAttrs({ 'data-field-description': '' }, props)}
     >
       {children}
     </Text>
@@ -469,7 +469,7 @@ function FieldError({
       // Android-only live region enhancement — not an iOS status solution.
       accessibilityLiveRegion="polite"
       style={style}
-      {...rnwAttrs({ 'data-field-error': '' })}
+      {...rnwAttrs({ 'data-field-error': '' }, props)}
     >
       {children}
     </Text>

@@ -49,13 +49,16 @@ export interface A11yValueProps {
  * RN typings omit attrs RNW and native a11y still read at runtime
  * (`data-*`, `aria-*`, `accessibilityLevel`). react-native-web drops raw
  * `data-*` props and writes its `dataSet` prop as `data-*` attributes
- * instead, so `data-*` keys move there (camel-cased, as RNW expects).
+ * instead, so `data-*` keys move there (camel-cased, as RNW expects),
+ * after the entries of `own`'s `dataSet`: the caller's props spread before
+ * these, whose `dataSet` this one would otherwise replace.
  */
 export function rnwAttrs(
   attrs: Record<string, string | number | boolean | undefined>,
+  own?: object,
 ): object {
   const props: Record<string, unknown> = {};
-  const dataSet: Record<string, string | number | boolean> = {};
+  const dataSet: Record<string, unknown> = { ...(own as { dataSet?: object } | undefined)?.dataSet };
   for (const [key, value] of Object.entries(attrs)) {
     if (!key.startsWith('data-')) props[key] = value;
     else if (value !== undefined) {

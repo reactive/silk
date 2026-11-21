@@ -53,6 +53,8 @@ export function Input({
     density: density ?? defaults.density ?? themeDensity,
   };
   const control = useTextControl({
+    // react-native-web's data attributes, which Silk adds to.
+    dataSet: (rest as { dataSet?: unknown }).dataSet,
     ref,
     nativeID,
     accessibilityLabel,

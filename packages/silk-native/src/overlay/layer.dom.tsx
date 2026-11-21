@@ -38,6 +38,7 @@ export function FloatingLayer({
   // False on a server and while hydrating, which have no page to portal into.
   // The effects below depend on it to run once the layer exists.
   const client = useSyncExternalStore(subscribeNever, onClient, onServer);
+  const anchorElement = () => (anchor.current ? element(anchor.current) : null);
   // The latest, so the page listeners below stay put while it is open.
   const dismiss = useRef(onDismiss);
   useLayoutEffect(() => {
@@ -76,7 +77,7 @@ export function FloatingLayer({
     const self = layer.current;
     return () => {
       // Runs as it closes, before it leaves the page, so focus inside it is still there to see.
-      if (anchor.current && self?.contains(document.activeElement)) element(anchor.current).focus();
+      if (self?.contains(document.activeElement)) anchorElement()?.focus();
     };
   }, [client, anchor]);
 
@@ -105,7 +106,7 @@ export function FloatingLayer({
 
   /** Whether `target` is in the anchor, whose own press toggles the layer. */
   const onAnchor = (target: EventTarget | null) =>
-    target instanceof Node && Boolean(anchor.current && element(anchor.current).contains(target));
+    target instanceof Node && Boolean(anchorElement()?.contains(target));
 
   if (!client) return null;
   return createPortal(
@@ -134,6 +135,7 @@ const samePlacement = (a: Placement, b: Placement) =>
   a.left === b.left &&
   a.top === b.top &&
   a.width === b.width &&
+  a.maxWidth === b.maxWidth &&
   a.maxHeight === b.maxHeight &&
   a.side === b.side;
 
