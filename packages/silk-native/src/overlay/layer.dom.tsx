@@ -33,6 +33,7 @@ export function FloatingLayer({
   const layer = useRef<HTMLDivElement>(null);
   const [place, setPlace] = useState<Placement>();
   // False on a server and while hydrating, which have no page to portal into.
+  // The effects below depend on it to run once the layer exists.
   const client = useSyncExternalStore(subscribeNever, onClient, onServer);
   // The latest, so the page listeners below stay put while it is open.
   const dismiss = useRef(onDismiss);

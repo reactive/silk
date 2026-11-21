@@ -214,13 +214,32 @@ test('Popover renders nothing on a server, even open', () => {
     const anchor = useRef<ComponentRef<typeof View>>(null);
     return (
       <SilkProvider theme={theme}>
+        <Text testID="page">Page</Text>
         <Popover.Root open onOpenChange={() => {}} anchor={anchor}>
           <Popover.Content testID="popover" />
         </Popover.Root>
       </SilkProvider>
     );
   }
-  expect(renderToString(<Open />)).not.toContain('popover');
+  const html = renderToString(<Open />);
+  expect(html).toContain('data-testid="page"');
+  expect(html).not.toContain('data-testid="popover"');
+});
+
+test('Listbox server markup has one Tab stop, the chosen item', () => {
+  const html = renderToString(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Steps" value="1500" onValueChange={() => {}}>
+        {STEPS.map((step) => (
+          <Listbox.Item key={step} value={step}>
+            {step}
+          </Listbox.Item>
+        ))}
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  expect(html.match(/tabindex="0"/g)).toHaveLength(1);
+  expect(html).toMatch(/aria-selected="true"[^>]*tabindex="0"|tabindex="0"[^>]*aria-selected="true"/);
 });
 
 test('Popover closes when the window resizes', () => {

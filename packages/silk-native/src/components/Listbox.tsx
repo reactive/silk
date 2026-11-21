@@ -121,7 +121,7 @@ function ListboxRoot({
     setEnabledItems((was) => (was && sameList(was, now) ? was : now));
   });
   /** `target`, if it names an enabled item shown. */
-  const enabledItem = (target: string | undefined) =>
+  const ifEnabled = (target: string | undefined) =>
     target !== undefined && enabledItems?.includes(target) ? target : undefined;
   const focus = (target: string) => items.current.get(target)?.node.focus();
   const highlight = (next: string) => {
@@ -138,21 +138,22 @@ function ListboxRoot({
     return [...items.current.values()].some(({ node }) => node === active);
   };
   /** The item the keys move from: the highlighted, else the chosen. */
-  const current = enabledItem(highlighted) ?? enabledItem(value);
+  const movesFrom = ifEnabled(highlighted) ?? ifEnabled(value);
+  const counted = enabledItems !== undefined;
 
+  // As it turns on (on mount, or later for a list opened by pointing, then
+  // pressed), once the items are counted; not again as they change.
   useEffect(() => {
     if (!autoFocus || !enabledItems) return;
-    const target = enabledItem(value) ?? enabledItems[0];
+    const target = ifEnabled(value) ?? enabledItems[0];
     if (target !== undefined) focus(target);
-    // As it turns on (on mount, or later for a list opened by pointing, then
-    // pressed), once the items are counted; not again as they change.
-  }, [autoFocus, enabledItems === undefined]);
+  }, [autoFocus, counted]);
 
   const onKeyDown = (event: KeyDownEvent) => {
     const { key } = event.nativeEvent;
     if (key === ' ') {
       // Enter presses the focused item already (react-native-web presses on Enter).
-      const focused = enabledItem(highlighted);
+      const focused = ifEnabled(highlighted);
       if (focused === undefined) return;
       event.preventDefault();
       pick(focused);
@@ -164,7 +165,8 @@ function ListboxRoot({
     } else {
       // In the order on the page now: items a child reordered on its own keep their nodes.
       const order = enabled();
-      const next = order[moveTo(key, current, order) ?? -1];
+      const index = moveTo(key, movesFrom, order);
+      const next = index === undefined ? undefined : order[index];
       if (next === undefined) return;
       event.preventDefault();
       focus(next);
@@ -172,15 +174,21 @@ function ListboxRoot({
   };
 
   // Before the items are counted (as on a server), the chosen one, else every one.
-  const tabStop = enabledItems ? (current ?? enabledItems[0]) : value;
+  const tabStop = enabledItems ? (movesFrom ?? enabledItems[0]) : value;
   const variant: SelectVariantProps = {
     size: size ?? defaults.size ?? selectRecipe.defaults.size,
     density: density ?? defaults.density ?? selectRecipe.defaults.density,
   };
   // Stable, so an item's ref callback keeps its place in mount order across renders.
   const register = useCallback((itemValue: string, node: ItemNode | null, disabled: boolean) => {
-    if (node) items.current.set(itemValue, { node, disabled });
-    else items.current.delete(itemValue);
+    const was = items.current.get(itemValue);
+    if (node) {
+      if (was?.node === node && was.disabled === disabled) return;
+      items.current.set(itemValue, { node, disabled });
+    } else {
+      if (!was) return;
+      items.current.delete(itemValue);
+    }
     setItemChanges((count) => count + 1);
   }, []);
 
