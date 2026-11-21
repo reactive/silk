@@ -1,3 +1,4 @@
+import { white } from '../tokens/palette.js';
 import {
   defaultPalette,
   defaultPaletteDark,
@@ -16,8 +17,6 @@ import type {
 } from '../tokens/index.js';
 import { oklch } from '../color/oklch.js';
 import { parseHexChannels } from './colorMath.js';
-
-const WHITE = oklch(1, 0, 0);
 
 export interface CreateThemeOptions {
   readonly colorScheme?: ColorScheme;
@@ -101,7 +100,7 @@ function toneFromScale(
   const isLight = scheme === 'light';
   return {
     solid: isLight ? solidScale[11] : solidScale[9],
-    onSolid: isLight ? WHITE : gray[1],
+    onSolid: isLight ? white : gray[1],
     // Body-sized colored text on surfaces.
     // Light uses step 12 so text clears 4.5:1 on surfaceRaised; dark uses 11.
     text: isLight ? solidScale[12] : solidScale[11],
@@ -133,7 +132,7 @@ function createSemanticColors(
   const tones: Record<ToneName, InteractionToneColors> = {
     neutral: {
       solid: gray[12],
-      onSolid: isLight ? WHITE : gray[1],
+      onSolid: isLight ? white : gray[1],
       text: gray[12],
       subtle: gray[3],
       subtleHover: gray[4],
@@ -153,7 +152,7 @@ function createSemanticColors(
   };
 
   return {
-    surface: isLight ? WHITE : gray[1],
+    surface: isLight ? white : gray[1],
     surfaceRaised: gray[2],
     surfaceSunken: gray[3],
     textPrimary: gray[12],
