@@ -16,14 +16,15 @@ import {
 } from './colorMath.js';
 import { hexToOklch, nudgeLUntil, oklchToHexInGamut } from './gamutOklch.js';
 
+/** Index of step 9, a chromatic scale's solid and its chroma peak. */
+const SOLID = 8;
+
 /**
  * Lightness and relative-chroma curves, read from Silk's default blue and gray
  * scales so the built-in coordinates live in one place (tokens/paletteOklch.ts).
  * Relative chroma is C / C₉, so a seed's chroma can scale the whole ramp while
  * keeping the same shape.
  */
-/** Index of step 9, a chromatic scale's solid and its chroma peak. */
-const SOLID = 8;
 const lightness = (scale: OklchScale): readonly number[] =>
   scale.map(([l]) => l);
 const relativeChroma = (scale: OklchScale): readonly number[] =>

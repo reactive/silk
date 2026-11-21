@@ -14,6 +14,7 @@ import type {
   Theme,
   ToneName,
 } from '../tokens/index.js';
+// white is internal, so it isn't in tokens/index.js (the public /tokens).
 import { white } from '../tokens/palette.js';
 import { mixOklab, oklabToRgb, rgbToOklab } from '../color/oklab.js';
 import { resolveOklch } from '../color/oklch.js';
