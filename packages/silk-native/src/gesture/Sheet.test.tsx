@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, rs, test } from '@rstest/core';
 import { act, render, screen } from '@testing-library/react';
 import { type ComponentProps, use, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import type { MeasuredDimensions } from 'react-native-reanimated';
 import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
 import { FloatingHostContext } from '../overlay/layer.js';
 import { SilkProvider } from '../theme/SilkProvider.js';
@@ -22,7 +23,7 @@ const mocked = rs.hoisted(() => ({
   /** The nodes handed to a sheet's scroll ref. */
   scrolls: [] as unknown[],
   /** The sheet's scroll view's box on the page, as `measure` reports it. */
-  box: null as null | { pageX: number; pageY: number; width: number; height: number },
+  box: null as Pick<MeasuredDimensions, 'pageX' | 'pageY' | 'width' | 'height'> | null,
   /** How far the sheet's content is scrolled. */
   scrollY: 0,
 }));
@@ -106,9 +107,14 @@ function Harness({
   );
 }
 
-/** Drags the sheet down by `distance` and lets go at `velocity`. */
-function fling(distance: number, velocity: number) {
+/** Drags the sheet down by `distance` (pressed at `at`, if given) and lets go at `velocity`. */
+function fling(
+  distance: number,
+  velocity: number,
+  at?: { readonly absoluteX: number; readonly absoluteY: number },
+) {
   act(() => {
+    if (at) mocked.pan!.onBegin!(at);
     mocked.pan!.onActivate!();
     mocked.pan!.onUpdate!({ changeY: distance });
     mocked.pan!.onDeactivate!({ canceled: false, velocityY: velocity });
@@ -184,20 +190,13 @@ test('caught as it slides out and flicked before it moves, a sheet keeps the fli
   expect(mocked.speeds).toEqual([1500]);
 });
 
-test('a drag beside scrolled content narrower than the sheet moves the sheet; one in it scrolls', () => {
+test('a flick in the scrolled content leaves the sheet open; one beside its box closes it', () => {
   mocked.box = { pageX: 100, pageY: 200, width: 200, height: 300 };
   mocked.scrollY = 50;
   render(<Harness scroll />);
-  const flick = (absoluteX: number) =>
-    act(() => {
-      mocked.pan!.onBegin!({ absoluteX, absoluteY: 300 });
-      mocked.pan!.onActivate!();
-      mocked.pan!.onUpdate!({ changeY: 100 });
-      mocked.pan!.onDeactivate!({ canceled: false, velocityY: 1500 });
-    });
-  flick(150);
+  fling(100, 1500, { absoluteX: 150, absoluteY: 300 });
   expect(asks()).toBe('0');
-  flick(40);
+  fling(100, 1500, { absoluteX: 40, absoluteY: 300 });
   expect(asks()).toBe('1');
 });
 
