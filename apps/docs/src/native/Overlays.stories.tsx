@@ -3,8 +3,11 @@ import {
   Dialog,
   Listbox,
   Popover,
+  Inline,
   Stack,
+  Switch,
   Text,
+  Tooltip,
 } from '@reactive/silk-native';
 import { type ComponentRef, type JSX, useRef, useState } from 'react';
 import type { View } from 'react-native';
@@ -79,3 +82,19 @@ function PopoverListboxDemo(): JSX.Element {
 
 /** A Popover holding a Listbox: arrows move, Space or Enter picks, a pick closes it. */
 export const PopoverWithListbox: Story = { render: () => <PopoverListboxDemo /> };
+
+function TooltipDemo(): JSX.Element {
+  return (
+    <Inline gap="3" align="center">
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <Switch accessibilityLabel="Hints" accessibilityHint="Only in Explore" disabled checked={false} />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Only in Explore</Tooltip.Content>
+      </Tooltip.Root>
+      <Text tone="secondary">Rest the pointer on the disabled switch, or tap it.</Text>
+    </Inline>
+  );
+}
+
+export const TooltipOnDisabledControl: Story = { render: () => <TooltipDemo /> };

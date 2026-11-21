@@ -107,6 +107,7 @@ Prove the shared layer is actually shared. Meaningful sharing, not pixel parity 
 
 - New package consuming `silk-core` tokens, themes, recipes directly (no CSS variables): `ThemeProvider` / `SilkProvider`, layout (`Box` / `Stack` / `Inline`), visual (`Text` / `Button` / `Surface` / `Card` / `Heading` / `Badge` / `Separator` / `Avatar` / `StatusDot` / `Skeleton` / `Spinner` / `Progress`), forms (`Input` / `Textarea` / `Field` / `Checkbox` / `Switch` / `RadioGroup`).
 - Native `Slider` followed with web's array-valued, multi-thumb contract (it had been deferred so as not to fork a scalar API).
+- Native `Tooltip` followed on the `Popover` layer, opening from a box around its control so disabled controls can explain themselves.
 - Graduated the Stage 1 native contract spike; spike replaced by `apps/native-example` (Expo).
 - Docs: RNW Storybook stories + Native guide + NativeShell / NativeSettingsForm fixtures (state matrix + tests).
 - Packaging: packed-consumer-check + hard JS perf budgets for native exports. Metro consumability verified locally via `yarn workspace @reactive/silk-native-example export:web` (not a CI gate — Expo export is slow/flaky in headless CI).

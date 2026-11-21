@@ -49,5 +49,6 @@ export {
   mapDialogStyle,
   mapListboxItemStyle,
   mapPopoverStyle,
+  mapTooltipStyle,
 } from './mappers/overlay.js';
 export type { ListboxItemState } from './mappers/overlay.js';

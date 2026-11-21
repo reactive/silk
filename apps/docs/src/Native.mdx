@@ -115,7 +115,7 @@ RNW tests assert ARIA aliases (`aria-checked`, `aria-valuenow`, …) via the
 **Layout:** Box, Stack, Inline · **Visual:** Text, Button, Surface, Card,
 Heading, Badge, Separator, Avatar, StatusDot, Skeleton, Spinner, Progress ·
 **Forms:** Input, Textarea, Field, Checkbox, Switch, RadioGroup, Slider ·
-**Overlays:** Dialog, Popover, Listbox
+**Overlays:** Dialog, Popover, Tooltip, Listbox
 
 ## Overlays
 
@@ -140,6 +140,7 @@ const anchor = useRef<View>(null);
 | --- | --- | --- |
 | `Dialog` | `Modal`: `aria-modal` dialog, focus trap, focus back to the opener, Escape | `Modal`: back button, modal to TalkBack |
 | `Popover` | Non-modal Radix `DismissableLayer` and untrapped `FocusScope` in a body portal: the page stays live, so a menu can open on hover | Transparent `Modal`; back button |
+| `Tooltip` | Popover's layer, never focused; opens on a resting mouse or keyboard focus, and on a press nothing inside takes | Transparent `Modal`, opened by a tap nothing inside takes; a tap anywhere closes it |
 | `Listbox` | `listbox` / `option`, one Tab stop, arrows / Home / End / Space | `radiogroup` / `radio` |
 
 A `Popover` closes on a press outside it and its anchor (on native the layer
@@ -147,6 +148,21 @@ covers the anchor, so a press there closes it too), Escape or the back button, a
 in a `Listbox` inside it; focus inside it goes back to the anchor. A
 `Popover` inside a `Dialog` is not supported on the web yet: the dialog's focus
 trap takes focus back from it.
+
+`Tooltip` has web's parts but no `Provider`. Its `Trigger` is a box around the
+control, so a disabled control (which takes no press) still opens it on a tap:
+
+```tsx
+<Tooltip.Root>
+  <Tooltip.Trigger>
+    <Switch accessibilityLabel="Hints" accessibilityHint="Only in Explore" disabled checked={false} />
+  </Tooltip.Trigger>
+  <Tooltip.Content>Only in Explore</Tooltip.Content>
+</Tooltip.Root>
+```
+
+Screen readers don't read the tooltip from the trigger, so give the control the
+same words.
 
 A `Listbox.Item` with custom children colors its text with `Listbox.ItemText`,
 which follows the item's state the way a plain string label does.
