@@ -3,6 +3,7 @@ import {
   type ComponentRef,
   createContext,
   type JSX,
+  type ReactNode,
   use,
   useLayoutEffect,
   useRef,
@@ -10,7 +11,6 @@ import {
 } from 'react';
 import {
   type LayoutChangeEvent,
-  Modal,
   ScrollView as RNScrollView,
   StyleSheet,
   useWindowDimensions,
@@ -37,8 +37,13 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { Dialog as RootDialog, type DialogContentProps, useDialogContext } from '../components/Dialog.js';
-import { rnwAttrs } from '../styles/a11yProps.js';
+import {
+  type DialogContentProps,
+  DialogShell,
+  dialogShellStyles,
+  Dialog as RootDialog,
+  useDialogContext,
+} from '../components/Dialog.js';
 import { mapDialogStyle } from '../styles/mappers/overlay.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -94,7 +99,7 @@ function DraggableSheet({
   onLayout,
   ...rest
 }: DialogContentProps): JSX.Element {
-  const { open, onOpenChange, titleId, titled } = useDialogContext('Content');
+  const { open, onOpenChange } = useDialogContext('Content');
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('Dialog');
   const reduced = useReducedMotion();
@@ -220,50 +225,46 @@ function DraggableSheet({
   }));
 
   return (
-    <Modal
+    <DialogShell
       visible={presented}
-      transparent
-      statusBarTranslucent
       animationType="none"
-      onRequestClose={requestClose}
-      {...rnwAttrs({ 'aria-labelledby': titled ? titleId : undefined })}
+      onClose={requestClose}
+      veil={[veil, styles.clearVeil]}
+      catcher={[veil, overlayStyle, veilMotion]}
+      Catcher={Animated.View}
+      Root={GestureRoot}
     >
-      {/* A Modal is a window of its own on Android, so gestures need their own root in it. */}
-      <GestureHandlerRootView style={styles.fill}>
-        <View style={[veil, styles.clearVeil]}>
-          <Animated.View
-            style={[StyleSheet.absoluteFill, veil, overlayStyle, veilMotion]}
-            onStartShouldSetResponder={() => true}
-            onResponderRelease={requestClose}
+      <GestureDetector gesture={pan}>
+        <Animated.View
+          ref={ref}
+          {...rest}
+          onLayout={(event: LayoutChangeEvent) => {
+            height.value = event.nativeEvent.layout.height;
+            onLayout?.(event);
+          }}
+          style={[panel, dialogShellStyles.overVeil, style, panelMotion]}
+        >
+          <View
+            aria-hidden
+            style={[
+              styles.handle,
+              {
+                top: theme.semantic.space[2],
+                borderRadius: theme.semantic.radius.full,
+                backgroundColor: theme.semantic.color.tones.neutral.border,
+              },
+            ]}
           />
-          <GestureDetector gesture={pan}>
-            <Animated.View
-              ref={ref}
-              {...rest}
-              onLayout={(event: LayoutChangeEvent) => {
-                height.value = event.nativeEvent.layout.height;
-                onLayout?.(event);
-              }}
-              style={[panel, styles.overVeil, style, panelMotion]}
-            >
-              <View
-                aria-hidden
-                style={[
-                  styles.handle,
-                  {
-                    top: theme.semantic.space[2],
-                    borderRadius: theme.semantic.radius.full,
-                    backgroundColor: theme.semantic.color.tones.neutral.border,
-                  },
-                ]}
-              />
-              <SheetScrollContext value={{ pan, scrollRef, scrollY }}>{children}</SheetScrollContext>
-            </Animated.View>
-          </GestureDetector>
-        </View>
-      </GestureHandlerRootView>
-    </Modal>
+          <SheetScrollContext value={{ pan, scrollRef, scrollY }}>{children}</SheetScrollContext>
+        </Animated.View>
+      </GestureDetector>
+    </DialogShell>
   );
+}
+
+/** A Modal is a window of its own on Android, so gestures need their own root in it. */
+function GestureRoot({ children }: { readonly children: ReactNode }) {
+  return <GestureHandlerRootView style={styles.fill}>{children}</GestureHandlerRootView>;
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(GHScrollView);
@@ -302,8 +303,6 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   // The veil's color fades with the sheet's offset, on its own layer.
   clearVeil: { backgroundColor: 'transparent' },
-  // The veil's press catcher is positioned, so it would cover the panel otherwise.
-  overVeil: { zIndex: 1 },
   // Over the panel's padding, centered at its top.
   handle: {
     ...HANDLE,

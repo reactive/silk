@@ -1,9 +1,10 @@
 import { createTheme } from '@reactive/silk-core';
 import { beforeEach, expect, rs, test } from '@rstest/core';
 import { act, render, screen } from '@testing-library/react';
-import { type ComponentProps, useLayoutEffect, useRef, useState } from 'react';
+import { type ComponentProps, use, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
+import { FloatingHostContext } from '../overlay/layer.js';
 import { SilkProvider } from '../theme/SilkProvider.js';
 
 /**
@@ -182,4 +183,23 @@ test("a centered dialog opened from a sheet scrolls on its own, not as the sheet
   );
   expect(screen.getByTestId('inner')).toBeTruthy();
   expect(mocked.scrolls).toEqual([]);
+});
+
+test('on the web, a pop-up opened in a sheet opens over it, as in a centered dialog', () => {
+  const hosts: unknown[] = [];
+  function Layer() {
+    hosts.push(use(FloatingHostContext));
+    return null;
+  }
+  render(
+    <SilkProvider theme={theme}>
+      <Dialog.Root open onOpenChange={() => {}}>
+        <Dialog.Content placement="bottom">
+          <Dialog.Title>Settings</Dialog.Title>
+          <Layer />
+        </Dialog.Content>
+      </Dialog.Root>
+    </SilkProvider>,
+  );
+  expect(hosts.at(-1)).toBeTruthy();
 });
