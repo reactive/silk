@@ -168,6 +168,23 @@ dialogTest('Escape closes a popover inside a Dialog, not the Dialog', () => {
   expect(changes).toEqual(['popover false', 'dialog false']);
 });
 
+dialogTest('An Escape whose keyup went to another window leaves the next one to the Dialog', () => {
+  const changes: string[] = [];
+  const { rerender } = render(<DialogWithPopover />);
+  press('Escape');
+  act(() => {
+    window.dispatchEvent(new Event('blur'));
+  });
+  rerender(
+    <DialogWithPopover
+      popoverOpen={false}
+      onDialogChange={(open) => changes.push(`dialog ${open}`)}
+    />,
+  );
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['dialog false']);
+});
+
 // --- Popover + Listbox ---
 
 const STEPS = ['1100', '1300', '1500', '1700'] as const;
