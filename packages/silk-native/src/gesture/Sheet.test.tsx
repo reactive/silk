@@ -203,3 +203,20 @@ test('on the web, a pop-up opened in a sheet opens over it, as in a centered dia
   );
   expect(hosts.at(-1)).toBeTruthy();
 });
+
+test('on the web, an Escape a pop-up in the sheet takes leaves the sheet open', () => {
+  render(<Harness />);
+  const key = (type: 'keydown' | 'keyup', taken = false) => {
+    const event = new KeyboardEvent(type, { key: 'Escape', bubbles: true, cancelable: true });
+    if (taken) event.preventDefault();
+    act(() => {
+      (document.activeElement ?? document.body).dispatchEvent(event);
+    });
+  };
+  key('keydown', true);
+  key('keyup');
+  expect(asks()).toBe('0');
+  key('keydown');
+  key('keyup');
+  expect(asks()).toBe('1');
+});
