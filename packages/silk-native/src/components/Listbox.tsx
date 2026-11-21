@@ -50,7 +50,7 @@ interface ListboxContextValue {
   /**
    * The item that takes Tab focus into the list: the highlighted, else the
    * chosen, else the first, of the enabled items shown; before they are
-   * counted, every item does.
+   * counted, the chosen one, else every item.
    */
   readonly tabStop: string | undefined;
   readonly highlight: (value: string) => void;
@@ -105,21 +105,21 @@ function ListboxRoot({
   const popover = usePopoverContext();
   const [highlighted, setHighlighted] = useState<string>();
   const items = useRef(new Map<string, { node: ItemNode; disabled: boolean }>());
-  // The enabled items' values in order, counted after each commit: an item
-  // filtered out or disabled can't hold the Tab stop or take a key.
-  const [shown, setShown] = useState<readonly string[]>();
-
-  const enabled = () =>
-    inTreeOrder(items.current)
+  // Bumped as items register, leave or change `disabled`, which happens in
+  // whichever component renders them, not only here.
+  const [itemChanges, setItemChanges] = useState(0);
+  // The enabled items' values in order: an item filtered out or disabled
+  // can't hold the Tab stop or take a key. Unknown until the items commit.
+  const [enabledItems, setEnabledItems] = useState<readonly string[]>();
+  useLayoutEffect(() => {
+    const now = inTreeOrder(items.current)
       .filter(([, item]) => !item.disabled)
       .map(([itemValue]) => itemValue);
-  useLayoutEffect(() => {
-    const now = enabled();
-    setShown((was) => (was && sameList(was, now) ? was : now));
-  });
+    setEnabledItems((was) => (was && sameList(was, now) ? was : now));
+  }, [itemChanges]);
   /** `target`, if it names an enabled item shown. */
-  const live = (target: string | undefined) =>
-    target !== undefined && shown?.includes(target) ? target : undefined;
+  const enabledItem = (target: string | undefined) =>
+    target !== undefined && enabledItems?.includes(target) ? target : undefined;
   const focus = (target: string) => items.current.get(target)?.node.focus();
   const highlight = (next: string) => {
     if (next === highlighted) return;
@@ -134,57 +134,40 @@ function ListboxRoot({
     const active = activeElement();
     return [...items.current.values()].some(({ node }) => node === active);
   };
+  /** The item the keys move from: the highlighted, else the chosen. */
+  const current = enabledItem(highlighted) ?? enabledItem(value);
 
   useEffect(() => {
-    if (!autoFocus) return;
-    const order = enabled();
-    const target = value !== undefined && order.includes(value) ? value : order[0];
+    if (!autoFocus || !enabledItems) return;
+    const target = enabledItem(value) ?? enabledItems[0];
     if (target !== undefined) focus(target);
-    // As it turns on: on mount, or later for a list opened by pointing, then pressed.
-  }, [autoFocus]);
+    // As it turns on (on mount, or later for a list opened by pointing, then
+    // pressed), once the items are counted; not again as they change.
+  }, [autoFocus, enabledItems === undefined]);
 
   const onKeyDown = (event: KeyDownEvent) => {
     const { key } = event.nativeEvent;
-    const order = enabled();
-    const at = Math.max(0, order.indexOf(live(highlighted) ?? live(value) ?? ''));
-    let target: number | undefined;
-    switch (key) {
-      case 'ArrowDown':
-        target = Math.min(at + 1, order.length - 1);
-        break;
-      case 'ArrowUp':
-        target = Math.max(at - 1, 0);
-        break;
-      case 'Home':
-        target = 0;
-        break;
-      case 'End':
-        target = order.length - 1;
-        break;
-      case ' ': {
-        // Enter presses the focused item already (react-native-web presses on Enter).
-        const focused = live(highlighted);
-        if (focused === undefined) return;
-        event.preventDefault();
-        pick(focused);
-        return;
-      }
-      case 'Tab':
-        if (!popover) return;
-        // Focus goes back to the anchor as the popover closes.
-        event.preventDefault();
-        popover.close();
-        return;
-      default:
-        return;
+    if (key === ' ') {
+      // Enter presses the focused item already (react-native-web presses on Enter).
+      const focused = enabledItem(highlighted);
+      if (focused === undefined) return;
+      event.preventDefault();
+      pick(focused);
+    } else if (key === 'Tab') {
+      if (!popover) return;
+      // Focus goes back to the anchor as the popover closes.
+      event.preventDefault();
+      popover.close();
+    } else if (enabledItems) {
+      const next = enabledItems[moveTo(key, current, enabledItems) ?? -1];
+      if (next === undefined) return;
+      event.preventDefault();
+      focus(next);
     }
-    const next = order[target];
-    if (next === undefined) return;
-    event.preventDefault();
-    focus(next);
   };
 
-  const tabStop = shown && (live(highlighted) ?? live(value) ?? shown[0]);
+  // Before the items are counted (as on a server), the chosen one, else every one.
+  const tabStop = enabledItems ? (current ?? enabledItems[0]) : value;
   const variant: SelectVariantProps = {
     size: size ?? defaults.size ?? selectRecipe.defaults.size,
     density: density ?? defaults.density ?? selectRecipe.defaults.density,
@@ -193,6 +176,7 @@ function ListboxRoot({
   const register = useCallback((itemValue: string, node: ItemNode | null, disabled: boolean) => {
     if (node) items.current.set(itemValue, { node, disabled });
     else items.current.delete(itemValue);
+    setItemChanges((count) => count + 1);
   }, []);
 
   return (
@@ -318,6 +302,19 @@ interface DomNode {
 }
 /** `Node.DOCUMENT_POSITION_FOLLOWING`. */
 const FOLLOWING = 4;
+
+/**
+ * The index in `order` that an arrow, Home or End moves to from `from`
+ * (nothing focused yet moves to the first); nothing for any other key.
+ */
+function moveTo(key: string, from: string | undefined, order: readonly string[]): number | undefined {
+  const at = from === undefined ? -1 : order.indexOf(from);
+  if (key === 'ArrowDown') return Math.min(at + 1, order.length - 1);
+  if (key === 'ArrowUp') return Math.max(at - 1, 0);
+  if (key === 'Home') return 0;
+  if (key === 'End') return order.length - 1;
+  return undefined;
+}
 
 const sameList = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((item, at) => item === b[at]);

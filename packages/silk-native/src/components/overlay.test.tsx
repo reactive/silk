@@ -223,6 +223,47 @@ test('Popover renders nothing on a server, even open', () => {
   expect(renderToString(<Open />)).not.toContain('popover');
 });
 
+test('Popover closes when the window resizes', () => {
+  render(<PickerHarness />);
+  fireEvent.click(screen.getByLabelText('Strength'));
+  act(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+  expect(popover()).toBeNull();
+});
+
+test('Popover re-places as its content resizes, on the side it took first', () => {
+  const observed: Array<() => void> = [];
+  const Observer = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class {
+    constructor(callback: () => void) {
+      observed.push(callback);
+    }
+    observe() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+  const rect = HTMLElement.prototype.getBoundingClientRect;
+  let layerHeight = 900;
+  HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+    if (this.getAttribute('aria-label') === 'Strength') return new DOMRect(50, 700, 80, 20);
+    if (this.querySelector('[data-testid="popover"]')) return new DOMRect(0, 0, 200, layerHeight);
+    return rect.call(this);
+  };
+  try {
+    render(<PickerHarness />);
+    fireEvent.click(screen.getByLabelText('Strength'));
+    const layer = () => popover()!.parentElement!;
+    // Too tall for either side: the roomier top, shrunk to the room there.
+    expect(layer().style.top).toBe('8px');
+    layerHeight = 100;
+    act(() => observed.forEach((callback) => callback()));
+    expect(layer().style.top).toBe(`${700 - 4 - 100}px`);
+  } finally {
+    globalThis.ResizeObserver = Observer;
+    HTMLElement.prototype.getBoundingClientRect = rect;
+  }
+});
+
 test('Popover keeps focus where it is as its placement props change', () => {
   const { rerender } = render(<PickerHarness focusOnOpen sideOffset={4} />);
   fireEvent.click(screen.getByLabelText('Strength'));
@@ -353,6 +394,31 @@ test('Listbox autoFocus focuses as it turns on, on a list already shown', () => 
   expect(document.activeElement).toBe(document.body);
   fireEvent.click(screen.getByLabelText('Now'));
   expect(focused()).toBe('1500');
+});
+
+test('Listbox keeps a Tab stop as items filtered by a child that renders alone come and go', () => {
+  let filter: (query: string) => void = () => {};
+  function Filtered() {
+    const [query, setQuery] = useState('');
+    filter = setQuery;
+    return STEPS.filter((step) => step.includes(query)).map((step) => (
+      <Listbox.Item key={step} value={step} accessibilityLabel={step}>
+        {step}
+      </Listbox.Item>
+    ));
+  }
+  render(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Steps" value="1300" onValueChange={() => {}}>
+        <Filtered />
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  expect(options().map((option) => option.tabIndex)).toEqual([-1, 0, -1, -1]);
+  act(() => filter('7'));
+  expect(options().map((option) => option.tabIndex)).toEqual([0]);
+  act(() => filter(''));
+  expect(options().map((option) => option.tabIndex)).toEqual([-1, 0, -1, -1]);
 });
 
 test('Listbox.ItemText takes the item label color, which follows the item state', () => {

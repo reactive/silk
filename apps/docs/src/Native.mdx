@@ -142,7 +142,7 @@ const anchor = useRef<View>(null);
 | `Popover` | Non-modal Radix `DismissableLayer` in a body portal: the page stays live, so a menu can open on hover | Transparent `Modal`; back button |
 | `Listbox` | `listbox` / `option`, one Tab stop, arrows / Home / End / Space | `radiogroup` / `radio` |
 
-A `Popover` closes on a press outside it and its anchor (on Android the layer
+A `Popover` closes on a press outside it and its anchor (on native the layer
 covers the anchor, so a press there closes it too), Escape or the back button, a resized window, scrolling that moves the anchor, and a pick (or Tab)
 in a `Listbox` inside it; focus inside it goes back to the anchor. A
 `Popover` inside a `Dialog` is not supported on the web yet: the dialog's focus
