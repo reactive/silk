@@ -85,7 +85,7 @@ export interface DialogContentProps
  * edge as a sheet (`placement="bottom"`). Its children lay out in the panel;
  * wrap long content in a ScrollView. On the web, a popover or tooltip opened
  * inside it opens over it (`FloatingHostContext`), and an Escape something
- * inside takes (prevents) closes that, not the dialog (`useEscapeTaken`).
+ * inside takes (prevents) closes that, not the dialog (`useTakenEscape`).
  */
 function DialogContent({
   size,
@@ -109,7 +109,7 @@ function DialogContent({
     density,
   );
   const close = () => onOpenChange(false);
-  const escapeTaken = useEscapeTaken(open);
+  const takeEscape = useTakenEscape(open);
   // Android recreates its dialog when animationType changes, so it is set
   // only while closed. Fading until the preference is known (it resolves a
   // moment after mount) keeps a dialog mounted open from losing its fade; a
@@ -126,7 +126,7 @@ function DialogContent({
       statusBarTranslucent
       animationType={animationType}
       onRequestClose={() => {
-        if (!escapeTaken()) close();
+        if (!takeEscape()) close();
       }}
       {...rnwAttrs({ 'aria-labelledby': titled ? titleId : undefined })}
     >
@@ -153,14 +153,15 @@ function DialogContent({
 }
 
 /**
- * Whether the Escape that react-native-web's Modal is closing on (at its
- * keyup) was taken by something inside: a popover or tooltip closes on the
- * keydown and prevents it. The Modal hands `onRequestClose` no event, so the
- * dialog remembers the keydown while open. A held key's repeats come after
- * the layer has closed, so the first press decides. Always false on native,
- * where `onRequestClose` is the back button.
+ * Answers, once, whether the Escape that react-native-web's Modal is closing
+ * on (at its keyup) was taken by something inside: a popover or tooltip
+ * closes on the keydown and prevents it. The Modal hands `onRequestClose` no
+ * event, so the dialog remembers the keydown while open, and forgets it once
+ * asked, so a later keyup the page saw no keydown for still closes it. A held
+ * key's repeats come after the layer has closed, so the first press decides.
+ * Always false on native, where `onRequestClose` is the back button.
  */
-function useEscapeTaken(open: boolean): () => boolean {
+function useTakenEscape(open: boolean): () => boolean {
   const escape = useRef<WebKeyEvent | null>(null);
   useEffect(() => {
     const page = WEB && open ? webDocument() : undefined;
@@ -174,7 +175,11 @@ function useEscapeTaken(open: boolean): () => boolean {
       escape.current = null;
     };
   }, [open]);
-  return () => escape.current?.defaultPrevented ?? false;
+  return () => {
+    const taken = escape.current?.defaultPrevented ?? false;
+    escape.current = null;
+    return taken;
+  };
 }
 
 export type DialogTitleProps = HeadingProps;

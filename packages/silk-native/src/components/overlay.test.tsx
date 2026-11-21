@@ -192,7 +192,7 @@ dialogTest('A held Escape closes a popover inside a Dialog, not the Dialog', () 
   expect(changes).toEqual(['popover false']);
 });
 
-dialogTest('A Dialog reopened after an Escape it ignored closes on its next Escape', () => {
+dialogTest('A reopened Dialog forgets an Escape a popover took before it closed', () => {
   const changes: string[] = [];
   const onDialogChange = (open: boolean) => changes.push(`dialog ${open}`);
   const { rerender } = render(<DialogWithPopover onDialogChange={onDialogChange} />);
@@ -201,6 +201,17 @@ dialogTest('A Dialog reopened after an Escape it ignored closes on its next Esca
   rerender(<DialogWithPopover open={false} popoverOpen={false} onDialogChange={onDialogChange} />);
   rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
   // A keyup with no keydown the page saw (focus came back mid-press).
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['dialog false']);
+});
+
+dialogTest('After an Escape a popover took, a lone Escape keyup still closes the Dialog', () => {
+  const changes: string[] = [];
+  const onDialogChange = (open: boolean) => changes.push(`dialog ${open}`);
+  const { rerender } = render(<DialogWithPopover onDialogChange={onDialogChange} />);
+  pressEscape();
+  rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
+  // Pressed in another window, released here.
   press('Escape', 'keyup');
   expect(changes).toEqual(['dialog false']);
 });
