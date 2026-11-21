@@ -1,4 +1,5 @@
-import { oklch } from 'culori';
+import { oklch as parseOklch } from 'culori';
+import { oklch } from '../color/oklch.js';
 import type { ColorScheme, PaletteScale, PaletteStep } from '../tokens/index.js';
 import {
   requireCanonicalHex,
@@ -46,7 +47,7 @@ const NEUTRAL_DARK_L = [
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 const SUNKEN_PROXY = oklchChannelsToHex(0.955, 0, 0);
 const SURFACE_PROXY = oklchChannelsToHex(0.178, 0, 0);
-const WHITE = oklchChannelsToHex(1, 0, 0);
+const WHITE = oklch(1, 0, 0);
 
 /** Nudge L so adjacent steps serialize to distinct hex after gamut mapping. */
 function ensureDistinctSteps(
@@ -61,7 +62,7 @@ function ensureDistinctSteps(
     if (scale[step] !== scale[prev]) {
       continue;
     }
-    const prevL = oklch(scale[prev])?.l ?? 0.5;
+    const prevL = parseOklch(scale[prev])?.l ?? 0.5;
     const direction = i < 8 ? -1 : 1;
     for (let n = 1; n <= 20; n += 1) {
       const l = Math.min(0.995, Math.max(0.12, prevL + direction * 0.01 * n));
@@ -100,7 +101,7 @@ export function generateScale(
   options: GenerateScaleOptions = {},
 ): PaletteScale {
   const seed = requireCanonicalHex(seedHex, 'seedHex');
-  const seedOklch = oklch(seed);
+  const seedOklch = parseOklch(seed);
   if (!seedOklch) {
     throw new Error(`Unable to parse seedHex: ${seed}`);
   }
@@ -146,13 +147,13 @@ export function generateScale(
       // textSecondary = step 11 must clear 4.5:1 on surfaceSunken (step 3).
       out[11] = nudgeLUntil(out[11], out[3], 4.5, { direction: -1 });
       out[12] = nudgeLUntil(out[12], out[3], 7, { direction: -1 });
-      if ((oklch(out[12])?.l ?? 1) >= (oklch(out[11])?.l ?? 0)) {
+      if ((parseOklch(out[12])?.l ?? 1) >= (parseOklch(out[11])?.l ?? 0)) {
         out[12] = nudgeLUntil(out[12], out[11], 1.2, { direction: -1 });
       }
     } else {
       out[11] = nudgeLUntil(out[11], WHITE, 4.5, { direction: -1 });
       out[10] = nudgeLUntil(out[10], SUNKEN_PROXY, 3, { direction: -1 });
-      const l11 = oklch(out[11])?.l ?? 0.5;
+      const l11 = parseOklch(out[11])?.l ?? 0.5;
       out[12] = oklchToHex(
         oklchAt(Math.min(l11 - 0.14, 0.35), peakC * Crels[11]!, hue),
       );

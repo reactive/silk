@@ -159,7 +159,7 @@ function createSemanticColors(
     textPrimary: gray[12],
     textSecondary: gray[11],
     borderSubtle: gray[6],
-    overlay: isLight ? oklch(0, 0, 0, 0.45) : oklch(0, 0, 0, 0.65),
+    overlay: oklch(0, 0, 0, isLight ? 0.45 : 0.65),
     tones,
   };
 }

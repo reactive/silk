@@ -13,5 +13,5 @@ test('oklch with alpha returns rgba()', () => {
 });
 
 test('oklch clips colors outside sRGB', () => {
-  expect(oklch(0.9, 0.4, 145)).toMatch(/^#[0-9a-f]{6}$/);
+  expect(oklch(0.9, 0.4, 145)).toBe('#00ff00');
 });
