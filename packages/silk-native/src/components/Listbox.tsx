@@ -51,7 +51,7 @@ interface ListboxContextValue {
   /**
    * The item that takes Tab focus into the list: the highlighted, else the
    * chosen, else the first, of the enabled items shown; before they are
-   * counted, the chosen one, else every item.
+   * counted, the chosen one, else every one; never a disabled item.
    */
   readonly tabStop: string | undefined;
   readonly highlight: (value: string) => void;
@@ -115,8 +115,9 @@ function ListboxRoot({
   const [, itemsChanged] = useReducer((count: number) => count + 1, 0);
   // The enabled items' values, recounted after each commit of Listbox.Root:
   // an item filtered out or disabled can't hold the Tab stop or take a key.
-  // Keys start from an item in this list but read the page order afresh,
-  // since a child can reorder its items without this list rendering.
+  // Keys move from the highlighted or chosen item if it is in this list,
+  // but read the order afresh at keydown, since a child can reorder its
+  // items without this list rendering.
   // Unknown until the items commit.
   const [enabledItems, setEnabledItems] = useState<readonly string[]>();
   useLayoutEffect(() => {

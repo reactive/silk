@@ -226,35 +226,37 @@ test('Popover renders nothing on a server, even open', () => {
   expect(html).not.toContain('data-testid="popover"');
 });
 
-test('Listbox server markup has one Tab stop, the chosen item', () => {
-  const html = renderToString(
+/** The items a server-rendered Listbox puts in the Tab order, by label. */
+function serverTabStops(value: string | undefined, disabled?: string): string[] {
+  const host = document.createElement('div');
+  host.innerHTML = renderToString(
     <SilkProvider theme={theme}>
-      <Listbox.Root accessibilityLabel="Steps" value="1500" onValueChange={() => {}}>
+      <Listbox.Root accessibilityLabel="Steps" value={value} onValueChange={() => {}}>
         {STEPS.map((step) => (
-          <Listbox.Item key={step} value={step}>
+          <Listbox.Item key={step} value={step} disabled={step === disabled}>
             {step}
           </Listbox.Item>
         ))}
       </Listbox.Root>
     </SilkProvider>,
   );
-  expect(html.match(/tabindex="0"/g)).toHaveLength(1);
-  expect(html).toMatch(/aria-selected="true"[^>]*tabindex="0"|tabindex="0"[^>]*aria-selected="true"/);
+  // The chosen item's text starts with its check mark.
+  return [...host.querySelectorAll('[role="option"][tabindex="0"]')].map(
+    (option) => option.textContent?.replace('✓', '') ?? '',
+  );
+}
+
+test('Listbox server markup has one Tab stop, the chosen item', () => {
+  expect(serverTabStops('1500')).toEqual(['1500']);
 });
 
 test('Listbox server markup with nothing chosen lets Tab reach every enabled item', () => {
-  const html = renderToString(
-    <SilkProvider theme={theme}>
-      <Listbox.Root accessibilityLabel="Steps" onValueChange={() => {}}>
-        {STEPS.map((step, index) => (
-          <Listbox.Item key={step} value={step} disabled={index === 0}>
-            {step}
-          </Listbox.Item>
-        ))}
-      </Listbox.Root>
-    </SilkProvider>,
-  );
-  expect(html.match(/tabindex="0"/g)).toHaveLength(STEPS.length - 1);
+  expect(serverTabStops(undefined, '1100')).toEqual(['1300', '1500', '1700']);
+});
+
+// The server can't know which items are disabled until they mount.
+test('Listbox server markup with a disabled chosen item has no Tab stop', () => {
+  expect(serverTabStops('1500', '1500')).toEqual([]);
 });
 
 test('Popover closes when the window resizes', () => {
