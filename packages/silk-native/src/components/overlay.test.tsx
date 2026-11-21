@@ -2,6 +2,7 @@ import { createTheme } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { type ComponentRef, useRef, useState } from 'react';
+import { renderToString } from 'react-dom/server';
 import { ScrollView, View } from 'react-native';
 import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
 import { placeFloating } from '../overlay/place.js';
@@ -206,6 +207,20 @@ test('Popover closes on scrolling that moves its anchor, not on scrolling that l
   anchor.getBoundingClientRect = () => new DOMRect(0, -40, 80, 20);
   fireEvent.scroll(document);
   expect(popover()).toBeNull();
+});
+
+test('Popover renders nothing on a server, even open', () => {
+  function Open() {
+    const anchor = useRef<ComponentRef<typeof View>>(null);
+    return (
+      <SilkProvider theme={theme}>
+        <Popover.Root open onOpenChange={() => {}} anchor={anchor}>
+          <Popover.Content testID="popover" />
+        </Popover.Root>
+      </SilkProvider>
+    );
+  }
+  expect(renderToString(<Open />)).not.toContain('popover');
 });
 
 test('Popover keeps focus where it is as its placement props change', () => {

@@ -8,6 +8,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { View } from 'react-native';
@@ -31,6 +32,8 @@ export function FloatingLayer({
 }: FloatingLayerProps): JSX.Element | null {
   const layer = useRef<HTMLDivElement>(null);
   const [place, setPlace] = useState<Placement>();
+  // False on a server and while hydrating, which have no page to portal into.
+  const client = useSyncExternalStore(subscribeNever, onClient, onServer);
   // The latest, so the page listeners below stay put while it is open.
   const dismiss = useRef(onDismiss);
   useLayoutEffect(() => {
@@ -62,7 +65,7 @@ export function FloatingLayer({
     const observer = new ResizeObserver(placeNow);
     observer.observe(self);
     return () => observer.disconnect();
-  }, [anchor, side, align, sideOffset, collisionPadding]);
+  }, [client, anchor, side, align, sideOffset, collisionPadding]);
 
   useLayoutEffect(() => {
     const self = layer.current;
@@ -70,7 +73,7 @@ export function FloatingLayer({
       // Runs as it closes, before it leaves the page, so focus inside it is still there to see.
       if (self?.contains(document.activeElement)) element(anchor.current)?.focus();
     };
-  }, [anchor]);
+  }, [client, anchor]);
 
   useEffect(() => {
     const from = element(anchor.current);
@@ -96,8 +99,7 @@ export function FloatingLayer({
   const onAnchor = (target: EventTarget | null) =>
     target instanceof Node && Boolean(element(anchor.current)?.contains(target));
 
-  // Nothing to portal into while rendering on a server.
-  if (typeof document === 'undefined') return null;
+  if (!client) return null;
   return createPortal(
     <DismissableLayer
       ref={layer}
@@ -125,6 +127,10 @@ export function FloatingLayer({
     document.body,
   );
 }
+
+const subscribeNever = () => () => {};
+const onClient = () => true;
+const onServer = () => false;
 
 const samePlacement = (a: Placement, b: Placement) =>
   a.left === b.left &&
