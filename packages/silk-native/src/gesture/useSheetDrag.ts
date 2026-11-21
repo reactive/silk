@@ -144,7 +144,8 @@ export function useSheetDrag({
       springTo(0, 0);
     } else if (!sliding.value) slideOut(0);
   }, [open]);
-  // Asked to close but kept open: back to rest, from wherever it got to.
+  // Asked to close but kept open: back to rest, from wherever it got to
+  // (held, the release settles it).
   useLayoutEffect(() => {
     if (closeAsks > 0 && latest.current.open && !dragging.value) {
       sliding.value = false;
