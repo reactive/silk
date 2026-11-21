@@ -67,6 +67,8 @@ Slot mapping for `generatePairedPalette(brand)`:
 | `gray` (surfaces / neutral / text) | Low-chroma brand-hue ramp |
 | `red` / `green` | Built-in defaults, or `dangerSeedHex` / `successSeedHex` |
 
+Write colors with `oklch(l, c, h, alpha?)` (also `@reactive/silk-core/color`, which imports nothing). It returns the sRGB form every renderer reads: `#rrggbb`, or `rgba()` with `alpha`. For example, `generatePairedPalette(oklch(0.649, 0.193, 251.8))` seeds from `#0090ff`.
+
 `generateScale(seed, colorScheme)` is the lower-level primitive (12-step OKLCH ramp). Seed input is canonical sRGB hex (`#RGB` / `#RRGGBB`); invalid input throws. Algorithm curves may improve between minors; the hex contract and 12-step shape are stable.
 
 See **Theme/TenantGallery** (two tenants × light/dark side by side) and **Theme/ThemePlayground** (live controls + contrast readout).

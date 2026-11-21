@@ -85,3 +85,9 @@ test('dark scheme uses dark palette and surfaces', () => {
   expect(theme.semantic.color.tones.success.solid).toBe(theme.palette.green[9]);
   expect(theme.semantic.color.surfaceSunken).toBe(theme.palette.gray[3]);
 });
+
+test('blended hover fills are pinned to their OKLab blends', () => {
+  const { tones } = createTheme().semantic.color;
+  expect(tones.accent.hover).toBe('#135297');
+  expect(tones.neutral.hover).toBe('#404040');
+});

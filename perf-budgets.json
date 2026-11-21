@@ -3,7 +3,7 @@
   "budgets": {
     "cssRaw": 130000,
     "cssGzip": 15000,
-    "sharedBaselineGzip": 3300,
+    "sharedBaselineGzip": 3600,
     "ssrMedianMsSoft": 5,
     "nativeIsolatedGzip": {
       "Box": 1300,
@@ -63,11 +63,11 @@
     }
   },
   "measured": {
-    "generatedAt": "2026-11-18T20:40:54.474Z",
-    "sharedBaselineGzip": 2682,
+    "generatedAt": "2026-11-21T19:52:31.249Z",
+    "sharedBaselineGzip": 3398,
     "css": {
-      "raw": 107123,
-      "gzip": 11663
+      "raw": 108402,
+      "gzip": 11825
     },
     "isolated": {
       "Button": {
@@ -75,24 +75,24 @@
         "gzip": 2553
       },
       "Dialog": {
-        "raw": 44590,
-        "gzip": 15422
+        "raw": 44747,
+        "gzip": 15497
       },
       "Tooltip": {
         "raw": 56988,
-        "gzip": 20366
+        "gzip": 20322
       },
       "Popover": {
         "raw": 73021,
-        "gzip": 25858
+        "gzip": 25833
       },
       "DropdownMenu": {
         "raw": 100045,
-        "gzip": 33415
+        "gzip": 33338
       },
       "Select": {
         "raw": 99570,
-        "gzip": 34346
+        "gzip": 34294
       },
       "Tabs": {
         "raw": 29173,
@@ -116,7 +116,7 @@
       },
       "Toast": {
         "raw": 41178,
-        "gzip": 13738
+        "gzip": 13748
       },
       "Identity": {
         "raw": 13119,
@@ -144,7 +144,7 @@
       },
       "Comment": {
         "raw": 44755,
-        "gzip": 15085
+        "gzip": 15084
       },
       "CommentThread": {
         "raw": 46904,
@@ -156,7 +156,7 @@
       },
       "FeedItem": {
         "raw": 56819,
-        "gzip": 18125
+        "gzip": 18124
       },
       "ProfileCard": {
         "raw": 23268,
@@ -168,7 +168,7 @@
       },
       "StatusDot": {
         "raw": 1296,
-        "gzip": 736
+        "gzip": 737
       }
     },
     "nativeIsolated": {
@@ -186,35 +186,35 @@
       },
       "Text": {
         "raw": 1981,
-        "gzip": 911
+        "gzip": 910
       },
       "Pressable": {
-        "raw": 1418,
-        "gzip": 735
+        "raw": 1644,
+        "gzip": 815
       },
       "Button": {
-        "raw": 4927,
-        "gzip": 2164
+        "raw": 5158,
+        "gzip": 2249
       },
       "Surface": {
-        "raw": 3348,
-        "gzip": 1410
+        "raw": 3582,
+        "gzip": 1493
       },
       "Card": {
-        "raw": 4825,
-        "gzip": 2039
+        "raw": 5057,
+        "gzip": 2122
       },
       "Heading": {
-        "raw": 2530,
-        "gzip": 1141
+        "raw": 2760,
+        "gzip": 1270
       },
       "Badge": {
         "raw": 3013,
         "gzip": 1441
       },
       "Separator": {
-        "raw": 1159,
-        "gzip": 576
+        "raw": 1389,
+        "gzip": 723
       },
       "Avatar": {
         "raw": 2377,
@@ -237,32 +237,52 @@
         "gzip": 2083
       },
       "Input": {
-        "raw": 6223,
-        "gzip": 2483
+        "raw": 6484,
+        "gzip": 2621
       },
       "Textarea": {
-        "raw": 6577,
-        "gzip": 2573
+        "raw": 6838,
+        "gzip": 2710
       },
       "Checkbox": {
-        "raw": 8697,
-        "gzip": 3442
+        "raw": 9246,
+        "gzip": 3649
       },
       "Switch": {
-        "raw": 8195,
-        "gzip": 3429
+        "raw": 8683,
+        "gzip": 3636
       },
       "RadioGroup": {
-        "raw": 9051,
-        "gzip": 3543
+        "raw": 9523,
+        "gzip": 3744
       },
       "Field": {
-        "raw": 6718,
-        "gzip": 2854
+        "raw": 6955,
+        "gzip": 2979
+      },
+      "Dialog": {
+        "raw": 7069,
+        "gzip": 3118
+      },
+      "Popover": {
+        "raw": 28858,
+        "gzip": 9577
+      },
+      "Listbox": {
+        "raw": 10172,
+        "gzip": 4293
+      },
+      "Slider": {
+        "raw": 12373,
+        "gzip": 5261
+      },
+      "Tooltip": {
+        "raw": 32665,
+        "gzip": 10912
       }
     },
     "ssr": {
-      "medianMs": 0.932
+      "medianMs": 0.91
     }
   }
 }

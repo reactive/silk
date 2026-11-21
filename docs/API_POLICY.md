@@ -10,8 +10,8 @@ Silk is pre-1.0. This document defines what counts as **public API** and how bre
 | Semantic token names | `surface`, `textPrimary`, `tones.accent.solid`, space steps `0`–`10` | Renaming or removing a token key is breaking |
 | Public CSS variables | `--silk-color-surface`, `--silk-color-surface-sunken`, `--silk-color-overlay`, `--silk-shadow-raised`, `--silk-shadow-overlay`, `--silk-color-tone-*-text`, `--silk-space-2`, `--silk-button-bg`, `--silk-grid-min` | Removing or changing the meaning of a documented `--silk-*` variable is breaking |
 | Recipe shapes | `buttonRecipe.variants`, `stackRecipe.defaults` | Removing an axis or declared value is breaking |
-| Core utilities | `defineRecipe`, `createTheme`, `generateScale`, `generatePairedPalette`, `checkThemeContrast`, `contrastRatio`, `relativeLuminance`, `compactSpace`, `DensityName` | Signature or behavioral changes that affect consumers are breaking |
-| Package exports / subpaths | `@reactive/silk`, `@reactive/silk-core/tokens`, `@reactive/silk/styles.css`, `@reactive/silk-native` | Removing an export path is breaking |
+| Core utilities | `defineRecipe`, `createTheme`, `generateScale`, `generatePairedPalette`, `checkThemeContrast`, `contrastRatio`, `relativeLuminance`, `oklch`, `compactSpace`, `DensityName` | Signature or behavioral changes that affect consumers are breaking |
+| Package exports / subpaths | `@reactive/silk`, `@reactive/silk-core/tokens`, `@reactive/silk-core/color`, `@reactive/silk/styles.css`, `@reactive/silk-native` | Removing an export path is breaking |
 
 **Not public API** (may change without a major bump pre-1.0, but still prefer a changeset note):
 
@@ -80,6 +80,11 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **`SilkDefaults` keys (native):** `Dialog`, `Popover`, `Listbox`.
 - **Mappers:** `mapDialogStyle`, `mapPopoverStyle`, `mapTooltipStyle`, `mapListboxItemStyle` (+ `ListboxItemState`).
 - **Packaging:** `silk-native` depends on `@radix-ui/react-dismissable-layer` and `@radix-ui/react-focus-scope` and takes `react-dom` as an optional peer; its web layer is chosen by the package `imports` entry `#floating-layer` (`react-native` condition → `Modal` layer, `default` → DOM layer).
+
+## OKLCH color additions
+
+- **`oklch(l, c, h, alpha?)`** (also `@reactive/silk-core/color`, which imports nothing) — how Silk writes colors: OKLCH in, sRGB out (`#rrggbb`, or `rgba()` with `alpha`), because React Native can't parse `oklch()`. Stable: that output format, so `checkThemeContrast` and every renderer read it, and a `RangeError` for `l` or `alpha` outside 0–1, negative `c`, or a non-finite value. Unspecified: the output for a color outside sRGB (today each channel is clipped; the intended direction is to keep `l` and `h` and lower `c`, as `generateScale` does). Built-in palettes are written with it, and resolve to the same hex under either gamut policy.
+- **Built-in palettes as OKLCH coordinates** — `generateScale` reads its curves from them, and interaction `hover` fills blend in OKLab rather than sRGB, so a hover sits between its two steps in perceived lightness and keeps their hue. Both may improve between minors, like `generateScale`'s curves. *breaking:* themes pinning the blended `hover` hex values (light tones, and neutral in both schemes) must re-derive them.
 
 ## Stage 3 public additions
 

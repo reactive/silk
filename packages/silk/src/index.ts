@@ -215,6 +215,7 @@ export {
   densityClass,
   generatePairedPalette,
   generateScale,
+  oklch,
   relativeLuminance,
   silkComponentVarMeta,
   silkComponentVarNames,

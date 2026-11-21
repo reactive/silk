@@ -13,7 +13,9 @@ This document describes how the system is built today. The _why_ — goals, cons
 @reactive/silk-native   React Native renderer (context Theme + style mappers)
 ```
 
-Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/models`.
+Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/models`, `/color`.
+
+Inside core, `color/` (OKLCH and sRGB conversion, imports nothing) sits under `tokens/`, which sits under `theme/`. culori is imported only by `theme/gamutOklch.ts`, for the generators, so `createTheme` never loads it.
 Native exports only `.` (root).
 
 **Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs, Expo native example) live under `apps/`.
@@ -22,7 +24,7 @@ Native exports only `.` (root).
 
 ## Theme model
 
-1. **Palette** — 12-step color scales. Never referenced by components.
+1. **Palette** — 12-step color scales, kept as OKLCH coordinates (`tokens/paletteOklch.ts`) and resolved to sRGB hex, because React Native can't parse `oklch()`. Never referenced by components.
 2. **Semantic tokens** — surfaces, text, borders, interaction tone contracts, space, radius, `fontFamily` (sans/serif/mono stacks), typography roles, motion. Canonical values are platform-neutral (numbers for dimensions; typography `lineHeight` is unitless; typography `family` is a `FontFamilyName` that references `fontFamily`).
 3. **Component tokens** — sparse public CSS variables (`--silk-button-bg`) resolved via private vars:
 

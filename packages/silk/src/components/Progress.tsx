@@ -54,14 +54,15 @@ const rootClass: string = css`
   &:where([data-progress='indeterminate']) {
     ${shimmerFillCss(
       'silk-progress-indeterminate',
-      'color-mix(in srgb, var(--_tone-solid) 35%, transparent)',
+      'color-mix(in oklab, var(--_tone-solid) 35%, transparent)',
     )}
   }
 
   @media (prefers-reduced-motion: reduce) {
     &:where([data-progress='indeterminate']) {
+      /* Oklab, not OKLCH: a hue blend toward a tinted gray can swing the hue. */
       background-color: color-mix(
-        in srgb,
+        in oklab,
         var(--_tone-solid) 35%,
         var(--silk-color-surface-sunken)
       );
