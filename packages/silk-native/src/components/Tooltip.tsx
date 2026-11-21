@@ -27,6 +27,7 @@ import {
   matchesFocusVisible,
   type WebFocusEvent,
   type WebNode,
+  webDocument,
 } from '../styles/a11yProps.js';
 import { mapTooltipStyle } from '../styles/mappers/overlay.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -39,9 +40,17 @@ const LEAVE_GRACE_MS = 100;
 interface TooltipContextValue {
   readonly open: boolean;
   readonly anchor: RefObject<ComponentRef<typeof View> | null>;
+  /**
+   * A press inside the trigger, from its start to its click: its mousedown
+   * may move focus out (to the nearest focusable box around the part it
+   * landed on, such as a popover's surface), which mustn't close the tooltip
+   * the press opens. A touch's mousedown comes only after the finger lifts.
+   */
+  readonly pressing: RefObject<boolean>;
   readonly openNow: () => void;
   /** Opens it once a mouse has rested for the delay, unless something changes it first. */
   readonly openAfterDelay: () => void;
+  /** Closes it, unless a press inside the trigger is underway. */
   readonly closeNow: () => void;
   /** Closes it after a pointer's moment to reach the tooltip, unless something changes it first. */
   readonly closeAfterGrace: () => void;
@@ -75,15 +84,17 @@ function TooltipRoot({
 }: TooltipRootProps): JSX.Element {
   const [open, setUncontrolled] = useControllableValue(openProp, defaultOpen);
   const anchor = useRef<ComponentRef<typeof View>>(null);
+  const pressing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   // The latest, for timers that fire after a render.
   const latest = useRef({ open, setUncontrolled, onOpenChange });
-  // What it asked for last, until it renders or the event ends: two closes in
-  // one event (focus leaving, and the layer seeing focus go outside) ask once.
-  const asked = useRef<boolean>(undefined);
+  // The change it last asked its owner for, until it renders or a zero-delay
+  // timer clears it: two closes in one event (focus leaving, and the layer
+  // seeing focus go outside) ask once.
+  const requested = useRef<boolean>(undefined);
   useLayoutEffect(() => {
     latest.current = { open, setUncontrolled, onOpenChange };
-    asked.current = undefined;
+    requested.current = undefined;
   });
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -91,10 +102,10 @@ function TooltipRoot({
   const setOpen = useCallback((next: boolean) => {
     clearTimeout(timer.current);
     const { open: shown, setUncontrolled: set, onOpenChange: report } = latest.current;
-    if (next === (asked.current ?? shown)) return;
-    asked.current = next;
+    if (next === (requested.current ?? shown)) return;
+    requested.current = next;
     setTimeout(() => {
-      asked.current = undefined;
+      requested.current = undefined;
     });
     set(next);
     report?.(next);
@@ -112,12 +123,14 @@ function TooltipRoot({
     () => ({
       openNow: () => setOpen(true),
       openAfterDelay: () => later(true, delayDuration),
-      closeNow: () => setOpen(false),
+      closeNow: () => {
+        if (!pressing.current) setOpen(false);
+      },
       closeAfterGrace: () => later(false, LEAVE_GRACE_MS),
     }),
     [setOpen, later, delayDuration],
   );
-  const value = useMemo(() => ({ open, anchor, ...actions }), [open, actions]);
+  const value = useMemo(() => ({ open, anchor, pressing, ...actions }), [open, actions]);
   return <TooltipContext.Provider value={value}>{children}</TooltipContext.Provider>;
 }
 
@@ -154,11 +167,15 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  * description) so they reach everyone.
  */
 function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
-  const { anchor, openNow, openAfterDelay, closeNow, closeAfterGrace } = useTooltip('Trigger');
-  // A press inside, from its start to its click: its mousedown may take focus
-  // to nothing (a part that takes no focus), which mustn't close the tooltip
-  // the press opens. A touch's mousedown comes only after the finger lifts.
-  const pressing = useRef(false);
+  const { anchor, pressing, openNow, openAfterDelay, closeNow, closeAfterGrace } =
+    useTooltip('Trigger');
+  const endPress = useCallback(() => {
+    pressing.current = false;
+  }, [pressing]);
+  useEffect(
+    () => () => webDocument()?.removeEventListener('click', endPress, { capture: true }),
+    [endPress],
+  );
   const setRef = useCallback(
     (node: ComponentRef<typeof View> | null) => {
       anchor.current = node;
@@ -182,35 +199,25 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
           },
           onPointerDown: () => {
             pressing.current = true;
+            // The press ends with its click, which lands on what holds both where
+            // it went down and where it came up: the page hears it wherever.
+            webDocument()?.addEventListener('click', endPress, { capture: true, once: true });
           },
-          onPointerCancel: () => {
-            pressing.current = false;
-          },
-          // Focus moving to another control inside keeps it open, and so does a
-          // press inside taking it to nothing.
+          onPointerCancel: endPress,
+          // Focus moving to another control inside keeps it open.
           onBlur: (event) => {
             const { relatedTarget } = event.nativeEvent as unknown as WebFocusEvent;
             const box = anchor.current as unknown as WebNode | null;
-            const inside = relatedTarget ? box?.contains(relatedTarget) : pressing.current;
-            if (!inside) closeNow();
+            if (!relatedTarget || !box?.contains(relatedTarget)) closeNow();
           },
         }
       : undefined;
-  // react-native-web's onClick, which React Native's View types lack.
-  const webClick =
-    Platform.OS === 'web'
-      ? {
-          onClick: () => {
-            pressing.current = false;
-          },
-        }
-      : undefined;
+
   return (
     <View
       ref={setRef}
       {...rest}
       {...web}
-      {...webClick}
       // Asked last, after everything inside: only a press nothing inside takes reaches it.
       onStartShouldSetResponder={() => true}
       onResponderRelease={openNow}

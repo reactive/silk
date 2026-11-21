@@ -148,6 +148,20 @@ export interface WebFocusEvent {
   readonly relatedTarget: WebNode | null;
 }
 
+/** The page's `document`, on the web: just what listening on it takes. */
+export interface WebDocument {
+  addEventListener(
+    type: string,
+    listener: () => void,
+    options: { readonly capture: boolean; readonly once?: boolean },
+  ): void;
+  removeEventListener(type: string, listener: () => void, options: { readonly capture: boolean }): void;
+}
+
+/** The page's `document` on the web, or nothing on native. */
+export const webDocument = (): WebDocument | undefined =>
+  (globalThis as { document?: WebDocument }).document;
+
 /** The DOM element react-native-web focuses. */
 export interface FocusTarget {
   matches?: (selector: string) => boolean;

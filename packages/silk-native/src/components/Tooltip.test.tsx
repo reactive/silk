@@ -191,14 +191,17 @@ test('a press on a part inside that takes no focus keeps it open, however long i
           </Tooltip.Trigger>
           <Tooltip.Content>Starts the game</Tooltip.Content>
         </Tooltip.Root>
+        <Pressable accessibilityRole="button" accessibilityLabel="Outside" />
       </SilkProvider>,
     );
     const go = screen.getByRole('button', { name: 'Go' });
     tabTo(go);
     expect(tip()).not.toBeNull();
-    // The press's mousedown takes focus to nothing; its click comes later.
+    // The press's mousedown takes focus off the control, to nothing or to a
+    // focusable box outside; its click comes later.
     fireEvent.pointerDown(screen.getByTestId('trigger'));
     act(() => go.blur());
+    tabTo(screen.getByRole('button', { name: 'Outside' }));
     act(() => rs.advanceTimersByTime(500));
     fireEvent.click(screen.getByTestId('trigger'));
     expect(tip()).not.toBeNull();
@@ -231,4 +234,44 @@ test('a controlled owner that keeps it open is asked again on the next close', (
       resolve();
     });
   });
+});
+
+test('a press that went down inside and came up outside ends there', () => {
+  render(
+    <SilkProvider>
+      <Tooltip.Root>
+        <Tooltip.Trigger testID="trigger">
+          <Pressable accessibilityRole="button" accessibilityLabel="Go" />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Starts the game</Tooltip.Content>
+      </Tooltip.Root>
+    </SilkProvider>,
+  );
+  const go = screen.getByRole('button', { name: 'Go' });
+  fireEvent.pointerDown(screen.getByTestId('trigger'));
+  // Released off the trigger: the click lands on what holds both.
+  fireEvent.click(document.body);
+  tabTo(go);
+  expect(tip()).not.toBeNull();
+  act(() => go.blur());
+  expect(tip()).toBeNull();
+});
+
+test('two closes in one event ask the owner once', () => {
+  const asks: boolean[] = [];
+  render(
+    <SilkProvider>
+      <Tooltip.Root defaultOpen onOpenChange={(open) => asks.push(open)}>
+        <Tooltip.Trigger>
+          <Pressable accessibilityRole="button" accessibilityLabel="Go" />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Starts the game</Tooltip.Content>
+      </Tooltip.Root>
+      <Pressable accessibilityRole="button" accessibilityLabel="Next" />
+    </SilkProvider>,
+  );
+  tabTo(screen.getByRole('button', { name: 'Go' }));
+  // Focus leaving the trigger for outside: the trigger's blur and the layer both close it.
+  tabTo(screen.getByRole('button', { name: 'Next' }));
+  expect(asks).toEqual([false]);
 });
