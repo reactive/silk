@@ -338,68 +338,77 @@ export function Slider({
         rest,
       )}
     >
-      <View pointerEvents="none" style={track}>
-        <View
-          style={[
-            range,
-            // A single thumb's range starts at the track's edge, not at a thumb center.
-            single ? { [from]: 0 } : placeAt(rangeStart, thumbSize, 0, from),
-            placeAt(1 - rangeEnd, thumbSize, 0, FAR[from]),
-          ]}
-        />
-      </View>
-      {children === undefined ? null : (
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
-        </View>
-      )}
-      {values.map((value, index) => {
-        const label =
-          thumbLabels?.[index] ??
-          (single
-            ? fieldProps.accessibilityLabel
-            : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
-        return (
-          <Pressable
-            key={index}
-            ref={(node) => {
-              thumbs.current[index] = node;
-            }}
-            pointerEvents="none"
-            focusable={!isDisabled}
-            disabled={isDisabled}
-            focusRing={isInvalid ? 'danger' : resolved.tone}
-            accessibilityRole="adjustable"
-            accessibilityLabel={label}
-            accessibilityHint={fieldProps.accessibilityHint}
-            accessibilityLabelledBy={
-              thumbLabels?.[index] === undefined && single
-                ? fieldProps.accessibilityLabelledBy
-                : undefined
-            }
-            nativeID={single ? fieldProps.nativeID : undefined}
-            accessibilityActions={ACTIONS}
-            onAccessibilityAction={onAction(index)}
-            {...a11yState({ disabled: isDisabled })}
-            {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
-            {...webKeyHandler(onThumbKey(index))}
-            {...rnwAttrs({
-              'aria-orientation': orientation,
-              'aria-describedby': fieldProps['aria-describedby'],
-              'aria-invalid': fieldProps['aria-invalid'],
-              'data-active': slide.active === index ? '' : undefined,
-            })}
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { flexDirection: root.flexDirection, alignItems: root.alignItems },
+          PHYSICAL_EDGES,
+        ]}
+      >
+        <View pointerEvents="none" style={track}>
+          <View
             style={[
-              thumb,
-              vertical
-                ? { left: '50%', marginLeft: -thumbSize / 2 }
-                : { top: '50%', marginTop: -thumbSize / 2 },
-              // Its box centered on the point.
-              placeAt(fractions[index]!, thumbSize, -thumbSize / 2, from),
+              range,
+              // A single thumb's range starts at the track's edge, not at a thumb center.
+              single ? { [from]: 0 } : placeAt(rangeStart, thumbSize, 0, from),
+              placeAt(1 - rangeEnd, thumbSize, 0, FAR[from]),
             ]}
           />
-        );
-      })}
+        </View>
+        {children === undefined ? null : (
+          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+            <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
+          </View>
+        )}
+        {values.map((value, index) => {
+          const label =
+            thumbLabels?.[index] ??
+            (single
+              ? fieldProps.accessibilityLabel
+              : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
+          return (
+            <Pressable
+              key={index}
+              ref={(node) => {
+                thumbs.current[index] = node;
+              }}
+              pointerEvents="none"
+              focusable={!isDisabled}
+              disabled={isDisabled}
+              focusRing={isInvalid ? 'danger' : resolved.tone}
+              accessibilityRole="adjustable"
+              accessibilityLabel={label}
+              accessibilityHint={fieldProps.accessibilityHint}
+              accessibilityLabelledBy={
+                thumbLabels?.[index] === undefined && single
+                  ? fieldProps.accessibilityLabelledBy
+                  : undefined
+              }
+              nativeID={single ? fieldProps.nativeID : undefined}
+              accessibilityActions={ACTIONS}
+              onAccessibilityAction={onAction(index)}
+              {...a11yState({ disabled: isDisabled })}
+              {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
+              {...webKeyHandler(onThumbKey(index))}
+              {...rnwAttrs({
+                'aria-orientation': orientation,
+                'aria-describedby': fieldProps['aria-describedby'],
+                'aria-invalid': fieldProps['aria-invalid'],
+                'data-active': slide.active === index ? '' : undefined,
+              })}
+              style={[
+                thumb,
+                vertical
+                  ? { left: '50%', marginLeft: -thumbSize / 2 }
+                  : { top: '50%', marginTop: -thumbSize / 2 },
+                // Its box centered on the point.
+                placeAt(fractions[index]!, thumbSize, -thumbSize / 2, from),
+              ]}
+            />
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -536,6 +545,18 @@ const ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const;
 const WEB_KEEP_FOCUS = {
   onMouseDown: (event: { preventDefault(): void }) => event.preventDefault(),
 };
+
+/**
+ * Lays the slider's parts out left to right in any app, so the physical
+ * `left` / `right` that place them mean what a press's `locationX` reads. In
+ * a right-to-left app, React Native turns `left` and `right` into `start` and
+ * `end` (`swapLeftAndRightInRTL`), and those resolve by the parent's
+ * direction; without this, the thumb would draw mirrored from where a press
+ * puts it. `dir` still picks the edge `min` sits at (`slideFrom`). It goes
+ * on a box inside the slider's own, since a box's direction also resolves
+ * its own margins: the slider's margins keep flipping with the app.
+ */
+const PHYSICAL_EDGES: ViewStyle = { direction: 'ltr' };
 
 /** Web only: a pointer over it, no text selected or page scrolled by a drag. */
 const WEB_SLIDER = { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as ViewStyle;

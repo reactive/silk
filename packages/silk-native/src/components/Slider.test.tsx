@@ -259,6 +259,21 @@ test('useSliderMarkStyle places a mark where the thumb centers, in the slider\'s
   );
 });
 
+test('its parts lay out left to right in any direction, so their left and right stay physical', () => {
+  // A right-to-left React Native app turns `left` / `right` into `start` / `end`
+  // (swapLeftAndRightInRTL), resolved by the parent's direction. The slider's own
+  // box keeps the direction it is given, so its margins still flip with the app.
+  render(
+    <SilkProvider>
+      <Slider accessibilityLabel="Rating" dir="rtl" testID="root" style={{ direction: 'rtl' }} />
+    </SilkProvider>,
+  );
+  const parts = screen.getByRole('slider').parentElement!;
+  expect(parts.style.direction).toBe('ltr');
+  expect(parts.parentElement).toBe(screen.getByTestId('root'));
+  expect(screen.getByTestId('root').style.direction).toBe('rtl');
+});
+
 test('fractionAt inverts the placement: the point a fraction is placed at reads back as it', () => {
   // A 200px slider with a 20px thumb: 0.25 is placed at 25% + (10 - 5)px = 55px.
   expect(fractionAt(55, 200, 20)).toBe(0.25);
