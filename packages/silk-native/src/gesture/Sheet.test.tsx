@@ -185,7 +185,7 @@ test("a centered dialog opened from a sheet scrolls on its own, not as the sheet
   expect(mocked.scrolls).toEqual([]);
 });
 
-test('on the web, a sheet gives pop-ups inside it the dialog host they open into, over it', () => {
+test('on the web, a sheet gives pop-ups inside it the dialog host they open into', () => {
   const hosts: unknown[] = [];
   function Layer() {
     hosts.push(use(FloatingHostContext));
