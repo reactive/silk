@@ -341,7 +341,7 @@ test('conformance: distinct Popover sizes differ in width', () => {
 });
 
 test('conformance: every Select size and density maps a listbox item row', () => {
-  const resting = { highlighted: false, selected: false, disabled: false };
+  const resting = { highlighted: false, pressed: false, selected: false, disabled: false };
   for (const size of selectRecipe.variants.size) {
     for (const density of selectRecipe.variants.density) {
       expect(mapListboxItemStyle(theme, { size, density }, resting).row.minHeight).toBeTypeOf(
@@ -352,4 +352,23 @@ test('conformance: every Select size and density maps a listbox item row', () =>
   const lit = mapListboxItemStyle(theme, {}, { ...resting, highlighted: true });
   expect(lit.row.backgroundColor).toBe(theme.semantic.color.tones.accent.subtle);
   expect(lit.label.color).toBe(theme.semantic.color.tones.accent.text);
+  const pressed = mapListboxItemStyle(theme, {}, { ...resting, pressed: true });
+  expect(pressed.row.backgroundColor).toBe(theme.semantic.color.tones.accent.subtle);
+});
+
+test('conformance: listbox rows follow the theme space scale', () => {
+  const resting = { highlighted: false, pressed: false, selected: false, disabled: false };
+  const doubled = {
+    ...theme,
+    semantic: {
+      ...theme.semantic,
+      space: Object.fromEntries(
+        Object.entries(theme.semantic.space).map(([step, px]) => [step, px * 2]),
+      ) as typeof theme.semantic.space,
+    },
+  };
+  for (const size of selectRecipe.variants.size) {
+    const row = (from: typeof theme) => mapListboxItemStyle(from, { size }, resting).row.minHeight;
+    expect(row(doubled)).toBe(2 * (row(theme) as number));
+  }
 });

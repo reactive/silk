@@ -69,6 +69,7 @@ export type {
 } from './components/Dialog.js';
 export { Popover } from './components/Popover.js';
 export type { PopoverRootProps, PopoverContentProps } from './components/Popover.js';
+export type { OpenAutoFocusEvent } from './overlay/layer.js';
 export { Listbox } from './components/Listbox.js';
 export type { ListboxRootProps, ListboxItemProps, ListboxItemTextProps } from './components/Listbox.js';
 export type { FloatingAlign, FloatingSide } from './overlay/place.js';

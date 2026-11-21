@@ -54,8 +54,8 @@ export interface SilkDefaults {
   readonly RadioGroup?: Partial<RadioGroupVariantProps>;
   readonly Dialog?: Partial<DialogVariantProps>;
   readonly Popover?: Partial<PopoverVariantProps>;
-  /** Listbox items (Select's vocabulary, shared with web `Select`). */
-  readonly Select?: Partial<SelectVariantProps>;
+  /** Listbox items, in web `Select`'s vocabulary (`size`, `density`). */
+  readonly Listbox?: Partial<SelectVariantProps>;
 }
 
 export interface SilkProviderProps extends ThemeProviderProps {

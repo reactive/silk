@@ -55,6 +55,10 @@ interface ListboxContextValue {
    */
   readonly tabStop: string | undefined;
   readonly highlight: (value: string) => void;
+  /** Clears the highlight, as focus leaves the list (web). */
+  readonly unhighlight: () => void;
+  /** Whether `node` is one of this list's items. */
+  readonly isItem: (node: unknown) => boolean;
   readonly pick: (value: string) => void;
   readonly focus: (value: string) => void;
   /** Whether an item of this list holds focus, so pointing moves focus too (web). */
@@ -100,18 +104,20 @@ function ListboxRoot({
   style,
   children,
   ref,
+  onPointerLeave,
   ...rest
 }: ListboxRootProps): JSX.Element {
-  const defaults = useComponentDefaults('Select');
+  const defaults = useComponentDefaults('Listbox');
   const { density: themeDensity } = useTheme();
   const popover = usePopoverContext();
   const [highlighted, setHighlighted] = useState<string>();
-  const { enabledItems, enabled, ifEnabled, focus, holdsFocus, register } = useItems();
-  const highlight = (next: string) => {
+  const { enabledItems, enabled, ifEnabled, focus, isItem, holdsFocus, register } = useItems();
+  const highlight = (next: string | undefined) => {
     if (next === highlighted) return;
     setHighlighted(next);
     onHighlightChange?.(next);
   };
+  const unhighlight = () => highlight(undefined);
   const pick = (picked: string) => {
     if (picked !== value) onValueChange(picked);
     popover?.close();
@@ -162,7 +168,19 @@ function ListboxRoot({
 
   return (
     <ListboxContext.Provider
-      value={{ value, highlighted, tabStop, highlight, pick, focus, holdsFocus, register, variant }}
+      value={{
+        value,
+        highlighted,
+        tabStop,
+        highlight,
+        unhighlight,
+        isItem,
+        pick,
+        focus,
+        holdsFocus,
+        register,
+        variant,
+      }}
     >
       <View
         ref={ref}
@@ -170,6 +188,11 @@ function ListboxRoot({
         role={LIST_ROLE}
         {...rest}
         {...({ onKeyDown } as object)}
+        // A pointer leaving clears the light, unless it is on the focused item.
+        onPointerLeave={(event) => {
+          onPointerLeave?.(event);
+          if (event.nativeEvent.pointerType !== 'touch' && !holdsFocus()) unhighlight();
+        }}
         style={style}
       >
         {children}
@@ -198,6 +221,7 @@ function ListboxItem({
   disabled = false,
   ref,
   onFocus,
+  onBlur,
   onPointerMove,
   ...rest
 }: ListboxItemProps): JSX.Element {
@@ -206,11 +230,8 @@ function ListboxItem({
   const { theme } = useTheme();
   const selected = list.value === value;
   const highlighted = list.highlighted === value;
-  const { row, indicator, label } = mapListboxItemStyle(theme, list.variant, {
-    highlighted,
-    selected,
-    disabled,
-  });
+  const state = { highlighted, selected, disabled };
+  const { indicator, label } = mapListboxItemStyle(theme, list.variant, { ...state, pressed: false });
   const isTabStop = !disabled && (list.tabStop === undefined || list.tabStop === value);
   const { register } = list;
   const setNode = useCallback(
@@ -244,8 +265,19 @@ function ListboxItem({
         onFocus?.(event);
         if (!disabled) list.highlight(value);
       }}
+      onBlur={(event) => {
+        onBlur?.(event);
+        // Focus leaving the list (web, where the blur names where it went).
+        const to = (event.nativeEvent as { relatedTarget?: unknown }).relatedTarget;
+        if (WEB && !list.isItem(to)) list.unhighlight();
+      }}
       onPress={() => list.pick(value)}
-      style={[row, style]}
+      // The light shows focus, as web Silk's menu items do.
+      focusRing={false}
+      style={({ pressed }) => [
+        mapListboxItemStyle(theme, list.variant, { ...state, pressed }).row,
+        style,
+      ]}
       {...rnwAttrs({ 'data-highlighted': highlighted || undefined }, rest)}
     >
       <ItemLabelContext.Provider value={label}>
@@ -300,10 +332,8 @@ function useItems() {
   const ifEnabled = (target: string | undefined) =>
     target !== undefined && enabledItems?.includes(target) ? target : undefined;
   const focus = (target: string) => items.current.get(target)?.node.focus();
-  const holdsFocus = () => {
-    const active = activeElement();
-    return [...items.current.values()].some(({ node }) => node === active);
-  };
+  const isItem = (node: unknown) => [...items.current.values()].some((item) => item.node === node);
+  const holdsFocus = () => isItem(activeElement());
   // Stable, so an item's ref callback keeps its place in mount order across renders.
   const register = useCallback((itemValue: string, node: ItemNode | null, disabled: boolean) => {
     const was = items.current.get(itemValue);
@@ -316,7 +346,7 @@ function useItems() {
     }
     itemsChanged();
   }, []);
-  return { enabledItems, enabled, ifEnabled, focus, holdsFocus, register };
+  return { enabledItems, enabled, ifEnabled, focus, isItem, holdsFocus, register };
 }
 
 /** react-native-web's focused DOM element (silk-native doesn't load DOM types). */

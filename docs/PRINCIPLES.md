@@ -47,7 +47,7 @@ Violating any of these is a bug regardless of how convenient the violation is.
 | SSR host                             | Anansi                                                  |
 | Source distribution                  | shadcn registry protocol                                |
 
-Where no behavior source exists for React Native, or one composes only by reaching through the host abstraction, `silk-native` owns the mechanic: minimal, following the WAI-ARIA Authoring Practices, pinned by tests, and listed here. Currently: `Listbox` roving focus and keys; anchored placement of `Popover`; `Popover` closing on window resize and on scrolling that moves its anchor, and focus returning to the anchor.
+Where no behavior source exists for React Native, or one composes only by reaching through the host abstraction, `silk-native` owns the mechanic: minimal, following the WAI-ARIA Authoring Practices, pinned by tests, and listed here. Currently: `Listbox` roving focus and keys; anchored placement of `Popover`; `Popover` closing on window resize and on scrolling that moves its anchor, focus moving in as it opens, and focus returning to the anchor.
 
 Bindings are commitments, not identity. Replacing one requires a charter amendment naming the trigger (maintenance stalled, security, platform incompatibility, or a strictly better implementation of the same invariant), the migration path, and its owner — and the invariants survive the replacement unchanged. Watch dependency health deliberately rather than discovering it in a crisis.
 

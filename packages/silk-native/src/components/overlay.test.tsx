@@ -112,7 +112,12 @@ function PickerHarness({
   disabled = [],
   steps = STEPS,
   sideOffset,
+  moveFocusIn = false,
+  onHighlight,
 }: {
+  /** Lets the popover move focus in as it opens; the rest leave it, as a hover menu does. */
+  readonly moveFocusIn?: boolean;
+  readonly onHighlight?: (value: string | undefined) => void;
   readonly focusOnOpen?: boolean;
   readonly onPick?: (value: string) => void;
   readonly scroller?: boolean;
@@ -134,11 +139,16 @@ function PickerHarness({
       />
       {scroller ? <ScrollView testID="elsewhere" /> : null}
       <Popover.Root open={open} onOpenChange={setOpen} anchor={anchor}>
-        <Popover.Content testID="popover" sideOffset={sideOffset}>
+        <Popover.Content
+          testID="popover"
+          sideOffset={sideOffset}
+          onOpenAutoFocus={moveFocusIn ? undefined : (event) => event.preventDefault()}
+        >
           <Listbox.Root
             accessibilityLabel="Opponent strength"
             value={value}
             autoFocus={focusOnOpen}
+            onHighlightChange={onHighlight}
             onValueChange={(next) => {
               setValue(next);
               onPick?.(next);
@@ -165,12 +175,22 @@ function PickerHarness({
 const options = () => [...document.querySelectorAll<HTMLElement>('[role="option"]')];
 const popover = () => screen.queryByTestId('popover');
 
-test('Popover opens without taking focus or making the page modal', () => {
-  render(<PickerHarness />);
-  fireEvent.click(screen.getByLabelText('Strength'));
-  expect(popover()).not.toBeNull();
-  expect(document.activeElement).toBe(document.body);
+test('Popover moves focus to the chosen item as it opens, without making the page modal', () => {
+  render(<PickerHarness moveFocusIn />);
+  const anchor = screen.getByLabelText('Strength');
+  act(() => anchor.focus());
+  fireEvent.click(anchor);
+  expect(focused()).toBe('1300');
   expect(document.querySelector('[aria-modal]')).toBeNull();
+});
+
+test('Popover whose onOpenAutoFocus prevents it leaves focus on the anchor', () => {
+  render(<PickerHarness />);
+  const anchor = screen.getByLabelText('Strength');
+  act(() => anchor.focus());
+  fireEvent.click(anchor);
+  expect(popover()).not.toBeNull();
+  expect(document.activeElement).toBe(anchor);
 });
 
 test('Popover closes on a press outside, not on its anchor', async () => {
@@ -329,6 +349,11 @@ test('Popover opened on mount is placed even when its anchor comes after it', as
   expect(layer().style.top).not.toBe('');
 });
 
+test('Popover with nothing to focus inside takes focus itself as it opens', () => {
+  render(<LateAnchor anchored />);
+  expect(document.activeElement).toBe(popover()!.parentElement);
+});
+
 test('Popover whose anchor mounts frames later is placed, and closes as it scrolls away', async () => {
   const { rerender } = render(<LateAnchor anchored={false} />);
   const layer = () => popover()!.parentElement!;
@@ -337,7 +362,7 @@ test('Popover whose anchor mounts frames later is placed, and closes as it scrol
   expect(layer().style.opacity).toBe('0');
   rerender(<LateAnchor anchored />);
   await nextFrame();
-  expect(layer().style.top).not.toBe('');
+  expect(layer().style.opacity).toBe('');
   screen.getByLabelText('Strength').getBoundingClientRect = () => new DOMRect(0, -40, 60, 20);
   fireEvent.scroll(document);
   expect(popover()).toBeNull();
@@ -370,7 +395,7 @@ test('Popover bounds its width instead of fixing it, so a new size is measured a
     render(<PickerHarness />);
     fireEvent.click(screen.getByLabelText('Strength'));
     const layer = popover()!.parentElement!;
-    expect(layer.style.width).toBe('');
+    expect(layer.style.width).toBe('max-content');
     expect(layer.style.maxWidth).toBe(`${Math.max(0, document.documentElement.clientWidth - 16)}px`);
   } finally {
     HTMLElement.prototype.getBoundingClientRect = rect;
@@ -468,6 +493,43 @@ test('pointing highlights an item, and moves focus only while the list holds it'
   act(() => options()[0]!.focus());
   pointAt(options()[3]!, 'mouse');
   expect(focused()).toBe('1700');
+});
+
+test('pointer leaving the list clears the highlight, unless the list holds focus', () => {
+  const highlights: (string | undefined)[] = [];
+  render(<PickerHarness onHighlight={(value) => highlights.push(value)} />);
+  fireEvent.click(screen.getByLabelText('Strength'));
+  const list = document.querySelector<HTMLElement>('[role="listbox"]')!;
+  const leave = () => {
+    const event = new MouseEvent('pointerout', { bubbles: true });
+    Object.defineProperty(event, 'pointerType', { value: 'mouse' });
+    act(() => {
+      list.dispatchEvent(event);
+    });
+  };
+  pointAt(options()[2]!, 'mouse');
+  leave();
+  expect(options()[2]!.hasAttribute('data-highlighted')).toBe(false);
+  expect(highlights).toEqual(['1500', undefined]);
+  act(() => options()[0]!.focus());
+  leave();
+  expect(options()[0]!.getAttribute('data-highlighted')).toBe('true');
+});
+
+test('Listbox takes its size from the provider defaults', () => {
+  const rowHeight = (defaults?: SilkDefaults) => {
+    const { unmount } = render(
+      <SilkProvider theme={theme} defaults={defaults}>
+        <Listbox.Root accessibilityLabel="Steps" value={undefined} onValueChange={() => {}}>
+          <Listbox.Item value="a">a</Listbox.Item>
+        </Listbox.Root>
+      </SilkProvider>,
+    );
+    const height = getComputedStyle(options()[0]!).minHeight;
+    unmount();
+    return height;
+  };
+  expect(rowHeight({ Listbox: { size: 'sm' } })).not.toBe(rowHeight());
 });
 
 test('Listbox skips disabled items: Tab stop, autoFocus and arrows land on enabled ones', () => {

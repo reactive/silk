@@ -13,6 +13,7 @@ import {
 import { type StyleProp, View, type ViewProps, type ViewStyle } from 'react-native';
 // The platform's layer: `layer.modal` on native, `layer.dom` on the web (package.json `imports`).
 import { FloatingLayer } from '#floating-layer';
+import type { OpenAutoFocusEvent } from '../overlay/layer.js';
 import type { FloatingAlign, FloatingSide } from '../overlay/place.js';
 import { mapPopoverStyle } from '../styles/mappers/overlay.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -74,12 +75,20 @@ export interface PopoverContentProps
   readonly sideOffset?: number;
   /** The least space it keeps from the window's edges. @default 8 */
   readonly collisionPadding?: number;
+  /**
+   * Web: called as it opens, before focus moves to its first Tab stop (in a
+   * `Listbox`, the chosen item), or to the surface when it has none. Call
+   * `event.preventDefault()` to keep focus where it is, as a menu that opens
+   * on hover does.
+   */
+  readonly onOpenAutoFocus?: ((event: OpenAutoFocusEvent) => void) | undefined;
 }
 
 /**
  * A surface floating beside the popover's anchor while open. Non-modal on the
- * web: the page stays live (a pointer can still hover the anchor), focus stays
- * where it was until something inside takes it, and no `aria-modal` is set.
+ * web: the page stays live (a pointer can still hover the anchor) and no
+ * `aria-modal` is set; focus moves in as it opens (see `onOpenAutoFocus`)
+ * and back to the anchor as it closes holding focus.
  * On native it is a transparent Modal. Its pointer props (`onPointerEnter`,
  * `onPointerLeave`) reach the surface, for menus that open on hover. It
  * shrinks to the room beside the anchor; wrap long content (a long
@@ -91,6 +100,7 @@ function PopoverContent({
   align = 'center',
   sideOffset = 4,
   collisionPadding = 8,
+  onOpenAutoFocus,
   style,
   children,
   ref,
@@ -112,6 +122,7 @@ function PopoverContent({
       align={align}
       sideOffset={sideOffset}
       collisionPadding={collisionPadding}
+      onOpenAutoFocus={onOpenAutoFocus}
     >
       <View ref={ref} {...rest} style={[surface, style]}>
         {children}

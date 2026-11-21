@@ -12,6 +12,18 @@ export interface FloatingLayerProps extends PlaceOptions {
   /** A press outside it and its anchor, Escape or the back button, scrolling that moves the anchor, a resized window. */
   readonly onDismiss: () => void;
   readonly children: ReactNode;
+  /**
+   * Web: called as it opens, before focus moves to its first Tab stop (or to
+   * the layer when it has none); `preventDefault()` keeps focus where it is.
+   * Native has no focus to move.
+   */
+  readonly onOpenAutoFocus?: ((event: OpenAutoFocusEvent) => void) | undefined;
+}
+
+/** What `onOpenAutoFocus` receives, as the web's `Event` does. */
+export interface OpenAutoFocusEvent {
+  preventDefault(): void;
+  readonly defaultPrevented: boolean;
 }
 
 /**

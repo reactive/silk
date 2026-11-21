@@ -8,6 +8,7 @@ import {
   type SelectVariantProps,
   type Theme,
 } from '@reactive/silk-core';
+import { listboxRowMinHeightStep, resolveSpaceSum } from '../controlGeometry.js';
 import { elevationBackground } from './visual.js';
 import { mapShadow, type RnTextStyle, type RnViewStyle, spaceScale } from './shared.js';
 
@@ -88,12 +89,11 @@ export function mapPopoverStyle(
 export interface ListboxItemState {
   /** Pointed at, or focused last: the one the keys act on. */
   readonly highlighted: boolean;
+  /** Held down by a finger or pointer: lit like a highlighted item, so a tap shows. */
+  readonly pressed: boolean;
   readonly selected: boolean;
   readonly disabled: boolean;
 }
-
-/** Row heights per size, before density (web `menuItemClass` pads space 1 × 2). */
-const ITEM_MIN_HEIGHT = { sm: 28, md: 32, lg: 40 } as const;
 
 /**
  * Listbox item (Select's vocabulary: `size`, `density`): a row with an
@@ -118,13 +118,14 @@ export function mapListboxItemStyle(
       flexDirection: 'row',
       alignItems: 'center',
       gap: space[2],
-      minHeight: density === 'compact' ? ITEM_MIN_HEIGHT[size] - 4 : ITEM_MIN_HEIGHT[size],
+      minHeight: resolveSpaceSum(space, listboxRowMinHeightStep[size]),
       paddingLeft: space[2],
       paddingRight: space[2],
       paddingTop: space[1],
       paddingBottom: space[1],
       borderRadius: radius.sm,
-      backgroundColor: state.highlighted && !state.disabled ? accent.subtle : undefined,
+      backgroundColor:
+        (state.highlighted || state.pressed) && !state.disabled ? accent.subtle : undefined,
     },
     indicator: {
       width: theme.semantic.space[4],

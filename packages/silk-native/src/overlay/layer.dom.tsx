@@ -22,7 +22,8 @@ import { type FloatingSide, type Placement, placeFloating, placedStyle } from '.
  * DismissableLayer closes it on a press or focus outside it and its anchor
  * and on Escape (the topmost layer only, and not an Escape another control
  * took). Silk adds closing on scrolling that moves the anchor and on resizing
- * the window, and hands focus back to the anchor when it closes holding focus.
+ * the window, moves focus in as it opens (unless `onOpenAutoFocus` prevents
+ * it), and hands focus back to the anchor when it closes holding focus.
  */
 export function FloatingLayer({
   anchor,
@@ -32,6 +33,7 @@ export function FloatingLayer({
   align,
   sideOffset,
   collisionPadding,
+  onOpenAutoFocus,
 }: FloatingLayerProps): JSX.Element | null {
   const layer = useRef<HTMLDivElement>(null);
   const [place, setPlace] = useState<Placement>();
@@ -41,8 +43,10 @@ export function FloatingLayer({
   const anchorElement = () => (anchor.current ? element(anchor.current) : null);
   // The latest, so the page listeners below stay put while it is open.
   const dismiss = useRef(onDismiss);
+  const openAutoFocus = useRef(onOpenAutoFocus);
   useLayoutEffect(() => {
     dismiss.current = onDismiss;
+    openAutoFocus.current = onOpenAutoFocus;
   });
 
   // Placed beside the anchor, and again as its size changes (content
@@ -72,6 +76,16 @@ export function FloatingLayer({
       return () => observer.disconnect();
     });
   }, [client, anchor, side, align, sideOffset, collisionPadding]);
+
+  // As it opens, unless something inside (a Listbox's autoFocus) took focus already.
+  useEffect(() => {
+    const self = layer.current;
+    if (!self) return;
+    const event = new Event('openAutoFocus', { cancelable: true });
+    openAutoFocus.current?.(event);
+    if (event.defaultPrevented || self.contains(document.activeElement)) return;
+    (self.querySelector<HTMLElement>(TAB_STOP) ?? self).focus({ preventScroll: true });
+  }, [client]);
 
   useLayoutEffect(() => {
     const self = layer.current;
@@ -119,6 +133,7 @@ export function FloatingLayer({
         if (onAnchor(event.target)) event.preventDefault();
       }}
       onDismiss={onDismiss}
+      tabIndex={-1}
       style={{ ...styles.layer, ...(place ? placedStyle(place) : styles.unplaced) }}
     >
       {children}
@@ -130,6 +145,9 @@ export function FloatingLayer({
 const subscribeNever = () => () => {};
 const onClient = () => true;
 const onServer = () => false;
+
+const TAB_STOP =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const samePlacement = (a: Placement, b: Placement) =>
   a.left === b.left &&
@@ -144,8 +162,12 @@ const element = (view: ComponentRef<typeof View>) => view as unknown as HTMLElem
 
 const styles = {
   // A column, so the surface inside shrinks to maxHeight and its list scrolls.
+  // Its own width, not what's left right of `left`, so moving it doesn't change it.
   layer: {
     position: 'fixed',
+    width: 'max-content',
+    // Focused only when nothing inside can be; its surface shows where it is.
+    outline: 'none',
     zIndex: FLOATING_Z_INDEX,
     display: 'flex',
     flexDirection: 'column',
