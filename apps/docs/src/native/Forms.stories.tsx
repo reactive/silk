@@ -172,6 +172,12 @@ export const SliderMarks: Story = {
 
 const INSET = { padding: 24, borderWidth: 4, borderColor: 'transparent' } as const;
 
+const PADDED = [
+  { name: 'Padded', vertical: false, rtl: false },
+  { name: 'Padded, right to left', vertical: false, rtl: true },
+  { name: 'Padded, vertical', vertical: true, rtl: false },
+] as const;
+
 /**
  * Presses on a slider with padding and a border bring the thumb to the
  * press: the slide runs along the box its thumbs sit in, inside both.
@@ -179,8 +185,17 @@ const INSET = { padding: 24, borderWidth: 4, borderColor: 'transparent' } as con
 export const SliderPadded: Story = {
   render: () => (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 24 }}>
-      <View style={{ width: 320 }}>
-        <Slider testID="Padded" accessibilityLabel="Padded" defaultValue={[50]} style={INSET} />
+      <View style={{ width: 320, gap: 16 }}>
+        {PADDED.filter((each) => !each.vertical).map(({ name, rtl }) => (
+          <Slider
+            key={name}
+            testID={name}
+            accessibilityLabel={name}
+            defaultValue={[50]}
+            dir={rtl ? 'rtl' : 'ltr'}
+            style={INSET}
+          />
+        ))}
       </View>
       <Slider
         testID="Padded, vertical"
@@ -192,31 +207,45 @@ export const SliderPadded: Story = {
     </View>
   ),
   play: async ({ canvas }) => {
-    for (const name of ['Padded', 'Padded, vertical']) {
-      const thumb = canvas.getByRole('slider', { name });
-      const slider = canvas.getByTestId(name);
-      const vertical = name.endsWith('vertical');
-      const box = slider.getBoundingClientRect();
-      const size = thumb.getBoundingClientRect().width;
-      const inset = INSET.padding + INSET.borderWidth;
-      const travel = (vertical ? box.height : box.width) - 2 * inset - size;
-      // Where the thumb's center sits at 0, 50 and 100: half a thumb in from each end.
+    for (const { name, vertical, rtl } of PADDED) {
       for (const value of [0, 50, 100]) {
-        const along = inset + size / 2 + (value / 100) * travel;
-        const coords = vertical
-          ? { clientX: box.left + box.width / 2, clientY: box.bottom - along }
-          : { clientX: box.left + along, clientY: box.top + box.height / 2 };
-        // Pressed again until it shows: the press renders a tick later, and the
-        // story's first presses can come before react-native-web listens for them.
+        // Pressed until it shows: under the test runner, the story's first
+        // presses can come before the slider takes them. A press that lands
+        // off the thumb's point never shows, so this still fails.
         await waitFor(() => {
-          fireEvent.mouseDown(slider, { ...coords, button: 0, buttons: 1 });
-          fireEvent.mouseUp(document, { ...coords, button: 0, buttons: 0 });
+          const slider = canvas.getByTestId(name);
+          const thumb = canvas.getByRole('slider', { name });
+          const point = pressPoint(slider, thumb, value, vertical, rtl);
+          fireEvent.mouseDown(slider, { ...point, buttons: 1 });
+          fireEvent.mouseUp(document);
           expect(thumb).toHaveAttribute('aria-valuenow', String(value));
         });
       }
     }
   },
 };
+
+/** Where on the page a thumb's center sits at `value` (of 0 to 100) on a padded slider. */
+function pressPoint(
+  slider: HTMLElement,
+  thumb: HTMLElement,
+  value: number,
+  vertical: boolean,
+  rtl: boolean,
+): { clientX: number; clientY: number } {
+  const box = slider.getBoundingClientRect();
+  const thumbSize = thumb.getBoundingClientRect().width;
+  const edge = INSET.padding + INSET.borderWidth;
+  const travel = (vertical ? box.height : box.width) - 2 * edge - thumbSize;
+  // From the end `min` sits at: the bottom, or the right when right to left.
+  const fromMin = edge + thumbSize / 2 + (value / 100) * travel;
+  return vertical
+    ? { clientX: box.left + box.width / 2, clientY: box.bottom - fromMin }
+    : {
+        clientX: rtl ? box.right - fromMin : box.left + fromMin,
+        clientY: box.top + box.height / 2,
+      };
+}
 
 export const RadioGroupOrientations: Story = {
   render: () => (

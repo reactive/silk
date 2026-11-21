@@ -480,10 +480,11 @@ function useSlide({
   const [active, setActive] = useState<number>();
 
   const offsetOf = ({ nativeEvent }: GestureResponderEvent) => {
-    const [location, page] = vertical
-      ? [nativeEvent.locationY, nativeEvent.pageY]
-      : [nativeEvent.locationX, nativeEvent.pageX];
-    return { location: location - span.current.start, page };
+    const location = vertical ? nativeEvent.locationY : nativeEvent.locationX;
+    return {
+      location: location - span.current.start,
+      page: vertical ? nativeEvent.pageY : nativeEvent.pageX,
+    };
   };
   const valueAt = (offset: number) => {
     const fraction = fractionAt(offset, span.current.length, thumbSize);
