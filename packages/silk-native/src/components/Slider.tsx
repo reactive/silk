@@ -1,7 +1,10 @@
 import { sliderRecipe, type SliderVariantProps } from '@reactive/silk-core';
 import {
   type ComponentRef,
+  createContext,
   useCallback,
+  useContext,
+  useMemo,
   useLayoutEffect,
   useRef,
   useState,
@@ -11,7 +14,6 @@ import {
 } from 'react';
 import {
   I18nManager,
-  Platform,
   StyleSheet,
   View,
   type AccessibilityActionEvent,
@@ -21,20 +23,9 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import {
-  a11yState,
-  a11yValue,
-  rnwAttrs,
-  webKeepFocusOnPress,
-  webKeyHandler,
-  type WebKeyDownEvent,
-} from '../styles/a11yProps.js';
+import { a11yState, a11yValue, rnwAttrs } from '../styles/a11yProps.js';
 import { minTouchHitSlop } from '../styles/controlGeometry.js';
-import {
-  mapSliderStyle,
-  type SliderEdge,
-  sliderMarkStyle,
-} from '../styles/mappers/controls.js';
+import { mapSliderStyle } from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import {
@@ -45,11 +36,18 @@ import {
 } from './Field.js';
 import { Pressable } from './Pressable.js';
 import { sameItems } from './sameItems.js';
+import {
+  FAR,
+  fractionAt,
+  fractionIn,
+  placeAt,
+  type SliderEdge,
+  slideFrom,
+} from './sliderGeometry.js';
 import { useControllableValue } from './useControllableValue.js';
+import { WEB, webKeyHandler, type WebKeyDownEvent } from '../web/host.js';
 
-const WEB = Platform.OS === 'web';
-
-type Thumb = ComponentRef<typeof View> & { focus?: () => void };
+type Thumb = ComponentRef<typeof View>;
 
 export interface SliderProps
   extends SliderVariantProps,
@@ -57,8 +55,9 @@ export interface SliderProps
   readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly style?: StyleProp<ViewStyle>;
   /**
-   * Drawn over the track and under the thumbs (marks, a scale). They never
-   * take touches: a press on them slides the thumb nearest it, as on the track.
+   * Drawn over the track and under the thumbs (marks, a scale), placed with
+   * `useSliderMarkStyle`. They never take touches: a press on them slides
+   * the thumb nearest it, as on the track.
    */
   readonly children?: ReactNode;
   /** One number per thumb, in order (controlled). */
@@ -92,17 +91,8 @@ export interface SliderProps
   readonly 'aria-describedby'?: string;
 }
 
-/** Which edge a value of `min` sits at. */
-type SlideFrom = SliderEdge;
-
-function slideFrom(vertical: boolean, rtl: boolean, inverted: boolean): SlideFrom {
-  if (vertical) return inverted ? 'top' : 'bottom';
-  // Right to left and inverted cancel out.
-  return rtl !== inverted ? 'right' : 'left';
-}
-
 /** Keys that move a thumb toward `min`, by the edge `min` sits at (Radix's). */
-const BACK_KEYS: Record<SlideFrom, readonly string[]> = {
+const BACK_KEYS: Record<SliderEdge, readonly string[]> = {
   left: ['Home', 'PageDown', 'ArrowDown', 'ArrowLeft'],
   right: ['Home', 'PageDown', 'ArrowDown', 'ArrowRight'],
   bottom: ['Home', 'PageDown', 'ArrowDown', 'ArrowLeft'],
@@ -110,9 +100,6 @@ const BACK_KEYS: Record<SlideFrom, readonly string[]> = {
 };
 const PAGE_KEYS = ['PageUp', 'PageDown'];
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-
-/** The far edge from each slide edge. */
-const FAR: Record<SlideFrom, SlideFrom> = { left: 'right', right: 'left', bottom: 'top', top: 'bottom' };
 
 export interface SliderBounds {
   readonly min: number;
@@ -156,15 +143,6 @@ export function moveThumb(
 export function nearestThumb(values: readonly number[], value: number): number {
   const distances = values.map((each) => Math.abs(each - value));
   return distances.indexOf(Math.min(...distances));
-}
-
-/**
- * The fraction of the way from `min`'s edge at `offset` along a slider
- * `length` long, clamped: `sliderMarkStyle`'s inverse.
- */
-export function fractionAt(offset: number, length: number, thumbSize: number): number {
-  const travel = length - thumbSize;
-  return travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
 }
 
 /**
@@ -248,22 +226,33 @@ export function Slider({
     latest.current = values;
   });
   const thumbs = useRef<(Thumb | null)[]>([]);
-  const focusThumb = (index: number) => thumbs.current[index]?.focus?.();
+  const focusThumb = useCallback((index: number) => thumbs.current[index]?.focus(), []);
 
   /**
-   * Moves thumb `index` of `from` (the rendered values unless a drag says) to
-   * `next` and reports it; returns the values and where that thumb is now,
-   * or undefined if refused.
+   * Moves thumb `index` of `base` (the rendered values unless a drag says) to
+   * `next` and reports the change; returns the values and where that thumb is
+   * now, or undefined if refused. Whoever moved it commits.
    */
-  const setThumb: SetThumb = (next, index, commit, base = latest.current) => {
+  const setThumb: SetThumb = (next, index, base = latest.current) => {
     const moved = moveThumb(base, next, index, bounds);
     if (!moved) return undefined;
     if (!sameItems(moved.values, base)) {
       setUncontrolled(moved.values);
       onValueChange?.(moved.values);
-      if (commit) onValueCommit?.(moved.values);
     }
     return moved;
+  };
+  /**
+   * A key or assistive action on thumb `focused` moving thumb `index`: it
+   * commits at once, and focus follows the moved thumb when that is another
+   * (one pushed past its neighbor takes its place; Home and End move the outer ones).
+   */
+  const keyMove = (next: number, index: number, focused = index) => {
+    const before = latest.current;
+    const moved = setThumb(next, index);
+    if (!moved) return;
+    if (!sameItems(moved.values, before)) onValueCommit?.(moved.values);
+    if (moved.index !== focused) focusThumb(moved.index);
   };
 
   const slide = useSlide({
@@ -275,19 +264,17 @@ export function Slider({
     setThumb,
     focusThumb,
     onValueCommit,
+    disabled: isDisabled,
   });
 
   const nudge = (index: number, steps: number) => {
-    if (isDisabled) return;
-    const at = setThumb(latest.current[index]! + steps * step, index, true)?.index;
-    // A thumb pushed past its neighbor takes its place; focus follows it.
-    if (at !== undefined && at !== index) focusThumb(at);
+    if (!isDisabled) keyMove(latest.current[index]! + steps * step, index);
   };
   const onThumbKey = (index: number) => (event: WebKeyDownEvent) => {
     const { key, shiftKey } = event.nativeEvent;
     if (isDisabled) return;
-    if (key === 'Home') setThumb(min, 0, true);
-    else if (key === 'End') setThumb(max, latest.current.length - 1, true);
+    if (key === 'Home') keyMove(min, 0, index);
+    else if (key === 'End') keyMove(max, latest.current.length - 1, index);
     else if (PAGE_KEYS.includes(key) || ARROW_KEYS.includes(key)) {
       const times = PAGE_KEYS.includes(key) || shiftKey ? 10 : 1;
       nudge(index, BACK_KEYS[from].includes(key) ? -times : times);
@@ -302,11 +289,18 @@ export function Slider({
 
   // A Field label focuses the first thumb.
   const focusFirst = useCallback(() => {
-    if (!isDisabled) thumbs.current[0]?.focus?.();
-  }, [isDisabled]);
+    if (!isDisabled) focusThumb(0);
+  }, [isDisabled, focusThumb]);
   useFieldControlRegistration(focusFirst);
 
-  const fractions = values.map((value) => (max > min ? (value - min) / (max - min) : 0));
+  const fractions = values.map((value) => fractionIn(value, min, max));
+  // Changes only with what places a mark, so marks don't re-render as the thumb slides.
+  const markStyle = useMemo<MarkStyle>(
+    () =>
+      (value, offset = 0) =>
+        placeAt(fractionIn(value, min, max), thumbSize, offset, from),
+    [min, max, thumbSize, from],
+  );
   const single = values.length === 1;
   const hitSlop = minTouchHitSlop(crossSize);
   // The web's pointer affordances, while it takes presses.
@@ -328,7 +322,7 @@ export function Slider({
       onResponderMove={slide.move}
       onResponderRelease={slide.end}
       onResponderTerminate={slide.end}
-      {...(webLive ? webKeepFocusOnPress : undefined)}
+      {...(webLive ? WEB_KEEP_FOCUS : undefined)}
       style={[root, webLive ? WEB_SLIDER : undefined, style]}
       {...rnwAttrs(
         {
@@ -344,14 +338,14 @@ export function Slider({
           style={[
             range,
             // A single thumb's range starts at the track's edge, not at a thumb center.
-            single ? { [from]: 0 } : sliderMarkStyle(rangeStart, thumbSize, 0, from),
-            sliderMarkStyle(1 - rangeEnd, thumbSize, 0, FAR[from]),
+            single ? { [from]: 0 } : placeAt(rangeStart, thumbSize, 0, from),
+            placeAt(1 - rangeEnd, thumbSize, 0, FAR[from]),
           ]}
         />
       </View>
       {children === undefined ? null : (
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          {children}
+          <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
         </View>
       )}
       {values.map((value, index) => {
@@ -396,7 +390,7 @@ export function Slider({
                 ? { left: '50%', marginLeft: -thumbSize / 2 }
                 : { top: '50%', marginTop: -thumbSize / 2 },
               // Its box centered on the point.
-              sliderMarkStyle(fractions[index]!, thumbSize, -thumbSize / 2, from),
+              placeAt(fractions[index]!, thumbSize, -thumbSize / 2, from),
             ]}
           />
         );
@@ -409,22 +403,41 @@ export function Slider({
   fieldLabelAssociation
 ] = 'labelledby';
 
+/** Places a mark at `value` on the slider, `offset` further along. */
+type MarkStyle = (value: number, offset?: number) => ViewStyle;
+
+const MarkContext = createContext<MarkStyle | null>(null);
+
+/**
+ * For a Slider's children: places a mark (a dot, a label, a scale) where the
+ * thumb sits at `value`, in the slider's own units, size and direction.
+ * `offset` moves it further along from `min`'s end; minus half the mark's
+ * size centers it there: `markStyle(1500, -4)` centers an 8-wide dot on the
+ * thumb at 1500. A position, so give the mark `position: 'absolute'`.
+ */
+export function useSliderMarkStyle(): MarkStyle {
+  const markStyle = useContext(MarkContext);
+  if (!markStyle) throw new Error('useSliderMarkStyle must be used within a Slider\'s children');
+  return markStyle;
+}
+
 type SetThumb = (
   next: number,
   index: number,
-  commit: boolean,
   base?: readonly number[],
 ) => { values: number[]; index: number } | undefined;
 
 interface SlideOptions {
   readonly vertical: boolean;
-  readonly from: SlideFrom;
+  readonly from: SliderEdge;
   readonly thumbSize: number;
   readonly bounds: SliderBounds;
   readonly latest: { readonly current: readonly number[] };
   readonly setThumb: SetThumb;
   readonly focusThumb: (index: number) => void;
   readonly onValueCommit: ((value: number[]) => void) | undefined;
+  /** A slider disabled mid-drag takes no more of it. */
+  readonly disabled: boolean;
 }
 
 /**
@@ -445,6 +458,7 @@ function useSlide({
   setThumb,
   focusThumb,
   onValueCommit,
+  disabled,
 }: SlideOptions) {
   const length = useRef(0);
   const sliding = useRef<{
@@ -478,7 +492,7 @@ function useSlide({
       const value = valueAt(location);
       const before = latest.current;
       const nearest = nearestThumb(before, value);
-      const moved = setThumb(value, nearest, false);
+      const moved = setThumb(value, nearest);
       const index = moved?.index ?? nearest;
       sliding.current = { index, before, values: moved?.values ?? before, start: location, page };
       setActive(index);
@@ -486,9 +500,9 @@ function useSlide({
     },
     move: (event: GestureResponderEvent) => {
       const slide = sliding.current;
-      if (!slide) return;
+      if (!slide || disabled) return;
       const offset = slide.start + offsetOf(event).page - slide.page;
-      const moved = setThumb(valueAt(offset), slide.index, false, slide.values);
+      const moved = setThumb(valueAt(offset), slide.index, slide.values);
       if (!moved) return;
       slide.values = moved.values;
       if (moved.index !== slide.index) {
@@ -508,6 +522,15 @@ function useSlide({
 }
 
 const ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const;
+
+/**
+ * Web only: a press keeps focus where it put it. The mousedown's default would
+ * move focus off the thumb, focused as the press began (it takes no pointer),
+ * to the nearest focusable box around it.
+ */
+const WEB_KEEP_FOCUS = {
+  onMouseDown: (event: { preventDefault(): void }) => event.preventDefault(),
+};
 
 /** Web only: a pointer over it, no text selected or page scrolled by a drag. */
 const WEB_SLIDER = { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as ViewStyle;

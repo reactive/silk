@@ -20,11 +20,8 @@ export {
   mapSwitchStyle,
   mapSliderStyle,
   mapTextareaStyle,
-  sliderMarkStyle,
 } from './mappers/controls.js';
 export type {
-  SliderEdge,
-  SliderMarkStyle,
   TextControlState,
   ToggleVisualState,
 } from './mappers/controls.js';

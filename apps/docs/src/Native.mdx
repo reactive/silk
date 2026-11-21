@@ -105,6 +105,8 @@ not core tokens. Avatar `mediaScale` sizes stay density-independent (content).
 | Spinner 25% `color-mix` ring | `tone.subtle` + `tone.solid` (no color-string parsing) |
 | `accessibilityLiveRegion` | Android-only enhancement; use roles + labels cross-platform |
 | Slider: Radix pointer capture, hidden form inputs | Responder drag from the slider's own location; no `name` / form inputs; Page and Shift keys on the web only |
+| Slider: marks positioned by the caller | `children` draw under the thumbs and take no touches; `useSliderMarkStyle()` places them |
+| Tooltip: Radix `aria-describedby` on the trigger | Trigger is a box, so the control inside carries the same words (`accessibilityHint`) |
 | Roving keyboard focus (RadioGroup) | Screen readers navigate elements directly |
 
 RNW tests assert ARIA aliases (`aria-checked`, `aria-valuenow`, …) via the
@@ -149,7 +151,7 @@ in a `Listbox` inside it; focus inside it goes back to the anchor. A
 `Popover` inside a `Dialog` is not supported on the web yet: the dialog's focus
 trap takes focus back from it.
 
-`Tooltip` has web's parts but no `Provider`. Its `Trigger` is a box around the
+`Tooltip` has web's parts; `Tooltip.Provider` is optional. Its `Trigger` is a box around the
 control, so a disabled control (which takes no press) still opens it on a tap:
 
 ```tsx

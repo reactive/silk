@@ -15,7 +15,6 @@ import {
   type RnTextStyle,
   type RnViewStyle,
   spaceScale,
-  typographyStyle,
 } from './shared.js';
 
 /** The floating-surface treatment every overlay shares (web: `floatingSurfaceClass`). */
@@ -96,13 +95,10 @@ const TOOLTIP_WIDTH = 240;
 
 /**
  * Tooltip: the floating surface, compact, around a line or two at the label
- * role (web: `floatingSurfaceCompactClass`).
+ * role (web: `floatingSurfaceCompactClass`); the text is a `Text` with that role.
  */
-export function mapTooltipStyle(theme: Theme): {
-  readonly surface: RnViewStyle;
-  readonly text: RnTextStyle;
-} {
-  const { space, color } = theme.semantic;
+export function mapTooltipStyle(theme: Theme): { readonly surface: RnViewStyle } {
+  const { space } = theme.semantic;
   return {
     surface: {
       ...floatingSurface(theme),
@@ -112,7 +108,6 @@ export function mapTooltipStyle(theme: Theme): {
       paddingRight: space[2],
       maxWidth: TOOLTIP_WIDTH,
     },
-    text: { ...typographyStyle(theme, 'label'), color: color.textPrimary },
   };
 }
 

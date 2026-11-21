@@ -389,45 +389,6 @@ export function mapSliderStyle(
   };
 }
 
-/** The edge of a slider that `min` sits at. */
-export type SliderEdge = 'left' | 'right' | 'bottom' | 'top';
-
-/** An edge offset in percent plus a margin in points, as React Native's `ViewStyle` takes them. */
-export type SliderMarkStyle = { [Edge in SliderEdge]?: `${number}%` } & {
-  marginLeft?: number;
-  marginRight?: number;
-  marginBottom?: number;
-  marginTop?: number;
-};
-
-const SLIDER_EDGE_MARGIN: Record<SliderEdge, keyof SliderMarkStyle> = {
-  left: 'marginLeft',
-  right: 'marginRight',
-  bottom: 'marginBottom',
-  top: 'marginTop',
-};
-
-/**
- * Places a box `fraction` of the way along a slider, where a thumb's center
- * sits at that value: from half a thumb past `edge` to half a thumb before
- * the far edge (Radix's in-bounds rule). Percent plus a fixed margin, so it
- * needs no measured size. `offset` moves the box further from `edge`; minus
- * half its size centers it on the point. Lines `Slider`'s children (marks,
- * a scale) up with its stops: `sliderMarkStyle(i / last, thumbSize, -4)`
- * centers an 8-wide dot on stop `i`.
- */
-export function sliderMarkStyle(
-  fraction: number,
-  thumbSize: number,
-  offset = 0,
-  edge: SliderEdge = 'left',
-): SliderMarkStyle {
-  return {
-    [edge]: `${fraction * 100}%`,
-    [SLIDER_EDGE_MARGIN[edge]]: thumbSize / 2 - fraction * thumbSize + offset,
-  };
-}
-
 export function mapRadioGroupStyle(
   theme: Theme,
   props: RadioGroupVariantProps = {},

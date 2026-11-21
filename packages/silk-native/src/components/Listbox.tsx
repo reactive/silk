@@ -14,19 +14,12 @@ import {
   useState,
 } from 'react';
 import {
-  Platform,
   type StyleProp,
   View,
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import {
-  a11yState,
-  rnwAttrs,
-  type WebFocusEvent,
-  webKeyHandler,
-  type WebKeyDownEvent,
-} from '../styles/a11yProps.js';
+import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
 import { mapListboxItemStyle } from '../styles/mappers/overlay.js';
 import type { RnTextStyle } from '../styles/mappers/shared.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -36,8 +29,16 @@ import { CheckGlyph } from './glyphs.js';
 import { Pressable, type PressableProps } from './Pressable.js';
 import { sameItems } from './sameItems.js';
 import { Text, type TextProps } from './Text.js';
+import {
+  FOLLOWING,
+  WEB,
+  type WebFocusEvent,
+  webDocument,
+  webKeyHandler,
+  type WebKeyDownEvent,
+  webNode,
+} from '../web/host.js';
 
-const WEB = Platform.OS === 'web';
 /** A listbox on the web; Android has none, so a radiogroup there. */
 const LIST_ROLE = (WEB ? 'listbox' : 'radiogroup') as ViewProps['role'];
 
@@ -362,7 +363,7 @@ function useItems() {
     target !== undefined && enabledItems?.includes(target) ? target : undefined;
   const focus = (target: string) => items.current.get(target)?.node.focus();
   const isItem = (node: unknown) => [...items.current.values()].some((item) => item.node === node);
-  const holdsFocus = () => isItem(activeElement());
+  const holdsFocus = () => isItem(webDocument()?.activeElement);
   // Stable, so an item's ref callback keeps its place in mount order across renders.
   const register = useCallback((itemValue: string, node: ItemNode | null, disabled: boolean) => {
     const was = items.current.get(itemValue);
@@ -377,17 +378,6 @@ function useItems() {
   }, []);
   return { enabledItems, enabled, ifEnabled, focus, isItem, holdsFocus, register };
 }
-
-/** react-native-web's focused DOM element (silk-native doesn't load DOM types). */
-function activeElement(): unknown {
-  return (globalThis as { document?: { activeElement?: unknown } }).document?.activeElement;
-}
-
-interface DomNode {
-  compareDocumentPosition?: (other: DomNode) => number;
-}
-/** `Node.DOCUMENT_POSITION_FOLLOWING`. */
-const FOLLOWING = 4;
 
 /**
  * The index in `order` that an arrow, Home or End moves to from `from`
@@ -410,9 +400,7 @@ function moveTo(key: string, from: string | undefined, order: readonly string[])
 function inTreeOrder<V>(items: ReadonlyMap<string, V & { node: ItemNode }>): Array<[string, V]> {
   const entries = [...items.entries()];
   return entries.sort(([, a], [, b]) => {
-    const first = a.node as unknown as DomNode;
-    const second = b.node as unknown as DomNode;
-    const position = first.compareDocumentPosition?.(second);
+    const position = webNode(a.node).compareDocumentPosition?.(webNode(b.node));
     if (position === undefined) return 0;
     return position & FOLLOWING ? -1 : 1;
   });

@@ -4,9 +4,6 @@
  * and DOM ARIA attributes, not the RN object shapes — without aliases, Checkbox
  * `aria-checked` and Progress `aria-valuenow` would silently vanish in
  * Storybook / jsdom tests.
- *
- * Also the react-native-web DOM shapes (keys, focus) its components read,
- * typed here once since silk-native doesn't load DOM types.
  */
 
 /** RN / RNW-compatible checked values (excludes string "true"/"false"). */
@@ -73,34 +70,6 @@ export function rnwAttrs(
   return props;
 }
 
-/**
- * A key pressed on a focused element: react-native-web's `onKeyDown`, which
- * React Native's View types lack before 0.84.
- */
-export interface WebKeyDownEvent {
-  readonly nativeEvent: { readonly key: string; readonly shiftKey?: boolean };
-  preventDefault(): void;
-}
-
-/**
- * `handler` as react-native-web's `onKeyDown` prop, typed here once so the
- * components that take keys don't each cast it.
- */
-export function webKeyHandler(handler: (event: WebKeyDownEvent) => void): {
-  readonly onKeyDown: (event: WebKeyDownEvent) => void;
-} {
-  return { onKeyDown: handler };
-}
-
-/**
- * react-native-web's `onMouseDown`, keeping focus where a press put it: the
- * mousedown's default would move focus to the nearest focusable ancestor of a
- * part that takes no pointer (a slider's thumb, focused as the press began).
- */
-export const webKeepFocusOnPress: {
-  readonly onMouseDown: (event: { preventDefault(): void }) => void;
-} = { onMouseDown: (event) => event.preventDefault() };
-
 export function a11yState(
   state: AccessibilityStateCompat,
 ): A11yStateProps {
@@ -136,50 +105,4 @@ export function a11yValue(value: AccessibilityValueCompat): A11yValueProps {
       ? { accessibilityValueText: value.text, 'aria-valuetext': value.text }
       : {}),
   };
-}
-
-/** A DOM node as react-native-web hands it over (a View's ref is one). */
-export interface WebNode {
-  contains(other: WebNode): boolean;
-}
-
-/** react-native-web's blur and focus `nativeEvent`: where focus went, or came from. */
-export interface WebFocusEvent {
-  readonly relatedTarget: WebNode | null;
-}
-
-/** The page's `document`, on the web: just what listening on it takes. */
-export interface WebDocument {
-  addEventListener(
-    type: string,
-    listener: () => void,
-    options: { readonly capture: boolean; readonly once?: boolean },
-  ): void;
-  removeEventListener(type: string, listener: () => void, options: { readonly capture: boolean }): void;
-}
-
-/** The page's `document` on the web, or nothing on native. */
-export const webDocument = (): WebDocument | undefined =>
-  (globalThis as { document?: WebDocument }).document;
-
-/** The DOM element react-native-web focuses. */
-export interface FocusTarget {
-  matches?: (selector: string) => boolean;
-  ownerDocument?: {
-    addEventListener(type: string, listener: () => void, capture: boolean): void;
-    removeEventListener(type: string, listener: () => void, capture: boolean): void;
-  };
-}
-
-/**
- * The browser decides whether focus should show (`:focus-visible`), so a click
- * doesn't ring a button but Tab does.
- */
-export function matchesFocusVisible(target: FocusTarget): boolean {
-  try {
-    return target.matches?.(':focus-visible') ?? true;
-  } catch {
-    // A browser too old for :focus-visible: show every focus.
-    return true;
-  }
 }

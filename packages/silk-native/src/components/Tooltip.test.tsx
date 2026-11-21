@@ -275,3 +275,67 @@ test('two closes in one event ask the owner once', () => {
   tabTo(screen.getByRole('button', { name: 'Next' }));
   expect(asks).toEqual([false]);
 });
+
+test('a press that ends without a click (a context menu) holds it no longer', () => {
+  render(
+    <SilkProvider>
+      <Tooltip.Root>
+        <Tooltip.Trigger testID="trigger">
+          <Pressable accessibilityRole="button" accessibilityLabel="Go" />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Starts the game</Tooltip.Content>
+      </Tooltip.Root>
+    </SilkProvider>,
+  );
+  const go = screen.getByRole('button', { name: 'Go' });
+  tabTo(go);
+  fireEvent.pointerDown(screen.getByTestId('trigger'), { button: 0 });
+  fireEvent.contextMenu(screen.getByTestId('trigger'));
+  act(() => go.blur());
+  expect(tip()).toBeNull();
+});
+
+test('a trigger unmounted mid-press holds it no longer', () => {
+  function Toggle({ shown }: { readonly shown: boolean }) {
+    return (
+      <SilkProvider>
+        <Tooltip.Root defaultOpen>
+          {shown ? (
+            <Tooltip.Trigger testID="trigger">
+              <Pressable accessibilityRole="button" accessibilityLabel="Go" />
+            </Tooltip.Trigger>
+          ) : null}
+          <Tooltip.Content>Starts the game</Tooltip.Content>
+        </Tooltip.Root>
+      </SilkProvider>
+    );
+  }
+  const { rerender } = render(<Toggle shown />);
+  fireEvent.pointerDown(screen.getByTestId('trigger'), { button: 0 });
+  rerender(<Toggle shown={false} />);
+  fireEvent.keyDown(document.body, { key: 'Escape' });
+  expect(tip()).toBeNull();
+});
+
+test('a Provider sets the delay of the tooltips inside it', () => {
+  rs.useFakeTimers();
+  try {
+    render(
+      <SilkProvider>
+        <Tooltip.Provider delayDuration={50}>
+          <Tooltip.Root>
+            <Tooltip.Trigger testID="trigger">
+              <Pressable accessibilityRole="button" accessibilityLabel="Go" />
+            </Tooltip.Trigger>
+            <Tooltip.Content>Starts the game</Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+      </SilkProvider>,
+    );
+    fireEvent.pointerEnter(screen.getByTestId('trigger'), { pointerType: 'mouse' });
+    act(() => rs.advanceTimersByTime(50));
+    expect(tip()).not.toBeNull();
+  } finally {
+    rs.useRealTimers();
+  }
+});

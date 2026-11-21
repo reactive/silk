@@ -18,7 +18,7 @@ import {
   type View,
   type ViewStyle,
 } from 'react-native';
-import { type FocusTarget, matchesFocusVisible } from '../styles/a11yProps.js';
+import { matchesFocusVisible, type WebNode } from '../web/host.js';
 import { mapFocusRingStyle } from '../styles/mappers/focus.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
@@ -58,14 +58,14 @@ export interface PressableProps
  */
 function useFocusVisible(): {
   focusVisible: boolean;
-  onFocus: (target: FocusTarget) => void;
+  onFocus: (target: WebNode) => void;
   onBlur: () => void;
 } {
   const [focusVisible, setFocusVisible] = useState(false);
   const stopWatchingKeys = useRef<(() => void) | undefined>(undefined);
   useEffect(() => () => stopWatchingKeys.current?.(), []);
 
-  const onFocus = useCallback((target: FocusTarget): void => {
+  const onFocus = useCallback((target: WebNode): void => {
     stopWatchingKeys.current?.();
     const visible = Platform.OS !== 'web' || matchesFocusVisible(target);
     setFocusVisible(visible);
@@ -115,7 +115,7 @@ export function Pressable({
     (event) => {
       // react-native-web calls this only for this element's own focus, not
       // a focused child's; on the web the target is that DOM element.
-      trackFocus(event.target as unknown as FocusTarget);
+      trackFocus(event.target as unknown as WebNode);
       onFocus?.(event);
     },
     [trackFocus, onFocus],

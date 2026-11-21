@@ -56,7 +56,7 @@ export { Checkbox } from './components/Checkbox.js';
 export type { CheckboxProps, CheckedState } from './components/Checkbox.js';
 export { Switch } from './components/Switch.js';
 export type { SwitchProps } from './components/Switch.js';
-export { Slider } from './components/Slider.js';
+export { Slider, useSliderMarkStyle } from './components/Slider.js';
 export type { SliderProps } from './components/Slider.js';
 export { RadioGroup } from './components/RadioGroup.js';
 export type {
@@ -74,6 +74,7 @@ export type { PopoverRootProps, PopoverContentProps } from './components/Popover
 export type { OpenAutoFocusEvent } from './overlay/layer.js';
 export { Tooltip } from './components/Tooltip.js';
 export type {
+  TooltipProviderProps,
   TooltipRootProps,
   TooltipTriggerProps,
   TooltipContentProps,
@@ -126,7 +127,6 @@ export {
   mapSurfaceStyle,
   mapSwitchStyle,
   mapSliderStyle,
-  sliderMarkStyle,
   mapTextStyle,
   mapTextareaStyle,
   mapTooltipStyle,
@@ -137,8 +137,6 @@ export type {
   ListboxItemState,
   RnTextStyle,
   RnViewStyle,
-  SliderEdge,
-  SliderMarkStyle,
   TextControlState,
   ToggleVisualState,
 } from './styles/mapStyles.js';

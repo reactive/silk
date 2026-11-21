@@ -1,16 +1,11 @@
 import { expect, test } from '@rstest/core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState, type JSX } from 'react';
-import { sliderMarkStyle } from '../styles/mappers/controls.js';
+import { View } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Field } from './Field.js';
-import {
-  fractionAt,
-  moveThumb,
-  nearestThumb,
-  Slider,
-  type SliderProps,
-} from './Slider.js';
+import { moveThumb, nearestThumb, Slider, type SliderProps, useSliderMarkStyle } from './Slider.js';
+import { fractionAt } from './sliderGeometry.js';
 
 function Controlled(props: Omit<SliderProps, 'value' | 'onValueChange'> & { initial: number[] }): JSX.Element {
   const { initial, ...rest } = props;
@@ -241,11 +236,42 @@ test('fractionAt inverts the placement: half a thumb in is min, half a thumb bef
   expect(nearestThumb([10, 20], 16)).toBe(1);
 });
 
-test('sliderMarkStyle puts a mark where the thumb centers at a fraction, offset from it', () => {
-  // A 20px thumb at 50%: center at 50%; an 8-wide dot centered there starts 4px before it.
-  expect(sliderMarkStyle(0.5, 20, -4)).toEqual({ left: '50%', marginLeft: -4 });
-  expect(sliderMarkStyle(0, 20)).toEqual({ left: '0%', marginLeft: 10 });
-  expect(sliderMarkStyle(1, 20, 0, 'bottom')).toEqual({ bottom: '100%', marginBottom: -10 });
+function Mark({ at }: { readonly at: number }): JSX.Element {
+  const markStyle = useSliderMarkStyle();
+  return <View testID={`mark-${at}`} style={[{ position: 'absolute' }, markStyle(at)]} />;
+}
+
+test('useSliderMarkStyle places a mark where the thumb centers, in the slider\'s own size and direction', () => {
+  render(
+    <SilkProvider defaults={{ Slider: { size: 'sm' } }}>
+      <Slider accessibilityLabel="Rating" dir="rtl" min={1000} max={2000} defaultValue={[1500]}>
+        <Mark at={1500} />
+      </Slider>
+    </SilkProvider>,
+  );
+  const thumb = screen.getByRole('slider').style;
+  const mark = screen.getByTestId('mark-1500').style;
+  // Right to left, so both count from the right; the thumb's box sits half its size back.
+  expect(mark.right).toBe('50%');
+  expect(thumb.right).toBe('50%');
+  expect(parseFloat(mark.marginRight) - parseFloat(thumb.marginRight)).toBe(
+    parseFloat(thumb.width) / 2,
+  );
+});
+
+test('fractionAt inverts the placement: the point a fraction is placed at reads back as it', () => {
+  // A 200px slider with a 20px thumb: 0.25 is placed at 25% + (10 - 5)px = 55px.
+  expect(fractionAt(55, 200, 20)).toBe(0.25);
+});
+
+test('Home and End move focus to the outer thumb they moved', () => {
+  render(<Controlled initial={[20, 80]} thumbLabels={['Low', 'High']} />);
+  const high = screen.getByRole('slider', { name: 'High' });
+  high.focus();
+  fireEvent.keyDown(high, { key: 'Home' });
+  expect(document.activeElement).toBe(screen.getByRole('slider', { name: 'Low' }));
+  fireEvent.keyDown(document.activeElement!, { key: 'End' });
+  expect(document.activeElement).toBe(screen.getByRole('slider', { name: 'High' }));
 });
 
 test('a Field names the thumb, describes it, and its label focuses it', () => {

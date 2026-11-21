@@ -16,6 +16,7 @@ import {
   radioGroupRecipe,
   separatorRecipe,
   skeletonRecipe,
+  sliderRecipe,
   spinnerRecipe,
   stackRecipe,
   statusDotRecipe,
@@ -44,6 +45,7 @@ import {
   mapSeparatorStyle,
   mapShadow,
   mapSkeletonStyle,
+  mapSliderStyle,
   mapSpinnerStyle,
   mapStackStyle,
   mapStatusDotStyle,
@@ -315,6 +317,22 @@ test('conformance: Checkbox / Switch / RadioGroup axes', () => {
     expect(
       mapRadioGroupStyle(theme, { orientation }).root.flexDirection,
     ).toBeTruthy();
+  }
+});
+
+test('conformance: every Slider size and tone maps; sizes differ in thumb size', () => {
+  for (const size of sliderRecipe.variants.size) {
+    for (const tone of sliderRecipe.variants.tone) {
+      const style = mapSliderStyle(theme, { size, tone });
+      expect(style.thumbSize).toBeGreaterThan(0);
+      expect(style.thumb.width).toBe(style.thumbSize);
+      expect(style.range.backgroundColor).toBe(theme.semantic.color.tones[tone].solid);
+    }
+  }
+  for (const [a, b] of distinctPairs(sliderRecipe.variants.size)) {
+    expect(mapSliderStyle(theme, { size: a }).thumbSize).not.toBe(
+      mapSliderStyle(theme, { size: b }).thumbSize,
+    );
   }
 });
 
