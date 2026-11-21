@@ -61,6 +61,17 @@ export type {
   RadioGroupRootProps,
   RadioGroupItemProps,
 } from './components/RadioGroup.js';
+export { Dialog } from './components/Dialog.js';
+export type {
+  DialogRootProps,
+  DialogContentProps,
+  DialogTitleProps,
+} from './components/Dialog.js';
+export { Popover } from './components/Popover.js';
+export type { PopoverRootProps, PopoverContentProps } from './components/Popover.js';
+export { Listbox } from './components/Listbox.js';
+export type { ListboxRootProps, ListboxItemProps, ListboxItemTextProps } from './components/Listbox.js';
+export type { FloatingAlign, FloatingSide } from './overlay/place.js';
 
 export { ThemeProvider, useTheme, useThemeDensity } from './theme/ThemeProvider.js';
 export type {
@@ -82,10 +93,13 @@ export {
   mapButtonStyle,
   mapCardStyle,
   mapCheckboxStyle,
+  mapDialogStyle,
   mapFocusRingStyle,
   mapHeadingStyle,
   mapInlineStyle,
   mapInputStyle,
+  mapListboxItemStyle,
+  mapPopoverStyle,
   mapProgressStyle,
   mapRadioGroupStyle,
   mapRadioItemStyle,
@@ -103,6 +117,7 @@ export {
   checkboxIndicatorColor,
 } from './styles/mapStyles.js';
 export type {
+  ListboxItemState,
   RnTextStyle,
   RnViewStyle,
   TextControlState,

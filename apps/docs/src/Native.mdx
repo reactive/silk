@@ -114,7 +114,42 @@ RNW tests assert ARIA aliases (`aria-checked`, `aria-valuenow`, …) via the
 
 **Layout:** Box, Stack, Inline · **Visual:** Text, Button, Surface, Card,
 Heading, Badge, Separator, Avatar, StatusDot, Skeleton, Spinner, Progress ·
-**Forms:** Input, Textarea, Field, Checkbox, Switch, RadioGroup
+**Forms:** Input, Textarea, Field, Checkbox, Switch, RadioGroup ·
+**Overlays:** Dialog, Popover, Listbox
+
+## Overlays
+
+`Dialog`, `Popover` and `Listbox` are controlled (`open` / `onOpenChange`,
+`value` / `onValueChange`) and have no Trigger or Close parts: the app's own
+button sets `open`, and gives `Popover.Root` its `anchor` ref.
+
+```tsx
+const anchor = useRef<View>(null);
+<Button ref={anchor} onPress={() => setOpen((was) => !was)}>{size}</Button>
+<Popover.Root open={open} onOpenChange={setOpen} anchor={anchor}>
+  <Popover.Content size="sm" align="start">
+    <Listbox.Root accessibilityLabel="Size" value={size} onValueChange={setSize}>
+      <Listbox.Item value="Small">Small</Listbox.Item>
+      <Listbox.Item value="Large">Large</Listbox.Item>
+    </Listbox.Root>
+  </Popover.Content>
+</Popover.Root>
+```
+
+| | Web (react-native-web) | Android |
+| --- | --- | --- |
+| `Dialog` | `Modal`: `aria-modal` dialog, focus trap, focus back to the opener, Escape | `Modal`: back button, modal to TalkBack |
+| `Popover` | Non-modal Radix `DismissableLayer` in a body portal: the page stays live, so a menu can open on hover | Transparent `Modal`; back button |
+| `Listbox` | `listbox` / `option`, one Tab stop, arrows / Home / End / Space | `radiogroup` / `radio` |
+
+A `Popover` closes on a press outside it and its anchor (on native the layer
+covers the anchor, so a press there closes it too), Escape or the back button, a resized window, scrolling that moves the anchor, and a pick (or Tab)
+in a `Listbox` inside it; focus inside it goes back to the anchor. A
+`Popover` inside a `Dialog` is not supported on the web yet: the dialog's focus
+trap takes focus back from it.
+
+A `Listbox.Item` with custom children colors its text with `Listbox.ItemText`,
+which follows the item's state the way a plain string label does.
 
 ## Stage 1 spike findings (folded forward)
 

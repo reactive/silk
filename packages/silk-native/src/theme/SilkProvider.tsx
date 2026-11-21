@@ -5,11 +5,14 @@ import type {
   ButtonVariantProps,
   CardVariantProps,
   CheckboxVariantProps,
+  DialogVariantProps,
   HeadingVariantProps,
   InlineVariantProps,
   InputVariantProps,
+  PopoverVariantProps,
   ProgressVariantProps,
   RadioGroupVariantProps,
+  SelectVariantProps,
   SeparatorVariantProps,
   SkeletonVariantProps,
   SpinnerVariantProps,
@@ -49,6 +52,10 @@ export interface SilkDefaults {
   readonly Checkbox?: Partial<CheckboxVariantProps>;
   readonly Switch?: Partial<SwitchVariantProps>;
   readonly RadioGroup?: Partial<RadioGroupVariantProps>;
+  readonly Dialog?: Partial<DialogVariantProps>;
+  readonly Popover?: Partial<PopoverVariantProps>;
+  /** Listbox items (Select's vocabulary, shared with web `Select`). */
+  readonly Select?: Partial<SelectVariantProps>;
 }
 
 export interface SilkProviderProps extends ThemeProviderProps {

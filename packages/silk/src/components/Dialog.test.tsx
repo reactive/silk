@@ -2,6 +2,7 @@ import { createTheme } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
 import { render, screen } from '@testing-library/react';
 import type { CSSProperties, JSX } from 'react';
+import { SilkProvider } from '../theme/SilkProvider';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { Dialog } from './Dialog';
 
@@ -175,4 +176,16 @@ test('explicit container still hosts a single theme scope wrapper', () => {
   } finally {
     host.remove();
   }
+});
+
+test('placement defaults to center, takes bottom, and resolves from SilkDefaults', () => {
+  const { unmount } = render(<OpenDialog />);
+  expect(screen.getByRole('dialog').getAttribute('data-placement')).toBe('center');
+  unmount();
+  render(
+    <SilkProvider defaults={{ Dialog: { placement: 'bottom' } }}>
+      <OpenDialog />
+    </SilkProvider>,
+  );
+  expect(screen.getByRole('dialog').getAttribute('data-placement')).toBe('bottom');
 });

@@ -63,6 +63,7 @@ test('recipe conformance: Text, Stack, Avatar, Dialog axes are styled', () => {
   assertAxisSelectors(css, 'data-size', avatarRecipe.variants.size);
   assertAxisSelectors(css, 'data-shape', avatarRecipe.variants.shape);
   assertAxisSelectors(css, 'data-size', dialogRecipe.variants.size);
+  assertAxisSelectors(css, 'data-placement', dialogRecipe.variants.placement);
 });
 
 test('recipe conformance: layout component axes are styled', () => {

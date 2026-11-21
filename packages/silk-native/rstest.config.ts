@@ -13,6 +13,8 @@ export default defineConfig({
   include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
   resolve: {
     alias: {
+      // The web layer: tests render through react-native-web.
+      '#floating-layer': path.resolve(packageRoot, 'src/overlay/layer.dom.tsx'),
       'react-native': path.resolve(
         monorepoRoot,
         'node_modules/react-native-web',
