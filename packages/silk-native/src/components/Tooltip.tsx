@@ -13,7 +13,6 @@ import {
   useRef,
 } from 'react';
 import {
-  type GestureResponderEvent,
   Platform,
   type StyleProp,
   View,
@@ -25,6 +24,7 @@ import { FloatingLayer } from '#floating-layer';
 import type { FloatingAlign, FloatingSide } from '../overlay/place.js';
 import { mapTooltipStyle } from '../styles/mappers/overlay.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { type FocusTarget, matchesFocusVisible } from './Pressable.js';
 import { Text } from './Text.js';
 import { useControllableValue } from './useControllableValue.js';
 
@@ -34,10 +34,12 @@ const LEAVE_GRACE_MS = 100;
 interface TooltipContextValue {
   readonly open: boolean;
   readonly anchor: RefObject<ComponentRef<typeof View> | null>;
-  /** Opens it now, or after the hover delay. */
-  readonly show: (afterDelay: boolean) => void;
-  /** Closes it now, or after a pointer's grace to reach the tooltip. */
-  readonly hide: (afterGrace: boolean) => void;
+  readonly openNow: () => void;
+  /** Opens it once a mouse has rested for the delay, unless something changes it first. */
+  readonly openAfterDelay: () => void;
+  readonly closeNow: () => void;
+  /** Closes it after a pointer's moment to reach the tooltip, unless something changes it first. */
+  readonly closeAfterGrace: () => void;
 }
 
 const TooltipContext = createContext<TooltipContextValue | null>(null);
@@ -76,6 +78,7 @@ function TooltipRoot({
   });
   useEffect(() => () => clearTimeout(timer.current), []);
 
+  // A change made now supersedes one a timer was waiting to make.
   const setOpen = useCallback((next: boolean) => {
     clearTimeout(timer.current);
     const { open: was, setUncontrolled: set, onOpenChange: report } = latest.current;
@@ -86,44 +89,30 @@ function TooltipRoot({
   const later = useCallback(
     (next: boolean, ms: number) => {
       clearTimeout(timer.current);
-      timer.current = setTimeout(() => setOpen(next), ms);
+      if (next !== latest.current.open) timer.current = setTimeout(() => setOpen(next), ms);
     },
     [setOpen],
   );
-  const show = useCallback(
-    (afterDelay: boolean) => {
-      if (afterDelay && !latest.current.open) later(true, delayDuration);
-      else setOpen(true);
-    },
-    [later, setOpen, delayDuration],
+  const actions = useMemo(
+    () => ({
+      openNow: () => setOpen(true),
+      openAfterDelay: () => later(true, delayDuration),
+      closeNow: () => setOpen(false),
+      closeAfterGrace: () => later(false, LEAVE_GRACE_MS),
+    }),
+    [setOpen, later, delayDuration],
   );
-  const hide = useCallback(
-    (afterGrace: boolean) => {
-      if (afterGrace && latest.current.open) later(false, LEAVE_GRACE_MS);
-      else setOpen(false);
-    },
-    [later, setOpen],
-  );
-  const value = useMemo(() => ({ open, anchor, show, hide }), [open, show, hide]);
+  const value = useMemo(() => ({ open, anchor, ...actions }), [open, actions]);
   return <TooltipContext.Provider value={value}>{children}</TooltipContext.Provider>;
 }
 
-export interface TooltipTriggerProps extends Omit<ViewProps, 'children'> {
+/** The Trigger's own handlers, which open and close it. */
+type WebHandlers = 'onPointerEnter' | 'onPointerLeave' | 'onFocus' | 'onBlur';
+type TriggerHandlers = WebHandlers | 'onStartShouldSetResponder' | 'onResponderRelease';
+
+export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | TriggerHandlers> {
   readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
-}
-
-/** A web pointer or focus event as react-native-web hands it to a View. */
-interface WebPointerEvent {
-  readonly nativeEvent: { readonly pointerType?: string };
-}
-/** react-native-web's pointer and focus props, which React Native's View types lack. */
-interface WebTriggerProps {
-  onPointerEnter(event: WebPointerEvent): void;
-  onPointerLeave(event: WebPointerEvent): void;
-  onPointerDown(): void;
-  onFocus(): void;
-  onBlur(): void;
 }
 
 /**
@@ -131,17 +120,20 @@ interface WebTriggerProps {
  * resting on it for `delayDuration` or keyboard focus arriving inside it; on
  * any platform, a tap or click that nothing inside takes. A disabled control
  * takes no press, so a tap on it opens the tooltip; an enabled one keeps its
- * press. It closes as the mouse leaves (with a moment to reach the tooltip),
- * as focus leaves, and on a press outside, Escape or the back button.
+ * press. Its whole box takes the presses nothing inside takes, so in a
+ * pressable row, a press there opens the tooltip instead of pressing the row.
+ * It closes as the mouse leaves (with a moment to reach the tooltip), as
+ * focus leaves it, and on a press outside, Escape or the back button.
+ *
+ * Keyboard focus can't land on a disabled control, so on the web its tooltip
+ * opens only for a mouse or a tap.
  *
  * The tooltip is not read by screen readers from the trigger: give the
  * control the same words (`accessibilityHint`, or `aria-describedby` to a
  * description) so they reach everyone.
  */
 function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
-  const { anchor, show, hide } = useTooltip('Trigger');
-  // A press focuses what it lands on; only focus from the keyboard opens it.
-  const pressing = useRef(false);
+  const { anchor, openNow, openAfterDelay, closeNow, closeAfterGrace } = useTooltip('Trigger');
   const setRef = useCallback(
     (node: ComponentRef<typeof View> | null) => {
       anchor.current = node;
@@ -150,25 +142,24 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
     },
     [anchor, ref],
   );
-  const web: WebTriggerProps | undefined =
+  const web: Pick<ViewProps, WebHandlers> | undefined =
     Platform.OS === 'web'
       ? {
           onPointerEnter: (event) => {
-            if (event.nativeEvent.pointerType === 'mouse') show(true);
+            if (event.nativeEvent.pointerType === 'mouse') openAfterDelay();
           },
           onPointerLeave: (event) => {
-            if (event.nativeEvent.pointerType === 'mouse') hide(true);
+            if (event.nativeEvent.pointerType === 'mouse') closeAfterGrace();
           },
-          onPointerDown: () => {
-            pressing.current = true;
-            setTimeout(() => {
-              pressing.current = false;
-            });
+          // Focus from the keyboard (the browser's :focus-visible) opens it; a press's doesn't.
+          onFocus: (event) => {
+            if (matchesFocusVisible(event.target as unknown as FocusTarget)) openNow();
           },
-          onFocus: () => {
-            if (!pressing.current) show(false);
+          // Focus moving to another control inside keeps it open.
+          onBlur: (event) => {
+            const next = (event.nativeEvent as { relatedTarget?: unknown }).relatedTarget;
+            if (!within(anchor.current, next)) closeNow();
           },
-          onBlur: () => hide(false),
         }
       : undefined;
   return (
@@ -178,19 +169,23 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
       {...web}
       // Asked last, after everything inside: only a press nothing inside takes reaches it.
       onStartShouldSetResponder={() => true}
-      onResponderRelease={(event: GestureResponderEvent) => {
-        rest.onResponderRelease?.(event);
-        show(false);
-      }}
+      onResponderRelease={openNow}
     >
       {children}
     </View>
   );
 }
 
-export interface TooltipContentProps extends Omit<ViewProps, 'children' | 'style'> {
+/** Whether `node` is inside `box` (react-native-web: both are DOM nodes). */
+function within(box: unknown, node: unknown): boolean {
+  const contains = (box as { contains?: (other: unknown) => boolean } | null)?.contains;
+  return Boolean(node && contains?.call(box, node));
+}
+
+export interface TooltipContentProps
+  extends Omit<ViewProps, 'children' | 'style' | 'onPointerEnter' | 'onPointerLeave'> {
   readonly ref?: Ref<ComponentRef<typeof View>>;
-  /** A string is set in the tooltip's text style; other children style themselves. */
+  /** A string or number is set in the tooltip's text style; other children style themselves. */
   readonly children?: ReactNode;
   /** The surface's style, after Silk's. */
   readonly style?: StyleProp<ViewStyle>;
@@ -224,18 +219,18 @@ function TooltipContent({
   ref,
   ...rest
 }: TooltipContentProps): JSX.Element | null {
-  const { open, anchor, show, hide } = useTooltip('Content');
+  const { open, anchor, openNow, closeNow, closeAfterGrace } = useTooltip('Content');
   const { theme } = useTheme();
   if (!open) return null;
   const tooltip = mapTooltipStyle(theme);
-  const web: Pick<WebTriggerProps, 'onPointerEnter' | 'onPointerLeave'> | undefined =
+  const web: Pick<ViewProps, 'onPointerEnter' | 'onPointerLeave'> | undefined =
     Platform.OS === 'web'
-      ? { onPointerEnter: () => show(false), onPointerLeave: () => hide(true) }
+      ? { onPointerEnter: openNow, onPointerLeave: closeAfterGrace }
       : undefined;
   return (
     <FloatingLayer
       anchor={anchor}
-      onDismiss={() => hide(false)}
+      onDismiss={closeNow}
       side={side}
       align={align}
       sideOffset={sideOffset}
@@ -243,7 +238,11 @@ function TooltipContent({
       onOpenAutoFocus={(event) => event.preventDefault()}
     >
       <View ref={ref} role="tooltip" {...rest} {...web} style={[tooltip.surface, style]}>
-        {typeof children === 'string' ? <Text style={tooltip.text}>{children}</Text> : children}
+        {typeof children === 'string' || typeof children === 'number' ? (
+          <Text style={tooltip.text}>{children}</Text>
+        ) : (
+          children
+        )}
       </View>
     </FloatingLayer>
   );

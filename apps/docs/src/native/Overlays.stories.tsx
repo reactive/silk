@@ -98,3 +98,22 @@ function TooltipDemo(): JSX.Element {
 }
 
 export const TooltipOnDisabledControl: Story = { render: () => <TooltipDemo /> };
+
+function TooltipPlacementDemo(): JSX.Element {
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger style={{ alignSelf: 'flex-start' }}>
+        <Button>Engine</Button>
+      </Tooltip.Trigger>
+      <Tooltip.Content side="bottom" align="start" style={{ maxWidth: 200 }}>
+        <Stack gap="1">
+          <Text role="label">Stockfish 19</Text>
+          <Text tone="secondary">Plays the move it judges best.</Text>
+        </Stack>
+      </Tooltip.Content>
+    </Tooltip.Root>
+  );
+}
+
+/** Below and start-aligned, with its own children and a narrower surface. */
+export const TooltipPlacementAndContent: Story = { render: () => <TooltipPlacementDemo /> };

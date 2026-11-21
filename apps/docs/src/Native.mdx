@@ -162,7 +162,8 @@ control, so a disabled control (which takes no press) still opens it on a tap:
 ```
 
 Screen readers don't read the tooltip from the trigger, so give the control the
-same words.
+same words. Keyboard focus can't land on a disabled control, so on the web its
+tooltip opens only for a mouse or a tap.
 
 A `Listbox.Item` with custom children colors its text with `Listbox.ItemText`,
 which follows the item's state the way a plain string label does.

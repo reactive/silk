@@ -95,14 +95,14 @@ export function mapPopoverStyle(
 const TOOLTIP_WIDTH = 240;
 
 /**
- * Tooltip: the floating surface, compact, around one or two lines at the
- * label role (web: `floatingSurfaceCompactClass`, line height 1.3).
+ * Tooltip: the floating surface, compact, around a line or two at the label
+ * role (web: `floatingSurfaceCompactClass`).
  */
 export function mapTooltipStyle(theme: Theme): {
   readonly surface: RnViewStyle;
   readonly text: RnTextStyle;
 } {
-  const { space, color, typography } = theme.semantic;
+  const { space, color } = theme.semantic;
   return {
     surface: {
       ...floatingSurface(theme),
@@ -112,11 +112,7 @@ export function mapTooltipStyle(theme: Theme): {
       paddingRight: space[2],
       maxWidth: TOOLTIP_WIDTH,
     },
-    text: {
-      ...typographyStyle(theme, 'label'),
-      color: color.textPrimary,
-      lineHeight: Math.round(typography.label.size * 1.3),
-    },
+    text: { ...typographyStyle(theme, 'label'), color: color.textPrimary },
   };
 }
 

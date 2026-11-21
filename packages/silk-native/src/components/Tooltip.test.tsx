@@ -29,6 +29,13 @@ function click(element: HTMLElement) {
   fireEvent.click(element);
 }
 
+/** Focuses `element` as the keyboard does: the browser matches :focus-visible (jsdom never does). */
+function tabTo(element: HTMLElement) {
+  element.matches = (selector: string) =>
+    selector === ':focus-visible' || Element.prototype.matches.call(element, selector);
+  act(() => element.focus());
+}
+
 const tip = () => screen.queryByRole('tooltip');
 
 test('a mouse resting on the trigger opens it after the delay, and leaving closes it', () => {
@@ -111,24 +118,42 @@ test('keyboard focus opens it without taking focus, and Escape or leaving closes
     </SilkProvider>,
   );
   const go = screen.getByRole('button', { name: 'Go' });
-  act(() => go.focus());
+  tabTo(go);
   expect(tip()?.textContent).toBe('Starts the game');
   expect(document.activeElement).toBe(go);
   fireEvent.keyDown(go, { key: 'Escape' });
   expect(tip()).toBeNull();
   act(() => go.blur());
-  act(() => go.focus());
+  tabTo(go);
   expect(tip()).not.toBeNull();
   act(() => go.blur());
   expect(tip()).toBeNull();
 });
 
-test('focus from a press does not open it', () => {
-  render(<Harness />);
-  const trigger = screen.getByTestId('trigger');
-  fireEvent.pointerDown(trigger);
-  fireEvent.focus(trigger);
+test('focus from a press does not open it; focus moving inside keeps it open', () => {
+  const changes: boolean[] = [];
+  render(
+    <SilkProvider>
+      <Tooltip.Root onOpenChange={(open) => changes.push(open)}>
+        <Tooltip.Trigger>
+          <Pressable accessibilityRole="button" accessibilityLabel="One" />
+          <Pressable accessibilityRole="button" accessibilityLabel="Two" />
+        </Tooltip.Trigger>
+        <Tooltip.Content>{2}</Tooltip.Content>
+      </Tooltip.Root>
+    </SilkProvider>,
+  );
+  const one = screen.getByRole('button', { name: 'One' });
+  act(() => one.focus());
   expect(tip()).toBeNull();
+  act(() => one.blur());
+  tabTo(one);
+  expect(tip()?.textContent).toBe('2');
+  tabTo(screen.getByRole('button', { name: 'Two' }));
+  expect(tip()).not.toBeNull();
+  expect(changes).toEqual([true]);
+  act(() => screen.getByRole('button', { name: 'Two' }).blur());
+  expect(changes).toEqual([true, false]);
 });
 
 test('controlled, it shows what it is told and asks to change', () => {

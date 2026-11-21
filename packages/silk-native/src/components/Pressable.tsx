@@ -49,7 +49,7 @@ export interface PressableProps
 }
 
 /** The DOM element react-native-web focuses (silk-native doesn't load DOM types). */
-interface FocusTarget {
+export interface FocusTarget {
   matches?: (selector: string) => boolean;
   ownerDocument?: {
     addEventListener(type: string, listener: () => void, capture: boolean): void;
@@ -61,7 +61,7 @@ interface FocusTarget {
  * The browser decides whether focus should show (`:focus-visible`), so a click
  * doesn't ring a button but Tab does.
  */
-function matchesFocusVisible(target: FocusTarget): boolean {
+export function matchesFocusVisible(target: FocusTarget): boolean {
   try {
     return target.matches?.(':focus-visible') ?? true;
   } catch {
