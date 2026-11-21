@@ -391,6 +391,9 @@ function FieldLabel({
 }: FieldLabelProps): JSX.Element {
   const field = useFieldContext();
   const activation = useContext(FieldActivationContext);
+  // A disabled field's label takes no press, so a tap reaches what wraps it
+  // (a Tooltip.Trigger saying why). Natively a Text with onPress is the responder.
+  const pressable = !field?.disabled && (onPress || activation);
   return (
     <Text
       {...props}
@@ -398,7 +401,7 @@ function FieldLabel({
       tone={field?.disabled ? 'secondary' : 'primary'}
       nativeID={nativeID ?? field?.labelId}
       onPress={
-        onPress || activation
+        pressable
           ? (event) => {
               onPress?.(event);
               if (!event.isDefaultPrevented()) {
