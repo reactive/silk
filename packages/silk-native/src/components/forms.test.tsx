@@ -162,6 +162,31 @@ test('Field.Label activates a native boolean control', () => {
   expect(box.getAttribute('aria-checked')).toBe('true');
 });
 
+test('a disabled Field.Label takes no press', () => {
+  let labelPresses = 0;
+  render(
+    <SilkProvider>
+      <Field.Root mode="group" orientation="horizontal" disabled>
+        <Checkbox />
+        <Field.Label
+          onPress={() => {
+            labelPresses += 1;
+          }}
+        >
+          Notify me
+        </Field.Label>
+      </Field.Root>
+    </SilkProvider>,
+  );
+  const label = screen.getByText('Notify me');
+  fireEvent.click(label);
+  expect(labelPresses).toBe(0);
+  expect(getComputedStyle(label).cursor).not.toBe('pointer');
+  expect(
+    screen.getByRole('checkbox', { name: 'Notify me' }).getAttribute('aria-checked'),
+  ).toBe('false');
+});
+
 test('Checkbox indeterminate → checked transition', () => {
   function Harness(): JSX.Element {
     const [checked, setChecked] = useState<boolean | 'indeterminate'>(
