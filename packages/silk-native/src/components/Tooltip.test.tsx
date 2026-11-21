@@ -117,6 +117,7 @@ test('keyboard focus opens it without taking focus, and Escape or leaving closes
         </Tooltip.Trigger>
         <Tooltip.Content>Starts the game</Tooltip.Content>
       </Tooltip.Root>
+      <Pressable accessibilityRole="button" accessibilityLabel="Next" />
     </SilkProvider>,
   );
   const go = screen.getByRole('button', { name: 'Go' });
@@ -128,7 +129,7 @@ test('keyboard focus opens it without taking focus, and Escape or leaving closes
   act(() => go.blur());
   tabTo(go);
   expect(tip()).not.toBeNull();
-  act(() => go.blur());
+  tabTo(screen.getByRole('button', { name: 'Next' }));
   expect(tip()).toBeNull();
 });
 
@@ -143,6 +144,7 @@ test('focus that is not from the keyboard does not open it; focus moving inside 
         </Tooltip.Trigger>
         <Tooltip.Content>{2}</Tooltip.Content>
       </Tooltip.Root>
+      <Pressable accessibilityRole="button" accessibilityLabel="Next" />
     </SilkProvider>,
   );
   const one = screen.getByRole('button', { name: 'One' });
@@ -154,7 +156,7 @@ test('focus that is not from the keyboard does not open it; focus moving inside 
   tabTo(screen.getByRole('button', { name: 'Two' }));
   expect(tip()).not.toBeNull();
   expect(changes).toEqual([true]);
-  act(() => screen.getByRole('button', { name: 'Two' }).blur());
+  tabTo(screen.getByRole('button', { name: 'Next' }));
   expect(changes).toEqual([true, false]);
 });
 
@@ -176,4 +178,29 @@ test('controlled, it shows what it is told and asks to change', () => {
   fireEvent.keyDown(document.body, { key: 'Escape' });
   expect(asks).toEqual([false]);
   expect(tip()).not.toBeNull();
+});
+
+test('a tap on a part inside that takes no focus keeps it open', () => {
+  rs.useFakeTimers();
+  try {
+    render(
+      <SilkProvider>
+        <Tooltip.Root>
+          <Tooltip.Trigger testID="trigger">
+            <Pressable accessibilityRole="button" accessibilityLabel="Go" />
+          </Tooltip.Trigger>
+          <Tooltip.Content>Starts the game</Tooltip.Content>
+        </Tooltip.Root>
+      </SilkProvider>,
+    );
+    tabTo(screen.getByRole('button', { name: 'Go' }));
+    expect(tip()).not.toBeNull();
+    // The tap's emulated mousedown takes focus to nothing, then its click lands inside.
+    act(() => screen.getByRole('button', { name: 'Go' }).blur());
+    fireEvent.click(screen.getByTestId('trigger'));
+    act(() => rs.advanceTimersByTime(500));
+    expect(tip()).not.toBeNull();
+  } finally {
+    rs.useRealTimers();
+  }
 });

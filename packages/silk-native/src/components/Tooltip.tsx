@@ -45,6 +45,8 @@ interface TooltipContextValue {
   readonly closeNow: () => void;
   /** Closes it after a pointer's moment to reach the tooltip, unless something changes it first. */
   readonly closeAfterGrace: () => void;
+  /** Cancels a pending close, if open. */
+  readonly keepOpen: () => void;
 }
 
 const TooltipContext = createContext<TooltipContextValue | null>(null);
@@ -88,6 +90,9 @@ function TooltipRoot({
     clearTimeout(timer.current);
     const { open: was, setUncontrolled: set, onOpenChange: report } = latest.current;
     if (next === was) return;
+    // Two closes in one event (focus leaving, and the layer seeing focus go
+    // outside) report once; the next render syncs it to what the owner kept.
+    latest.current = { ...latest.current, open: next };
     set(next);
     report?.(next);
   }, []);
@@ -106,6 +111,10 @@ function TooltipRoot({
       openAfterDelay: () => later(true, delayDuration),
       closeNow: () => setOpen(false),
       closeAfterGrace: () => later(false, LEAVE_GRACE_MS),
+      // Open, the only change a timer can be waiting to make is a close.
+      keepOpen: () => {
+        if (latest.current.open) clearTimeout(timer.current);
+      },
     }),
     [setOpen, later, delayDuration],
   );
@@ -140,7 +149,8 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  * description) so they reach everyone.
  */
 function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
-  const { anchor, openNow, openAfterDelay, closeNow, closeAfterGrace } = useTooltip('Trigger');
+  const { anchor, openNow, openAfterDelay, closeNow, closeAfterGrace, keepOpen } =
+    useTooltip('Trigger');
   const setRef = useCallback(
     (node: ComponentRef<typeof View> | null) => {
       anchor.current = node;
@@ -162,19 +172,25 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
           onFocus: (event) => {
             if (matchesFocusVisible(event.target as unknown as FocusTarget)) openNow();
           },
-          // Focus moving to another control inside keeps it open.
+          // Focus moving to another control inside keeps it open. Focus going
+          // nowhere may be a press on a part inside that takes no focus (a tap
+          // that just opened it): that press's click keeps it open.
           onBlur: (event) => {
             const { relatedTarget } = event.nativeEvent as unknown as WebFocusEvent;
             const box = anchor.current as unknown as WebNode | null;
-            if (!relatedTarget || !box?.contains(relatedTarget)) closeNow();
+            if (!relatedTarget) closeAfterGrace();
+            else if (!box?.contains(relatedTarget)) closeNow();
           },
         }
       : undefined;
+  // react-native-web's onClick, which React Native's View types lack.
+  const webClick = Platform.OS === 'web' ? { onClick: keepOpen } : undefined;
   return (
     <View
       ref={setRef}
       {...rest}
       {...web}
+      {...webClick}
       // Asked last, after everything inside: only a press nothing inside takes reaches it.
       onStartShouldSetResponder={() => true}
       onResponderRelease={openNow}

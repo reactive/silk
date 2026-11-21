@@ -25,6 +25,7 @@ import {
   a11yState,
   a11yValue,
   rnwAttrs,
+  webKeepFocusOnPress,
   webKeyHandler,
   type WebKeyDownEvent,
 } from '../styles/a11yProps.js';
@@ -334,6 +335,7 @@ export function Slider({
       onResponderMove={slide.move}
       onResponderRelease={slide.end}
       onResponderTerminate={slide.end}
+      {...(WEB && !isDisabled ? webKeepFocusOnPress : undefined)}
       style={[root, WEB && !isDisabled ? WEB_SLIDER : undefined, style]}
       {...rnwAttrs(
         {

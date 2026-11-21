@@ -92,6 +92,15 @@ export function webKeyHandler(handler: (event: WebKeyDownEvent) => void): {
   return { onKeyDown: handler };
 }
 
+/**
+ * react-native-web's `onMouseDown`, keeping focus where a press put it: the
+ * mousedown's default would move focus to the nearest focusable ancestor of a
+ * part that takes no pointer (a slider's thumb, focused as the press began).
+ */
+export const webKeepFocusOnPress: {
+  readonly onMouseDown: (event: { preventDefault(): void }) => void;
+} = { onMouseDown: (event) => event.preventDefault() };
+
 export function a11yState(
   state: AccessibilityStateCompat,
 ): A11yStateProps {
