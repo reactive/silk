@@ -183,6 +183,8 @@ const PADDED = [
  * press: the slide runs along the box its thumbs sit in, inside both.
  */
 export const SliderPadded: Story = {
+  // Presses land by layout, which jsdom doesn't have; the browser run presses.
+  tags: ['needs-layout'],
   render: () => (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 24 }}>
       {PADDED.map(({ name, vertical, rtl }) => (
@@ -201,17 +203,14 @@ export const SliderPadded: Story = {
     </View>
   ),
   play: async ({ canvas }) => {
-    // jsdom has no layout, so nothing can be pressed; the browser run checks this.
-    if (canvas.getByTestId(PADDED[0].name).getBoundingClientRect().width === 0) return;
     for (const row of PADDED) {
-      const { name } = row;
       for (const value of [0, 50, 100]) {
         // Pressed until it shows: under the test runner, the story's first
         // presses can come before the slider takes them. A press that lands
         // off the thumb's point never shows, so this still fails.
         await waitFor(() => {
-          const slider = canvas.getByTestId(name);
-          const thumb = canvas.getByRole('slider', { name });
+          const slider = canvas.getByTestId(row.name);
+          const thumb = canvas.getByRole('slider', { name: row.name });
           const point = pressPoint(slider, thumb, value, row);
           fireEvent.mouseDown(slider, { ...point, buttons: 1 });
           fireEvent.mouseUp(document);

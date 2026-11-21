@@ -449,12 +449,12 @@ interface SlideOptions {
  * Dragging, through the responder system: a press brings the nearest thumb
  * there and focuses it (on the web), a move slides it, and the end commits
  * once if anything changed; a press before the slider is laid out does
- * nothing. The slider's parts take no touches, so the
- * press's location is the slider's own, less where its parts box starts
- * (past any padding or border); moves add the page distance from
- * the press, so a pointer that wanders off the slider keeps sliding. A drag
- * keeps the values it last reported, since a move may not have rendered yet
- * when the next move or the release comes.
+ * nothing. The slider's parts take no touches, so the press's location is
+ * the slider's own, less where its parts box starts (past any padding or
+ * border); moves add the page distance from the press, so a pointer that
+ * wanders off the slider keeps sliding. A drag keeps the values it last
+ * reported, since a move may not have rendered yet when the next move or the
+ * release comes.
  */
 function useSlide({
   vertical,
@@ -467,8 +467,7 @@ function useSlide({
   onValueCommit,
   disabled,
 }: SlideOptions) {
-  // Where the parts box (which the thumbs are placed in) runs, along the
-  // slide, from the slider's own top-left corner: inside any padding or border.
+  // Where the parts box runs along the slide, from the slider's top-left corner.
   const span = useRef({ start: 0, length: 0 });
   const sliding = useRef<{
     index: number;
@@ -479,13 +478,10 @@ function useSlide({
   }>(undefined);
   const [active, setActive] = useState<number>();
 
-  const offsetOf = ({ nativeEvent }: GestureResponderEvent) => {
-    const location = vertical ? nativeEvent.locationY : nativeEvent.locationX;
-    return {
-      location: location - span.current.start,
-      page: vertical ? nativeEvent.pageY : nativeEvent.pageX,
-    };
-  };
+  const offsetOf = ({ nativeEvent }: GestureResponderEvent) =>
+    vertical
+      ? { location: nativeEvent.locationY - span.current.start, page: nativeEvent.pageY }
+      : { location: nativeEvent.locationX - span.current.start, page: nativeEvent.pageX };
   const valueAt = (offset: number) => {
     const fraction = fractionAt(offset, span.current.length, thumbSize, from);
     return bounds.min + fraction * (bounds.max - bounds.min);
@@ -498,7 +494,6 @@ function useSlide({
       span.current = vertical ? { start: y, length: height } : { start: x, length: width };
     },
     start: (event: GestureResponderEvent) => {
-      // Not laid out yet, so a press can't be placed.
       if (span.current.length === 0) return;
       const { location, page } = offsetOf(event);
       const value = valueAt(location);
