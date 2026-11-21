@@ -6,9 +6,9 @@ import {
   type CSSProperties,
   type JSX,
   useEffect,
+  useContext,
   useLayoutEffect,
   useRef,
-  useContext,
   useState,
   useSyncExternalStore,
 } from 'react';

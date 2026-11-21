@@ -25,6 +25,12 @@ function press(key: string, type: 'keydown' | 'keyup' = 'keydown', repeat = fals
   return event.defaultPrevented;
 }
 
+/** A whole Escape press: keydown, then keyup (where react-native-web's Modal closes). */
+const pressEscape = () => {
+  press('Escape');
+  press('Escape', 'keyup');
+};
+
 /** Lets Radix register its outside-press listener, which it defers a tick. */
 const tick = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
@@ -156,8 +162,7 @@ dialogTest('Escape closes a popover inside a Dialog, not the Dialog', () => {
       onPopoverChange={(open) => changes.push(`popover ${open}`)}
     />,
   );
-  press('Escape');
-  press('Escape', 'keyup');
+  pressEscape();
   expect(changes).toEqual(['popover false']);
   // With the popover gone, the next Escape closes the Dialog.
   rerender(
@@ -166,8 +171,7 @@ dialogTest('Escape closes a popover inside a Dialog, not the Dialog', () => {
       onDialogChange={(open) => changes.push(`dialog ${open}`)}
     />,
   );
-  press('Escape');
-  press('Escape', 'keyup');
+  pressEscape();
   expect(changes).toEqual(['popover false', 'dialog false']);
 });
 
@@ -219,8 +223,7 @@ dialogTest('A tooltip inside a Dialog opens in its Modal, and Escape closes only
   );
   const tooltip = screen.getByRole('tooltip');
   expect(document.querySelector('[aria-modal="true"]')?.contains(tooltip)).toBe(true);
-  press('Escape');
-  press('Escape', 'keyup');
+  pressEscape();
   expect(changes).toEqual(['tooltip false']);
   expect(screen.queryByRole('tooltip')).toBeNull();
 });
