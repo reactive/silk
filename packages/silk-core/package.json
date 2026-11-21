@@ -38,6 +38,11 @@
       "import": "./dist/models/index.js",
       "default": "./dist/models/index.js"
     },
+    "./color": {
+      "types": "./dist/color/index.d.ts",
+      "import": "./dist/color/index.js",
+      "default": "./dist/color/index.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

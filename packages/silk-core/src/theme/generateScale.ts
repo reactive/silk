@@ -46,6 +46,7 @@ const NEUTRAL_DARK_L = [
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 const SUNKEN_PROXY = oklchChannelsToHex(0.955, 0, 0);
 const SURFACE_PROXY = oklchChannelsToHex(0.178, 0, 0);
+const WHITE = oklchChannelsToHex(1, 0, 0);
 
 /** Nudge L so adjacent steps serialize to distinct hex after gamut mapping. */
 function ensureDistinctSteps(
@@ -149,7 +150,7 @@ export function generateScale(
         out[12] = nudgeLUntil(out[12], out[11], 1.2, { direction: -1 });
       }
     } else {
-      out[11] = nudgeLUntil(out[11], '#ffffff', 4.5, { direction: -1 });
+      out[11] = nudgeLUntil(out[11], WHITE, 4.5, { direction: -1 });
       out[10] = nudgeLUntil(out[10], SUNKEN_PROXY, 3, { direction: -1 });
       const l11 = oklch(out[11])?.l ?? 0.5;
       out[12] = oklchToHex(

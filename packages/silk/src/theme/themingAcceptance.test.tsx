@@ -25,7 +25,7 @@ test('partial createTheme overrides flow to CSS vars', () => {
   expect(vars['--silk-color-surface']).toBe('#fafafa');
   expect(vars['--silk-color-tone-accent-solid']).toBe('#123456');
   expect(vars['--silk-color-tone-success-solid']).toBeDefined();
-  expect(vars['--silk-shadow-raised']).toContain('rgba');
+  expect(vars['--silk-shadow-raised']).toContain('oklch(0 0 0 /');
 });
 
 test('nested ThemeProviders: inner custom theme wins for descendants', () => {

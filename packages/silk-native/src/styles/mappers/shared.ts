@@ -176,7 +176,7 @@ export function mapShadow(
   }
   const layer = theme.semantic.shadow[level];
   return {
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: layer.offsetX, height: layer.offsetY },
     shadowOpacity: layer.opacity,
     shadowRadius: layer.blur / 2,

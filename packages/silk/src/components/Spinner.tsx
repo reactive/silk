@@ -39,7 +39,7 @@ const spinnerClass: string = css`
   box-sizing: border-box;
   border-style: solid;
   border-radius: var(--silk-radius-full);
-  border-color: color-mix(in srgb, var(--_tone-solid) 25%, transparent);
+  border-color: color-mix(in oklch, var(--_tone-solid) 25%, transparent);
   border-top-color: var(--_tone-solid);
   animation: silk-spinner-rotate var(--silk-motion-loop-duration-ms)
     var(--silk-motion-loop-easing) infinite;

@@ -51,6 +51,8 @@ export {
   toneNames,
 } from './tokens/index.js';
 
+export { oklch } from './color/index.js';
+
 export {
   checkThemeContrast,
   contrastRatio,
