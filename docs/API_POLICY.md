@@ -55,7 +55,7 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **`generatePairedPalette(brandHex, options?)`** — tenant recipe → `{ light, dark }` palettes (`blue`/`gray` from brand; `red`/`green` default or optional seeds). Dark derivation is a full palette, not accent-only.
 - **`checkThemeContrast(theme)`** → `{ ok, violations }` with discriminated kinds `contrast` \| `unsupported-color` \| `distinctness`. Hex-only audit; non-hex semantic colors are diagnostics, not silent passes.
 - **`contrastRatio` / `relativeLuminance` / `parseCanonicalHex`** — platform-neutral hex contrast helpers.
-- **`oklch(l, c, h, alpha?)`** (also `@reactive/silk-core/color`, which imports nothing) — how Silk writes colors: OKLCH in, sRGB out (`#rrggbb`, or `rgba()` with `alpha`), because React Native can't parse `oklch()`. Stable: that output format, so `checkThemeContrast` and every renderer read it. Built-in palettes are written with it.
+- **`oklch(l, c, h, alpha?)`** (also `@reactive/silk-core/color`, which imports nothing) — how Silk writes colors: OKLCH in, sRGB out (`#rrggbb`, or `rgba()` with `alpha`), because React Native can't parse `oklch()`. Stable: that output format, so `checkThemeContrast` and every renderer read it. Unspecified: the output for a color outside sRGB (today each channel is clipped). Built-in palettes are written with it.
 - **Theme scope channels** — `semanticVars` vs `customVars` on web theme scope (behavior change for named-inside-tenant portals: component hooks now inherit; semantic vars still drop).
 - **Public component CSS-var list frozen** in `silkComponentVarMeta` (documented in Theming.mdx). Removals/renames/meaning changes are breaking.
 

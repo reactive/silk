@@ -1,6 +1,12 @@
 import { oklch as parseOklch } from 'culori';
 import { oklch } from '../color/oklch.js';
-import type { ColorScheme, PaletteScale, PaletteStep } from '../tokens/index.js';
+import {
+  grayScale,
+  grayScaleDark,
+  type ColorScheme,
+  type PaletteScale,
+  type PaletteStep,
+} from '../tokens/index.js';
 import {
   requireCanonicalHex,
   requireFiniteNonNegative,
@@ -45,8 +51,9 @@ const NEUTRAL_DARK_L = [
 ] as const;
 
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
-const SUNKEN_PROXY = oklchChannelsToHex(0.955, 0, 0);
-const SURFACE_PROXY = oklchChannelsToHex(0.178, 0, 0);
+// Silk's default sunken (light) and surface (dark) grays, as contrast targets.
+const SUNKEN_PROXY = grayScale[3];
+const SURFACE_PROXY = grayScaleDark[1];
 const WHITE = oklch(1, 0, 0);
 
 /** Nudge L so adjacent steps serialize to distinct hex after gamut mapping. */
