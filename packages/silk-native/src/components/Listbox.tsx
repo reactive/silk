@@ -135,6 +135,7 @@ function ListboxRoot({
   }, [autoFocus, counted]);
 
   const onKeyDown = (event: KeyDownEvent) => {
+    (rest as { onKeyDown?: (event: KeyDownEvent) => void }).onKeyDown?.(event);
     const { key } = event.nativeEvent;
     if (key === ' ') {
       // Enter presses the focused item already (react-native-web presses on Enter).
@@ -283,7 +284,10 @@ function ListboxItem({
       {...rnwAttrs({ 'data-highlighted': highlighted || undefined }, rest)}
     >
       <ItemLabelContext.Provider value={label}>
-        <View style={indicator}>{selected ? <ListboxItemText>✓</ListboxItemText> : null}</View>
+        {/* Not part of the option's name; aria-selected says it. */}
+        <View style={indicator} aria-hidden importantForAccessibility="no-hide-descendants">
+          {selected ? <ListboxItemText>✓</ListboxItemText> : null}
+        </View>
         {typeof children === 'string' || typeof children === 'number' ? (
           <ListboxItemText>{children}</ListboxItemText>
         ) : (

@@ -21,8 +21,8 @@ import { type FloatingSide, type Placement, placeFloating, placedStyle } from '.
  * at the end of the page, so no box around the anchor clips it and the page
  * stays live under it (a pointer can still hover the anchor). Radix's
  * DismissableLayer closes it on a press or focus outside it and its anchor
- * and on Escape (the topmost layer only, and not an Escape another control
- * took), and Radix's FocusScope (untrapped) moves focus in as it opens
+ * and on Escape (the topmost layer only; it listens in the capture phase,
+ * so a control inside sees Escape after it), and Radix's FocusScope (untrapped) moves focus in as it opens
  * unless `onOpenAutoFocus` prevents it. Silk adds closing on scrolling that
  * moves the anchor and on resizing the window, and hands focus back to the
  * anchor (not to what held focus before) when it closes holding focus.
@@ -93,7 +93,9 @@ export function FloatingLayer({
         // elsewhere (or inside the layer) scrolling itself, or the page scrolling
         // under a fixed anchor, doesn't.
         const opened = from.getBoundingClientRect();
-        const onScroll = () => {
+        const onScroll = (event: Event) => {
+          // Only a scroll of something around the anchor can move it.
+          if (event.target instanceof Node && !event.target.contains(from)) return;
           const now = from.getBoundingClientRect();
           if (now.top !== opened.top || now.left !== opened.left) dismiss.current();
         };
@@ -108,6 +110,13 @@ export function FloatingLayer({
     [anchor],
   );
 
+  const revealFocus = () => {
+    const focused = document.activeElement;
+    if (focused !== layer.current && layer.current?.contains(focused)) {
+      focused?.scrollIntoView?.({ block: 'nearest' });
+    }
+  };
+
   /** Whether `target` is in the anchor, whose own press toggles the layer. */
   const onAnchor = (target: EventTarget | null) =>
     target instanceof Node && Boolean(anchorElement()?.contains(target));
@@ -116,7 +125,12 @@ export function FloatingLayer({
   return createPortal(
     <FocusScope
       asChild
-      onMountAutoFocus={(event) => onOpenAutoFocus?.(event)}
+      onMountAutoFocus={(event) => {
+        onOpenAutoFocus?.(event);
+        // FocusScope focuses without scrolling; bring a chosen item below a
+        // list's fold into view once it has.
+        if (!event.defaultPrevented) queueMicrotask(revealFocus);
+      }}
       // Silk hands focus back to the anchor instead (the layout effect's cleanup).
       onUnmountAutoFocus={(event) => event.preventDefault()}
     >

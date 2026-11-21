@@ -27,6 +27,10 @@ export function FloatingLayer({
   // loading in, or shrunk to the room) places it on that side.
   const [natural, setNatural] = useState<Size>();
   const [size, setSize] = useState<Size>();
+  // The room it is placed in: the Modal's own, which starts where
+  // measureInWindow's coordinates do (under the status bar unless the app is
+  // edge-to-edge, which then lays the Modal out from the screen's top too).
+  const [room, setRoom] = useState<Size>();
   useLayoutEffect(
     () =>
       withAnchor(anchor, (view) =>
@@ -46,15 +50,22 @@ export function FloatingLayer({
     }
   }, [screen.width, screen.height, onDismiss]);
 
-  const side = anchorBox && natural && placeFloating(anchorBox, natural, screen, options).side;
-  const place = side && size && placeFloating(anchorBox, size, screen, { ...options, side });
+  const side = room && anchorBox && natural && placeFloating(anchorBox, natural, room, options).side;
+  const place = side && size && placeFloating(anchorBox, size, room, { ...options, side });
   return (
-    <Modal transparent statusBarTranslucent visible onRequestClose={onDismiss}>
+    <Modal transparent visible onRequestClose={onDismiss}>
       <Pressable
         accessibilityLabel="Close"
         accessibilityRole="button"
         focusRing={false}
         onPress={onDismiss}
+        onLayout={({ nativeEvent: { layout } }) =>
+          setRoom((was) =>
+            was?.width === layout.width && was.height === layout.height
+              ? was
+              : { width: layout.width, height: layout.height },
+          )
+        }
         style={StyleSheet.absoluteFill}
       />
       <View

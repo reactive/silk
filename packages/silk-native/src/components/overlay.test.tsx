@@ -204,7 +204,7 @@ test('Popover closes on a press outside, not on its anchor', async () => {
   expect(popover()).toBeNull();
 });
 
-test('Popover leaves an Escape another control took, and closes on its own', () => {
+test('Popover leaves an Escape already handled before it, and closes on its own', () => {
   render(<PickerHarness />);
   fireEvent.click(screen.getByLabelText('Strength'));
   const taken = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
@@ -225,6 +225,10 @@ test('Popover closes on scrolling that moves its anchor, not on scrolling that l
   fireEvent.scroll(document);
   expect(popover()).not.toBeNull();
   anchor.getBoundingClientRect = () => new DOMRect(0, -40, 80, 20);
+  // A scroll inside the popover, or anywhere not around the anchor, can't have moved it.
+  fireEvent.scroll(popover()!);
+  fireEvent.scroll(screen.getByTestId('elsewhere'));
+  expect(popover()).not.toBeNull();
   fireEvent.scroll(document);
   expect(popover()).toBeNull();
 });
@@ -533,6 +537,39 @@ test('Listbox takes its size from the provider defaults', () => {
   // Space steps 6 + 1 and 7 at the default scale.
   expect(rowHeight({ Listbox: { size: 'sm' } })).toBe('28px');
   expect(rowHeight()).toBe('32px');
+});
+
+test("the chosen item's check is not part of its name", () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Steps" value="b" onValueChange={() => {}}>
+        <Listbox.Item value="a">A</Listbox.Item>
+        <Listbox.Item value="b">B</Listbox.Item>
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  expect(screen.getByRole('option', { name: 'B' }).getAttribute('aria-selected')).toBe('true');
+});
+
+test("Listbox calls the caller's onKeyDown, then handles the key", () => {
+  const keys: string[] = [];
+  render(
+    <SilkProvider theme={theme}>
+      <Listbox.Root
+        accessibilityLabel="Steps"
+        value="a"
+        onValueChange={() => {}}
+        {...({ onKeyDown: (event: { nativeEvent: { key: string } }) => keys.push(event.nativeEvent.key) } as object)}
+      >
+        <Listbox.Item value="a">A</Listbox.Item>
+        <Listbox.Item value="b">B</Listbox.Item>
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  act(() => screen.getByRole('option', { name: 'A' }).focus());
+  press('ArrowDown');
+  expect(keys).toEqual(['ArrowDown']);
+  expect(document.activeElement).toBe(screen.getByRole('option', { name: 'B' }));
 });
 
 test('Listbox skips disabled items: Tab stop, autoFocus and arrows land on enabled ones', () => {

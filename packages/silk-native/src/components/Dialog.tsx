@@ -103,12 +103,17 @@ function DialogContent({
     density,
   );
   const close = () => onOpenChange(false);
+  // Android recreates its dialog when animationType changes, and reduced
+  // motion resolves a moment after mount, so it is set only while closed.
+  const motion: 'none' | 'fade' = reducedMotion ? 'none' : 'fade';
+  const [animationType, setAnimationType] = useState(motion);
+  if (!open && animationType !== motion) setAnimationType(motion);
   return (
     <Modal
       visible={open}
       transparent
       statusBarTranslucent
-      animationType={reducedMotion ? 'none' : 'fade'}
+      animationType={animationType}
       onRequestClose={close}
       {...rnwAttrs({ 'aria-labelledby': titled ? titleId : undefined })}
     >
