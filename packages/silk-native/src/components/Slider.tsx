@@ -177,7 +177,6 @@ export function Slider({
   children,
   style,
   ref,
-  onLayout: onLayoutProp,
   nativeID,
   accessibilityLabel,
   accessibilityHint,
@@ -316,7 +315,6 @@ export function Slider({
     <View
       ref={ref}
       {...rest}
-      onLayout={onLayoutProp}
       hitSlop={vertical ? { left: hitSlop, right: hitSlop } : { top: hitSlop, bottom: hitSlop }}
       onStartShouldSetResponder={() => !isDisabled}
       onResponderTerminationRequest={() => false}
