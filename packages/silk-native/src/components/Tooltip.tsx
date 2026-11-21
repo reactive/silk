@@ -242,7 +242,9 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
         // Focus moving to another control inside keeps it open.
         onBlur: (event) => {
           const { relatedTarget } = event.nativeEvent as unknown as WebFocusEvent;
-          if (!relatedTarget || !webNode(anchor.current).contains(relatedTarget)) closeNow();
+          const box = anchor.current;
+          // No box: the trigger is unmounting while it has focus.
+          if (!relatedTarget || !box || !webNode(box).contains(relatedTarget)) closeNow();
         },
       }
     : undefined;
