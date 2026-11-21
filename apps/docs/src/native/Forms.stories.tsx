@@ -186,20 +186,23 @@ export const SliderPadded: Story = {
   render: () => (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 24 }}>
       {PADDED.map(({ name, vertical, rtl }) => (
-        <Slider
-          key={name}
-          testID={name}
-          accessibilityLabel={name}
-          defaultValue={[50]}
-          orientation={vertical ? 'vertical' : 'horizontal'}
-          dir={rtl ? 'rtl' : 'ltr'}
-          style={[INSET, vertical ? { height: 240 } : { width: 240 }]}
-        />
+        // A horizontal slider fills its container's width, as in an app.
+        <View key={name} style={vertical ? undefined : { width: 240 }}>
+          <Slider
+            testID={name}
+            accessibilityLabel={name}
+            defaultValue={[50]}
+            orientation={vertical ? 'vertical' : 'horizontal'}
+            dir={rtl ? 'rtl' : 'ltr'}
+            style={[INSET, vertical ? { height: 240 } : undefined]}
+          />
+        </View>
       ))}
     </View>
   ),
   play: async ({ canvas }) => {
-    for (const { name, vertical, rtl } of PADDED) {
+    for (const padded of PADDED) {
+      const { name } = padded;
       for (const value of [0, 50, 100]) {
         // Pressed until it shows: under the test runner, the story's first
         // presses can come before the slider takes them. A press that lands
@@ -207,7 +210,7 @@ export const SliderPadded: Story = {
         await waitFor(() => {
           const slider = canvas.getByTestId(name);
           const thumb = canvas.getByRole('slider', { name });
-          const point = pressPoint(slider, thumb, value, vertical, rtl);
+          const point = pressPoint(slider, thumb, value, padded);
           fireEvent.mouseDown(slider, { ...point, buttons: 1 });
           fireEvent.mouseUp(document);
           expect(thumb).toHaveAttribute('aria-valuenow', String(value));
@@ -225,8 +228,7 @@ function pressPoint(
   slider: HTMLElement,
   thumb: HTMLElement,
   value: number,
-  vertical: boolean,
-  rtl: boolean,
+  { vertical, rtl }: (typeof PADDED)[number],
 ): { clientX: number; clientY: number } {
   const box = slider.getBoundingClientRect();
   const thumbSize = thumb.getBoundingClientRect().width;
