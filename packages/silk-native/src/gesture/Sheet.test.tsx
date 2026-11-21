@@ -200,6 +200,27 @@ test('a flick in the scrolled content leaves the sheet open; one beside its box 
   expect(asks()).toBe('1');
 });
 
+test('flung shut and caught before its owner answers, a sheet goes on out', () => {
+  render(<Harness />);
+  mocked.finish = false;
+  // One act: the owner's answer (and the render it brings) lands only after the catch.
+  act(() => {
+    mocked.pan!.onActivate!();
+    mocked.pan!.onUpdate!({ changeY: 200 });
+    mocked.pan!.onDeactivate!({ canceled: false, velocityY: 1500 });
+    mocked.pan!.onActivate!();
+    // Pushed back up to a third of its height and let go.
+    mocked.pan!.onUpdate!({ changeY: -400 });
+    mocked.pan!.onDeactivate!({ canceled: false, velocityY: 0 });
+  });
+  expect(mocked.springs.slice(1)).not.toContain(0);
+});
+
+test('a sheet drags either way, so one caught sliding can be pushed back up', () => {
+  render(<Harness />);
+  expect(mocked.pan!.activeOffsetY).toEqual([-8, 8]);
+});
+
 test('a short, slow drag settles back without asking to close', () => {
   render(<Harness />);
   fling(40, 100);

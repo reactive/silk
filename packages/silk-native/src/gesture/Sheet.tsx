@@ -45,7 +45,7 @@ import {
   useDialogContext,
 } from '../components/Dialog.js';
 import { mapDialogStyle } from '../styles/mappers/overlay.js';
-import { useReducedMotion } from '../styles/useReducedMotion.js';
+import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { dragStep, pressIn, releaseCloses, releaseSpeed, SHEET_SPRING } from './physics.js';
@@ -103,7 +103,8 @@ function DraggableSheet({
   const { open, onOpenChange } = useDialogContext('Content');
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('Dialog');
-  const reduced = useReducedMotion();
+  // Slides until reduced motion is known, as the root Dialog fades until then.
+  const reduced = useMotionPreference() === 'reduced';
   const { veil, panel } = mapDialogStyle(
     theme,
     { size: size ?? defaults.size ?? dialogRecipe.defaults.size, placement: 'bottom' },
@@ -186,7 +187,8 @@ function DraggableSheet({
   }, [closeAsks]);
 
   const pan = usePanGesture({
-    activeOffsetY: SLOP,
+    // Either way: a sheet caught sliding can be pushed back up.
+    activeOffsetY: [-SLOP, SLOP],
     failOffsetX: [-SLOP, SLOP],
     maxPointers: 1,
     onBegin: (event) => {
@@ -218,6 +220,8 @@ function DraggableSheet({
       }
       if (offset.value <= 0) return;
       if (!event.canceled && releaseCloses(offset.value, velocity, height.value)) {
+        // Shut now, not once React answers, so a catch before then still goes on out.
+        shut.value = true;
         slideOut(velocity);
         scheduleOnRN(requestClose);
       } else springTo(0, velocity);
