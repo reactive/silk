@@ -122,7 +122,11 @@ export interface SliderBounds {
   readonly minSteps: number;
 }
 
-const decimals = (n: number): number => (String(n).split('.')[1] ?? '').length;
+/** The decimal places `n` has, including those of an exponent (1e-7 has 7). */
+const decimals = (n: number): number => {
+  const [digits = '', exponent = '0'] = String(n).split('e');
+  return Math.max(0, (digits.split('.')[1] ?? '').length - Number(exponent));
+};
 
 /**
  * The values after moving thumb `index` to `next` (snapped to the step grid
@@ -140,10 +144,10 @@ export function moveThumb(
   // `+ 0` turns a -0 from the rounding into 0, which compares as the same value.
   const value = Math.min(max, Math.max(min, snapped)) + 0;
   const moved = values.map((each, i) => (i === index ? value : each)).sort((a, b) => a - b);
-  // Counted in whole steps, so a float difference (0.3 - 0.2) doesn't fall short of one.
-  const apart = moved.every(
-    (each, i) => i === 0 || Math.round((each - moved[i - 1]!) / step) >= minSteps,
-  );
+  // With a hair's slack, so a float difference (0.3 - 0.2) doesn't fall short of a step; a
+  // half step to an off-grid `max` still does.
+  const gap = minSteps * step - step * 1e-9;
+  const apart = moved.every((each, i) => i === 0 || each - moved[i - 1]! >= gap);
   return apart ? { values: moved, index: moved.indexOf(value) } : undefined;
 }
 
@@ -489,6 +493,8 @@ function useSlide({
       if (moved.index !== slide.index) {
         slide.index = moved.index;
         setActive(moved.index);
+        // Thumbs are keyed by place, so focus follows the dragged one past its neighbor, as keys do.
+        if (WEB) focusThumb(moved.index);
       }
     },
     end: () => {

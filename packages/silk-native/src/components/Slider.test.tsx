@@ -191,6 +191,14 @@ test('moveThumb snaps, clamps, sorts, and keeps whole steps apart despite float 
   expect(Object.is(zero?.values[0], 0)).toBe(true);
 });
 
+test('moveThumb keeps a full step apart at an off-grid max, and snaps steps written with an exponent', () => {
+  // 95 is half a step past 90: 90 and 95 are not a step apart.
+  const offGrid = { min: 0, max: 95, step: 10, minSteps: 1 };
+  expect(moveThumb([80, 95], 90, 0, offGrid)).toBeUndefined();
+  const tiny = { min: 0, max: 0.000001, step: 0.0000001, minSteps: 0 };
+  expect(moveThumb([0], 0.00000031, 0, tiny)?.values).toEqual([0.0000003]);
+});
+
 test('a thumb sits by percent less a share of its size, so its center stays in bounds', () => {
   render(
     <SilkProvider>
