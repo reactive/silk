@@ -70,6 +70,23 @@ export function rnwAttrs(
   return props;
 }
 
+/**
+ * A key pressed on a focused element: react-native-web's `onKeyDown`, which
+ * React Native's View types lack before 0.84.
+ */
+export interface WebKeyDownEvent {
+  readonly nativeEvent: { readonly key: string; readonly shiftKey?: boolean };
+  preventDefault(): void;
+}
+
+/**
+ * `handler` as react-native-web's `onKeyDown` prop, typed here once so the
+ * components that take keys don't each cast it.
+ */
+export function webKeyHandler(handler: (event: WebKeyDownEvent) => void): object {
+  return { onKeyDown: handler };
+}
+
 export function a11yState(
   state: AccessibilityStateCompat,
 ): A11yStateProps {

@@ -21,7 +21,13 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { a11yState, a11yValue, rnwAttrs } from '../styles/a11yProps.js';
+import {
+  a11yState,
+  a11yValue,
+  rnwAttrs,
+  webKeyHandler,
+  type WebKeyDownEvent,
+} from '../styles/a11yProps.js';
 import { minTouchHitSlop } from '../styles/controlGeometry.js';
 import { mapSliderStyle } from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -32,16 +38,10 @@ import {
   useFieldControlProps,
   useFieldControlRegistration,
 } from './Field.js';
-import type { ListboxKeyDownEvent } from './Listbox.js';
 import { Pressable } from './Pressable.js';
 import { useControllableValue } from './useControllableValue.js';
 
 const WEB = Platform.OS === 'web';
-
-/** A key pressed on a thumb (react-native-web's `onKeyDown`), with Shift. */
-interface ThumbKeyEvent extends ListboxKeyDownEvent {
-  readonly nativeEvent: { readonly key: string; readonly shiftKey?: boolean };
-}
 
 type Thumb = ComponentRef<typeof View> & { focus?: () => void };
 
@@ -258,27 +258,40 @@ export function Slider({
   const thumbs = useRef<(Thumb | null)[]>([]);
   const focusThumb = (index: number) => thumbs.current[index]?.focus?.();
 
-  /** Moves thumb `index` to `next` and reports it; returns where it is now, or undefined if refused. */
-  const setThumb = (next: number, index: number, commit: boolean): number | undefined => {
-    const moved = moveThumb(latest.current, next, index, bounds);
+  /**
+   * Moves thumb `index` of `from` (the rendered values unless a drag says) to
+   * `next` and reports it; returns the values and where that thumb is now,
+   * or undefined if refused.
+   */
+  const setThumb: SetThumb = (next, index, commit, base = latest.current) => {
+    const moved = moveThumb(base, next, index, bounds);
     if (!moved) return undefined;
-    if (String(moved.values) !== String(latest.current)) {
+    if (String(moved.values) !== String(base)) {
       setUncontrolled(moved.values);
       onValueChange?.(moved.values);
       if (commit) onValueCommit?.(moved.values);
     }
-    return moved.index;
+    return moved;
   };
 
-  const slide = useSlide({ vertical, from, thumbSize, bounds, latest, setThumb, focusThumb, onValueCommit });
+  const slide = useSlide({
+    vertical,
+    from,
+    thumbSize,
+    bounds,
+    latest,
+    setThumb,
+    focusThumb,
+    onValueCommit,
+  });
 
   const nudge = (index: number, steps: number) => {
     if (isDisabled) return;
-    const at = setThumb(latest.current[index]! + steps * step, index, true);
+    const at = setThumb(latest.current[index]! + steps * step, index, true)?.index;
     // A thumb pushed past its neighbor takes its place; focus follows it.
     if (at !== undefined && at !== index) focusThumb(at);
   };
-  const onThumbKey = (index: number) => (event: ThumbKeyEvent) => {
+  const onThumbKey = (index: number) => (event: WebKeyDownEvent) => {
     const { key, shiftKey } = event.nativeEvent;
     if (isDisabled) return;
     if (key === 'Home') setThumb(min, 0, true);
@@ -352,8 +365,6 @@ export function Slider({
           (single
             ? fieldProps.accessibilityLabel
             : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
-        // react-native-web's key handler, which React Native's Pressable doesn't type.
-        const keys = { onKeyDown: onThumbKey(index) } as object;
         return (
           <Pressable
             key={index}
@@ -377,7 +388,7 @@ export function Slider({
             onAccessibilityAction={onAction(index)}
             {...a11yState({ disabled: isDisabled })}
             {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
-            {...keys}
+            {...webKeyHandler(onThumbKey(index))}
             {...rnwAttrs({
               'aria-orientation': orientation,
               'aria-describedby': fieldProps['aria-describedby'],
@@ -402,13 +413,20 @@ export function Slider({
   fieldLabelAssociation
 ] = 'labelledby';
 
+type SetThumb = (
+  next: number,
+  index: number,
+  commit: boolean,
+  base?: readonly number[],
+) => { values: number[]; index: number } | undefined;
+
 interface SlideOptions {
   readonly vertical: boolean;
   readonly from: SlideFrom;
   readonly thumbSize: number;
   readonly bounds: SliderBounds;
   readonly latest: { readonly current: readonly number[] };
-  readonly setThumb: (next: number, index: number, commit: boolean) => number | undefined;
+  readonly setThumb: SetThumb;
   readonly focusThumb: (index: number) => void;
   readonly onValueCommit: ((value: number[]) => void) | undefined;
 }
@@ -418,13 +436,28 @@ interface SlideOptions {
  * there and focuses it (on the web), a move slides it, and the end commits
  * once if anything changed. The slider's parts take no touches, so the
  * press's location is the slider's own; moves add the page distance from
- * the press, so a pointer that wanders off the slider keeps sliding.
+ * the press, so a pointer that wanders off the slider keeps sliding. A drag
+ * keeps the values it last reported, since a move may not have rendered yet
+ * when the next move or the release comes.
  */
-function useSlide({ vertical, from, thumbSize, bounds, latest, setThumb, focusThumb, onValueCommit }: SlideOptions) {
+function useSlide({
+  vertical,
+  from,
+  thumbSize,
+  bounds,
+  latest,
+  setThumb,
+  focusThumb,
+  onValueCommit,
+}: SlideOptions) {
   const length = useRef(0);
-  const sliding = useRef<{ index: number; before: readonly number[]; start: number; page: number }>(
-    undefined,
-  );
+  const sliding = useRef<{
+    index: number;
+    before: readonly number[];
+    values: readonly number[];
+    start: number;
+    page: number;
+  }>(undefined);
   const [active, setActive] = useState<number>();
 
   const offsetOf = ({ nativeEvent }: GestureResponderEvent) =>
@@ -449,25 +482,29 @@ function useSlide({ vertical, from, thumbSize, bounds, latest, setThumb, focusTh
       const value = valueAt(location);
       const before = latest.current;
       const nearest = nearestThumb(before, value);
-      const index = setThumb(value, nearest, false) ?? nearest;
-      sliding.current = { index, before, start: location, page };
+      const moved = setThumb(value, nearest, false);
+      const index = moved?.index ?? nearest;
+      sliding.current = { index, before, values: moved?.values ?? before, start: location, page };
       setActive(index);
       if (WEB) focusThumb(index);
     },
     move: (event: GestureResponderEvent) => {
       const slide = sliding.current;
       if (!slide) return;
-      const at = setThumb(valueAt(slide.start + offsetOf(event).page - slide.page), slide.index, false);
-      if (at !== undefined && at !== slide.index) {
-        slide.index = at;
-        setActive(at);
+      const offset = slide.start + offsetOf(event).page - slide.page;
+      const moved = setThumb(valueAt(offset), slide.index, false, slide.values);
+      if (!moved) return;
+      slide.values = moved.values;
+      if (moved.index !== slide.index) {
+        slide.index = moved.index;
+        setActive(moved.index);
       }
     },
     end: () => {
       const slide = sliding.current;
       sliding.current = undefined;
       setActive(undefined);
-      if (slide && String(latest.current) !== String(slide.before)) onValueCommit?.([...latest.current]);
+      if (slide && String(slide.values) !== String(slide.before)) onValueCommit?.([...slide.values]);
     },
   };
 }

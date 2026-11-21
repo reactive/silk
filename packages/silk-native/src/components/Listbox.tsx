@@ -20,7 +20,12 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
+import {
+  a11yState,
+  rnwAttrs,
+  webKeyHandler,
+  type WebKeyDownEvent,
+} from '../styles/a11yProps.js';
 import { mapListboxItemStyle } from '../styles/mappers/overlay.js';
 import type { RnTextStyle } from '../styles/mappers/shared.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
@@ -36,14 +41,8 @@ const LIST_ROLE = (WEB ? 'listbox' : 'radiogroup') as ViewProps['role'];
 
 type ItemNode = ComponentRef<typeof View>;
 
-/**
- * A key pressed in the list: react-native-web's `onKeyDown`, which React
- * Native before 0.84 doesn't type on View.
- */
-export interface ListboxKeyDownEvent {
-  readonly nativeEvent: { readonly key: string };
-  preventDefault(): void;
-}
+/** A key pressed in the list: react-native-web's `onKeyDown`. */
+export type ListboxKeyDownEvent = WebKeyDownEvent;
 
 interface ListboxContextValue {
   readonly value: string | undefined;
@@ -192,7 +191,7 @@ function ListboxRoot({
         // React Native's role type lacks the web's listbox.
         role={LIST_ROLE}
         {...rest}
-        {...({ onKeyDown } as object)}
+        {...webKeyHandler(onKeyDown)}
         // A pointer leaving clears the light, unless it is on the focused item.
         // Not a finger: it leaves as it lifts, which would clear the row it just pressed.
         onPointerLeave={(event) => {
