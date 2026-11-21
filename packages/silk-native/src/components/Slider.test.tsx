@@ -122,7 +122,7 @@ test('without a gap, a thumb crossing another swaps places and keeps focus', () 
   expect(document.activeElement).toBe(second);
 });
 
-test('a press on the slider keeps focus on the thumb it focused (web)', () => {
+test('a press on the slider prevents the mousedown default that would take focus off the thumb (web)', () => {
   render(<Controlled accessibilityLabel="Kept" initial={[5]} testID="root" />);
   // fireEvent returns false when the default (moving focus) was prevented.
   expect(fireEvent.mouseDown(screen.getByTestId('root'))).toBe(false);

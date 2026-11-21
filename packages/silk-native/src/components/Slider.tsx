@@ -318,6 +318,8 @@ export function Slider({
   const fractions = values.map((value) => (max > min ? (value - min) / (max - min) : 0));
   const single = values.length === 1;
   const hitSlop = minTouchHitSlop(crossSize);
+  // The web's pointer affordances, while it takes presses.
+  const webLive = WEB && !isDisabled;
   const rangeStart = fractions[0]!;
   const rangeEnd = fractions[fractions.length - 1]!;
   return (
@@ -335,8 +337,8 @@ export function Slider({
       onResponderMove={slide.move}
       onResponderRelease={slide.end}
       onResponderTerminate={slide.end}
-      {...(WEB && !isDisabled ? webKeepFocusOnPress : undefined)}
-      style={[root, WEB && !isDisabled ? WEB_SLIDER : undefined, style]}
+      {...(webLive ? webKeepFocusOnPress : undefined)}
+      style={[root, webLive ? WEB_SLIDER : undefined, style]}
       {...rnwAttrs(
         {
           'data-orientation': orientation,

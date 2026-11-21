@@ -180,7 +180,7 @@ test('controlled, it shows what it is told and asks to change', () => {
   expect(tip()).not.toBeNull();
 });
 
-test('a tap on a part inside that takes no focus keeps it open', () => {
+test('a press on a part inside that takes no focus keeps it open, however long it is held', () => {
   rs.useFakeTimers();
   try {
     render(
@@ -193,14 +193,42 @@ test('a tap on a part inside that takes no focus keeps it open', () => {
         </Tooltip.Root>
       </SilkProvider>,
     );
-    tabTo(screen.getByRole('button', { name: 'Go' }));
+    const go = screen.getByRole('button', { name: 'Go' });
+    tabTo(go);
     expect(tip()).not.toBeNull();
-    // The tap's emulated mousedown takes focus to nothing, then its click lands inside.
-    act(() => screen.getByRole('button', { name: 'Go' }).blur());
-    fireEvent.click(screen.getByTestId('trigger'));
+    // The press's mousedown takes focus to nothing; its click comes later.
+    fireEvent.pointerDown(screen.getByTestId('trigger'));
+    act(() => go.blur());
     act(() => rs.advanceTimersByTime(500));
+    fireEvent.click(screen.getByTestId('trigger'));
     expect(tip()).not.toBeNull();
+    // Focus going to nothing with no press closes it.
+    tabTo(go);
+    act(() => go.blur());
+    expect(tip()).toBeNull();
   } finally {
     rs.useRealTimers();
   }
+});
+
+test('a controlled owner that keeps it open is asked again on the next close', () => {
+  const asks: boolean[] = [];
+  render(
+    <SilkProvider>
+      <Tooltip.Root open onOpenChange={(open) => asks.push(open)}>
+        <Tooltip.Trigger>
+          <Pressable accessibilityRole="button" accessibilityLabel="Go" />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Starts the game</Tooltip.Content>
+      </Tooltip.Root>
+    </SilkProvider>,
+  );
+  fireEvent.keyDown(document.body, { key: 'Escape' });
+  return new Promise<void>((resolve) => {
+    setTimeout(() => {
+      fireEvent.keyDown(document.body, { key: 'Escape' });
+      expect(asks).toEqual([false, false]);
+      resolve();
+    });
+  });
 });
