@@ -1,5 +1,5 @@
 import { createTheme } from '@reactive/silk-core';
-import { beforeEach, expect, rs, test } from '@rstest/core';
+import { afterEach, beforeEach, expect, rs, test } from '@rstest/core';
 import { act, render, screen } from '@testing-library/react';
 import { type ComponentProps, use, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -104,6 +104,9 @@ function fling(distance: number, velocity: number) {
 
 const asks = () => screen.getByTestId('asks').textContent;
 
+/** The clock the sheet reads to tell a held finger from a moving one (ms). */
+let now = 0;
+
 beforeEach(() => {
   // react-native-web's Modal shows its content once an entrance animation ends, which jsdom never runs.
   setPrefersReducedMotion(true);
@@ -111,6 +114,12 @@ beforeEach(() => {
   mocked.speeds.length = 0;
   mocked.scrolls.length = 0;
   mocked.finish = true;
+  now = 1000;
+  rs.spyOn(Date, 'now').mockImplementation(() => now);
+});
+
+afterEach(() => {
+  rs.restoreAllMocks();
 });
 
 test('a bottom sheet opens by springing up to rest', () => {
@@ -137,14 +146,12 @@ test('thrown past half its height but let go moving up, a sheet slides out witho
 
 test('dragged, held still, then let go, a sheet settles back however fast the drag was', () => {
   render(<Harness />);
-  const now = rs.spyOn(Date, 'now').mockReturnValue(1000);
   act(() => {
     mocked.pan!.onActivate!();
     mocked.pan!.onUpdate!({ changeY: 100 });
   });
-  now.mockReturnValue(3000);
+  now += 2000;
   act(() => mocked.pan!.onDeactivate!({ canceled: false, velocityY: 1500 }));
-  now.mockRestore();
   expect(asks()).toBe('0');
   expect(mocked.springs.at(-1)).toBe(0);
   expect(mocked.speeds).not.toContain(1500);

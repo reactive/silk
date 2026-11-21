@@ -84,9 +84,9 @@ export function SheetContent(props: DialogContentProps): JSX.Element {
 /**
  * The bottom sheet: it slides up as it opens and down as it closes, however
  * it closes, on Silk's sheet spring. A drag follows the finger on the UI
- * thread; let go, the sheet keeps the finger's speed and settles back or
- * slides off and asks to close (`onOpenChange(false)`). If its owner keeps it
- * open, it settles back. With reduced motion, a release jumps to its end.
+ * thread; let go, the sheet keeps the finger's speed (none if it was held
+ * still) and settles back or slides off and asks to close
+ * (`onOpenChange(false)`). If its owner keeps it open, it settles back. With reduced motion, a release jumps to its end.
  */
 function DraggableSheet({
   size,
@@ -122,8 +122,8 @@ function DraggableSheet({
   const shut = useSharedValue(!open);
   const inScroll = useSharedValue(false);
   const scrollY = useSharedValue(0);
-  // When the drag last moved (ms), so a finger held still lets go with no speed.
-  const lastMove = useSharedValue(0);
+  // When the drag last moved (ms, on the UI thread), so a held finger lets go with no speed.
+  const lastMoveAt = useSharedValue(0);
   const scrollRef = useAnimatedRef<ComponentRef<typeof RNScrollView>>();
 
   // The gesture is made once; these keep its calls into React current.
@@ -198,19 +198,20 @@ function DraggableSheet({
       'worklet';
       cancelAnimation(offset);
       sliding.value = false;
+      lastMoveAt.value = Date.now();
     },
     onUpdate: (event) => {
       'worklet';
       const step = dragStep(offset.value, event.changeY, inScroll.value, scrollY.value);
       offset.value = step.offset;
-      lastMove.value = Date.now();
+      lastMoveAt.value = Date.now();
       if (step.pinScroll) scrollTo(scrollRef, 0, 0, false);
     },
     onDeactivate: (event) => {
       'worklet';
       const velocity = event.canceled
         ? 0
-        : releaseSpeed(event.velocityY, Date.now() - lastMove.value);
+        : releaseSpeed(event.velocityY, Date.now() - lastMoveAt.value);
       if (shut.value) {
         // Caught while sliding out after closing: it goes on out.
         slideOut(velocity);
