@@ -48,8 +48,11 @@ export function releaseCloses(offset: number, velocity: number, height: number):
 
 /**
  * The speed a drag lets go at: Gesture Handler's `velocity`, or none when it
- * last moved (or started) more than 40 ms before the release. A finger held still may
- * send no moves, and Gesture Handler then still reports the speed of its last.
+ * last moved (or started) more than 40 ms before the release. A finger held
+ * still may send no moves, and Gesture Handler then still reports the speed
+ * of its last. Gesture Handler's events carry no time, so the caller times
+ * them as they run on the UI thread: a hitch over 40 ms just before a
+ * release also drops its speed.
  */
 export function releaseSpeed(velocity: number, sinceLastMove: number): number {
   'worklet';

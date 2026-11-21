@@ -123,7 +123,7 @@ function DraggableSheet({
   const shut = useSharedValue(!open);
   const inScroll = useSharedValue(false);
   const scrollY = useSharedValue(0);
-  // When the drag started or last moved (ms, on the UI thread), so a held finger lets go with no speed.
+  // When the drag started or last moved (ms, on the UI thread): a held finger lets go at rest.
   const lastMoveAt = useSharedValue(0);
   const scrollRef = useAnimatedRef<ComponentRef<typeof RNScrollView>>();
 
