@@ -16,7 +16,7 @@ import type {
 } from '../tokens/index.js';
 // Not re-exported from tokens/index.js, which is the public /tokens subpath.
 import { white } from '../tokens/palette.js';
-import { oklabToRgb, rgbToOklab } from '../color/oklab.js';
+import { oklabToSrgb, rgbToOklab } from '../color/oklab.js';
 import { oklch } from '../color/oklch.js';
 import { parseHexChannels } from './colorMath.js';
 
@@ -85,7 +85,7 @@ function mixHex(from: string, to: string, amount: number): string {
   }
   const a = rgbToOklab(...start);
   const b = rgbToOklab(...end);
-  return oklabToRgb([
+  return oklabToSrgb([
     a[0] + (b[0] - a[0]) * amount,
     a[1] + (b[1] - a[1]) * amount,
     a[2] + (b[2] - a[2]) * amount,

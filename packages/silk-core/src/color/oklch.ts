@@ -2,7 +2,7 @@
  * Imports nothing outside this folder, so a web view's bundle can take it alone
  * (`@reactive/silk-core/color`).
  */
-import { oklabToRgb } from './oklab.js';
+import { oklabToSrgb } from './oklab.js';
 
 /**
  * A color written in OKLCH, whose lightness `l` (0–1) is perceptual: two colors
@@ -23,5 +23,5 @@ export function oklch(l: number, c: number, h: number, alpha?: number): string {
     throw new RangeError(`oklch(${args.join(', ')}) is out of range`);
   }
   const hue = ((h % 360) * Math.PI) / 180;
-  return oklabToRgb([l, c * Math.cos(hue), c * Math.sin(hue)], alpha);
+  return oklabToSrgb([l, c * Math.cos(hue), c * Math.sin(hue)], alpha);
 }

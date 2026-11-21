@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { expect, test } from '@rstest/core';
-import { oklabToRgb, rgbToOklab } from './oklab.js';
+import { oklabToSrgb, rgbToOklab } from './oklab.js';
 import { oklch } from './oklch.js';
 
 test('oklch returns the sRGB hex of an OKLCH color', () => {
@@ -27,6 +27,7 @@ test('oklch throws on input out of range', () => {
   ] as const) {
     expect(() => oklch(...args)).toThrow(RangeError);
   }
+  expect(() => oklch(1.5, 0, 0)).toThrow('oklch(1.5, 0, 0) is out of range');
 });
 
 test('the color module imports nothing outside its folder', () => {
@@ -47,6 +48,6 @@ test('OKLab conversions round-trip sRGB', () => {
     [229, 72, 77, '#e5484d'],
     [32, 32, 32, '#202020'],
   ] as const) {
-    expect(oklabToRgb(rgbToOklab(r, g, b))).toBe(hex);
+    expect(oklabToSrgb(rgbToOklab(r, g, b))).toBe(hex);
   }
 });

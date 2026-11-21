@@ -176,8 +176,8 @@ export function mapShadow(
   }
   const layer = theme.semantic.shadow[level];
   return {
-    // A keyword, not oklch(): black needs no conversion, and the color math
-    // would add to every native component's budget in perf-budgets.json.
+    // A keyword, not oklch(): black needs no conversion, and this keeps the
+    // color math out of every native component's bundle.
     shadowColor: 'black',
     shadowOffset: { width: layer.offsetX, height: layer.offsetY },
     shadowOpacity: layer.opacity,

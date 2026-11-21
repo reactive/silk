@@ -40,10 +40,13 @@ const CHROMATIC_LIGHT_L = lightness(blueScaleOklch);
 const CHROMATIC_LIGHT_C_REL = relativeChroma(blueScaleOklch);
 const CHROMATIC_DARK_L = lightness(blueScaleDarkOklch);
 const CHROMATIC_DARK_C_REL = relativeChroma(blueScaleDarkOklch);
-/** Neutral L curves; light step 11 is darker than Silk's gray so a tinted
- * textSecondary still clears 4.5:1 on sunken. */
+/**
+ * Generated neutral light step 11, darker than Silk's own gray (0.503) so a
+ * brand-tinted textSecondary still clears 4.5:1 on sunken. Generator-only.
+ */
+const NEUTRAL_LIGHT_STEP_11_L = 0.48;
 const NEUTRAL_LIGHT_L = lightness(grayScaleOklch).map((l, i) =>
-  i === 10 ? 0.48 : l,
+  i === 10 ? NEUTRAL_LIGHT_STEP_11_L : l,
 );
 const NEUTRAL_DARK_L = lightness(grayScaleDarkOklch);
 

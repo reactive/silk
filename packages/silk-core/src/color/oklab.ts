@@ -19,8 +19,8 @@ export const linearize = (channel: number): number => {
   return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
 };
 
-/** OKLab to `#rrggbb`, or `rgba(r, g, b, alpha)`, clipping outside sRGB. */
-export function oklabToRgb([l, a, b]: Oklab, alpha?: number): string {
+/** OKLab to its sRGB form, `#rrggbb` or `rgba(r, g, b, alpha)`, clipping outside sRGB. */
+export function oklabToSrgb([l, a, b]: Oklab, alpha?: number): string {
   const long = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
   const medium = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
   const short = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;

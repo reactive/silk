@@ -8,8 +8,8 @@ export type OklchScale = readonly Oklch[];
 
 // Each built-in scale is kept as OKLCH coordinates, which generateScale's
 // curves are read from, and resolved once to the sRGB hex the theme carries.
-// Every coordinate sits inside sRGB (palette.test.ts), which is why a few carry
-// an extra decimal.
+// Every coordinate sits inside sRGB (palette.test.ts); a few carry an extra
+// decimal so they do and still resolve to the same hex.
 function toScale(source: OklchScale): PaletteScale {
   const scale = {} as Record<PaletteStep, string>;
   source.forEach(([l, c, h], i) => {
