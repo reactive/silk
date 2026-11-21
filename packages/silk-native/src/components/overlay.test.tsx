@@ -107,13 +107,21 @@ function PickerHarness({
   focusOnOpen = false,
   onPick,
   scroller = false,
+  initial = '1300',
+  disabled = [],
+  steps = STEPS,
+  sideOffset,
 }: {
   readonly focusOnOpen?: boolean;
   readonly onPick?: (value: string) => void;
   readonly scroller?: boolean;
+  readonly initial?: string;
+  readonly disabled?: readonly string[];
+  readonly steps?: readonly string[];
+  readonly sideOffset?: number;
 }) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState('1300');
+  const [value, setValue] = useState(initial);
   const anchor = useRef<ComponentRef<typeof View>>(null);
   return (
     <SilkProvider theme={theme}>
@@ -125,7 +133,7 @@ function PickerHarness({
       />
       {scroller ? <ScrollView testID="elsewhere" /> : null}
       <Popover.Root open={open} onOpenChange={setOpen} anchor={anchor}>
-        <Popover.Content testID="popover">
+        <Popover.Content testID="popover" sideOffset={sideOffset}>
           <Listbox.Root
             accessibilityLabel="Opponent strength"
             value={value}
@@ -135,8 +143,13 @@ function PickerHarness({
               onPick?.(next);
             }}
           >
-            {STEPS.map((step) => (
-              <Listbox.Item key={step} value={step} accessibilityLabel={step}>
+            {steps.map((step) => (
+              <Listbox.Item
+                key={step}
+                value={step}
+                accessibilityLabel={step}
+                disabled={disabled.includes(step)}
+              >
                 {step}
               </Listbox.Item>
             ))}
@@ -183,13 +196,25 @@ test('Popover leaves an Escape another control took, and closes on its own', () 
   expect(popover()).toBeNull();
 });
 
-test('Popover closes when the page scrolls, not when a list elsewhere does', () => {
+test('Popover closes on scrolling that moves its anchor, not on scrolling that leaves it', () => {
   render(<PickerHarness scroller />);
-  fireEvent.click(screen.getByLabelText('Strength'));
+  const anchor = screen.getByLabelText('Strength');
+  fireEvent.click(anchor);
   fireEvent.scroll(screen.getByTestId('elsewhere'));
+  fireEvent.scroll(document);
   expect(popover()).not.toBeNull();
+  anchor.getBoundingClientRect = () => new DOMRect(0, -40, 80, 20);
   fireEvent.scroll(document);
   expect(popover()).toBeNull();
+});
+
+test('Popover keeps focus where it is as its placement props change', () => {
+  const { rerender } = render(<PickerHarness focusOnOpen sideOffset={4} />);
+  fireEvent.click(screen.getByLabelText('Strength'));
+  expect(focused()).toBe('1300');
+  rerender(<PickerHarness focusOnOpen sideOffset={8} />);
+  expect(focused()).toBe('1300');
+  expect(popover()).not.toBeNull();
 });
 
 test('Listbox opened from the keyboard focuses the chosen item; arrows, Home and End move', () => {
@@ -276,6 +301,62 @@ test('pointing highlights an item, and moves focus only while the list holds it'
   expect(focused()).toBe('1700');
 });
 
+test('Listbox skips disabled items: Tab stop, autoFocus and arrows land on enabled ones', () => {
+  render(<PickerHarness focusOnOpen initial="1100" disabled={['1100', '1500']} />);
+  fireEvent.click(screen.getByLabelText('Strength'));
+  expect(options().map((option) => option.tabIndex)).toEqual([-1, 0, -1, -1]);
+  expect(focused()).toBe('1300');
+  press('ArrowDown');
+  expect(focused()).toBe('1700');
+  press('Home');
+  expect(focused()).toBe('1300');
+});
+
+test('Listbox gives the first item the Tab stop when the chosen one is not shown', () => {
+  render(<PickerHarness initial="1900" />);
+  fireEvent.click(screen.getByLabelText('Strength'));
+  expect(options().map((option) => option.tabIndex)).toEqual([0, -1, -1, -1]);
+});
+
+test('Listbox autoFocus focuses as it turns on, on a list already shown', () => {
+  function Late() {
+    const [focusNow, setFocusNow] = useState(false);
+    return (
+      <SilkProvider theme={theme}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Now" onPress={() => setFocusNow(true)} />
+        <Listbox.Root accessibilityLabel="Steps" value="1500" autoFocus={focusNow} onValueChange={() => {}}>
+          {STEPS.map((step) => (
+            <Listbox.Item key={step} value={step} accessibilityLabel={step}>
+              {step}
+            </Listbox.Item>
+          ))}
+        </Listbox.Root>
+      </SilkProvider>
+    );
+  }
+  render(<Late />);
+  expect(document.activeElement).toBe(document.body);
+  fireEvent.click(screen.getByLabelText('Now'));
+  expect(focused()).toBe('1500');
+});
+
+test('Listbox.ItemText takes the item label color, which follows the item state', () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Steps" value="b" onValueChange={() => {}}>
+        <Listbox.Item value="a">
+          <Listbox.ItemText testID="a">A</Listbox.ItemText>
+        </Listbox.Item>
+        <Listbox.Item value="b">
+          <Listbox.ItemText testID="b">B</Listbox.ItemText>
+        </Listbox.Item>
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  const color = (id: string) => getComputedStyle(screen.getByTestId(id)).color;
+  expect(color('b')).not.toBe(color('a'));
+});
+
 test('a finger sliding over an item leaves the highlight where it is', () => {
   render(<PickerHarness />);
   fireEvent.click(screen.getByLabelText('Strength'));
@@ -293,6 +374,7 @@ test('placeFloating goes on its preferred side, lined up as asked, when it fits'
   expect(placeFloating(anchor, { width: 200, height: 300 }, WINDOW, OPTIONS)).toEqual({
     left: 50,
     top: 126,
+    width: 200,
     maxHeight: 800 - 120 - 6 - 8,
     side: 'bottom',
   });
@@ -309,6 +391,7 @@ test('placeFloating flips to the other side when only it fits, else takes the ro
   expect(placeFloating(low, { width: 200, height: 300 }, WINDOW, OPTIONS)).toEqual({
     left: 50,
     top: 700 - 6 - 300,
+    width: 200,
     maxHeight: 700 - 6 - 8,
     side: 'top',
   });
@@ -321,4 +404,21 @@ test('placeFloating flips to the other side when only it fits, else takes the ro
 test('placeFloating keeps it inside the window', () => {
   const right = { x: 380, y: 100, width: 20, height: 20 };
   expect(placeFloating(right, { width: 200, height: 100 }, WINDOW, OPTIONS).left).toBe(192);
+});
+
+test('placeFloating narrows it to the window less the padding on both sides', () => {
+  const anchor = { x: 50, y: 100, width: 80, height: 20 };
+  const narrow = placeFloating(anchor, { width: 420, height: 100 }, { width: 360, height: 800 }, OPTIONS);
+  expect(narrow).toMatchObject({ left: 8, width: 344 });
+});
+
+test('placeFloating keeps the side it is given once its height shrinks to the room there', () => {
+  const low = { x: 50, y: 700, width: 80, height: 20 };
+  const first = placeFloating(low, { width: 200, height: 900 }, WINDOW, OPTIONS);
+  expect(first.side).toBe('top');
+  const again = placeFloating(low, { width: 200, height: first.maxHeight }, WINDOW, {
+    ...OPTIONS,
+    side: first.side,
+  });
+  expect(again).toEqual(first);
 });

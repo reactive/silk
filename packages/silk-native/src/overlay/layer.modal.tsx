@@ -23,6 +23,9 @@ export function FloatingLayer({
 }: FloatingLayerProps): JSX.Element {
   const screen = useWindowDimensions();
   const [anchorBox, setAnchorBox] = useState<Box>();
+  // Its size before it was placed picks the side; its size now (content
+  // loading in, or shrunk to the room) places it on that side.
+  const [natural, setNatural] = useState<Size>();
   const [size, setSize] = useState<Size>();
   useLayoutEffect(() => {
     anchor.current?.measureInWindow((x, y, width, height) =>
@@ -41,7 +44,8 @@ export function FloatingLayer({
     }
   }, [screen.width, screen.height, onDismiss]);
 
-  const place = anchorBox && size && placeFloating(anchorBox, size, screen, options);
+  const side = anchorBox && natural && placeFloating(anchorBox, natural, screen, options).side;
+  const place = side && size && placeFloating(anchorBox, size, screen, { ...options, side });
   return (
     <Modal transparent statusBarTranslucent visible onRequestClose={onDismiss}>
       <Pressable
@@ -52,14 +56,15 @@ export function FloatingLayer({
         style={StyleSheet.absoluteFill}
       />
       <View
-        // Measured once, before it is placed; a smaller maxHeight later doesn't move it.
-        onLayout={({ nativeEvent: { layout } }) =>
-          setSize((measured) => measured ?? layout)
-        }
+        onLayout={({ nativeEvent: { layout } }) => {
+          const now = { width: layout.width, height: layout.height };
+          setNatural((was) => was ?? now);
+          setSize((was) => (was?.width === now.width && was.height === now.height ? was : now));
+        }}
         style={[
           styles.layer,
           place
-            ? { left: place.left, top: place.top, maxHeight: place.maxHeight }
+            ? { left: place.left, top: place.top, width: place.width, maxHeight: place.maxHeight }
             : styles.unplaced,
         ]}
       >

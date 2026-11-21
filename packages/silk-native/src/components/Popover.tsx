@@ -41,7 +41,11 @@ export interface PopoverRootProps {
    * window, or a pick in a `Listbox` inside it.
    */
   readonly onOpenChange: (open: boolean) => void;
-  /** What it opens from, usually the control that toggles `open`; presses on it never close it. */
+  /**
+   * What it opens from, usually the control that toggles `open`. On the web,
+   * a press on it is left to the anchor's own toggle; on native the layer
+   * covers it, so a press there closes the popover as any press outside does.
+   */
   readonly anchor: RefObject<ComponentRef<typeof View> | null>;
   readonly children?: ReactNode;
 }

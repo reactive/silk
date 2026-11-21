@@ -70,7 +70,7 @@ export type {
 export { Popover } from './components/Popover.js';
 export type { PopoverRootProps, PopoverContentProps } from './components/Popover.js';
 export { Listbox } from './components/Listbox.js';
-export type { ListboxRootProps, ListboxItemProps } from './components/Listbox.js';
+export type { ListboxRootProps, ListboxItemProps, ListboxItemTextProps } from './components/Listbox.js';
 export type { FloatingAlign, FloatingSide } from './overlay/place.js';
 
 export { ThemeProvider, useTheme, useThemeDensity } from './theme/ThemeProvider.js';

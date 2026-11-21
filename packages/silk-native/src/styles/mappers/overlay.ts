@@ -77,6 +77,8 @@ export function mapPopoverStyle(
     ...floatingSurface(theme),
     padding: theme.semantic.space[2],
     width: POPOVER_WIDTH[size],
+    // No wider than the layer, which narrows to fit the window.
+    maxWidth: '100%',
     // Shrinks to the room the layer gives it, so a list inside scrolls.
     flexShrink: 1,
   };

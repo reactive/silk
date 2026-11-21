@@ -24,11 +24,14 @@ export interface PlaceOptions {
   readonly collisionPadding: number;
 }
 
-/** Where a floating surface goes, from the window's top left corner, and how tall it may grow there. */
+/** Where a floating surface goes, from the window's top left corner, how wide it is, and how tall it may grow there. */
 export interface Placement {
   readonly left: number;
   readonly top: number;
+  /** Its own width, or the window's less the padding on both sides when narrower. */
+  readonly width: number;
   readonly maxHeight: number;
+  /** The side it took; placing it again on this side keeps it there as its size changes. */
   readonly side: FloatingSide;
 }
 
@@ -36,8 +39,8 @@ export interface Placement {
  * Where a surface of `size` goes beside `anchor` in a window of `window`'s
  * size: on its preferred side when it fits there or that side is the roomier,
  * otherwise on the other side, shrunk to the room there; lined up with the
- * anchor as `align` says, but kept inside the window. Pure, so both
- * platforms' layers share it.
+ * anchor as `align` says, but kept inside the window, and narrowed to fit
+ * it. Pure, so both platforms' layers share it.
  */
 export function placeFloating(
   anchor: Box,
@@ -57,15 +60,13 @@ export function placeFloating(
     chosen === 'bottom'
       ? anchor.y + anchor.height + sideOffset
       : anchor.y - sideOffset - Math.min(size.height, maxHeight);
+  const width = Math.min(size.width, Math.max(0, window.width - 2 * collisionPadding));
   const wanted =
     align === 'start'
       ? anchor.x
       : align === 'end'
-        ? anchor.x + anchor.width - size.width
-        : anchor.x + (anchor.width - size.width) / 2;
-  const left = Math.max(
-    collisionPadding,
-    Math.min(wanted, window.width - size.width - collisionPadding),
-  );
-  return { left, top, maxHeight, side: chosen };
+        ? anchor.x + anchor.width - width
+        : anchor.x + (anchor.width - width) / 2;
+  const left = Math.max(collisionPadding, Math.min(wanted, window.width - width - collisionPadding));
+  return { left, top, width, maxHeight, side: chosen };
 }

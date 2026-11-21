@@ -8,6 +8,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -20,13 +21,16 @@ import {
 } from 'react-native';
 import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
 import { mapListboxItemStyle } from '../styles/mappers/overlay.js';
+import type { RnTextStyle } from '../styles/mappers/shared.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { usePopoverContext } from './Popover.js';
 import { Pressable, type PressableProps } from './Pressable.js';
-import { Text } from './Text.js';
+import { Text, type TextProps } from './Text.js';
 
 const WEB = Platform.OS === 'web';
+/** A listbox on the web; Android has none, so a radiogroup there. */
+const LIST_ROLE = (WEB ? 'listbox' : 'radiogroup') as ViewProps['role'];
 
 type ItemNode = ComponentRef<typeof View>;
 
@@ -43,7 +47,11 @@ interface ListboxContextValue {
   readonly value: string | undefined;
   /** The item the keys act on: pointed at, or focused last. */
   readonly highlighted: string | undefined;
-  /** The item that takes Tab focus into the list: the highlighted, else the chosen; with neither, every item does. */
+  /**
+   * The item that takes Tab focus into the list: the highlighted, else the
+   * chosen, else the first, of the enabled items shown; before they are
+   * counted, every item does.
+   */
   readonly tabStop: string | undefined;
   readonly highlight: (value: string) => void;
   readonly pick: (value: string) => void;
@@ -97,8 +105,21 @@ function ListboxRoot({
   const popover = usePopoverContext();
   const [highlighted, setHighlighted] = useState<string>();
   const items = useRef(new Map<string, { node: ItemNode; disabled: boolean }>());
+  // The enabled items' values in order, counted after each commit: an item
+  // filtered out or disabled can't hold the Tab stop or take a key.
+  const [shown, setShown] = useState<readonly string[]>();
 
-  const enabled = () => inTreeOrder(items.current).filter(([, item]) => !item.disabled);
+  const enabled = () =>
+    inTreeOrder(items.current)
+      .filter(([, item]) => !item.disabled)
+      .map(([itemValue]) => itemValue);
+  useLayoutEffect(() => {
+    const now = enabled();
+    setShown((was) => (was && sameList(was, now) ? was : now));
+  });
+  /** `target`, if it names an enabled item shown. */
+  const live = (target: string | undefined) =>
+    target !== undefined && shown?.includes(target) ? target : undefined;
   const focus = (target: string) => items.current.get(target)?.node.focus();
   const highlight = (next: string) => {
     if (next === highlighted) return;
@@ -116,37 +137,54 @@ function ListboxRoot({
 
   useEffect(() => {
     if (!autoFocus) return;
-    const target = value !== undefined && items.current.has(value) ? value : enabled()[0]?.[0];
+    const order = enabled();
+    const target = value !== undefined && order.includes(value) ? value : order[0];
     if (target !== undefined) focus(target);
-    // Only on mount, as autoFocus does.
-  }, []);
+    // As it turns on: on mount, or later for a list opened by pointing, then pressed.
+  }, [autoFocus]);
 
   const onKeyDown = (event: KeyDownEvent) => {
     const { key } = event.nativeEvent;
-    const order = enabled().map(([itemValue]) => itemValue);
-    if (order.length === 0) return;
-    const at = order.indexOf(highlighted ?? value ?? order[0]!);
-    const moves: Record<string, number> = {
-      ArrowDown: Math.min(at + 1, order.length - 1),
-      ArrowUp: Math.max(at - 1, 0),
-      Home: 0,
-      End: order.length - 1,
-    };
-    if (Object.hasOwn(moves, key)) {
-      event.preventDefault();
-      focus(order[moves[key]!]!);
-    } else if (key === ' ' && highlighted !== undefined) {
-      // Enter presses the focused item already (react-native-web presses on Enter).
-      event.preventDefault();
-      pick(highlighted);
-    } else if (key === 'Tab' && popover) {
-      // Focus goes back to the anchor as the popover closes.
-      event.preventDefault();
-      popover.close();
+    const order = enabled();
+    const at = Math.max(0, order.indexOf(live(highlighted) ?? live(value) ?? ''));
+    let target: number | undefined;
+    switch (key) {
+      case 'ArrowDown':
+        target = Math.min(at + 1, order.length - 1);
+        break;
+      case 'ArrowUp':
+        target = Math.max(at - 1, 0);
+        break;
+      case 'Home':
+        target = 0;
+        break;
+      case 'End':
+        target = order.length - 1;
+        break;
+      case ' ': {
+        // Enter presses the focused item already (react-native-web presses on Enter).
+        const focused = live(highlighted);
+        if (focused === undefined) return;
+        event.preventDefault();
+        pick(focused);
+        return;
+      }
+      case 'Tab':
+        if (!popover) return;
+        // Focus goes back to the anchor as the popover closes.
+        event.preventDefault();
+        popover.close();
+        return;
+      default:
+        return;
     }
+    const next = order[target];
+    if (next === undefined) return;
+    event.preventDefault();
+    focus(next);
   };
 
-  const tabStop = highlighted ?? value;
+  const tabStop = shown && (live(highlighted) ?? live(value) ?? shown[0]);
   const variant: SelectVariantProps = {
     size: size ?? defaults.size ?? selectRecipe.defaults.size,
     density: density ?? defaults.density ?? selectRecipe.defaults.density,
@@ -163,8 +201,8 @@ function ListboxRoot({
     >
       <View
         ref={ref}
-        // A listbox on the web, which React Native's role type lacks.
-        role={(WEB ? 'listbox' : 'radiogroup') as 'radiogroup'}
+        // React Native's role type lacks the web's listbox.
+        role={LIST_ROLE}
         {...rest}
         {...({ onKeyDown } as object)}
         style={style}
@@ -183,6 +221,9 @@ export interface ListboxItemProps
   readonly style?: StyleProp<ViewStyle>;
   readonly disabled?: boolean;
 }
+
+/** The label style of the item around, which follows its state. */
+const ItemLabelContext = createContext<RnTextStyle | null>(null);
 
 /** An item of a `Listbox`: a check in its indicator slot when chosen, lit while highlighted. */
 function ListboxItem({
@@ -205,7 +246,7 @@ function ListboxItem({
     selected,
     disabled,
   });
-  const isTabStop = list.tabStop === undefined || list.tabStop === value;
+  const isTabStop = !disabled && (list.tabStop === undefined || list.tabStop === value);
   const { register } = list;
   const setNode = useCallback(
     (node: ItemNode | null) => {
@@ -236,24 +277,35 @@ function ListboxItem({
       }}
       onFocus={(event) => {
         onFocus?.(event);
-        list.highlight(value);
+        if (!disabled) list.highlight(value);
       }}
       onPress={() => list.pick(value)}
       style={[row, style]}
       {...rnwAttrs({ 'data-highlighted': highlighted || undefined })}
     >
-      <View style={indicator}>
-        {selected ? <Text role="bodySm" style={label}>✓</Text> : null}
-      </View>
-      {typeof children === 'string' || typeof children === 'number' ? (
-        <Text role="bodySm" style={label}>
-          {children}
-        </Text>
-      ) : (
-        children
-      )}
+      <ItemLabelContext.Provider value={label}>
+        <View style={indicator}>{selected ? <ListboxItemText>✓</ListboxItemText> : null}</View>
+        {typeof children === 'string' || typeof children === 'number' ? (
+          <ListboxItemText>{children}</ListboxItemText>
+        ) : (
+          children
+        )}
+      </ItemLabelContext.Provider>
     </Pressable>
   );
+}
+
+export type ListboxItemTextProps = TextProps;
+
+/**
+ * Text in a `Listbox.Item` with custom children, colored as the item's own
+ * label is: lit while highlighted or chosen, dimmed while disabled. A string
+ * child is wrapped in it already.
+ */
+function ListboxItemText({ role = 'bodySm', style, ...props }: ListboxItemTextProps): JSX.Element {
+  const label = useContext(ItemLabelContext);
+  if (!label) throw new Error('Listbox.ItemText must be used within Listbox.Item');
+  return <Text role={role} {...props} style={[label, style]} />;
 }
 
 /** react-native-web's focused DOM element (silk-native doesn't load DOM types). */
@@ -266,6 +318,9 @@ interface DomNode {
 }
 /** `Node.DOCUMENT_POSITION_FOLLOWING`. */
 const FOLLOWING = 4;
+
+const sameList = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((item, at) => item === b[at]);
 
 /**
  * The items in the order they appear: on the web, by their place in the
@@ -286,9 +341,11 @@ function inTreeOrder<V>(items: ReadonlyMap<string, V & { node: ItemNode }>): Arr
 export interface ListboxNamespace {
   readonly Root: typeof ListboxRoot;
   readonly Item: typeof ListboxItem;
+  readonly ItemText: typeof ListboxItemText;
 }
 
 export const Listbox: ListboxNamespace = {
   Root: ListboxRoot,
   Item: ListboxItem,
+  ItemText: ListboxItemText,
 };

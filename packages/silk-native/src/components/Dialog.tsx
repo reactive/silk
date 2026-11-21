@@ -24,7 +24,7 @@ import { mapDialogStyle } from '../styles/mappers/overlay.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { Text, type TextProps } from './Text.js';
+import { Heading, type HeadingProps } from './Heading.js';
 
 interface DialogContextValue {
   readonly open: boolean;
@@ -130,16 +130,16 @@ function DialogContent({
   );
 }
 
-export type DialogTitleProps = TextProps;
+export type DialogTitleProps = HeadingProps;
 
-/** The dialog's name: a heading, and what screen readers announce for it. */
-function DialogTitle({ role = 'heading', ...props }: DialogTitleProps): JSX.Element {
+/** The dialog's name: a heading (level 2, size `md` unless given), and what screen readers announce for it. */
+function DialogTitle({ level = '2', size = 'md', ...props }: DialogTitleProps): JSX.Element {
   const { titleId, setTitled } = useDialogContext('Title');
   useLayoutEffect(() => {
     setTitled(true);
     return () => setTitled(false);
   }, [setTitled]);
-  return <Text role={role} accessibilityRole="header" nativeID={titleId} {...props} />;
+  return <Heading level={level} size={size} nativeID={titleId} {...props} />;
 }
 
 const styles = StyleSheet.create({
