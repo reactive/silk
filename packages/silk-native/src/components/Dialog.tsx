@@ -121,7 +121,12 @@ function DialogContent({
   const [animationType, setAnimationType] = useState(motion);
   if (!open && animationType !== motion) setAnimationType(motion);
   return (
-    <DialogShell visible={open} animationType={animationType} onClose={close} veil={[veil, overlayStyle]}>
+    <DialogShell
+      visible={open}
+      animationType={animationType}
+      onClose={close}
+      veil={[veil, overlayStyle]}
+    >
       <View ref={ref} {...rest} style={[panel, dialogShellStyles.overVeil, style]}>
         {children}
       </View>
