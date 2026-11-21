@@ -23,6 +23,7 @@ import {
 import {
   a11yState,
   rnwAttrs,
+  type WebFocusEvent,
   webKeyHandler,
   type WebKeyDownEvent,
 } from '../styles/a11yProps.js';
@@ -281,7 +282,7 @@ function ListboxItem({
       onBlur={(event) => {
         onBlur?.(event);
         // Focus leaving the list (web, where the blur names where it went).
-        const to = (event.nativeEvent as { relatedTarget?: unknown }).relatedTarget;
+        const to = (event.nativeEvent as unknown as WebFocusEvent).relatedTarget;
         if (WEB && !list.isItem(to)) list.unhighlight();
       }}
       onPress={() => list.pick(value)}

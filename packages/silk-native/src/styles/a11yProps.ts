@@ -4,6 +4,9 @@
  * and DOM ARIA attributes, not the RN object shapes — without aliases, Checkbox
  * `aria-checked` and Progress `aria-valuenow` would silently vanish in
  * Storybook / jsdom tests.
+ *
+ * Also the react-native-web DOM shapes (keys, focus) its components read,
+ * typed here once since silk-native doesn't load DOM types.
  */
 
 /** RN / RNW-compatible checked values (excludes string "true"/"false"). */
@@ -126,7 +129,17 @@ export function a11yValue(value: AccessibilityValueCompat): A11yValueProps {
   };
 }
 
-/** The DOM element react-native-web focuses (silk-native doesn't load DOM types). */
+/** A DOM node as react-native-web hands it over (a View's ref is one). */
+export interface WebNode {
+  contains(other: WebNode): boolean;
+}
+
+/** react-native-web's blur and focus `nativeEvent`: where focus went, or came from. */
+export interface WebFocusEvent {
+  readonly relatedTarget: WebNode | null;
+}
+
+/** The DOM element react-native-web focuses. */
 export interface FocusTarget {
   matches?: (selector: string) => boolean;
   ownerDocument?: {

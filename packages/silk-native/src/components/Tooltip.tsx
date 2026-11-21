@@ -22,7 +22,12 @@ import {
 // The platform's layer: `layer.modal` on native, `layer.dom` on the web (package.json `imports`).
 import { FloatingLayer } from '#floating-layer';
 import type { FloatingAlign, FloatingSide } from '../overlay/place.js';
-import { type FocusTarget, matchesFocusVisible } from '../styles/a11yProps.js';
+import {
+  type FocusTarget,
+  matchesFocusVisible,
+  type WebFocusEvent,
+  type WebNode,
+} from '../styles/a11yProps.js';
 import { mapTooltipStyle } from '../styles/mappers/overlay.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { Text } from './Text.js';
@@ -109,14 +114,6 @@ function TooltipRoot({
 }
 
 /** The Trigger's own handlers, which open and close it. */
-/** react-native-web hands Views DOM nodes and DOM focus events (silk-native doesn't load DOM types). */
-interface WebNode {
-  contains(other: WebNode): boolean;
-}
-interface WebFocusEvent {
-  readonly relatedTarget: WebNode | null;
-}
-
 type WebHandlers = 'onPointerEnter' | 'onPointerLeave' | 'onFocus' | 'onBlur';
 type TriggerHandlers = WebHandlers | 'onStartShouldSetResponder' | 'onResponderRelease';
 
