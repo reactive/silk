@@ -212,7 +212,7 @@ export function Slider({
   const rtl = (dir ?? (I18nManager.isRTL ? 'rtl' : 'ltr')) === 'rtl';
   const from = slideFrom(vertical, rtl, inverted);
   // Memoized: a drag re-renders the slider on every move, and its styles don't change with the values.
-  const { root, track, range, thumb, thumbSize, crossSize } = useMemo(
+  const { root, parts, track, range, thumb, thumbSize, crossSize } = useMemo(
     () =>
       mapSliderStyle(
         theme,
@@ -338,14 +338,7 @@ export function Slider({
         rest,
       )}
     >
-      <View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          { flexDirection: root.flexDirection, alignItems: root.alignItems },
-          PHYSICAL_EDGES,
-        ]}
-      >
+      <View pointerEvents="none" style={parts}>
         <View pointerEvents="none" style={track}>
           <View
             style={[
@@ -427,7 +420,9 @@ const MarkContext = createContext<MarkStyle | null>(null);
  * thumb sits at `value`, in the slider's own units, size and direction.
  * `offset` moves it further along from `min`'s end; minus half the mark's
  * size centers it there: `markStyle(1500, -4)` centers an 8-wide dot on the
- * thumb at 1500. A position, so give the mark `position: 'absolute'`.
+ * thumb at 1500. A position, so give the mark `position: 'absolute'`. Marks
+ * lay out left to right in any app (see `mapSliderStyle`'s `parts`); a box
+ * inside a mark can set `direction` to lay its own content out right to left.
  */
 export function useSliderMarkStyle(): MarkStyle {
   const markStyle = useContext(MarkContext);
@@ -545,18 +540,6 @@ const ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const;
 const WEB_KEEP_FOCUS = {
   onMouseDown: (event: { preventDefault(): void }) => event.preventDefault(),
 };
-
-/**
- * Lays the slider's parts out left to right in any app, so the physical
- * `left` / `right` that place them mean what a press's `locationX` reads. In
- * a right-to-left app, React Native turns `left` and `right` into `start` and
- * `end` (`swapLeftAndRightInRTL`), and those resolve by the parent's
- * direction; without this, the thumb would draw mirrored from where a press
- * puts it. `dir` still picks the edge `min` sits at (`slideFrom`). It goes
- * on a box inside the slider's own, since a box's direction also resolves
- * its own margins: the slider's margins keep flipping with the app.
- */
-const PHYSICAL_EDGES: ViewStyle = { direction: 'ltr' };
 
 /** Web only: a pointer over it, no text selected or page scrolled by a drag. */
 const WEB_SLIDER = { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as ViewStyle;

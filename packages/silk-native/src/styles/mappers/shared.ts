@@ -37,6 +37,7 @@ export type RnViewStyle = {
     | 'space-evenly'
     | undefined;
   flexWrap?: 'nowrap' | 'wrap' | undefined;
+  direction?: 'inherit' | 'ltr' | 'rtl' | undefined;
   gap?: number | undefined;
   borderRadius?: number | undefined;
   borderWidth?: number | undefined;
