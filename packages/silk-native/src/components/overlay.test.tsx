@@ -559,7 +559,7 @@ test("Listbox calls the caller's onKeyDown, then handles the key", () => {
         accessibilityLabel="Steps"
         value="a"
         onValueChange={() => {}}
-        {...({ onKeyDown: (event: { nativeEvent: { key: string } }) => keys.push(event.nativeEvent.key) } as object)}
+        onKeyDown={(event) => keys.push(event.nativeEvent.key)}
       >
         <Listbox.Item value="a">A</Listbox.Item>
         <Listbox.Item value="b">B</Listbox.Item>

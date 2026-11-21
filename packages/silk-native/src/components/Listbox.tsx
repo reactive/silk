@@ -39,7 +39,7 @@ type ItemNode = ComponentRef<typeof View>;
  * A key pressed in the list: react-native-web's `onKeyDown`, which React
  * Native before 0.84 doesn't type on View.
  */
-interface KeyDownEvent {
+export interface ListboxKeyDownEvent {
   readonly nativeEvent: { readonly key: string };
   preventDefault(): void;
 }
@@ -70,7 +70,7 @@ interface ListboxContextValue {
 const ListboxContext = createContext<ListboxContextValue | null>(null);
 
 export interface ListboxRootProps
-  extends SelectVariantProps, Omit<ViewProps, 'children' | 'style'> {
+  extends SelectVariantProps, Omit<ViewProps, 'children' | 'style' | 'onKeyDown'> {
   readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly children?: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
@@ -82,6 +82,8 @@ export interface ListboxRootProps
   readonly onHighlightChange?: (value: string | undefined) => void;
   /** Focuses the chosen item (else the first) on mount, as for a list opened from the keyboard. @default false */
   readonly autoFocus?: boolean;
+  /** Called with each key pressed in the list (web), before the list handles it. */
+  readonly onKeyDown?: (event: ListboxKeyDownEvent) => void;
 }
 
 /**
@@ -105,6 +107,7 @@ function ListboxRoot({
   children,
   ref,
   onPointerLeave,
+  onKeyDown: onCallerKeyDown,
   ...rest
 }: ListboxRootProps): JSX.Element {
   const defaults = useComponentDefaults('Listbox');
@@ -134,8 +137,8 @@ function ListboxRoot({
     if (target !== undefined) focus(target);
   }, [autoFocus, counted]);
 
-  const onKeyDown = (event: KeyDownEvent) => {
-    (rest as { onKeyDown?: (event: KeyDownEvent) => void }).onKeyDown?.(event);
+  const onKeyDown = (event: ListboxKeyDownEvent) => {
+    onCallerKeyDown?.(event);
     const { key } = event.nativeEvent;
     if (key === ' ') {
       // Enter presses the focused item already (react-native-web presses on Enter).
@@ -284,7 +287,7 @@ function ListboxItem({
       {...rnwAttrs({ 'data-highlighted': highlighted || undefined }, rest)}
     >
       <ItemLabelContext.Provider value={label}>
-        {/* Not part of the option's name; aria-selected says it. */}
+        {/* Not part of the option's name; its state says it (aria-selected on the web, checked on native). */}
         <View style={indicator} aria-hidden importantForAccessibility="no-hide-descendants">
           {selected ? <ListboxItemText>✓</ListboxItemText> : null}
         </View>
