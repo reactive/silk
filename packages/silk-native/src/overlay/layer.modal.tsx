@@ -7,7 +7,7 @@ import {
 } from 'react';
 import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Pressable } from '../components/Pressable.js';
-import type { FloatingLayerProps } from './layer.js';
+import { type FloatingLayerProps, withAnchor } from './layer.js';
 import { type Box, placedStyle, placeFloating, type Size } from './place.js';
 
 /**
@@ -27,11 +27,13 @@ export function FloatingLayer({
   // loading in, or shrunk to the room) places it on that side.
   const [natural, setNatural] = useState<Size>();
   const [size, setSize] = useState<Size>();
-  useLayoutEffect(() => {
-    anchor.current?.measureInWindow((x, y, width, height) =>
-      setAnchorBox({ x, y, width, height }),
-    );
-  }, [anchor]);
+  useLayoutEffect(
+    () =>
+      withAnchor(anchor, (view) =>
+        view.measureInWindow((x, y, width, height) => setAnchorBox({ x, y, width, height })),
+      ),
+    [anchor],
+  );
 
   // The window it opened in: a new size (the device turned) moves the anchor.
   const opened = useRef(screen);

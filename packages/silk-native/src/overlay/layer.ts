@@ -19,3 +19,24 @@ export interface FloatingLayerProps extends PlaceOptions {
  * so a body portal lands over anything the page layers below it.
  */
 export const FLOATING_Z_INDEX = 40;
+
+/**
+ * Runs `start` with the anchor's node once it is attached, and returns what
+ * undoes it. An anchor rendered after the layer attaches its ref after the
+ * layer's layout effects, so it is tried again on the next frame.
+ */
+export function withAnchor<T>(
+  anchor: RefObject<T | null>,
+  start: (node: T) => (() => void) | void,
+): () => void {
+  let stop: (() => void) | void;
+  const run = () => {
+    if (anchor.current) stop = start(anchor.current);
+  };
+  const frame = anchor.current ? undefined : requestAnimationFrame(run);
+  if (frame === undefined) run();
+  return () => {
+    if (frame !== undefined) cancelAnimationFrame(frame);
+    stop?.();
+  };
+}

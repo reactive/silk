@@ -81,7 +81,9 @@ export interface PopoverContentProps
  * web: the page stays live (a pointer can still hover the anchor), focus stays
  * where it was until something inside takes it, and no `aria-modal` is set.
  * On native it is a transparent Modal. Its pointer props (`onPointerEnter`,
- * `onPointerLeave`) reach the surface, for menus that open on hover.
+ * `onPointerLeave`) reach the surface, for menus that open on hover. It
+ * shrinks to the room beside the anchor; wrap long content (a long
+ * `Listbox`) in a ScrollView so it scrolls there.
  */
 function PopoverContent({
   size,

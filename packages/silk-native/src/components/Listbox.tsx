@@ -103,6 +103,7 @@ function ListboxRoot({
   ...rest
 }: ListboxRootProps): JSX.Element {
   const defaults = useComponentDefaults('Select');
+  const { density: themeDensity } = useTheme();
   const popover = usePopoverContext();
   const [highlighted, setHighlighted] = useState<string>();
   const { enabledItems, enabled, ifEnabled, focus, holdsFocus, register } = useItems();
@@ -156,7 +157,7 @@ function ListboxRoot({
   const tabStop = enabledItems ? (movesFrom ?? enabledItems[0]) : value;
   const variant: SelectVariantProps = {
     size: size ?? defaults.size ?? selectRecipe.defaults.size,
-    density: density ?? defaults.density ?? selectRecipe.defaults.density,
+    density: density ?? defaults.density ?? themeDensity,
   };
 
   return (

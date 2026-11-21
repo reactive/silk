@@ -300,6 +300,46 @@ test('Popover re-places as its content resizes, on the side it took first', () =
   }
 });
 
+test('Popover opened on mount is placed even when its anchor comes after it', async () => {
+  function LateAnchor() {
+    const anchor = useRef<ComponentRef<typeof View>>(null);
+    return (
+      <SilkProvider theme={theme}>
+        <Popover.Root open onOpenChange={() => {}} anchor={anchor}>
+          <Popover.Content testID="popover">
+            <Text>Inside</Text>
+          </Popover.Content>
+        </Popover.Root>
+        <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
+      </SilkProvider>
+    );
+  }
+  render(<LateAnchor />);
+  const layer = () => popover()!.parentElement!;
+  // Unplaced until the anchor attaches, then placed on the next frame.
+  expect(layer().style.opacity).toBe('0');
+  await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+  expect(layer().style.opacity).toBe('');
+  expect(layer().style.top).not.toBe('');
+});
+
+test('Listbox items take the provider density unless told otherwise', () => {
+  const rowHeight = (provider?: 'compact', own?: 'comfortable') => {
+    const { unmount } = render(
+      <SilkProvider theme={theme} density={provider}>
+        <Listbox.Root accessibilityLabel="Steps" value={undefined} density={own} onValueChange={() => {}}>
+          <Listbox.Item value="a">a</Listbox.Item>
+        </Listbox.Root>
+      </SilkProvider>,
+    );
+    const height = getComputedStyle(options()[0]).minHeight;
+    unmount();
+    return height;
+  };
+  expect(rowHeight('compact')).not.toBe(rowHeight());
+  expect(rowHeight('compact', 'comfortable')).toBe(rowHeight());
+});
+
 test('Popover keeps focus where it is as its placement props change', () => {
   const { rerender } = render(<PickerHarness focusOnOpen sideOffset={4} />);
   fireEvent.click(screen.getByLabelText('Strength'));

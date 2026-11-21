@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { View } from 'react-native';
-import { FLOATING_Z_INDEX, type FloatingLayerProps } from './layer.js';
+import { FLOATING_Z_INDEX, type FloatingLayerProps, withAnchor } from './layer.js';
 import { type FloatingSide, type Placement, placeFloating, placedStyle } from './place.js';
 
 /**
@@ -47,27 +47,29 @@ export function FloatingLayer({
   // Placed beside the anchor, and again as its size changes (content
   // loading in), on the side it took first so a smaller height can't flip it.
   useLayoutEffect(() => {
-    const from = element(anchor.current);
     const self = layer.current;
-    if (!from || !self) return;
-    let taken: FloatingSide | undefined;
-    const placeNow = () => {
-      const { left, top, width, height } = from.getBoundingClientRect();
-      const next = placeFloating(
-        { x: left, y: top, width, height },
-        self.getBoundingClientRect(),
-        { width: document.documentElement.clientWidth, height: window.innerHeight },
-        { side: taken ?? side, align, sideOffset, collisionPadding },
-      );
-      taken = next.side;
-      setPlace((was) => (was && samePlacement(was, next) ? was : next));
-    };
-    placeNow();
-    // jsdom has none.
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(placeNow);
-    observer.observe(self);
-    return () => observer.disconnect();
+    if (!self) return;
+    return withAnchor(anchor, (view) => {
+      const from = element(view)!;
+      let taken: FloatingSide | undefined;
+      const placeNow = () => {
+        const { left, top, width, height } = from.getBoundingClientRect();
+        const next = placeFloating(
+          { x: left, y: top, width, height },
+          self.getBoundingClientRect(),
+          { width: document.documentElement.clientWidth, height: window.innerHeight },
+          { side: taken ?? side, align, sideOffset, collisionPadding },
+        );
+        taken = next.side;
+        setPlace((was) => (was && samePlacement(was, next) ? was : next));
+      };
+      placeNow();
+      // jsdom has none.
+      if (typeof ResizeObserver === 'undefined') return;
+      const observer = new ResizeObserver(placeNow);
+      observer.observe(self);
+      return () => observer.disconnect();
+    });
   }, [client, anchor, side, align, sideOffset, collisionPadding]);
 
   useLayoutEffect(() => {
