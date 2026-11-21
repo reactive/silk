@@ -21,6 +21,10 @@ const mocked = rs.hoisted(() => ({
   finish: true,
   /** The nodes handed to a sheet's scroll ref. */
   scrolls: [] as unknown[],
+  /** The sheet's scroll view's box on the page, as `measure` reports it. */
+  box: null as null | { pageX: number; pageY: number; width: number; height: number },
+  /** How far the sheet's content is scrolled. */
+  scrollY: 0,
 }));
 
 // The factories run at the sheet's import below, after this file's own imports.
@@ -39,13 +43,15 @@ rs.mock('react-native-reanimated', () => ({
   ReduceMotion: { Always: 'always', Never: 'never' },
   cancelAnimation: () => {},
   interpolate: () => 1,
-  measure: () => null,
+  measure: () => mocked.box,
   scrollTo: () => {},
   useAnimatedRef: () => (node: unknown) => {
     if (node) mocked.scrolls.push(node);
   },
   useAnimatedStyle: (style: () => object) => style(),
-  useScrollOffset: () => {},
+  useScrollOffset: (_ref: unknown, offset: { value: number }) => {
+    offset.value = mocked.scrollY;
+  },
   useSharedValue: <T,>(value: T) => useRef({ value }).current,
   withSpring: (to: number, config: { velocity: number }, done?: (finished: boolean) => void) => {
     mocked.springs.push(to);
@@ -71,8 +77,14 @@ const { Dialog } = await import('./index.js');
 
 const theme = createTheme({ colorScheme: 'dark' });
 
-/** A bottom sheet whose owner closes it when asked, unless `keepOpen`. */
-function Harness({ keepOpen = false }: { readonly keepOpen?: boolean }) {
+/** A bottom sheet whose owner closes it when asked, unless `keepOpen`; `scroll` adds content. */
+function Harness({
+  keepOpen = false,
+  scroll = false,
+}: {
+  readonly keepOpen?: boolean;
+  readonly scroll?: boolean;
+}) {
   const [open, setOpen] = useState(true);
   const [asks, setAsks] = useState(0);
   return (
@@ -86,6 +98,7 @@ function Harness({ keepOpen = false }: { readonly keepOpen?: boolean }) {
       >
         <Dialog.Content placement="bottom" testID="sheet">
           <Dialog.Title>Settings</Dialog.Title>
+          {scroll ? <Dialog.ScrollView /> : null}
         </Dialog.Content>
       </Dialog.Root>
       <span data-testid="asks">{asks}</span>
@@ -114,6 +127,8 @@ beforeEach(() => {
   mocked.speeds.length = 0;
   mocked.scrolls.length = 0;
   mocked.finish = true;
+  mocked.box = null;
+  mocked.scrollY = 0;
   now = 1000;
   rs.spyOn(Date, 'now').mockImplementation(() => now);
 });
@@ -167,6 +182,23 @@ test('caught as it slides out and flicked before it moves, a sheet keeps the fli
   now += 10;
   act(() => mocked.pan!.onDeactivate!({ canceled: false, velocityY: 1500 }));
   expect(mocked.speeds).toEqual([1500]);
+});
+
+test('a drag beside scrolled content narrower than the sheet moves the sheet; one in it scrolls', () => {
+  mocked.box = { pageX: 100, pageY: 200, width: 200, height: 300 };
+  mocked.scrollY = 50;
+  render(<Harness scroll />);
+  const flick = (absoluteX: number) =>
+    act(() => {
+      mocked.pan!.onBegin!({ absoluteX, absoluteY: 300 });
+      mocked.pan!.onActivate!();
+      mocked.pan!.onUpdate!({ changeY: 100 });
+      mocked.pan!.onDeactivate!({ canceled: false, velocityY: 1500 });
+    });
+  flick(150);
+  expect(asks()).toBe('0');
+  flick(40);
+  expect(asks()).toBe('1');
 });
 
 test('a short, slow drag settles back without asking to close', () => {
