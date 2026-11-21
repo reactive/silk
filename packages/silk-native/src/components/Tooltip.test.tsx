@@ -199,7 +199,7 @@ test('a press on a part inside that takes no focus keeps it open, however long i
     expect(tip()).not.toBeNull();
     // The press's mousedown takes focus off the control, to nothing or to a
     // focusable box outside; its click comes later.
-    fireEvent.pointerDown(screen.getByTestId('trigger'));
+    fireEvent.pointerDown(screen.getByTestId('trigger'), { button: 0 });
     act(() => go.blur());
     tabTo(screen.getByRole('button', { name: 'Outside' }));
     act(() => rs.advanceTimersByTime(500));
@@ -248,7 +248,7 @@ test('a press that went down inside and came up outside ends there', () => {
     </SilkProvider>,
   );
   const go = screen.getByRole('button', { name: 'Go' });
-  fireEvent.pointerDown(screen.getByTestId('trigger'));
+  fireEvent.pointerDown(screen.getByTestId('trigger'), { button: 0 });
   // Released off the trigger: the click lands on what holds both.
   fireEvent.click(document.body);
   tabTo(go);

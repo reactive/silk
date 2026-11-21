@@ -52,7 +52,10 @@ interface TooltipContextValue {
   readonly openAfterDelay: () => void;
   /** Closes it, unless a press inside the trigger is underway. */
   readonly closeNow: () => void;
-  /** Closes it after a pointer's moment to reach the tooltip, unless something changes it first. */
+  /**
+   * Closes it after a pointer's moment to reach the tooltip, unless something
+   * changes it first. Not held by a press: a mouse leaving ends its hover.
+   */
   readonly closeAfterGrace: () => void;
 }
 
@@ -197,7 +200,9 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
           onFocus: (event) => {
             if (matchesFocusVisible(event.target as unknown as FocusTarget)) openNow();
           },
-          onPointerDown: () => {
+          onPointerDown: (event) => {
+            // The main button's press, which ends with a click.
+            if (event.nativeEvent.button !== 0) return;
             pressing.current = true;
             // The press ends with its click, which lands on what holds both where
             // it went down and where it came up: the page hears it wherever.
