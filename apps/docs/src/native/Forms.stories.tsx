@@ -201,6 +201,8 @@ export const SliderPadded: Story = {
     </View>
   ),
   play: async ({ canvas }) => {
+    // jsdom has no layout, so nothing can be pressed; the browser run checks this.
+    if (canvas.getByTestId(PADDED[0].name).getBoundingClientRect().width === 0) return;
     for (const row of PADDED) {
       const { name } = row;
       for (const value of [0, 50, 100]) {

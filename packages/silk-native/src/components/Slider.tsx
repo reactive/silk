@@ -39,8 +39,8 @@ import { sameItems } from './sameItems.js';
 import {
   FAR,
   fractionAt,
-  PHYSICAL_FRAME,
   fractionIn,
+  PHYSICAL_FRAME,
   placeAt,
   type SliderEdge,
   slideFrom,
@@ -448,7 +448,8 @@ interface SlideOptions {
 /**
  * Dragging, through the responder system: a press brings the nearest thumb
  * there and focuses it (on the web), a move slides it, and the end commits
- * once if anything changed. The slider's parts take no touches, so the
+ * once if anything changed; a press before the slider is laid out does
+ * nothing. The slider's parts take no touches, so the
  * press's location is the slider's own, less where its parts box starts
  * (past any padding or border); moves add the page distance from
  * the press, so a pointer that wanders off the slider keeps sliding. A drag
