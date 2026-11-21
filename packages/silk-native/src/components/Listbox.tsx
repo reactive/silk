@@ -105,29 +105,7 @@ function ListboxRoot({
   const defaults = useComponentDefaults('Select');
   const popover = usePopoverContext();
   const [highlighted, setHighlighted] = useState<string>();
-  const items = useRef(new Map<string, { node: ItemNode; disabled: boolean }>());
-  const enabled = () =>
-    inTreeOrder(items.current)
-      .filter(([, item]) => !item.disabled)
-      .map(([itemValue]) => itemValue);
-  // Renders this list again as items register, leave or change `disabled`,
-  // which happens in whichever component renders them.
-  const [, itemsChanged] = useReducer((count: number) => count + 1, 0);
-  // The enabled items' values, recounted after each commit of Listbox.Root:
-  // an item filtered out or disabled can't hold the Tab stop or take a key.
-  // Keys move from the highlighted or chosen item if it is in this list,
-  // but read the order afresh at keydown, since a child can reorder its
-  // items without this list rendering.
-  // Unknown until the items commit.
-  const [enabledItems, setEnabledItems] = useState<readonly string[]>();
-  useLayoutEffect(() => {
-    const now = enabled();
-    setEnabledItems((was) => (was && sameList(was, now) ? was : now));
-  });
-  /** `target`, if it names an enabled item shown. */
-  const ifEnabled = (target: string | undefined) =>
-    target !== undefined && enabledItems?.includes(target) ? target : undefined;
-  const focus = (target: string) => items.current.get(target)?.node.focus();
+  const { enabledItems, enabled, ifEnabled, focus, holdsFocus, register } = useItems();
   const highlight = (next: string) => {
     if (next === highlighted) return;
     setHighlighted(next);
@@ -136,10 +114,6 @@ function ListboxRoot({
   const pick = (picked: string) => {
     if (picked !== value) onValueChange(picked);
     popover?.close();
-  };
-  const holdsFocus = () => {
-    const active = activeElement();
-    return [...items.current.values()].some(({ node }) => node === active);
   };
   /** The item the keys move from: the highlighted, else the chosen. */
   const movesFrom = ifEnabled(highlighted) ?? ifEnabled(value);
@@ -184,18 +158,6 @@ function ListboxRoot({
     size: size ?? defaults.size ?? selectRecipe.defaults.size,
     density: density ?? defaults.density ?? selectRecipe.defaults.density,
   };
-  // Stable, so an item's ref callback keeps its place in mount order across renders.
-  const register = useCallback((itemValue: string, node: ItemNode | null, disabled: boolean) => {
-    const was = items.current.get(itemValue);
-    if (node) {
-      if (was?.node === node && was.disabled === disabled) return;
-      items.current.set(itemValue, { node, disabled });
-    } else {
-      if (!was) return;
-      items.current.delete(itemValue);
-    }
-    itemsChanged();
-  }, []);
 
   return (
     <ListboxContext.Provider
@@ -308,6 +270,52 @@ function ListboxItemText({ role = 'bodySm', style, ...props }: ListboxItemTextPr
   const label = useContext(ItemLabelContext);
   if (!label) throw new Error('Listbox.ItemText must be used within Listbox.Item');
   return <Text role={role} {...props} style={[label, style]} />;
+}
+
+/**
+ * The items of a list, as they register through their refs: the enabled
+ * ones, focusing one, and whether one holds focus. The enabled list is
+ * recounted after each commit of the component calling this: an item
+ * filtered out or disabled can't hold the Tab stop or take a key. It is
+ * unknown until the items commit. `enabled()` reads the order on the page
+ * afresh, for keys, since a child can reorder its items without the list
+ * rendering.
+ */
+function useItems() {
+  const items = useRef(new Map<string, { node: ItemNode; disabled: boolean }>());
+  const enabled = () =>
+    inTreeOrder(items.current)
+      .filter(([, item]) => !item.disabled)
+      .map(([itemValue]) => itemValue);
+  // Renders the list again as items register, leave or change `disabled`,
+  // which happens in whichever component renders them.
+  const [, itemsChanged] = useReducer((count: number) => count + 1, 0);
+  const [enabledItems, setEnabledItems] = useState<readonly string[]>();
+  useLayoutEffect(() => {
+    const now = enabled();
+    setEnabledItems((was) => (was && sameList(was, now) ? was : now));
+  });
+  /** `target`, if it names an enabled item shown. */
+  const ifEnabled = (target: string | undefined) =>
+    target !== undefined && enabledItems?.includes(target) ? target : undefined;
+  const focus = (target: string) => items.current.get(target)?.node.focus();
+  const holdsFocus = () => {
+    const active = activeElement();
+    return [...items.current.values()].some(({ node }) => node === active);
+  };
+  // Stable, so an item's ref callback keeps its place in mount order across renders.
+  const register = useCallback((itemValue: string, node: ItemNode | null, disabled: boolean) => {
+    const was = items.current.get(itemValue);
+    if (node) {
+      if (was?.node === node && was.disabled === disabled) return;
+      items.current.set(itemValue, { node, disabled });
+    } else {
+      if (!was) return;
+      items.current.delete(itemValue);
+    }
+    itemsChanged();
+  }, []);
+  return { enabledItems, enabled, ifEnabled, focus, holdsFocus, register };
 }
 
 /** react-native-web's focused DOM element (silk-native doesn't load DOM types). */

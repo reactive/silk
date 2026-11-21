@@ -8,7 +8,7 @@ import {
 import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Pressable } from '../components/Pressable.js';
 import type { FloatingLayerProps } from './layer.js';
-import { type Box, placeFloating, type Size } from './place.js';
+import { type Box, placedStyle, placeFloating, type Size } from './place.js';
 
 /**
  * The native floating layer: a transparent Modal, so it draws over everything
@@ -63,9 +63,7 @@ export function FloatingLayer({
         }}
         style={[
           styles.layer,
-          place
-            ? { left: place.left, top: place.top, width: place.width, maxHeight: place.maxHeight }
-            : styles.unplaced,
+          place ? placedStyle(place) : styles.unplaced,
         ]}
       >
         {children}

@@ -70,3 +70,13 @@ export function placeFloating(
   const left = Math.max(collisionPadding, Math.min(wanted, window.width - width - collisionPadding));
   return { left, top, width, maxHeight, side: chosen };
 }
+
+/** The style that puts a surface where `placement` says, for either platform's layer. */
+export function placedStyle({
+  left,
+  top,
+  width,
+  maxHeight,
+}: Placement): Pick<Placement, 'left' | 'top' | 'width' | 'maxHeight'> {
+  return { left, top, width, maxHeight };
+}

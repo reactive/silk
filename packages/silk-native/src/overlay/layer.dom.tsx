@@ -13,7 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 import type { View } from 'react-native';
 import { FLOATING_Z_INDEX, type FloatingLayerProps } from './layer.js';
-import { type FloatingSide, type Placement, placeFloating } from './place.js';
+import { type FloatingSide, type Placement, placeFloating, placedStyle } from './place.js';
 
 /**
  * The web's floating layer (react-native-web): a non-modal layer in a portal
@@ -28,7 +28,10 @@ export function FloatingLayer({
   anchor,
   onDismiss,
   children,
-  ...options
+  side,
+  align,
+  sideOffset,
+  collisionPadding,
 }: FloatingLayerProps): JSX.Element | null {
   const layer = useRef<HTMLDivElement>(null);
   const [place, setPlace] = useState<Placement>();
@@ -40,7 +43,6 @@ export function FloatingLayer({
   useLayoutEffect(() => {
     dismiss.current = onDismiss;
   });
-  const { side, align, sideOffset, collisionPadding } = options;
 
   // Placed beside the anchor, and again as its size changes (content
   // loading in), on the side it took first so a smaller height can't flip it.
@@ -111,17 +113,7 @@ export function FloatingLayer({
         if (onAnchor(event.target)) event.preventDefault();
       }}
       onDismiss={onDismiss}
-      style={
-        place
-          ? {
-              ...styles.layer,
-              left: place.left,
-              top: place.top,
-              width: place.width,
-              maxHeight: place.maxHeight,
-            }
-          : { ...styles.layer, ...styles.unplaced }
-      }
+      style={{ ...styles.layer, ...(place ? placedStyle(place) : styles.unplaced) }}
     >
       {children}
     </DismissableLayer>,
