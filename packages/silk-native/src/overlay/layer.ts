@@ -1,4 +1,10 @@
-import type { ComponentRef, ReactNode, RefObject } from 'react';
+import {
+  type ComponentRef,
+  type Context,
+  createContext,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import type { View } from 'react-native';
 import type { PlaceOptions } from './place.js';
 
@@ -33,6 +39,17 @@ export interface OpenAutoFocusEvent {
  * so a body portal lands over anything the page layers below it.
  */
 export const FLOATING_Z_INDEX = 40;
+
+/**
+ * Where a floating layer opened inside a Dialog goes on the web: a node inside
+ * the dialog's Modal, so the layer paints above the dialog (react-native-web
+ * stacks a Modal at z-index 9999, over a layer at the end of the page) and
+ * stays inside its focus trap. Undefined outside a dialog, where the layer
+ * goes to the end of the page; null inside one until its host mounts, while
+ * the layer waits for it. Native layers are Modals of their own and ignore it.
+ */
+export const FloatingHostContext: Context<ComponentRef<typeof View> | null | undefined> =
+  createContext<ComponentRef<typeof View> | null | undefined>(undefined);
 
 /**
  * Runs `start` with the anchor's node once it is attached, and returns what

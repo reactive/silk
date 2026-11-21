@@ -48,13 +48,32 @@ export interface WebFocusEvent {
   readonly relatedTarget: WebNode | null;
 }
 
+/** A key event as the page's listeners get it. */
+export interface WebKeyEvent {
+  readonly key: string;
+  /** A held key's repeat. */
+  readonly repeat: boolean;
+  /** Something that handled it said so (`preventDefault()`); read after it was dispatched. */
+  readonly defaultPrevented: boolean;
+}
+
 /** The page's `document`: what listening on it, and finding focus, take. */
 export interface WebDocument {
   readonly activeElement?: unknown;
   addEventListener(
+    type: 'keydown',
+    listener: (event: WebKeyEvent) => void,
+    options: boolean | { readonly capture: boolean; readonly once?: boolean },
+  ): void;
+  addEventListener(
     type: string,
     listener: () => void,
     options: boolean | { readonly capture: boolean; readonly once?: boolean },
+  ): void;
+  removeEventListener(
+    type: 'keydown',
+    listener: (event: WebKeyEvent) => void,
+    options: boolean | { readonly capture: boolean },
   ): void;
   removeEventListener(
     type: string,

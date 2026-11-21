@@ -28,7 +28,7 @@
       "Switch": 3700,
       "RadioGroup": 3800,
       "Field": 3200,
-      "Dialog": 3200,
+      "Dialog": 3500,
       "Popover": 9800,
       "Listbox": 4300,
       "Slider": 5400,
