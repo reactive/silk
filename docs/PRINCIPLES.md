@@ -44,7 +44,7 @@ Violating any of these is a bug regardless of how convenient the violation is.
 | Interaction behavior source (web)    | Radix Primitives                                        |
 | Interaction behavior source (native) | OS behaviors + vetted native-backed libraries (Stage 6) |
 | Interaction behavior source (`silk-native` on react-native-web) | React Native components as react-native-web implements them (`Modal`) for modal overlays; Radix's non-visual `DismissableLayer` and untrapped `FocusScope` for non-modal layers |
-| Native gestures and gesture-driven motion (`silk-native/gesture`) | React Native Gesture Handler v3 + Reanimated v4 (worklets), optional peers |
+| Native gestures and gesture-driven motion (`silk-native/gesture`) | React Native Gesture Handler v3 + Reanimated v4 + react-native-worklets, optional peers |
 | SSR host                             | Anansi                                                  |
 | Source distribution                  | shadcn registry protocol                                |
 
