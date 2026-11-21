@@ -49,7 +49,7 @@ export function FloatingLayer({
   const host = useContext(FloatingHostContext);
   const [place, setPlace] = useState<Placement>();
   // False on a server and while hydrating, which have no page to portal into.
-  // The effects below depend on it to run once the layer exists.
+  // The effects below depend on it, and on `host`, to run once the layer exists.
   const client = useSyncExternalStore(subscribeNever, onClient, onServer);
   const anchorElement = () => (anchor.current ? element(anchor.current) : null);
   // The latest, so the page listeners below stay put while it is open.
@@ -84,7 +84,7 @@ export function FloatingLayer({
       observer.observe(self);
       return () => observer.disconnect();
     });
-  }, [client, anchor, side, align, sideOffset, collisionPadding]);
+  }, [client, host, anchor, side, align, sideOffset, collisionPadding]);
 
   useLayoutEffect(() => {
     const self = layer.current;
@@ -92,7 +92,7 @@ export function FloatingLayer({
       // Runs as it closes, before it leaves the page, so focus inside it is still there to see.
       if (self?.contains(document.activeElement)) anchorElement()?.focus();
     };
-  }, [client, anchor]);
+  }, [client, host, anchor]);
 
   useEffect(
     () =>
@@ -134,7 +134,9 @@ export function FloatingLayer({
   const onAnchor = (target: EventTarget | null) =>
     target instanceof Node && Boolean(anchorElement()?.contains(target));
 
-  if (!client) return null;
+  // Inside a dialog whose host hasn't mounted yet, it waits rather than open
+  // at the end of the page and move (which would rebuild it).
+  if (!client || host === null) return null;
   return createPortal(
     <FocusScope
       asChild

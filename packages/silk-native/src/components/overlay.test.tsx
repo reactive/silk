@@ -100,16 +100,16 @@ dialogTest('Dialog placement comes from the prop, else SilkDefaults, else center
   expect(sheet({ placement: 'center', defaults: { Dialog: { placement: 'bottom' } } })).toBe(false);
 });
 
-function DialogWithPopover() {
+function DialogWithPopover({ popoverOpen = true }: { readonly popoverOpen?: boolean }) {
   const anchor = useRef<ComponentRef<typeof View>>(null);
   return (
     <SilkProvider theme={theme}>
       <Dialog.Root open onOpenChange={() => {}}>
         <Dialog.Content>
           <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
-          <Popover.Root open onOpenChange={() => {}} anchor={anchor}>
-            <Popover.Content testID="popover" onOpenAutoFocus={(event) => event.preventDefault()}>
-              <Text>1500</Text>
+          <Popover.Root open={popoverOpen} onOpenChange={() => {}} anchor={anchor}>
+            <Popover.Content testID="popover">
+              <Pressable accessibilityRole="button" accessibilityLabel="1500" />
             </Popover.Content>
           </Popover.Root>
         </Dialog.Content>
@@ -126,6 +126,15 @@ dialogTest('A popover opened inside a Dialog renders in its Modal, over the pane
   expect(dialog.contains(popover)).toBe(true);
   // Not inside the panel, whose box would clip it.
   expect(screen.getByLabelText('Strength').parentElement?.contains(popover)).toBe(false);
+});
+
+dialogTest('A popover open as its Dialog mounts hands focus back to its anchor as it closes', () => {
+  // It waits for the dialog's host rather than open at the end of the page and
+  // move, which would rebuild it under effects still holding the old one.
+  const { rerender } = render(<DialogWithPopover />);
+  expect(focused()).toBe('1500');
+  rerender(<DialogWithPopover popoverOpen={false} />);
+  expect(focused()).toBe('Strength');
 });
 
 // --- Popover + Listbox ---
