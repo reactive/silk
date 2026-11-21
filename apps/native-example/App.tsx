@@ -32,6 +32,7 @@ import {
 } from '@reactive/silk-native';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState, type JSX } from 'react';
+import { Overlays } from './Overlays';
 import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 
 const paired = generatePairedPalette('#0ea5e9');
@@ -195,6 +196,8 @@ export function App(): JSX.Element {
                   <Text tone="secondary">Column + gap + subtle border</Text>
                 </Card>
               </Stack>
+
+              <Overlays />
 
               <Stack gap="2">
                 <Heading level="2">Forms</Heading>

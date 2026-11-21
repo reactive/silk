@@ -190,6 +190,33 @@ export const dialogPanelMotionClass: string = css`
     }
   }
 
+  /* A sheet rises from the bottom edge and sinks back into it. */
+  &:where([data-placement='bottom']):where([data-state='open']) {
+    animation-name: silk-dialog-sheet-in;
+  }
+
+  &:where([data-placement='bottom']):where([data-state='closed']) {
+    animation-name: silk-dialog-sheet-out;
+  }
+
+  @keyframes silk-dialog-sheet-in {
+    from {
+      transform: translate(-50%, 100%);
+    }
+    to {
+      transform: translate(-50%, 0);
+    }
+  }
+
+  @keyframes silk-dialog-sheet-out {
+    from {
+      transform: translate(-50%, 0);
+    }
+    to {
+      transform: translate(-50%, 100%);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     &:where([data-state='open']),
     &:where([data-state='closed']) {

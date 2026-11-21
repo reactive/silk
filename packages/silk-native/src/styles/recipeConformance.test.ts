@@ -6,6 +6,9 @@ import {
   cardRecipe,
   checkboxRecipe,
   createTheme,
+  dialogRecipe,
+  popoverRecipe,
+  selectRecipe,
   headingRecipe,
   inlineRecipe,
   inputRecipe,
@@ -30,6 +33,9 @@ import {
   mapButtonStyle,
   mapCardStyle,
   mapCheckboxStyle,
+  mapDialogStyle,
+  mapListboxItemStyle,
+  mapPopoverStyle,
   mapHeadingStyle,
   mapInlineStyle,
   mapInputStyle,
@@ -309,5 +315,69 @@ test('conformance: Checkbox / Switch / RadioGroup axes', () => {
     expect(
       mapRadioGroupStyle(theme, { orientation }).root.flexDirection,
     ).toBeTruthy();
+  }
+});
+
+test('conformance: every Dialog size and placement maps; a sheet meets the bottom edge', () => {
+  for (const size of dialogRecipe.variants.size) {
+    for (const placement of dialogRecipe.variants.placement) {
+      const { veil, panel } = mapDialogStyle(theme, { size, placement });
+      expect(veil.backgroundColor).toBe(theme.semantic.color.overlay);
+      expect(panel.width).toBe('100%');
+    }
+  }
+  const sheet = mapDialogStyle(theme, { placement: 'bottom' });
+  expect(sheet.veil.justifyContent).toBe('flex-end');
+  expect(sheet.panel.borderBottomLeftRadius).toBe(0);
+  expect(mapDialogStyle(theme, { placement: 'center' }).veil.justifyContent).toBe('center');
+});
+
+test('conformance: distinct Popover sizes differ in width', () => {
+  for (const [a, b] of distinctPairs(popoverRecipe.variants.size)) {
+    expect(mapPopoverStyle(theme, { size: a }).width).not.toBe(
+      mapPopoverStyle(theme, { size: b }).width,
+    );
+  }
+});
+
+test('conformance: every Select size and density maps a listbox item row', () => {
+  const resting = { highlighted: false, pressed: false, selected: false, disabled: false };
+  for (const size of selectRecipe.variants.size) {
+    for (const density of selectRecipe.variants.density) {
+      expect(mapListboxItemStyle(theme, { size, density }, resting).row.minHeight).toBeTypeOf(
+        'number',
+      );
+    }
+  }
+  const { accent, neutral } = theme.semantic.color.tones;
+  const lit = mapListboxItemStyle(theme, {}, { ...resting, highlighted: true });
+  expect(lit.row.backgroundColor).toBe(accent.subtleHover);
+  expect(lit.label.color).toBe(accent.text);
+  const pressed = mapListboxItemStyle(theme, {}, { ...resting, pressed: true });
+  expect(pressed.row.backgroundColor).toBe(accent.subtleHover);
+  const chosen = mapListboxItemStyle(theme, {}, { ...resting, selected: true });
+  expect(chosen.check.color).toBe(accent.solid);
+  expect(chosen.label.fontWeight).toBe(String(theme.semantic.typography.label.weight));
+  expect(chosen.description.color).toBe(theme.semantic.color.textSecondary);
+  // A disabled item's secondary text dims with its label.
+  const off = mapListboxItemStyle(theme, {}, { ...resting, disabled: true });
+  expect(off.label.color).toBe(neutral.disabledFg);
+  expect(off.description.color).toBe(neutral.disabledFg);
+});
+
+test('conformance: listbox rows follow the theme space scale', () => {
+  const resting = { highlighted: false, pressed: false, selected: false, disabled: false };
+  const doubled = {
+    ...theme,
+    semantic: {
+      ...theme.semantic,
+      space: Object.fromEntries(
+        Object.entries(theme.semantic.space).map(([step, px]) => [step, px * 2]),
+      ) as typeof theme.semantic.space,
+    },
+  };
+  for (const size of selectRecipe.variants.size) {
+    const row = (from: typeof theme) => mapListboxItemStyle(from, { size }, resting).row.minHeight;
+    expect(row(doubled)).toBe(2 * (row(theme) as number));
   }
 });

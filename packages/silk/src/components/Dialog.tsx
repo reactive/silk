@@ -31,15 +31,28 @@ const overlayClass: string = css`
 
 const contentClass: string = css`
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   z-index: ${floatingZIndex.dialog};
   max-height: calc(100vh - var(--silk-space-8));
   overflow: auto;
   /* Dialog-specific: larger radius and padding than popper surfaces */
   border-radius: var(--silk-radius-lg);
   padding: var(--silk-space-5);
+
+  &:where([data-placement='center']) {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  /* A sheet: risen from the bottom edge, flush with it, its top corners rounded. */
+  &:where([data-placement='bottom']) {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-width: 0;
+    padding-bottom: calc(var(--silk-space-5) + env(safe-area-inset-bottom, 0px));
+  }
 
   &:where([data-size='sm']) {
     width: min(100% - var(--silk-space-6), 360px);
@@ -53,6 +66,19 @@ const contentClass: string = css`
   &:where([data-size='full']) {
     width: calc(100% - var(--silk-space-6));
     max-height: calc(100vh - var(--silk-space-6));
+  }
+  /* A sheet spans the screen up to its size's width, with no side gutter. */
+  &:where([data-placement='bottom']):where([data-size='sm']) {
+    width: min(100%, 360px);
+  }
+  &:where([data-placement='bottom']):where([data-size='md']) {
+    width: min(100%, 480px);
+  }
+  &:where([data-placement='bottom']):where([data-size='lg']) {
+    width: min(100%, 640px);
+  }
+  &:where([data-placement='bottom']):where([data-size='full']) {
+    width: 100%;
   }
 `;
 
@@ -80,6 +106,7 @@ export interface DialogContentProps
 export function DialogContent({
   className,
   size,
+  placement,
   container,
   overlayClassName,
   children,
@@ -87,6 +114,8 @@ export function DialogContent({
 }: DialogContentProps): JSX.Element {
   const defaults = useComponentDefaults('Dialog');
   const resolvedSize = size ?? defaults.size ?? dialogRecipe.defaults.size;
+  const resolvedPlacement =
+    placement ?? defaults.placement ?? dialogRecipe.defaults.placement;
 
   return (
     <RadixDialog.Portal {...(container != null ? { container } : {})}>
@@ -103,6 +132,7 @@ export function DialogContent({
             className,
           )}
           data-size={resolvedSize}
+          data-placement={resolvedPlacement}
         >
           {children}
         </RadixDialog.Content>

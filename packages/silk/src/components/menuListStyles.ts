@@ -22,7 +22,8 @@ export const menuItemClass: string = css`
     color var(--silk-motion-fast-duration-ms) var(--silk-motion-fast-easing);
 
   &:where([data-highlighted]) {
-    background-color: var(--silk-color-tone-accent-subtle);
+    /* The hover step: \`subtle\` all but vanishes on a raised menu surface. */
+    background-color: var(--silk-color-tone-accent-subtle-hover);
     color: var(--silk-color-tone-accent-text);
   }
 

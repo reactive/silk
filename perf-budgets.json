@@ -24,10 +24,13 @@
       "Progress": 2300,
       "Input": 2800,
       "Textarea": 2900,
-      "Checkbox": 3600,
-      "Switch": 3600,
+      "Checkbox": 3700,
+      "Switch": 3700,
       "RadioGroup": 3800,
-      "Field": 3200
+      "Field": 3200,
+      "Dialog": 3200,
+      "Popover": 9800,
+      "Listbox": 4300
     },
     "isolatedGzip": {
       "Button": 3200,

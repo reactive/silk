@@ -27,6 +27,8 @@ type TextControlOptions = {
   readonly required?: boolean | undefined;
   readonly onFocus?: TextInputProps['onFocus'];
   readonly onBlur?: TextInputProps['onBlur'];
+  /** The control's own `dataSet`, kept beside Silk's `data-*` attributes (web). */
+  readonly dataSet?: unknown;
 };
 
 type TextControlHostProps = TextInputProps & {
@@ -106,7 +108,7 @@ export function useTextControl(
         'aria-required': fieldProps['aria-required'],
         'data-invalid': invalid ? 'true' : undefined,
         'data-disabled': disabled ? 'true' : undefined,
-      }),
+      }, options),
     } as TextControlHostProps,
   };
 }

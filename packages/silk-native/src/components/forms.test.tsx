@@ -371,3 +371,20 @@ test('Input and Textarea refs reach the text input host, which focuses', () => {
   area.current?.focus();
   expect(document.activeElement).toBe(screen.getByLabelText('Notes'));
 });
+
+test("Silk's data attributes join a control's own dataSet rather than replace it", () => {
+  // React Native's types omit react-native-web's dataSet.
+  const own = (analyticsId: string) => ({ dataSet: { analyticsId } }) as object;
+  render(
+    <SilkProvider>
+      <Checkbox testID="checkbox" {...own('subscribe')} />
+      <Input testID="input" {...own('email')} invalid />
+    </SilkProvider>,
+  );
+  const checkbox = screen.getByTestId('checkbox');
+  expect(checkbox.getAttribute('data-analytics-id')).toBe('subscribe');
+  expect(checkbox.getAttribute('data-state')).toBe('unchecked');
+  const input = screen.getByTestId('input');
+  expect(input.getAttribute('data-analytics-id')).toBe('email');
+  expect(input.getAttribute('data-invalid')).toBe('true');
+});

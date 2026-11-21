@@ -21,6 +21,10 @@ export default defineConfig({
         monorepoRoot,
         'packages/silk-native/src/index.ts',
       ),
+      '#floating-layer': path.resolve(
+        monorepoRoot,
+        'packages/silk-native/src/overlay/layer.dom.tsx',
+      ),
     },
   },
 });

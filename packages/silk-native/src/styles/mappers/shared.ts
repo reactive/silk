@@ -55,7 +55,12 @@ export type RnViewStyle = {
   height?: number | `${number}%` | undefined;
   minHeight?: number | undefined;
   minWidth?: number | undefined;
-  maxWidth?: number | undefined;
+  maxWidth?: number | `${number}%` | undefined;
+  maxHeight?: number | `${number}%` | undefined;
+  flex?: number | undefined;
+  borderBottomWidth?: number | undefined;
+  borderBottomLeftRadius?: number | undefined;
+  borderBottomRightRadius?: number | undefined;
   overflow?: 'hidden' | 'visible' | undefined;
   opacity?: number | undefined;
   shadowColor?: string | undefined;

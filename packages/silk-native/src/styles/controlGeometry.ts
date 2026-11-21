@@ -50,6 +50,18 @@ export const controlMinHeightStep: Readonly<
   lg: { a: 8, b: 2 },
 };
 
+/**
+ * Min-height space steps for a Listbox item row at each size (28 / 32 / 40
+ * at the default scale), resolved through the density-aware space scale.
+ */
+export const listboxRowMinHeightStep: Readonly<
+  Record<ControlSize, { readonly a: SpaceStep; readonly b?: SpaceStep }>
+> = {
+  sm: { a: 6, b: 1 },
+  md: { a: 7 },
+  lg: { a: 8 },
+};
+
 /** Checkbox / Radio box and Switch track height (web space-4 / space-5). */
 export const toggleBoxStep: Readonly<Record<ToggleSize, SpaceStep>> = {
   sm: 4,
