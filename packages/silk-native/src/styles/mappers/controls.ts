@@ -322,7 +322,8 @@ export function mapSwitchStyle(
  * is the thumb's diameter: a thumb's center runs from `thumbSize / 2` past
  * the track's start to `thumbSize / 2` before its end, as Radix keeps web
  * thumbs in bounds, so marks laid out along the slider can line up with it.
- * `crossSize` is the slider's size across its track.
+ * `crossSize` is the slider's size across its track. `parts` is the box
+ * inside `root` that holds the track, marks and thumbs, and fills `root`.
  */
 export function mapSliderStyle(
   theme: Theme,
@@ -335,6 +336,7 @@ export function mapSliderStyle(
   } = {},
 ): {
   root: RnViewStyle;
+  parts: RnViewStyle;
   track: RnViewStyle;
   range: RnViewStyle;
   thumb: SizedViewStyle;
@@ -361,6 +363,12 @@ export function mapSliderStyle(
       ...layout,
       alignItems: 'center',
       ...(state.disabled ? { opacity: 0.55 } : {}),
+    },
+    parts: {
+      flexDirection: layout.flexDirection,
+      flexGrow: 1,
+      alignSelf: 'stretch',
+      alignItems: 'center',
     },
     track: {
       ...(vertical ? { width: trackThickness } : { height: trackThickness }),

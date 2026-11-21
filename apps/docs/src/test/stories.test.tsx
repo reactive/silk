@@ -25,8 +25,10 @@ for (const [path, storyModule] of Object.entries(storyModules)) {
 
   describe(`portable stories: ${moduleName}`, () => {
     for (const [storyName, Story] of stories) {
-      // Mount + play only — browser a11y is gated by @storybook/test-runner.
-      test(`${storyName} mounts`, async () => {
+      // Mount + play only — browser a11y is gated by @storybook/test-runner,
+      // which also runs the stories that need real layout.
+      const run = Story.tags?.includes('needs-layout') ? test.skip : test;
+      run(`${storyName} mounts`, async () => {
         await Story.run();
       });
     }
