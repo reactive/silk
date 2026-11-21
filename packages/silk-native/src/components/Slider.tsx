@@ -39,6 +39,7 @@ import {
   useFieldControlRegistration,
 } from './Field.js';
 import { Pressable } from './Pressable.js';
+import { sameItems } from './sameItems.js';
 import { useControllableValue } from './useControllableValue.js';
 
 const WEB = Platform.OS === 'web';
@@ -89,6 +90,13 @@ export interface SliderProps
 /** Which edge a value of `min` sits at. */
 type SlideFrom = 'left' | 'right' | 'bottom' | 'top';
 
+/** Which edge `min` sits at. */
+function slideFrom(vertical: boolean, rtl: boolean, inverted: boolean): SlideFrom {
+  if (vertical) return inverted ? 'top' : 'bottom';
+  // Right to left and inverted cancel out.
+  return rtl !== inverted ? 'right' : 'left';
+}
+
 /** Keys that move a thumb toward `min`, by the edge `min` sits at (Radix's). */
 const BACK_KEYS: Record<SlideFrom, readonly string[]> = {
   left: ['Home', 'PageDown', 'ArrowDown', 'ArrowLeft'],
@@ -114,16 +122,6 @@ export interface SliderBounds {
   readonly step: number;
   /** The smallest gap between neighboring thumbs, in steps. */
   readonly minSteps: number;
-}
-
-const sameValues = (a: readonly number[], b: readonly number[]): boolean =>
-  a.length === b.length && a.every((value, i) => value === b[i]);
-
-/** Which edge `min` sits at. */
-function slideFrom(vertical: boolean, rtl: boolean, inverted: boolean): SlideFrom {
-  if (vertical) return inverted ? 'top' : 'bottom';
-  // Right to left and inverted cancel out.
-  return rtl !== inverted ? 'right' : 'left';
 }
 
 const decimals = (n: number): number => (String(n).split('.')[1] ?? '').length;
@@ -158,9 +156,7 @@ export function nearestThumb(values: readonly number[], value: number): number {
 
 /**
  * The fraction of the way from `min`'s edge at `offset` along a slider
- * `length` long (clamped). A thumb's center runs from half a thumb in to half
- * a thumb before the far edge, so no thumb overhangs (Radix's in-bounds
- * offset); `atFraction` places it there.
+ * `length` long, clamped: `atFraction`'s inverse.
  */
 export function fractionAt(offset: number, length: number, thumbSize: number): number {
   const travel = length - thumbSize;
@@ -168,9 +164,10 @@ export function fractionAt(offset: number, length: number, thumbSize: number): n
 }
 
 /**
- * Where `fraction` puts a thumb's center (`fractionAt`'s inverse), as an
- * edge offset: percent plus a fixed margin, so it needs no measured size, as
- * on a server. `inset` moves it back toward the edge (a
+ * Where `fraction` puts a thumb's center: from half a thumb in to half a
+ * thumb before the far edge, so no thumb overhangs (Radix's in-bounds
+ * offset). As an edge offset: percent plus a fixed margin, so it needs no
+ * measured size, as on a server. `inset` moves it back toward the edge (a
  * thumb's half-width, so its box centers on the point).
  */
 const atFraction = (edge: SlideFrom, fraction: number, thumbSize: number, inset = 0): ViewStyle => ({
@@ -269,7 +266,7 @@ export function Slider({
   const setThumb: SetThumb = (next, index, commit, base = latest.current) => {
     const moved = moveThumb(base, next, index, bounds);
     if (!moved) return undefined;
-    if (!sameValues(moved.values, base)) {
+    if (!sameItems(moved.values, base)) {
       setUncontrolled(moved.values);
       onValueChange?.(moved.values);
       if (commit) onValueCommit?.(moved.values);
@@ -507,7 +504,7 @@ function useSlide({
       const slide = sliding.current;
       sliding.current = undefined;
       setActive(undefined);
-      if (slide && !sameValues(slide.values, slide.before)) onValueCommit?.([...slide.values]);
+      if (slide && !sameItems(slide.values, slide.before)) onValueCommit?.([...slide.values]);
     },
   };
 }

@@ -33,6 +33,7 @@ import { useTheme } from '../theme/ThemeProvider.js';
 import { usePopoverContext } from './Popover.js';
 import { CheckGlyph } from './glyphs.js';
 import { Pressable, type PressableProps } from './Pressable.js';
+import { sameItems } from './sameItems.js';
 import { Text, type TextProps } from './Text.js';
 
 const WEB = Platform.OS === 'web';
@@ -353,7 +354,7 @@ function useItems() {
   const [enabledItems, setEnabledItems] = useState<readonly string[]>();
   useLayoutEffect(() => {
     const now = enabled();
-    setEnabledItems((was) => (was && sameList(was, now) ? was : now));
+    setEnabledItems((was) => (was && sameItems(was, now) ? was : now));
   });
   /** `target`, if it names an enabled item shown. */
   const ifEnabled = (target: string | undefined) =>
@@ -399,9 +400,6 @@ function moveTo(key: string, from: string | undefined, order: readonly string[])
   if (key === 'End') return order.length - 1;
   return undefined;
 }
-
-const sameList = (a: readonly string[], b: readonly string[]) =>
-  a.length === b.length && a.every((item, at) => item === b[at]);
 
 /**
  * The items in the order they appear: on the web, by their place in the

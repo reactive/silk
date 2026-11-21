@@ -181,7 +181,21 @@ test('moveThumb snaps, clamps, sorts, and keeps whole steps apart despite float 
   expect(moveThumb([0.5], 7, 0, bounds)).toEqual({ values: [1], index: 0 });
 });
 
-test('thumbs stay in bounds: a center runs from half a thumb in to half a thumb before the end', () => {
+test('a thumb sits by percent less a share of its size, so its center stays in bounds', () => {
+  render(
+    <SilkProvider>
+      <Slider accessibilityLabel="Half" defaultValue={[50]} size="md" />
+      <Slider accessibilityLabel="End" defaultValue={[100]} size="md" />
+    </SilkProvider>,
+  );
+  // md thumb: 20px. Left edge at 50% - 10px puts its center at 50% (= 10 + 0.5 * (width - 20)).
+  const half = screen.getByRole('slider', { name: 'Half' }).style;
+  expect([half.left, half.marginLeft]).toEqual(['50%', '-10px']);
+  const end = screen.getByRole('slider', { name: 'End' }).style;
+  expect([end.left, end.marginLeft]).toEqual(['100%', '-20px']);
+});
+
+test('fractionAt inverts the placement: half a thumb in is min, half a thumb before the end is max', () => {
   expect(fractionAt(10, 200, 20)).toBe(0);
   expect(fractionAt(190, 200, 20)).toBe(1);
   expect(fractionAt(100, 200, 20)).toBe(0.5);
