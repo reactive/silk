@@ -50,7 +50,7 @@ export function FloatingLayer({
     const self = layer.current;
     if (!self) return;
     return withAnchor(anchor, (view) => {
-      const from = element(view)!;
+      const from = element(view);
       let taken: FloatingSide | undefined;
       const placeNow = () => {
         const { left, top, width, height } = from.getBoundingClientRect();
@@ -76,33 +76,36 @@ export function FloatingLayer({
     const self = layer.current;
     return () => {
       // Runs as it closes, before it leaves the page, so focus inside it is still there to see.
-      if (self?.contains(document.activeElement)) element(anchor.current)?.focus();
+      if (anchor.current && self?.contains(document.activeElement)) element(anchor.current).focus();
     };
   }, [client, anchor]);
 
-  useEffect(() => {
-    const from = element(anchor.current);
-    if (!from) return;
-    // Scrolling that moves the anchor would leave the layer behind; a list
-    // elsewhere (or inside the layer) scrolling itself, or the page scrolling
-    // under a fixed anchor, doesn't.
-    const opened = from.getBoundingClientRect();
-    const onScroll = () => {
-      const now = from.getBoundingClientRect();
-      if (now.top !== opened.top || now.left !== opened.left) dismiss.current();
-    };
-    const onResize = () => dismiss.current();
-    document.addEventListener('scroll', onScroll, true);
-    window.addEventListener('resize', onResize);
-    return () => {
-      document.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('resize', onResize);
-    };
-  }, [anchor]);
+  useEffect(
+    () =>
+      withAnchor(anchor, (view) => {
+        const from = element(view);
+        // Scrolling that moves the anchor would leave the layer behind; a list
+        // elsewhere (or inside the layer) scrolling itself, or the page scrolling
+        // under a fixed anchor, doesn't.
+        const opened = from.getBoundingClientRect();
+        const onScroll = () => {
+          const now = from.getBoundingClientRect();
+          if (now.top !== opened.top || now.left !== opened.left) dismiss.current();
+        };
+        const onResize = () => dismiss.current();
+        document.addEventListener('scroll', onScroll, true);
+        window.addEventListener('resize', onResize);
+        return () => {
+          document.removeEventListener('scroll', onScroll, true);
+          window.removeEventListener('resize', onResize);
+        };
+      }),
+    [anchor],
+  );
 
   /** Whether `target` is in the anchor, whose own press toggles the layer. */
   const onAnchor = (target: EventTarget | null) =>
-    target instanceof Node && Boolean(element(anchor.current)?.contains(target));
+    target instanceof Node && Boolean(anchor.current && element(anchor.current).contains(target));
 
   if (!client) return null;
   return createPortal(
@@ -135,7 +138,7 @@ const samePlacement = (a: Placement, b: Placement) =>
   a.side === b.side;
 
 /** React Native Web's View refs are the DOM elements themselves. */
-const element = (view: ComponentRef<typeof View> | null) => view as unknown as HTMLElement | null;
+const element = (view: ComponentRef<typeof View>) => view as unknown as HTMLElement;
 
 const styles = {
   // A column, so the surface inside shrinks to maxHeight and its list scrolls.

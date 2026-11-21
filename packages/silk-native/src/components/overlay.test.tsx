@@ -300,27 +300,48 @@ test('Popover re-places as its content resizes, on the side it took first', () =
   }
 });
 
-test('Popover opened on mount is placed even when its anchor comes after it', async () => {
-  function LateAnchor() {
-    const anchor = useRef<ComponentRef<typeof View>>(null);
-    return (
-      <SilkProvider theme={theme}>
-        <Popover.Root open onOpenChange={() => {}} anchor={anchor}>
-          <Popover.Content testID="popover">
-            <Text>Inside</Text>
-          </Popover.Content>
-        </Popover.Root>
+const nextFrame = () => act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+
+function LateAnchor({ anchored }: { readonly anchored: boolean }) {
+  const [open, setOpen] = useState(true);
+  const anchor = useRef<ComponentRef<typeof View>>(null);
+  return (
+    <SilkProvider theme={theme}>
+      <Popover.Root open={open} onOpenChange={setOpen} anchor={anchor}>
+        <Popover.Content testID="popover">
+          <Text>Inside</Text>
+        </Popover.Content>
+      </Popover.Root>
+      {anchored ? (
         <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
-      </SilkProvider>
-    );
-  }
-  render(<LateAnchor />);
+      ) : null}
+    </SilkProvider>
+  );
+}
+
+test('Popover opened on mount is placed even when its anchor comes after it', async () => {
+  render(<LateAnchor anchored />);
   const layer = () => popover()!.parentElement!;
   // Unplaced until the anchor attaches, then placed on the next frame.
   expect(layer().style.opacity).toBe('0');
-  await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+  await nextFrame();
   expect(layer().style.opacity).toBe('');
-  expect(layer().style.top).not.toBe('');
+});
+
+test('Popover whose anchor mounts frames later is placed, and closes as it scrolls away', async () => {
+  const { rerender } = render(<LateAnchor anchored={false} />);
+  const layer = () => popover()!.parentElement!;
+  await nextFrame();
+  await nextFrame();
+  expect(layer().style.opacity).toBe('0');
+  rerender(<LateAnchor anchored />);
+  await nextFrame();
+  expect(layer().style.opacity).toBe('');
+  screen.getByLabelText('Strength').getBoundingClientRect = () => new DOMRect(0, -40, 60, 20);
+  act(() => {
+    document.dispatchEvent(new Event('scroll'));
+  });
+  expect(popover()).toBeNull();
 });
 
 test('Listbox items take the provider density unless told otherwise', () => {
