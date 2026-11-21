@@ -17,8 +17,8 @@ import { Tooltip } from './Tooltip.js';
 const theme = createTheme({ colorScheme: 'dark' });
 
 /** Presses `key` on whatever has focus; returns whether something took it (prevented its default). */
-function press(key: string, type: 'keydown' | 'keyup' = 'keydown') {
-  const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+function press(key: string, type: 'keydown' | 'keyup' = 'keydown', repeat = false) {
+  const event = new KeyboardEvent(type, { key, repeat, bubbles: true, cancelable: true });
   act(() => {
     (document.activeElement ?? document.body).dispatchEvent(event);
   });
@@ -102,10 +102,12 @@ dialogTest('Dialog placement comes from the prop, else SilkDefaults, else center
 });
 
 function DialogWithPopover({
+  open = true,
   popoverOpen = true,
   onDialogChange = () => {},
   onPopoverChange = () => {},
 }: {
+  readonly open?: boolean;
   readonly popoverOpen?: boolean;
   readonly onDialogChange?: (open: boolean) => void;
   readonly onPopoverChange?: (open: boolean) => void;
@@ -113,7 +115,7 @@ function DialogWithPopover({
   const anchor = useRef<ComponentRef<typeof View>>(null);
   return (
     <SilkProvider theme={theme}>
-      <Dialog.Root open onOpenChange={onDialogChange}>
+      <Dialog.Root open={open} onOpenChange={onDialogChange}>
         <Dialog.Content>
           <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
           <Popover.Root open={popoverOpen} onOpenChange={onPopoverChange} anchor={anchor}>
@@ -181,30 +183,20 @@ dialogTest('A held Escape closes a popover inside a Dialog, not the Dialog', () 
   press('Escape');
   rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
   // The repeats come after the popover has closed, so nothing takes them.
-  for (let i = 0; i < 3; i++) {
-    act(() => {
-      document.body.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Escape', repeat: true, bubbles: true }),
-      );
-    });
-  }
+  for (let i = 0; i < 3; i++) press('Escape', 'keydown', true);
   press('Escape', 'keyup');
   expect(changes).toEqual(['popover false']);
 });
 
-dialogTest('An Escape a closed Dialog saw leaves the next Dialog to close on its own Escape', () => {
+dialogTest('A Dialog reopened after an Escape it ignored closes on its next Escape', () => {
   const changes: string[] = [];
-  const { unmount } = render(<DialogWithPopover />);
-  // A keydown with no keyup, as a test or a lost keyup leaves it.
+  const onDialogChange = (open: boolean) => changes.push(`dialog ${open}`);
+  const { rerender } = render(<DialogWithPopover onDialogChange={onDialogChange} />);
+  // The popover takes the keydown; its keyup goes to another window.
   press('Escape');
-  unmount();
-  render(
-    <DialogWithPopover
-      popoverOpen={false}
-      onDialogChange={(open) => changes.push(`dialog ${open}`)}
-    />,
-  );
-  press('Escape');
+  rerender(<DialogWithPopover open={false} popoverOpen={false} onDialogChange={onDialogChange} />);
+  rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
+  // A keyup with no keydown the page saw (focus came back mid-press).
   press('Escape', 'keyup');
   expect(changes).toEqual(['dialog false']);
 });

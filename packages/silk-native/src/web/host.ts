@@ -61,13 +61,23 @@ export interface WebKeyEvent {
 export interface WebDocument {
   readonly activeElement?: unknown;
   addEventListener(
-    type: string,
+    type: 'keydown',
     listener: (event: WebKeyEvent) => void,
     options: boolean | { readonly capture: boolean; readonly once?: boolean },
   ): void;
+  addEventListener(
+    type: string,
+    listener: () => void,
+    options: boolean | { readonly capture: boolean; readonly once?: boolean },
+  ): void;
+  removeEventListener(
+    type: 'keydown',
+    listener: (event: WebKeyEvent) => void,
+    options: boolean | { readonly capture: boolean },
+  ): void;
   removeEventListener(
     type: string,
-    listener: (event: WebKeyEvent) => void,
+    listener: () => void,
     options: boolean | { readonly capture: boolean },
   ): void;
 }

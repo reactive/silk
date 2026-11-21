@@ -174,11 +174,7 @@ function useEscapeTaken(open: boolean): () => boolean {
       escape.current = null;
     };
   }, [open]);
-  return () => {
-    const taken = escape.current?.defaultPrevented ?? false;
-    escape.current = null;
-    return taken;
-  };
+  return () => escape.current?.defaultPrevented ?? false;
 }
 
 export type DialogTitleProps = HeadingProps;
