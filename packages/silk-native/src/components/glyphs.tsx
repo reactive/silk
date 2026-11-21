@@ -18,3 +18,17 @@ export function CheckGlyph({ color, size }: { color: string; size: number }): JS
     />
   );
 }
+
+/** A dash drawn as a bar: an indeterminate checkbox. */
+export function DashGlyph({ color, size }: { color: string; size: number }): JSX.Element {
+  return (
+    <View
+      style={{
+        width: size * 0.55,
+        height: Math.max(2, size * 0.12),
+        backgroundColor: color,
+        borderRadius: 1,
+      }}
+    />
+  );
+}

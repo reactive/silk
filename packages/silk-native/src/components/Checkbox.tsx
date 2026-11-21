@@ -16,7 +16,7 @@ import {
 } from '../styles/mappers/controls.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { CheckGlyph } from './glyphs.js';
+import { CheckGlyph, DashGlyph } from './glyphs.js';
 import { Pressable, type PressableProps } from './Pressable.js';
 import {
   useFieldControlProps,
@@ -40,19 +40,6 @@ export interface CheckboxProps
   readonly invalid?: boolean;
   readonly required?: boolean;
   readonly 'aria-describedby'?: string;
-}
-
-function DashGlyph({ color, size }: { color: string; size: number }): JSX.Element {
-  return (
-    <View
-      style={{
-        width: size * 0.55,
-        height: Math.max(2, size * 0.12),
-        backgroundColor: color,
-        borderRadius: 1,
-      }}
-    />
-  );
 }
 
 /**
