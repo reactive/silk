@@ -421,6 +421,32 @@ test('Listbox keeps a Tab stop as items filtered by a child that renders alone c
   expect(options().map((option) => option.tabIndex)).toEqual([-1, 0, -1, -1]);
 });
 
+test('Listbox arrows follow items a child reorders on its own', () => {
+  let reverse: () => void = () => {};
+  function Sorted() {
+    const [reversed, setReversed] = useState(false);
+    reverse = () => setReversed(true);
+    const steps = reversed ? [...STEPS].reverse() : STEPS;
+    return steps.map((step) => (
+      <Listbox.Item key={step} value={step} accessibilityLabel={step}>
+        {step}
+      </Listbox.Item>
+    ));
+  }
+  render(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Steps" value="1300" onValueChange={() => {}}>
+        <Sorted />
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  act(() => reverse());
+  act(() => options()[0]!.focus());
+  expect(focused()).toBe('1700');
+  press('ArrowDown');
+  expect(focused()).toBe('1500');
+});
+
 test('Listbox.ItemText takes the item label color, which follows the item state', () => {
   render(
     <SilkProvider theme={theme}>

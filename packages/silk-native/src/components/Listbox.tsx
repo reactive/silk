@@ -105,18 +105,21 @@ function ListboxRoot({
   const popover = usePopoverContext();
   const [highlighted, setHighlighted] = useState<string>();
   const items = useRef(new Map<string, { node: ItemNode; disabled: boolean }>());
-  // Bumped as items register, leave or change `disabled`, which happens in
-  // whichever component renders them, not only here.
-  const [itemChanges, setItemChanges] = useState(0);
-  // The enabled items' values in order: an item filtered out or disabled
-  // can't hold the Tab stop or take a key. Unknown until the items commit.
-  const [enabledItems, setEnabledItems] = useState<readonly string[]>();
-  useLayoutEffect(() => {
-    const now = inTreeOrder(items.current)
+  const enabled = () =>
+    inTreeOrder(items.current)
       .filter(([, item]) => !item.disabled)
       .map(([itemValue]) => itemValue);
+  // Bumped as items register, leave or change `disabled`, which happens in
+  // whichever component renders them, so this list renders again then too.
+  const [, setItemChanges] = useState(0);
+  // The enabled items' values in order, recounted after each commit of this
+  // list: an item filtered out or disabled can't hold the Tab stop or take a
+  // key. Unknown until the items commit.
+  const [enabledItems, setEnabledItems] = useState<readonly string[]>();
+  useLayoutEffect(() => {
+    const now = enabled();
     setEnabledItems((was) => (was && sameList(was, now) ? was : now));
-  }, [itemChanges]);
+  });
   /** `target`, if it names an enabled item shown. */
   const enabledItem = (target: string | undefined) =>
     target !== undefined && enabledItems?.includes(target) ? target : undefined;
@@ -158,8 +161,10 @@ function ListboxRoot({
       // Focus goes back to the anchor as the popover closes.
       event.preventDefault();
       popover.close();
-    } else if (enabledItems) {
-      const next = enabledItems[moveTo(key, current, enabledItems) ?? -1];
+    } else {
+      // In the order on the page now: items a child reordered on its own keep their nodes.
+      const order = enabled();
+      const next = order[moveTo(key, current, order) ?? -1];
       if (next === undefined) return;
       event.preventDefault();
       focus(next);
