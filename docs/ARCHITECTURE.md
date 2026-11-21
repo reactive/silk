@@ -13,7 +13,9 @@ This document describes how the system is built today. The _why_ — goals, cons
 @reactive/silk-native   React Native renderer (context Theme + style mappers)
 ```
 
-Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/models`.
+Subpaths on core: `@reactive/silk-core`, `/tokens`, `/theme`, `/recipes`, `/models`, `/color`.
+
+Inside core, `color/` (OKLCH and sRGB conversion, imports nothing) sits under `tokens/`, which sits under `theme/`. culori is imported only by `theme/gamutOklch.ts`, for the generators, so `createTheme` never loads it.
 Native exports only `.` (root).
 
 **Repo layout:** publishable libraries live under `packages/`; runnable consumers (Storybook docs, Expo native example) live under `apps/`.
@@ -22,7 +24,7 @@ Native exports only `.` (root).
 
 ## Theme model
 
-1. **Palette** — 12-step color scales. Never referenced by components.
+1. **Palette** — 12-step color scales, kept as OKLCH coordinates (`tokens/paletteOklch.ts`) and resolved to sRGB hex, because React Native can't parse `oklch()`. Never referenced by components.
 2. **Semantic tokens** — surfaces, text, borders, interaction tone contracts, space, radius, `fontFamily` (sans/serif/mono stacks), typography roles, motion. Canonical values are platform-neutral (numbers for dimensions; typography `lineHeight` is unitless; typography `family` is a `FontFamilyName` that references `fontFamily`).
 3. **Component tokens** — sparse public CSS variables (`--silk-button-bg`) resolved via private vars:
 
@@ -66,7 +68,7 @@ Nesting (native analog of web semantic-var replacement):
 
 Density selects `compactSpace` vs `theme.semantic.space` in the mapper — still off the Theme object. Interaction states use Silk's `Pressable`: pressed + disabled, plus a focus ring outline while focus is visible (the browser's `:focus-visible` on web, so a click doesn't ring; every focus on native, where only keyboard, D-pad or assistive technology focuses a Pressable). Button control padding and `lineHeight: 1.2` are renderer-local, intentionally parallel to web `controlGeometry.ts`. Text `measure="prose"` approximates CSS `ch` as `fontSize × measure.prose × 0.6`.
 
-Native `SilkDefaults` is keyed by recipe-bearing components (`Box` / `Stack` / `Inline` / `Text` / `Button` / visual primitives / form controls / `Dialog` / `Popover` / `Listbox` — not `Field`). Nested defaults replace the entire map. Form interaction uses Silk's `Pressable` (RN has no checkbox/radio primitives); roving keyboard focus is web-only for form controls, and `Listbox` owns its own on both platforms. Overlays: `Dialog` sits on `Modal`; `Popover` on `Modal` (native) or a Radix `DismissableLayer` and untrapped `FocusScope` portal (web), chosen by the `#floating-layer` import; both layers place with the shared, pure `placeFloating`. `Tooltip` reuses that layer, opened from a View around its control rather than from the control itself, so a disabled control (which takes no press or pointer) still opens it. An open web `Popover` renders nothing on the server or in the hydration render (a body portal has no server target) and appears on the client's next pass; a server-rendered `Listbox` places its Tab stop as `API_POLICY.md` states until its items are counted. Native `Slider` keeps web's array-valued contract; it drags through the responder system from the slider's own location (its parts take no touches), so it needs no measurement but its length. Animated geometry uses measured widths; RNW a11y object props are paired with ARIA aliases via `a11yState` / `a11yValue`.
+Native `SilkDefaults` is keyed by recipe-bearing components (`Box` / `Stack` / `Inline` / `Text` / `Button` / visual primitives / form controls / `Dialog` / `Popover` / `Listbox` — not `Field`). Nested defaults replace the entire map. Form interaction uses Silk's `Pressable` (RN has no checkbox/radio primitives); roving keyboard focus is web-only for form controls, and `Listbox` owns its own on both platforms. Overlays: `Dialog` sits on `Modal`; `Popover` on `Modal` (native) or a Radix `DismissableLayer` and untrapped `FocusScope` portal (web), chosen by the `#floating-layer` import; both layers place with the shared, pure `placeFloating`. `Tooltip` reuses that layer, opened from a View around its control rather than from the control itself, so a disabled control (which takes no press or pointer) still opens it. An open web `Popover` renders nothing on the server or in the hydration render (a body portal has no server target) and appears on the client's next pass; a server-rendered `Listbox` places its Tab stop as `API_POLICY.md` states until its items are counted. Native `Slider` keeps web's array-valued contract; it drags through the responder system from the slider's own location (its parts take no touches), read along the box its parts sit in (`mapSliderStyle`'s `parts`, inside any padding or border), so it measures only where that box starts and how long it is. Animated geometry uses measured widths; RNW a11y object props are paired with ARIA aliases via `a11yState` / `a11yValue`.
 
 Escape hatches (native ladder): recipe props → `style` applied **last** (Button composes object/array/function `Pressable` styles) → typed `ref` → remaining RN host props. No `className` or public CSS variables.
 

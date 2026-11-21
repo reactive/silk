@@ -40,6 +40,7 @@ import {
   FAR,
   fractionAt,
   fractionIn,
+  PHYSICAL_FRAME,
   placeAt,
   type SliderEdge,
   slideFrom,
@@ -177,7 +178,6 @@ export function Slider({
   children,
   style,
   ref,
-  onLayout: onLayoutProp,
   nativeID,
   accessibilityLabel,
   accessibilityHint,
@@ -212,7 +212,7 @@ export function Slider({
   const rtl = (dir ?? (I18nManager.isRTL ? 'rtl' : 'ltr')) === 'rtl';
   const from = slideFrom(vertical, rtl, inverted);
   // Memoized: a drag re-renders the slider on every move, and its styles don't change with the values.
-  const { root, track, range, thumb, thumbSize, crossSize } = useMemo(
+  const { root, parts, track, range, thumb, thumbSize, crossSize } = useMemo(
     () =>
       mapSliderStyle(
         theme,
@@ -316,10 +316,6 @@ export function Slider({
     <View
       ref={ref}
       {...rest}
-      onLayout={(event: LayoutChangeEvent) => {
-        slide.measure(event);
-        onLayoutProp?.(event);
-      }}
       hitSlop={vertical ? { left: hitSlop, right: hitSlop } : { top: hitSlop, bottom: hitSlop }}
       onStartShouldSetResponder={() => !isDisabled}
       onResponderTerminationRequest={() => false}
@@ -338,68 +334,70 @@ export function Slider({
         rest,
       )}
     >
-      <View pointerEvents="none" style={track}>
-        <View
-          style={[
-            range,
-            // A single thumb's range starts at the track's edge, not at a thumb center.
-            single ? { [from]: 0 } : placeAt(rangeStart, thumbSize, 0, from),
-            placeAt(1 - rangeEnd, thumbSize, 0, FAR[from]),
-          ]}
-        />
-      </View>
-      {children === undefined ? null : (
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
-        </View>
-      )}
-      {values.map((value, index) => {
-        const label =
-          thumbLabels?.[index] ??
-          (single
-            ? fieldProps.accessibilityLabel
-            : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
-        return (
-          <Pressable
-            key={index}
-            ref={(node) => {
-              thumbs.current[index] = node;
-            }}
-            pointerEvents="none"
-            focusable={!isDisabled}
-            disabled={isDisabled}
-            focusRing={isInvalid ? 'danger' : resolved.tone}
-            accessibilityRole="adjustable"
-            accessibilityLabel={label}
-            accessibilityHint={fieldProps.accessibilityHint}
-            accessibilityLabelledBy={
-              thumbLabels?.[index] === undefined && single
-                ? fieldProps.accessibilityLabelledBy
-                : undefined
-            }
-            nativeID={single ? fieldProps.nativeID : undefined}
-            accessibilityActions={ACTIONS}
-            onAccessibilityAction={onAction(index)}
-            {...a11yState({ disabled: isDisabled })}
-            {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
-            {...webKeyHandler(onThumbKey(index))}
-            {...rnwAttrs({
-              'aria-orientation': orientation,
-              'aria-describedby': fieldProps['aria-describedby'],
-              'aria-invalid': fieldProps['aria-invalid'],
-              'data-active': slide.active === index ? '' : undefined,
-            })}
+      <View pointerEvents="none" style={[parts, PHYSICAL_FRAME]} onLayout={slide.measure}>
+        <View style={track}>
+          <View
             style={[
-              thumb,
-              vertical
-                ? { left: '50%', marginLeft: -thumbSize / 2 }
-                : { top: '50%', marginTop: -thumbSize / 2 },
-              // Its box centered on the point.
-              placeAt(fractions[index]!, thumbSize, -thumbSize / 2, from),
+              range,
+              // A single thumb's range starts at the track's edge, not at a thumb center.
+              single ? { [from]: 0 } : placeAt(rangeStart, thumbSize, 0, from),
+              placeAt(1 - rangeEnd, thumbSize, 0, FAR[from]),
             ]}
           />
-        );
-      })}
+        </View>
+        {children === undefined ? null : (
+          <View style={StyleSheet.absoluteFill}>
+            <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
+          </View>
+        )}
+        {values.map((value, index) => {
+          const label =
+            thumbLabels?.[index] ??
+            (single
+              ? fieldProps.accessibilityLabel
+              : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
+          return (
+            <Pressable
+              key={index}
+              ref={(node) => {
+                thumbs.current[index] = node;
+              }}
+              pointerEvents="none"
+              focusable={!isDisabled}
+              disabled={isDisabled}
+              focusRing={isInvalid ? 'danger' : resolved.tone}
+              accessibilityRole="adjustable"
+              accessibilityLabel={label}
+              accessibilityHint={fieldProps.accessibilityHint}
+              accessibilityLabelledBy={
+                thumbLabels?.[index] === undefined && single
+                  ? fieldProps.accessibilityLabelledBy
+                  : undefined
+              }
+              nativeID={single ? fieldProps.nativeID : undefined}
+              accessibilityActions={ACTIONS}
+              onAccessibilityAction={onAction(index)}
+              {...a11yState({ disabled: isDisabled })}
+              {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
+              {...webKeyHandler(onThumbKey(index))}
+              {...rnwAttrs({
+                'aria-orientation': orientation,
+                'aria-describedby': fieldProps['aria-describedby'],
+                'aria-invalid': fieldProps['aria-invalid'],
+                'data-active': slide.active === index ? '' : undefined,
+              })}
+              style={[
+                thumb,
+                vertical
+                  ? { left: '50%', marginLeft: -thumbSize / 2 }
+                  : { top: '50%', marginTop: -thumbSize / 2 },
+                // Its box centered on the point.
+                placeAt(fractions[index]!, thumbSize, -thumbSize / 2, from),
+              ]}
+            />
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -418,7 +416,9 @@ const MarkContext = createContext<MarkStyle | null>(null);
  * thumb sits at `value`, in the slider's own units, size and direction.
  * `offset` moves it further along from `min`'s end; minus half the mark's
  * size centers it there: `markStyle(1500, -4)` centers an 8-wide dot on the
- * thumb at 1500. A position, so give the mark `position: 'absolute'`.
+ * thumb at 1500. A position, so give the mark `position: 'absolute'`. Marks
+ * lay out left to right in any app (see `PHYSICAL_FRAME`); a box
+ * inside a mark can set `direction` to lay its own content out right to left.
  */
 export function useSliderMarkStyle(): MarkStyle {
   const markStyle = useContext(MarkContext);
@@ -448,11 +448,13 @@ interface SlideOptions {
 /**
  * Dragging, through the responder system: a press brings the nearest thumb
  * there and focuses it (on the web), a move slides it, and the end commits
- * once if anything changed. The slider's parts take no touches, so the
- * press's location is the slider's own; moves add the page distance from
- * the press, so a pointer that wanders off the slider keeps sliding. A drag
- * keeps the values it last reported, since a move may not have rendered yet
- * when the next move or the release comes.
+ * once if anything changed; a press before the slider is laid out does
+ * nothing. The slider's parts take no touches, so the press's location is
+ * the slider's own, less where its parts box starts (past any padding or
+ * border); moves add the page distance from the press, so a pointer that
+ * wanders off the slider keeps sliding. A drag keeps the values it last
+ * reported, since a move may not have rendered yet when the next move or the
+ * release comes.
  */
 function useSlide({
   vertical,
@@ -465,7 +467,8 @@ function useSlide({
   onValueCommit,
   disabled,
 }: SlideOptions) {
-  const length = useRef(0);
+  // Where the parts box runs along the slide, from the slider's top-left corner.
+  const span = useRef({ start: 0, length: 0 });
   const sliding = useRef<{
     index: number;
     before: readonly number[];
@@ -477,22 +480,21 @@ function useSlide({
 
   const offsetOf = ({ nativeEvent }: GestureResponderEvent) =>
     vertical
-      ? { location: nativeEvent.locationY, page: nativeEvent.pageY }
-      : { location: nativeEvent.locationX, page: nativeEvent.pageX };
+      ? { location: nativeEvent.locationY - span.current.start, page: nativeEvent.pageY }
+      : { location: nativeEvent.locationX - span.current.start, page: nativeEvent.pageX };
   const valueAt = (offset: number) => {
-    const fraction = fractionAt(offset, length.current, thumbSize);
-    // Offsets run from the top-left corner; the slide may start at the other edge.
-    const fromMin = from === 'right' || from === 'bottom' ? 1 - fraction : fraction;
-    return bounds.min + fromMin * (bounds.max - bounds.min);
+    const fraction = fractionAt(offset, span.current.length, thumbSize, from);
+    return bounds.min + fraction * (bounds.max - bounds.min);
   };
 
   return {
     active,
     measure: (event: LayoutChangeEvent) => {
-      const { width, height } = event.nativeEvent.layout;
-      length.current = vertical ? height : width;
+      const { x, y, width, height } = event.nativeEvent.layout;
+      span.current = vertical ? { start: y, length: height } : { start: x, length: width };
     },
     start: (event: GestureResponderEvent) => {
+      if (span.current.length === 0) return;
       const { location, page } = offsetOf(event);
       const value = valueAt(location);
       const before = latest.current;

@@ -63,3 +63,17 @@ for (const [name, seed] of TENANT_SEEDS) {
     }
   });
 }
+
+// Golden scales: the curves come from Silk's default blue and gray coordinates
+// (tokens/paletteOklch.ts), so retuning those moves every tenant palette. This
+// makes that show up in review.
+test('generateScale golden output for #2563eb', () => {
+  expect(Object.values(generateScale('#2563eb', 'light'))).toEqual([
+    '#f2f3f6', '#e9edf4', '#dbe3f2', '#cbd9f3', '#b7cbf0', '#a0baeb',
+    '#85a6e5', '#608ade', '#2563eb', '#255fdf', '#1f51bf', '#16326c',
+  ]);
+  expect(Object.values(generateScale('#2563eb', 'dark'))).toEqual([
+    '#080e1b', '#09101f', '#091a3e', '#061f58', '#0b2868', '#123278',
+    '#1a3f8c', '#224da9', '#2563eb', '#3e77ed', '#6996ee', '#b5c9ee',
+  ]);
+});

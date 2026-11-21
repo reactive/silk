@@ -23,6 +23,14 @@ const MARGIN = {
   top: 'marginTop',
 } as const satisfies Record<SliderEdge, keyof ViewStyle>;
 
+/**
+ * Style for the box a slider's thumbs, range and marks sit in, so the
+ * physical `left` / `right` that `placeAt` emits mean what a press's
+ * `locationX` reads. A right-to-left React Native app turns `left` / `right`
+ * into `start` / `end`, resolved by the parent's direction.
+ */
+export const PHYSICAL_FRAME: { readonly direction: 'ltr' } = { direction: 'ltr' };
+
 /** The edge `min` sits at, for a slider's orientation, reading direction and inversion. */
 export function slideFrom(vertical: boolean, rtl: boolean, inverted: boolean): SliderEdge {
   if (vertical) return inverted ? 'top' : 'bottom';
@@ -51,10 +59,17 @@ export const placeAt = (
 });
 
 /**
- * The fraction of the way from the top-left end at `offset` along a slider
- * `length` long, clamped: `placeAt`'s inverse.
+ * The fraction of the way from `edge` at `offset` (from the top-left end)
+ * along a slider `length` long, clamped: `placeAt`'s inverse.
  */
-export function fractionAt(offset: number, length: number, thumbSize: number): number {
+export function fractionAt(
+  offset: number,
+  length: number,
+  thumbSize: number,
+  edge: SliderEdge,
+): number {
   const travel = length - thumbSize;
-  return travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
+  const fromTopLeft =
+    travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
+  return edge === 'right' || edge === 'bottom' ? 1 - fromTopLeft : fromTopLeft;
 }

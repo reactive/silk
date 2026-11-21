@@ -5,6 +5,7 @@
  * Also packs @reactive/silk-native and verifies an RNW-aliased esbuild consumer.
  */
 import { execSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import {
   mkdtempSync,
   readFileSync,
@@ -273,6 +274,14 @@ try {
     if (coreMod[name] === undefined) {
       throw new Error(`Packed core missing export: ${name}`);
     }
+  }
+  // The dependency-free color subpath resolves through package exports.
+  const colorEntry = createRequire(join(fixture, 'package.json')).resolve(
+    '@reactive/silk-core/color',
+  );
+  const colorMod = await import(pathToFileURL(colorEntry).href);
+  if (colorMod.oklch?.(1, 0, 0) !== '#ffffff') {
+    throw new Error('Packed @reactive/silk-core/color missing oklch()');
   }
   const theme = coreMod.createTheme();
   if (!theme.semantic.color.tones.success || !theme.semantic.shadow.raised) {

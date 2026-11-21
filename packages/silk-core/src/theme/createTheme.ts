@@ -14,6 +14,11 @@ import type {
   Theme,
   ToneName,
 } from '../tokens/index.js';
+// white is internal, so it isn't in tokens/index.js (the public /tokens).
+import { white } from '../tokens/palette.js';
+import { mixOklab, oklabToRgb, rgbToOklab } from '../color/oklab.js';
+import { resolveOklch } from '../color/oklch.js';
+import { formatRgb } from '../color/srgb.js';
 import { parseHexChannels } from './colorMath.js';
 
 export interface CreateThemeOptions {
@@ -61,7 +66,8 @@ function mergePalette(
 }
 
 /**
- * Blend `from` toward `to` in sRGB, weighting `to` by `amount`.
+ * Blend `from` toward `to` in OKLab, weighting `to` by `amount`, so the blend
+ * sits between the two in perceived lightness and keeps their hue.
  *
  * Interaction states need three visually distinct fills, but a tone's `solid`
  * can sit one step from the end of its scale (light solid is step 11 so white
@@ -78,11 +84,8 @@ function mixHex(from: string, to: string, amount: number): string {
   if (!start || !end) {
     return to;
   }
-  const channel = (index: number): string =>
-    Math.round(start[index]! + (end[index]! - start[index]!) * amount)
-      .toString(16)
-      .padStart(2, '0');
-  return `#${channel(0)}${channel(1)}${channel(2)}`;
+  const mix = mixOklab(rgbToOklab(start), rgbToOklab(end), amount);
+  return formatRgb(oklabToRgb(mix));
 }
 
 /**
@@ -98,7 +101,7 @@ function toneFromScale(
   const isLight = scheme === 'light';
   return {
     solid: isLight ? solidScale[11] : solidScale[9],
-    onSolid: isLight ? '#ffffff' : gray[1],
+    onSolid: isLight ? white : gray[1],
     // Body-sized colored text on surfaces.
     // Light uses step 12 so text clears 4.5:1 on surfaceRaised; dark uses 11.
     text: isLight ? solidScale[12] : solidScale[11],
@@ -130,7 +133,7 @@ function createSemanticColors(
   const tones: Record<ToneName, InteractionToneColors> = {
     neutral: {
       solid: gray[12],
-      onSolid: isLight ? '#ffffff' : gray[1],
+      onSolid: isLight ? white : gray[1],
       text: gray[12],
       subtle: gray[3],
       subtleHover: gray[4],
@@ -150,13 +153,13 @@ function createSemanticColors(
   };
 
   return {
-    surface: isLight ? '#ffffff' : gray[1],
+    surface: isLight ? white : gray[1],
     surfaceRaised: gray[2],
     surfaceSunken: gray[3],
     textPrimary: gray[12],
     textSecondary: gray[11],
     borderSubtle: gray[6],
-    overlay: isLight ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.65)',
+    overlay: resolveOklch(0, 0, 0, isLight ? 0.45 : 0.65),
     tones,
   };
 }

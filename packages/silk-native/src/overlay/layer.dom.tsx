@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type JSX,
   useEffect,
+  useContext,
   useLayoutEffect,
   useRef,
   useState,
@@ -13,12 +14,18 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { View } from 'react-native';
-import { FLOATING_Z_INDEX, type FloatingLayerProps, withAnchor } from './layer.js';
+import {
+  FLOATING_Z_INDEX,
+  FloatingHostContext,
+  type FloatingLayerProps,
+  withAnchor,
+} from './layer.js';
 import { type FloatingSide, type Placement, placeFloating, placedStyle } from './place.js';
 
 /**
  * The web's floating layer (react-native-web): a non-modal layer in a portal
- * at the end of the page, so no box around the anchor clips it and the page
+ * at the end of the page (inside a Dialog, at the end of the dialog:
+ * `FloatingHostContext`), so no box around the anchor clips it and the page
  * stays live under it (a pointer can still hover the anchor). Radix's
  * DismissableLayer closes it on a press or focus outside it and its anchor
  * and on Escape (the topmost layer only; it listens in the capture phase,
@@ -39,9 +46,10 @@ export function FloatingLayer({
   onOpenAutoFocus,
 }: FloatingLayerProps): JSX.Element | null {
   const layer = useRef<HTMLDivElement>(null);
+  const host = useContext(FloatingHostContext);
   const [place, setPlace] = useState<Placement>();
   // False on a server and while hydrating, which have no page to portal into.
-  // The effects below depend on it to run once the layer exists.
+  // The effects below depend on it, and on `host`, to run once the layer exists.
   const client = useSyncExternalStore(subscribeNever, onClient, onServer);
   const anchorElement = () => (anchor.current ? element(anchor.current) : null);
   // The latest, so the page listeners below stay put while it is open.
@@ -76,7 +84,7 @@ export function FloatingLayer({
       observer.observe(self);
       return () => observer.disconnect();
     });
-  }, [client, anchor, side, align, sideOffset, collisionPadding]);
+  }, [client, host, anchor, side, align, sideOffset, collisionPadding]);
 
   useLayoutEffect(() => {
     const self = layer.current;
@@ -84,7 +92,7 @@ export function FloatingLayer({
       // Runs as it closes, before it leaves the page, so focus inside it is still there to see.
       if (self?.contains(document.activeElement)) anchorElement()?.focus();
     };
-  }, [client, anchor]);
+  }, [client, host, anchor]);
 
   useEffect(
     () =>
@@ -126,7 +134,9 @@ export function FloatingLayer({
   const onAnchor = (target: EventTarget | null) =>
     target instanceof Node && Boolean(anchorElement()?.contains(target));
 
-  if (!client) return null;
+  // Inside a dialog whose host hasn't mounted yet, it waits rather than open
+  // at the end of the page and move (which would rebuild it).
+  if (!client || host === null) return null;
   return createPortal(
     <FocusScope
       asChild
@@ -153,7 +163,7 @@ export function FloatingLayer({
         {children}
       </DismissableLayer>
     </FocusScope>,
-    document.body,
+    host ? element(host) : document.body,
   );
 }
 

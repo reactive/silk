@@ -124,6 +124,13 @@ test('a press on the slider prevents the mousedown default, which would take foc
   expect(fireEvent.mouseDown(screen.getByTestId('root'))).toBe(false);
 });
 
+test('a press before the slider is laid out moves nothing, since it has no length to place the press on', () => {
+  render(<Controlled accessibilityLabel="Unmeasured" initial={[5]} testID="root" />);
+  fireEvent.mouseDown(screen.getByTestId('root'), { buttons: 1 });
+  fireEvent.mouseUp(document);
+  expect(now(screen.getByRole('slider'))).toBe(5);
+});
+
 test('a step of 0 or less steps by 1', () => {
   render(
     <>
@@ -227,11 +234,11 @@ test('a vertical thumb sits from the bottom, an inverted one from the top', () =
 });
 
 test('fractionAt inverts the placement: half a thumb in is min, half a thumb before the end is max', () => {
-  expect(fractionAt(10, 200, 20)).toBe(0);
-  expect(fractionAt(190, 200, 20)).toBe(1);
-  expect(fractionAt(100, 200, 20)).toBe(0.5);
-  expect(fractionAt(-50, 200, 20)).toBe(0);
-  expect(fractionAt(500, 200, 20)).toBe(1);
+  expect(fractionAt(10, 200, 20, 'left')).toBe(0);
+  expect(fractionAt(190, 200, 20, 'left')).toBe(1);
+  expect(fractionAt(100, 200, 20, 'left')).toBe(0.5);
+  expect(fractionAt(-50, 200, 20, 'left')).toBe(0);
+  expect(fractionAt(500, 200, 20, 'left')).toBe(1);
   expect(nearestThumb([10, 20], 15)).toBe(0);
   expect(nearestThumb([10, 20], 16)).toBe(1);
 });
@@ -259,9 +266,24 @@ test('useSliderMarkStyle places a mark where the thumb centers, in the slider\'s
   );
 });
 
+test('its parts lay out left to right in any direction, so their left and right stay physical', () => {
+  // See `PHYSICAL_FRAME`.
+  render(
+    <SilkProvider>
+      <Slider accessibilityLabel="Rating" dir="rtl" testID="root" style={{ direction: 'rtl' }} />
+    </SilkProvider>,
+  );
+  const parts = screen.getByRole('slider').parentElement!;
+  expect(parts.style.direction).toBe('ltr');
+  expect(parts.parentElement).toBe(screen.getByTestId('root'));
+  expect(screen.getByTestId('root').style.direction).toBe('rtl');
+});
+
 test('fractionAt inverts the placement: the point a fraction is placed at reads back as it', () => {
   // A 200px slider with a 20px thumb: 0.25 is placed at 25% + (10 - 5)px = 55px.
-  expect(fractionAt(55, 200, 20)).toBe(0.25);
+  expect(fractionAt(55, 200, 20, 'left')).toBe(0.25);
+  // From the right, the same point is 0.75 of the way.
+  expect(fractionAt(55, 200, 20, 'right')).toBe(0.75);
 });
 
 test('Home and End move focus to the outer thumb they moved', () => {

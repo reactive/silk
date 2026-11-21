@@ -12,17 +12,24 @@ import { Listbox } from './Listbox.js';
 import { Popover } from './Popover.js';
 import { Pressable } from './Pressable.js';
 import { Text } from './Text.js';
+import { Tooltip } from './Tooltip.js';
 
 const theme = createTheme({ colorScheme: 'dark' });
 
 /** Presses `key` on whatever has focus; returns whether something took it (prevented its default). */
-function press(key: string, type: 'keydown' | 'keyup' = 'keydown') {
-  const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+function press(key: string, type: 'keydown' | 'keyup' = 'keydown', repeat = false) {
+  const event = new KeyboardEvent(type, { key, repeat, bubbles: true, cancelable: true });
   act(() => {
     (document.activeElement ?? document.body).dispatchEvent(event);
   });
   return event.defaultPrevented;
 }
+
+/** A whole Escape press: keydown, then keyup (where react-native-web's Modal closes). */
+const pressEscape = () => {
+  press('Escape');
+  press('Escape', 'keyup');
+};
 
 /** Lets Radix register its outside-press listener, which it defers a tick. */
 const tick = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
@@ -98,6 +105,138 @@ dialogTest('Dialog placement comes from the prop, else SilkDefaults, else center
   expect(sheet({ placement: 'bottom' })).toBe(true);
   expect(sheet({ defaults: { Dialog: { placement: 'bottom' } } })).toBe(true);
   expect(sheet({ placement: 'center', defaults: { Dialog: { placement: 'bottom' } } })).toBe(false);
+});
+
+function DialogWithPopover({
+  open = true,
+  popoverOpen = true,
+  onDialogChange = () => {},
+  onPopoverChange = () => {},
+}: {
+  readonly open?: boolean;
+  readonly popoverOpen?: boolean;
+  readonly onDialogChange?: (open: boolean) => void;
+  readonly onPopoverChange?: (open: boolean) => void;
+}) {
+  const anchor = useRef<ComponentRef<typeof View>>(null);
+  return (
+    <SilkProvider theme={theme}>
+      <Dialog.Root open={open} onOpenChange={onDialogChange}>
+        <Dialog.Content>
+          <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
+          <Popover.Root open={popoverOpen} onOpenChange={onPopoverChange} anchor={anchor}>
+            <Popover.Content testID="popover">
+              <Pressable accessibilityRole="button" accessibilityLabel="1500" />
+            </Popover.Content>
+          </Popover.Root>
+        </Dialog.Content>
+      </Dialog.Root>
+    </SilkProvider>
+  );
+}
+
+dialogTest('A popover opened inside a Dialog renders in its Modal, over the panel', () => {
+  render(<DialogWithPopover />);
+  const dialog = document.querySelector('[aria-modal="true"]')!;
+  const popover = screen.getByTestId('popover');
+  // Inside the Modal, so react-native-web's z-index 9999 doesn't cover it and its focus trap holds it.
+  expect(dialog.contains(popover)).toBe(true);
+  // Not inside the panel, whose box would clip it.
+  expect(screen.getByLabelText('Strength').parentElement?.contains(popover)).toBe(false);
+});
+
+dialogTest('A popover open as its Dialog mounts hands focus back to its anchor as it closes', () => {
+  // It waits for the dialog's host rather than open at the end of the page and
+  // move, which would rebuild it under effects still holding the old one.
+  const { rerender } = render(<DialogWithPopover />);
+  expect(focused()).toBe('1500');
+  rerender(<DialogWithPopover popoverOpen={false} />);
+  expect(focused()).toBe('Strength');
+});
+
+dialogTest('Escape closes a popover inside a Dialog, not the Dialog', () => {
+  const changes: string[] = [];
+  const { rerender } = render(
+    <DialogWithPopover
+      onDialogChange={(open) => changes.push(`dialog ${open}`)}
+      onPopoverChange={(open) => changes.push(`popover ${open}`)}
+    />,
+  );
+  pressEscape();
+  expect(changes).toEqual(['popover false']);
+  // With the popover gone, the next Escape closes the Dialog.
+  rerender(
+    <DialogWithPopover
+      popoverOpen={false}
+      onDialogChange={(open) => changes.push(`dialog ${open}`)}
+    />,
+  );
+  pressEscape();
+  expect(changes).toEqual(['popover false', 'dialog false']);
+});
+
+dialogTest('A held Escape closes a popover inside a Dialog, not the Dialog', () => {
+  const changes: string[] = [];
+  const onDialogChange = (open: boolean) => changes.push(`dialog ${open}`);
+  const { rerender } = render(
+    <DialogWithPopover
+      onDialogChange={onDialogChange}
+      onPopoverChange={(open) => changes.push(`popover ${open}`)}
+    />,
+  );
+  press('Escape');
+  rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
+  // The repeats come after the popover has closed, so nothing takes them.
+  for (let i = 0; i < 3; i++) press('Escape', 'keydown', true);
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['popover false']);
+});
+
+dialogTest('A reopened Dialog forgets an Escape a popover took before it closed', () => {
+  const changes: string[] = [];
+  const onDialogChange = (open: boolean) => changes.push(`dialog ${open}`);
+  const { rerender } = render(<DialogWithPopover onDialogChange={onDialogChange} />);
+  // The popover takes the keydown; its keyup goes to another window.
+  press('Escape');
+  rerender(<DialogWithPopover open={false} popoverOpen={false} onDialogChange={onDialogChange} />);
+  rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
+  // A keyup with no keydown the page saw (focus came back mid-press).
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['dialog false']);
+});
+
+dialogTest('After an Escape a popover took, a lone Escape keyup still closes the Dialog', () => {
+  const changes: string[] = [];
+  const onDialogChange = (open: boolean) => changes.push(`dialog ${open}`);
+  const { rerender } = render(<DialogWithPopover onDialogChange={onDialogChange} />);
+  pressEscape();
+  rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
+  // Pressed in another window, released here.
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['dialog false']);
+});
+
+dialogTest('A tooltip inside a Dialog opens in its Modal, and Escape closes only the tooltip', () => {
+  const changes: string[] = [];
+  render(
+    <SilkProvider theme={theme}>
+      <Dialog.Root open onOpenChange={(open) => changes.push(`dialog ${open}`)}>
+        <Dialog.Content>
+          <Tooltip.Root defaultOpen onOpenChange={(open) => changes.push(`tooltip ${open}`)}>
+            <Tooltip.Trigger>
+              <Text>Moves on the board</Text>
+            </Tooltip.Trigger>
+            <Tooltip.Content>Only in Explore</Tooltip.Content>
+          </Tooltip.Root>
+        </Dialog.Content>
+      </Dialog.Root>
+    </SilkProvider>,
+  );
+  const tooltip = screen.getByRole('tooltip');
+  expect(document.querySelector('[aria-modal="true"]')?.contains(tooltip)).toBe(true);
+  pressEscape();
+  expect(changes).toEqual(['tooltip false']);
+  expect(screen.queryByRole('tooltip')).toBeNull();
 });
 
 // --- Popover + Listbox ---

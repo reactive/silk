@@ -19,6 +19,7 @@ import {
 } from '@reactive/silk-native';
 import { View } from 'react-native';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { expect, fireEvent, waitFor } from 'storybook/test';
 import { withNativeSilk } from './withNativeSilk';
 
 const meta = {
@@ -168,6 +169,81 @@ export const SliderMarks: Story = {
     </>
   ),
 };
+
+const INSET = { padding: 24, borderWidth: 4, borderColor: 'transparent' } as const;
+
+const PADDED = [
+  { name: 'Padded', vertical: false, rtl: false },
+  { name: 'Padded, right to left', vertical: false, rtl: true },
+  { name: 'Padded, vertical', vertical: true, rtl: false },
+] as const;
+
+/**
+ * Presses on a slider with padding and a border bring the thumb to the
+ * press: the slide runs along the box its thumbs sit in, inside both.
+ */
+export const SliderPadded: Story = {
+  // Presses land by layout, which jsdom doesn't have; the browser run presses.
+  tags: ['needs-layout'],
+  render: () => (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 24 }}>
+      {PADDED.map(({ name, vertical, rtl }) => (
+        // A horizontal slider fills its container's width, as in an app.
+        <View key={name} style={vertical ? undefined : { width: 240 }}>
+          <Slider
+            testID={name}
+            accessibilityLabel={name}
+            defaultValue={[50]}
+            orientation={vertical ? 'vertical' : 'horizontal'}
+            dir={rtl ? 'rtl' : 'ltr'}
+            style={[INSET, vertical ? { height: 240 } : undefined]}
+          />
+        </View>
+      ))}
+    </View>
+  ),
+  play: async ({ canvas }) => {
+    for (const row of PADDED) {
+      for (const value of [0, 50, 100]) {
+        // Pressed until it shows: under the test runner, the story's first
+        // presses can come before the slider takes them. A press that lands
+        // off the thumb's point never shows, so this still fails.
+        await waitFor(() => {
+          const slider = canvas.getByTestId(row.name);
+          const thumb = canvas.getByRole('slider', { name: row.name });
+          const point = pressPoint(slider, thumb, value, row);
+          fireEvent.mouseDown(slider, { ...point, buttons: 1 });
+          fireEvent.mouseUp(document);
+          expect(thumb).toHaveAttribute('aria-valuenow', String(value));
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Where on the page a thumb's center sits at `value` (of 0 to 100) on a
+ * padded slider. Mirrors `slideFrom` for sliders that aren't inverted.
+ */
+function pressPoint(
+  slider: HTMLElement,
+  thumb: HTMLElement,
+  value: number,
+  { vertical, rtl }: (typeof PADDED)[number],
+): { clientX: number; clientY: number } {
+  const box = slider.getBoundingClientRect();
+  const thumbSize = thumb.getBoundingClientRect().width;
+  const edge = INSET.padding + INSET.borderWidth;
+  const travel = (vertical ? box.height : box.width) - 2 * edge - thumbSize;
+  // From the end `min` sits at: the bottom, or the right when right to left.
+  const fromMin = edge + thumbSize / 2 + (value / 100) * travel;
+  return vertical
+    ? { clientX: box.left + box.width / 2, clientY: box.bottom - fromMin }
+    : {
+        clientX: rtl ? box.right - fromMin : box.left + fromMin,
+        clientY: box.top + box.height / 2,
+      };
+}
 
 export const RadioGroupOrientations: Story = {
   render: () => (
