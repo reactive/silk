@@ -215,8 +215,11 @@ export interface ListboxItemProps
   readonly disabled?: boolean;
 }
 
-/** The label style of the item around, which follows its state. */
-const ItemLabelContext = createContext<RnTextStyle | null>(null);
+/** The text styles of the item around, which follow its state. */
+const ItemLabelContext = createContext<{
+  readonly label: RnTextStyle;
+  readonly description: RnTextStyle;
+} | null>(null);
 
 /** An item of a `Listbox`: a check in its indicator slot when chosen, lit while highlighted. */
 function ListboxItem({
@@ -236,7 +239,7 @@ function ListboxItem({
   const selected = list.value === value;
   const highlighted = list.highlighted === value;
   const state = { highlighted, selected, disabled };
-  const { indicator, label } = mapListboxItemStyle(theme, list.variant, { ...state, pressed: false });
+  const itemStyle = mapListboxItemStyle(theme, list.variant, { ...state, pressed: false });
   const isTabStop = !disabled && (list.tabStop === undefined || list.tabStop === value);
   const { register } = list;
   const setNode = useCallback(
@@ -287,10 +290,10 @@ function ListboxItem({
       ]}
       {...rnwAttrs({ 'data-highlighted': highlighted || undefined }, rest)}
     >
-      <ItemLabelContext.Provider value={label}>
+      <ItemLabelContext.Provider value={itemStyle}>
         {/* Not part of the option's name; its state says it (aria-selected on the web, checked on native). */}
-        <View style={indicator} aria-hidden importantForAccessibility="no-hide-descendants">
-          {selected ? <ListboxItemText>✓</ListboxItemText> : null}
+        <View style={itemStyle.indicator} aria-hidden importantForAccessibility="no-hide-descendants">
+          {selected ? <View style={itemStyle.check} /> : null}
         </View>
         {typeof children === 'string' || typeof children === 'number' ? (
           <ListboxItemText>{children}</ListboxItemText>
@@ -306,13 +309,21 @@ export type ListboxItemTextProps = TextProps;
 
 /**
  * Text in a `Listbox.Item` with custom children, colored as the item's own
- * label is: lit while highlighted or chosen, dimmed while disabled. A string
+ * label is: lit while highlighted or chosen, dimmed while disabled. With
+ * `tone="secondary"` it is the item's secondary text (a description under
+ * the label): secondary, and dimmed with the label while disabled. A string
  * child is wrapped in it already.
  */
-function ListboxItemText({ role = 'bodySm', style, ...props }: ListboxItemTextProps): JSX.Element {
-  const label = useContext(ItemLabelContext);
-  if (!label) throw new Error('Listbox.ItemText must be used within Listbox.Item');
-  return <Text role={role} {...props} style={[label, style]} />;
+function ListboxItemText({
+  role = 'bodySm',
+  tone,
+  style,
+  ...props
+}: ListboxItemTextProps): JSX.Element {
+  const item = useContext(ItemLabelContext);
+  if (!item) throw new Error('Listbox.ItemText must be used within Listbox.Item');
+  const text = tone === 'secondary' ? item.description : item.label;
+  return <Text role={role} {...props} style={[text, style]} />;
 }
 
 /**

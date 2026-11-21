@@ -329,6 +329,7 @@ test('conformance: every Dialog size and placement maps; a sheet meets the botto
   const sheet = mapDialogStyle(theme, { placement: 'bottom' });
   expect(sheet.veil.justifyContent).toBe('flex-end');
   expect(sheet.panel.borderBottomLeftRadius).toBe(0);
+  expect(sheet.panel.shadowOffset?.height).toBeLessThan(0);
   expect(mapDialogStyle(theme, { placement: 'center' }).veil.justifyContent).toBe('center');
 });
 
@@ -349,11 +350,20 @@ test('conformance: every Select size and density maps a listbox item row', () =>
       );
     }
   }
+  const { accent, neutral } = theme.semantic.color.tones;
   const lit = mapListboxItemStyle(theme, {}, { ...resting, highlighted: true });
-  expect(lit.row.backgroundColor).toBe(theme.semantic.color.tones.accent.subtle);
-  expect(lit.label.color).toBe(theme.semantic.color.tones.accent.text);
+  expect(lit.row.backgroundColor).toBe(accent.subtleHover);
+  expect(lit.label.color).toBe(accent.text);
   const pressed = mapListboxItemStyle(theme, {}, { ...resting, pressed: true });
-  expect(pressed.row.backgroundColor).toBe(theme.semantic.color.tones.accent.subtle);
+  expect(pressed.row.backgroundColor).toBe(accent.subtleHover);
+  const chosen = mapListboxItemStyle(theme, {}, { ...resting, selected: true });
+  expect(chosen.check.borderColor).toBe(accent.solid);
+  expect(chosen.label.fontWeight).toBe(String(theme.semantic.typography.label.weight));
+  expect(chosen.description.color).toBe(theme.semantic.color.textSecondary);
+  // A disabled item's secondary text dims with its label.
+  const off = mapListboxItemStyle(theme, {}, { ...resting, disabled: true });
+  expect(off.label.color).toBe(neutral.disabledFg);
+  expect(off.description.color).toBe(neutral.disabledFg);
 });
 
 test('conformance: listbox rows follow the theme space scale', () => {
