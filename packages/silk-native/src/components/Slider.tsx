@@ -39,6 +39,7 @@ import { sameItems } from './sameItems.js';
 import {
   FAR,
   fractionAt,
+  PHYSICAL_FRAME,
   fractionIn,
   placeAt,
   type SliderEdge,
@@ -333,7 +334,7 @@ export function Slider({
         rest,
       )}
     >
-      <View pointerEvents="none" style={parts} onLayout={slide.measure}>
+      <View pointerEvents="none" style={[parts, PHYSICAL_FRAME]} onLayout={slide.measure}>
         <View style={track}>
           <View
             style={[
@@ -416,7 +417,7 @@ const MarkContext = createContext<MarkStyle | null>(null);
  * `offset` moves it further along from `min`'s end; minus half the mark's
  * size centers it there: `markStyle(1500, -4)` centers an 8-wide dot on the
  * thumb at 1500. A position, so give the mark `position: 'absolute'`. Marks
- * lay out left to right in any app (see `mapSliderStyle`'s `parts`); a box
+ * lay out left to right in any app (see `PHYSICAL_FRAME`); a box
  * inside a mark can set `direction` to lay its own content out right to left.
  */
 export function useSliderMarkStyle(): MarkStyle {
@@ -485,10 +486,8 @@ function useSlide({
     };
   };
   const valueAt = (offset: number) => {
-    const fraction = fractionAt(offset, span.current.length, thumbSize);
-    // Offsets run from the top-left corner; the slide may start at the other edge.
-    const fromMin = from === 'right' || from === 'bottom' ? 1 - fraction : fraction;
-    return bounds.min + fromMin * (bounds.max - bounds.min);
+    const fraction = fractionAt(offset, span.current.length, thumbSize, from);
+    return bounds.min + fraction * (bounds.max - bounds.min);
   };
 
   return {
@@ -498,6 +497,8 @@ function useSlide({
       span.current = vertical ? { start: y, length: height } : { start: x, length: width };
     },
     start: (event: GestureResponderEvent) => {
+      // Not laid out yet, so a press can't be placed.
+      if (span.current.length === 0) return;
       const { location, page } = offsetOf(event);
       const value = valueAt(location);
       const before = latest.current;

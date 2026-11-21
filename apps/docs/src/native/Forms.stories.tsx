@@ -203,11 +203,10 @@ export const SliderPadded: Story = {
   play: async ({ canvas }) => {
     for (const row of PADDED) {
       const { name } = row;
-      for (const value of [100, 0, 50]) {
+      for (const value of [0, 50, 100]) {
         // Pressed until it shows: under the test runner, the story's first
         // presses can come before the slider takes them. A press that lands
-        // off the thumb's point never shows, so this still fails. 100 comes
-        // first because a slider pressed before it measures reads every press as 0.
+        // off the thumb's point never shows, so this still fails.
         await waitFor(() => {
           const slider = canvas.getByTestId(name);
           const thumb = canvas.getByRole('slider', { name });

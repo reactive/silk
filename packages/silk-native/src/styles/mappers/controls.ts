@@ -323,11 +323,7 @@ export function mapSwitchStyle(
  * the track's start to `thumbSize / 2` before its end, as Radix keeps web
  * thumbs in bounds, so marks laid out along the slider can line up with it.
  * `crossSize` is the slider's size across its track. `parts` is the box
- * inside `root` that holds the track, marks and thumbs: it fills `root` and
- * lays out left to right in any app, so the physical `left` / `right` that
- * place them mean what a press's `locationX` reads. (A right-to-left React
- * Native app turns `left` / `right` into `start` / `end`, resolved by the
- * parent's direction; `root` keeps the app's, so its own margins still flip.)
+ * inside `root` that holds the track, marks and thumbs, and fills `root`.
  */
 export function mapSliderStyle(
   theme: Theme,
@@ -373,7 +369,6 @@ export function mapSliderStyle(
       flexGrow: 1,
       alignSelf: 'stretch',
       alignItems: 'center',
-      direction: 'ltr',
     },
     track: {
       ...(vertical ? { width: trackThickness } : { height: trackThickness }),
