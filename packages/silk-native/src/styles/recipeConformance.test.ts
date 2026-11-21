@@ -329,7 +329,11 @@ test('conformance: every Slider size and tone maps; sizes differ in thumb size',
       expect(style.range.backgroundColor).toBe(theme.semantic.color.tones[tone].solid);
     }
   }
-  expect(mapSliderStyle(theme).parts.direction).toBe('ltr');
+  for (const orientation of ['horizontal', 'vertical'] as const) {
+    const { root, parts } = mapSliderStyle(theme, {}, 'comfortable', { orientation });
+    expect(parts.direction).toBe('ltr');
+    expect(root.direction).toBeUndefined();
+  }
   for (const [a, b] of distinctPairs(sliderRecipe.variants.size)) {
     expect(mapSliderStyle(theme, { size: a }).thumbSize).not.toBe(
       mapSliderStyle(theme, { size: b }).thumbSize,
