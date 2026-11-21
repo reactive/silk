@@ -101,17 +101,8 @@ function DialogContent({
   ...rest
 }: DialogContentProps): JSX.Element {
   const { open, onOpenChange } = useDialogContext('Content');
-  const { theme, density } = useTheme();
-  const defaults = useComponentDefaults('Dialog');
   const motionPreference = useMotionPreference();
-  const { veil, panel } = mapDialogStyle(
-    theme,
-    {
-      size: size ?? defaults.size ?? dialogRecipe.defaults.size,
-      placement: placement ?? defaults.placement ?? dialogRecipe.defaults.placement,
-    },
-    density,
-  );
+  const { veil, panel } = useDialogStyle({ size, placement });
   const close = () => onOpenChange(false);
   // Android recreates its dialog when animationType changes, so it is set
   // only while closed. Fading until the preference is known (it resolves a
@@ -132,6 +123,26 @@ function DialogContent({
       </View>
     </DialogShell>
   );
+}
+
+/**
+ * @internal A dialog's variants, each from its prop, else the provider's
+ * defaults, else the recipe's, and the styles they map to.
+ */
+export function useDialogStyle({
+  size,
+  placement,
+}: {
+  readonly size?: DialogVariantProps['size'] | undefined;
+  readonly placement?: DialogVariantProps['placement'] | undefined;
+}): Required<DialogVariantProps> & ReturnType<typeof mapDialogStyle> {
+  const { theme, density } = useTheme();
+  const defaults = useComponentDefaults('Dialog');
+  const variants = {
+    size: size ?? defaults.size ?? dialogRecipe.defaults.size,
+    placement: placement ?? defaults.placement ?? dialogRecipe.defaults.placement,
+  };
+  return { ...variants, ...mapDialogStyle(theme, variants, density) };
 }
 
 /** @internal What a dialog's `Modal` holds around its panel; see {@link DialogShell}. */
