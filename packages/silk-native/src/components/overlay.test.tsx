@@ -6,6 +6,7 @@ import { renderToString } from 'react-dom/server';
 import { ScrollView, View } from 'react-native';
 import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
 import { placeFloating } from '../overlay/place.js';
+import { releaseCloses } from '../overlay/sheetDrag.js';
 import { type SilkDefaults, SilkProvider } from '../theme/SilkProvider.js';
 import { Dialog } from './Dialog.js';
 import { Listbox } from './Listbox.js';
@@ -98,6 +99,47 @@ dialogTest('Dialog placement comes from the prop, else SilkDefaults, else center
   expect(sheet({ placement: 'bottom' })).toBe(true);
   expect(sheet({ defaults: { Dialog: { placement: 'bottom' } } })).toBe(true);
   expect(sheet({ placement: 'center', defaults: { Dialog: { placement: 'bottom' } } })).toBe(false);
+});
+
+/** Drags a finger on `target` by `dx`, `dy` in steps, then lifts it. */
+function swipe(target: Element, dx: number, dy: number) {
+  const touch = (x: number, y: number) => ({
+    identifier: 1,
+    target,
+    pageX: x,
+    pageY: y,
+    clientX: x,
+    clientY: y,
+  });
+  const fire = (type: string, x: number, y: number, lifted = false) => {
+    const event = new Event(type, { bubbles: true, cancelable: true });
+    Object.assign(event, {
+      touches: lifted ? [] : [touch(x, y)],
+      changedTouches: [touch(x, y)],
+    });
+    act(() => {
+      target.dispatchEvent(event);
+    });
+  };
+  fire('touchstart', 100, 100);
+  for (const step of [0.25, 0.5, 0.75, 1]) fire('touchmove', 100 + dx * step, 100 + dy * step);
+  fire('touchend', 100 + dx, 100 + dy, true);
+}
+
+dialogTest('A sheet closes when dragged down, not sideways', () => {
+  render(<DialogHarness placement="bottom" />);
+  fireEvent.click(screen.getByLabelText('Settings'));
+  swipe(screen.getByTestId('panel'), 120, 10);
+  expect(screen.queryByTestId('panel')).not.toBeNull();
+  swipe(screen.getByTestId('panel'), 0, 200);
+  expect(screen.queryByTestId('panel')).toBeNull();
+});
+
+test('A sheet let go of closes once dragged a third of its height, or flung down', () => {
+  expect(releaseCloses(80, 0.1, 300)).toBe(false);
+  expect(releaseCloses(100, 0.1, 300)).toBe(true);
+  expect(releaseCloses(20, 1, 300)).toBe(true);
+  expect(releaseCloses(-20, 1, 300)).toBe(false);
 });
 
 // --- Popover + Listbox ---
