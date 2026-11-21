@@ -85,6 +85,7 @@ export function SheetContent(props: DialogContentProps): JSX.Element {
  */
 function DraggableSheet({
   size,
+  // Chosen already (SheetContent); kept off the panel's view props.
   placement: _placement,
   style,
   overlayStyle,
@@ -199,10 +200,13 @@ function DraggableSheet({
     onDeactivate: (event) => {
       'worklet';
       const velocity = event.canceled ? 0 : event.velocityY;
-      // Caught while sliding out after closing: it goes on out.
-      if (shut.value) slideOut(velocity);
-      else if (offset.value <= 0) return;
-      else if (!event.canceled && releaseCloses(offset.value, velocity, height.value)) {
+      if (shut.value) {
+        // Caught while sliding out after closing: it goes on out, never up first.
+        slideOut(Math.max(0, velocity));
+        return;
+      }
+      if (offset.value <= 0) return;
+      if (!event.canceled && releaseCloses(offset.value, velocity, height.value)) {
         slideOut(velocity);
         scheduleOnRN(requestClose);
       } else springTo(0, velocity);

@@ -14,6 +14,8 @@ import { SilkProvider } from '../theme/SilkProvider.js';
 const mocked = rs.hoisted(() => ({
   pan: undefined as undefined | Record<string, (event?: object) => void>,
   springs: [] as number[],
+  /** The release speed each spring started with. */
+  speeds: [] as number[],
   /** Whether a spring lands at once; off, it is still running. */
   finish: true,
   /** The nodes handed to a sheet's scroll ref. */
@@ -44,8 +46,9 @@ rs.mock('react-native-reanimated', () => ({
   useAnimatedStyle: (style: () => object) => style(),
   useScrollOffset: () => {},
   useSharedValue: <T,>(value: T) => useRef({ value }).current,
-  withSpring: (to: number, _config: unknown, done?: (finished: boolean) => void) => {
+  withSpring: (to: number, config: { velocity: number }, done?: (finished: boolean) => void) => {
     mocked.springs.push(to);
+    mocked.speeds.push(config.velocity);
     if (mocked.finish) done?.(true);
     return to;
   },
@@ -104,6 +107,7 @@ beforeEach(() => {
   // react-native-web's Modal shows its content once an entrance animation ends, which jsdom never runs.
   setPrefersReducedMotion(true);
   mocked.springs.length = 0;
+  mocked.speeds.length = 0;
   mocked.scrolls.length = 0;
   mocked.finish = true;
 });
@@ -144,8 +148,10 @@ test('caught as it slides out after closing, a sheet goes on out when let go sho
   expect(asks()).toBe('1');
   expect(screen.getByTestId('sheet')).toBeTruthy();
   mocked.finish = true;
-  fling(-20, 0);
+  // Pushed back up to a third of its height and flung up.
+  fling(-400, -2000);
   expect(asks()).toBe('1');
+  expect(mocked.speeds.at(-1)).toBe(0);
   expect(screen.queryByTestId('sheet')).toBeNull();
 });
 
