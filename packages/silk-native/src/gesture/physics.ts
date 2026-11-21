@@ -47,8 +47,8 @@ export function releaseCloses(offset: number, velocity: number, height: number):
 }
 
 /**
- * The speed a drag lets go at: Gesture Handler's `velocity`, or none when its
- * last move came more than 40 ms before the release. A finger held still may
+ * The speed a drag lets go at: Gesture Handler's `velocity`, or none when it
+ * last moved (or started) more than 40 ms before the release. A finger held still may
  * send no moves, and Gesture Handler then still reports the speed of its last.
  */
 export function releaseSpeed(velocity: number, sinceLastMove: number): number {

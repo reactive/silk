@@ -86,7 +86,8 @@ export function SheetContent(props: DialogContentProps): JSX.Element {
  * it closes, on Silk's sheet spring. A drag follows the finger on the UI
  * thread; let go, the sheet keeps the finger's speed (none if it was held
  * still) and settles back or slides off and asks to close
- * (`onOpenChange(false)`). If its owner keeps it open, it settles back. With reduced motion, a release jumps to its end.
+ * (`onOpenChange(false)`). If its owner keeps it open, it settles back. With
+ * reduced motion, a release jumps to its end.
  */
 function DraggableSheet({
   size,
@@ -122,7 +123,7 @@ function DraggableSheet({
   const shut = useSharedValue(!open);
   const inScroll = useSharedValue(false);
   const scrollY = useSharedValue(0);
-  // When the drag last moved (ms, on the UI thread), so a held finger lets go with no speed.
+  // When the drag started or last moved (ms, on the UI thread), so a held finger lets go with no speed.
   const lastMoveAt = useSharedValue(0);
   const scrollRef = useAnimatedRef<ComponentRef<typeof RNScrollView>>();
 

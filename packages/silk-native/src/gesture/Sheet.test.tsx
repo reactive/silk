@@ -157,6 +157,18 @@ test('dragged, held still, then let go, a sheet settles back however fast the dr
   expect(mocked.speeds).not.toContain(1500);
 });
 
+test('caught as it slides out and flicked before it moves, a sheet keeps the flick', () => {
+  render(<Harness />);
+  mocked.finish = false;
+  fling(200, 1500);
+  mocked.speeds.length = 0;
+  now += 5000;
+  act(() => mocked.pan!.onActivate!());
+  now += 10;
+  act(() => mocked.pan!.onDeactivate!({ canceled: false, velocityY: 1500 }));
+  expect(mocked.speeds).toEqual([1500]);
+});
+
 test('a short, slow drag settles back without asking to close', () => {
   render(<Harness />);
   fling(40, 100);
