@@ -139,7 +139,7 @@ const anchor = useRef<View>(null);
 | | Web (react-native-web) | Android |
 | --- | --- | --- |
 | `Dialog` | `Modal`: `aria-modal` dialog, focus trap, focus back to the opener, Escape | `Modal`: back button, modal to TalkBack |
-| `Popover` | Non-modal Radix `DismissableLayer` in a body portal: the page stays live, so a menu can open on hover | Transparent `Modal`; back button |
+| `Popover` | Non-modal Radix `DismissableLayer` and untrapped `FocusScope` in a body portal: the page stays live, so a menu can open on hover | Transparent `Modal`; back button |
 | `Listbox` | `listbox` / `option`, one Tab stop, arrows / Home / End / Space | `radiogroup` / `radio` |
 
 A `Popover` closes on a press outside it and its anchor (on native the layer

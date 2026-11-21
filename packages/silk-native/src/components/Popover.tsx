@@ -76,10 +76,11 @@ export interface PopoverContentProps
   /** The least space it keeps from the window's edges. @default 8 */
   readonly collisionPadding?: number;
   /**
-   * Web: called as it opens, before focus moves to its first Tab stop (in a
-   * `Listbox`, the chosen item), or to the surface when it has none. Call
-   * `event.preventDefault()` to keep focus where it is, as a menu that opens
-   * on hover does.
+   * Web: called as it opens, before focus moves to its first Tab stop that
+   * isn't a link (in a `Listbox`, the chosen item), or to the surface when it
+   * has none, as Radix's `Popover` does. Not called when something inside
+   * took focus already. Call `event.preventDefault()` to keep focus where it
+   * is, as a menu that opens on hover does.
    */
   readonly onOpenAutoFocus?: ((event: OpenAutoFocusEvent) => void) | undefined;
 }

@@ -13,8 +13,10 @@ export interface FloatingLayerProps extends PlaceOptions {
   readonly onDismiss: () => void;
   readonly children: ReactNode;
   /**
-   * Web: called as it opens, before focus moves to its first Tab stop (or to
-   * the layer when it has none); `preventDefault()` keeps focus where it is.
+   * Web: called as it opens, before Radix's FocusScope moves focus to its
+   * first Tab stop that isn't a link (or to the layer when it has none), and
+   * not when something inside took focus already; `preventDefault()` keeps
+   * focus where it is.
    * Native has no focus to move.
    */
   readonly onOpenAutoFocus?: ((event: OpenAutoFocusEvent) => void) | undefined;

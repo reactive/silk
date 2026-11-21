@@ -117,7 +117,7 @@ export function FloatingLayer({
     <FocusScope
       asChild
       onMountAutoFocus={(event) => onOpenAutoFocus?.(event)}
-      // The anchor gets focus back instead, above.
+      // Silk hands focus back to the anchor instead (the layout effect's cleanup).
       onUnmountAutoFocus={(event) => event.preventDefault()}
     >
       <DismissableLayer
