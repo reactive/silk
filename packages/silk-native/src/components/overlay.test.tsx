@@ -100,14 +100,22 @@ dialogTest('Dialog placement comes from the prop, else SilkDefaults, else center
   expect(sheet({ placement: 'center', defaults: { Dialog: { placement: 'bottom' } } })).toBe(false);
 });
 
-function DialogWithPopover({ popoverOpen = true }: { readonly popoverOpen?: boolean }) {
+function DialogWithPopover({
+  popoverOpen = true,
+  onDialogChange = () => {},
+  onPopoverChange = () => {},
+}: {
+  readonly popoverOpen?: boolean;
+  readonly onDialogChange?: (open: boolean) => void;
+  readonly onPopoverChange?: (open: boolean) => void;
+}) {
   const anchor = useRef<ComponentRef<typeof View>>(null);
   return (
     <SilkProvider theme={theme}>
-      <Dialog.Root open onOpenChange={() => {}}>
+      <Dialog.Root open onOpenChange={onDialogChange}>
         <Dialog.Content>
           <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
-          <Popover.Root open={popoverOpen} onOpenChange={() => {}} anchor={anchor}>
+          <Popover.Root open={popoverOpen} onOpenChange={onPopoverChange} anchor={anchor}>
             <Popover.Content testID="popover">
               <Pressable accessibilityRole="button" accessibilityLabel="1500" />
             </Popover.Content>
@@ -135,6 +143,29 @@ dialogTest('A popover open as its Dialog mounts hands focus back to its anchor a
   expect(focused()).toBe('1500');
   rerender(<DialogWithPopover popoverOpen={false} />);
   expect(focused()).toBe('Strength');
+});
+
+dialogTest('Escape closes a popover inside a Dialog, not the Dialog', () => {
+  const changes: string[] = [];
+  const { rerender } = render(
+    <DialogWithPopover
+      onDialogChange={(open) => changes.push(`dialog ${open}`)}
+      onPopoverChange={(open) => changes.push(`popover ${open}`)}
+    />,
+  );
+  press('Escape');
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['popover false']);
+  // With the popover gone, the next Escape closes the Dialog.
+  rerender(
+    <DialogWithPopover
+      popoverOpen={false}
+      onDialogChange={(open) => changes.push(`dialog ${open}`)}
+    />,
+  );
+  press('Escape');
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['popover false', 'dialog false']);
 });
 
 // --- Popover + Listbox ---

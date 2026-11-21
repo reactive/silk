@@ -29,7 +29,8 @@ import { type FloatingSide, type Placement, placeFloating, placedStyle } from '.
  * stays live under it (a pointer can still hover the anchor). Radix's
  * DismissableLayer closes it on a press or focus outside it and its anchor
  * and on Escape (the topmost layer only; it listens in the capture phase,
- * so a control inside sees Escape after it). Radix's FocusScope (untrapped)
+ * so a control inside sees Escape after it; inside a Dialog, Silk keeps that
+ * Escape's keyup from the dialog's Modal, which would close too). Radix's FocusScope (untrapped)
  * moves focus in as it opens unless `onOpenAutoFocus` prevents it. Silk adds
  * closing on scrolling that moves the anchor and on resizing the window,
  * scrolling the item that gets focus on open into view, and handing focus
@@ -157,6 +158,8 @@ export function FloatingLayer({
         onFocusOutside={(event) => {
           if (onAnchor(event.target)) event.preventDefault();
         }}
+        // A Dialog's Modal closes on Escape's keyup; this layer closed on its keydown.
+        onEscapeKeyDown={host ? swallowEscapeKeyUp : undefined}
         onDismiss={onDismiss}
         style={{ ...styles.layer, ...(place ? placedStyle(place) : styles.unplaced) }}
       >
@@ -165,6 +168,25 @@ export function FloatingLayer({
     </FocusScope>,
     host ? element(host) : document.body,
   );
+}
+
+/**
+ * Keeps the coming Escape keyup from the page (react-native-web's Modal listens
+ * for it on the document), so closing a layer inside a Dialog leaves the Dialog open.
+ */
+function swallowEscapeKeyUp() {
+  const swallow = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape') return;
+    event.stopPropagation();
+    stop();
+  };
+  // A keyup lost to another window must not swallow a later Escape.
+  const stop = () => {
+    window.removeEventListener('keyup', swallow, true);
+    window.removeEventListener('blur', stop);
+  };
+  window.addEventListener('keyup', swallow, true);
+  window.addEventListener('blur', stop);
 }
 
 const subscribeNever = () => () => {};
