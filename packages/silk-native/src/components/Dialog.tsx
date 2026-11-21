@@ -80,7 +80,8 @@ export interface DialogContentProps
  * react-native-web renders as an `aria-modal` dialog that traps focus, hands
  * it back on close, and closes on Escape). Centered, or risen from the bottom
  * edge as a sheet (`placement="bottom"`). Its children lay out in the panel;
- * wrap long content in a ScrollView.
+ * wrap long content in a ScrollView. For a sheet that drags down to close,
+ * import `Dialog` from `@reactive/silk-native/gesture` instead.
  */
 function DialogContent({
   size,

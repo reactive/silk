@@ -40,7 +40,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Dialog as RootDialog, type DialogContentProps, useDialogContext } from '../components/Dialog.js';
 import { rnwAttrs } from '../styles/a11yProps.js';
 import { mapDialogStyle } from '../styles/mappers/overlay.js';
-import { useMotionPreference } from '../styles/useReducedMotion.js';
+import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { dragStep, releaseCloses, SHEET_SPRING } from './physics.js';
@@ -52,13 +52,13 @@ const SLOP = 8;
 type Pan = ReturnType<typeof usePanGesture>;
 
 /** What a sheet's `ScrollView` shares with the sheet's drag. */
-interface SheetScroll {
+interface SheetScrollLink {
   readonly pan: Pan;
   readonly scrollRef: AnimatedRef<ComponentRef<typeof RNScrollView>>;
   readonly scrollY: SharedValue<number>;
 }
 
-const SheetScrollContext = createContext<SheetScroll | null>(null);
+const SheetScrollContext = createContext<SheetScrollLink | null>(null);
 
 /**
  * `Dialog.Content`: a bottom sheet drags (below); any other placement is the
@@ -67,7 +67,13 @@ const SheetScrollContext = createContext<SheetScroll | null>(null);
 export function SheetContent(props: DialogContentProps): JSX.Element {
   const defaults = useComponentDefaults('Dialog');
   const placement = props.placement ?? defaults.placement ?? dialogRecipe.defaults.placement;
-  return placement === 'bottom' ? <DraggableSheet {...props} /> : <RootDialog.Content {...props} />;
+  if (placement === 'bottom') return <DraggableSheet {...props} />;
+  // A centered dialog opened from a sheet scrolls on its own, not as the sheet's content.
+  return (
+    <SheetScrollContext value={null}>
+      <RootDialog.Content {...props} />
+    </SheetScrollContext>
+  );
 }
 
 /**
@@ -79,6 +85,7 @@ export function SheetContent(props: DialogContentProps): JSX.Element {
  */
 function DraggableSheet({
   size,
+  placement: _placement,
   style,
   overlayStyle,
   children,
@@ -89,22 +96,24 @@ function DraggableSheet({
   const { open, onOpenChange, titleId, titled } = useDialogContext('Content');
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('Dialog');
-  const reduced = useMotionPreference() === 'reduced';
+  const reduced = useReducedMotion();
   const { veil, panel } = mapDialogStyle(
     theme,
     { size: size ?? defaults.size ?? dialogRecipe.defaults.size, placement: 'bottom' },
     density,
   );
-  const window = useWindowDimensions();
+  const screen = useWindowDimensions();
 
   // Shown from opening until it has slid out after closing.
   const [presented, setPresented] = useState(open);
   if (open && !presented) setPresented(true);
 
-  const offset = useSharedValue(window.height);
-  const height = useSharedValue(window.height);
+  const offset = useSharedValue(screen.height);
+  const height = useSharedValue(screen.height);
   const sliding = useSharedValue(false);
   const reduceMotion = useSharedValue(reduced);
+  // Closed by its owner: a release slides it out, however short.
+  const shut = useSharedValue(!open);
   const inScroll = useSharedValue(false);
   const scrollY = useSharedValue(0);
   const scrollRef = useAnimatedRef<ComponentRef<typeof RNScrollView>>();
@@ -115,12 +124,13 @@ function DraggableSheet({
   useLayoutEffect(() => {
     latest.current = { open, onOpenChange };
     reduceMotion.value = reduced;
+    shut.value = !open;
   });
   const [requestClose] = useState(() => () => {
     latest.current.onOpenChange(false);
     setCloseAsks((asks) => asks + 1);
   });
-  const [slidOut] = useState(() => () => {
+  const [unmountIfClosed] = useState(() => () => {
     if (!latest.current.open) setPresented(false);
   });
 
@@ -145,7 +155,7 @@ function DraggableSheet({
     springTo(height.value, velocity, () => {
       'worklet';
       sliding.value = false;
-      scheduleOnRN(slidOut);
+      scheduleOnRN(unmountIfClosed);
     });
   };
 
@@ -188,11 +198,14 @@ function DraggableSheet({
     },
     onDeactivate: (event) => {
       'worklet';
-      if (offset.value <= 0) return;
-      if (!event.canceled && releaseCloses(offset.value, event.velocityY, height.value)) {
-        slideOut(event.velocityY);
+      const velocity = event.canceled ? 0 : event.velocityY;
+      // Caught while sliding out after closing: it goes on out.
+      if (shut.value) slideOut(velocity);
+      else if (offset.value <= 0) return;
+      else if (!event.canceled && releaseCloses(offset.value, velocity, height.value)) {
+        slideOut(velocity);
         scheduleOnRN(requestClose);
-      } else springTo(0, event.canceled ? 0 : event.velocityY);
+      } else springTo(0, velocity);
     },
   });
 
@@ -232,7 +245,11 @@ function DraggableSheet({
                 aria-hidden
                 style={[
                   styles.handle,
-                  { top: theme.semantic.space[2], backgroundColor: theme.semantic.color.tones.neutral.border },
+                  {
+                    top: theme.semantic.space[2],
+                    borderRadius: theme.semantic.radius.full,
+                    backgroundColor: theme.semantic.color.tones.neutral.border,
+                  },
                 ]}
               />
               <SheetScrollContext value={{ pan, scrollRef, scrollY }}>{children}</SheetScrollContext>
@@ -256,7 +273,7 @@ export function SheetScrollView(props: SheetScrollViewProps): JSX.Element {
   return sheet ? <SheetScroll sheet={sheet} {...props} /> : <RNScrollView {...props} />;
 }
 
-function SheetScroll({ sheet, ref, ...props }: SheetScrollViewProps & { readonly sheet: SheetScroll }) {
+function SheetScroll({ sheet, ref, ...props }: SheetScrollViewProps & { readonly sheet: SheetScrollLink }) {
   useScrollOffset(sheet.scrollRef, sheet.scrollY);
   return (
     <AnimatedScrollView
@@ -288,6 +305,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: '50%',
     marginLeft: -HANDLE.width / 2,
-    borderRadius: HANDLE.height / 2,
   },
 });

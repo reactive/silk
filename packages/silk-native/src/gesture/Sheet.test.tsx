@@ -14,6 +14,10 @@ import { SilkProvider } from '../theme/SilkProvider.js';
 const mocked = rs.hoisted(() => ({
   pan: undefined as undefined | Record<string, (event?: object) => void>,
   springs: [] as number[],
+  /** Whether a spring lands at once; off, it is still running. */
+  finish: true,
+  /** The nodes handed to a sheet's scroll ref. */
+  scrolls: [] as unknown[],
 }));
 
 // The factories run at the sheet's import below, after this file's own imports.
@@ -34,13 +38,15 @@ rs.mock('react-native-reanimated', () => ({
   interpolate: () => 1,
   measure: () => null,
   scrollTo: () => {},
-  useAnimatedRef: () => () => {},
+  useAnimatedRef: () => (node: unknown) => {
+    if (node) mocked.scrolls.push(node);
+  },
   useAnimatedStyle: (style: () => object) => style(),
   useScrollOffset: () => {},
   useSharedValue: <T,>(value: T) => useRef({ value }).current,
   withSpring: (to: number, _config: unknown, done?: (finished: boolean) => void) => {
     mocked.springs.push(to);
-    done?.(true);
+    if (mocked.finish) done?.(true);
     return to;
   },
 }));
@@ -98,6 +104,8 @@ beforeEach(() => {
   // react-native-web's Modal shows its content once an entrance animation ends, which jsdom never runs.
   setPrefersReducedMotion(true);
   mocked.springs.length = 0;
+  mocked.scrolls.length = 0;
+  mocked.finish = true;
 });
 
 test('a bottom sheet opens by springing up to rest', () => {
@@ -127,4 +135,36 @@ test('flung down but kept open by its owner, a sheet settles back', () => {
   expect(asks()).toBe('1');
   expect(mocked.springs.at(-1)).toBe(0);
   expect(screen.getByTestId('sheet')).toBeTruthy();
+});
+
+test('caught as it slides out after closing, a sheet goes on out when let go short', () => {
+  render(<Harness />);
+  mocked.finish = false;
+  fling(200, 1500);
+  expect(asks()).toBe('1');
+  expect(screen.getByTestId('sheet')).toBeTruthy();
+  mocked.finish = true;
+  fling(-20, 0);
+  expect(asks()).toBe('1');
+  expect(screen.queryByTestId('sheet')).toBeNull();
+});
+
+test("a centered dialog opened from a sheet scrolls on its own, not as the sheet's content", () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Dialog.Root open onOpenChange={() => {}}>
+        <Dialog.Content placement="bottom">
+          <Dialog.Title>Settings</Dialog.Title>
+          <Dialog.Root open onOpenChange={() => {}}>
+            <Dialog.Content testID="inner">
+              <Dialog.Title>Sources</Dialog.Title>
+              <Dialog.ScrollView />
+            </Dialog.Content>
+          </Dialog.Root>
+        </Dialog.Content>
+      </Dialog.Root>
+    </SilkProvider>,
+  );
+  expect(screen.getByTestId('inner')).toBeTruthy();
+  expect(mocked.scrolls).toEqual([]);
 });

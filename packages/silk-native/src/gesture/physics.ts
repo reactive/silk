@@ -10,6 +10,9 @@ const FLICK = 1000;
 /** Material's hide friction: how far ahead the release speed throws the sheet, in seconds. */
 const HIDE_FRICTION = 0.1;
 
+/** Material 3's default spatial spring stiffness. */
+const STIFFNESS = 700;
+
 /**
  * The spring a sheet settles, slides in and slides out on: Material 3's
  * default spatial spring (damping ratio 0.9, stiffness 700), clamped so it
@@ -21,9 +24,9 @@ export const SHEET_SPRING: {
   readonly mass: number;
   readonly overshootClamping: boolean;
 } = {
-  stiffness: 700,
+  stiffness: STIFFNESS,
   // Damping ratio 0.9: 2 × 0.9 × √(stiffness × mass).
-  damping: 2 * 0.9 * Math.sqrt(700),
+  damping: 2 * 0.9 * Math.sqrt(STIFFNESS),
   mass: 1,
   overshootClamping: true,
 };
