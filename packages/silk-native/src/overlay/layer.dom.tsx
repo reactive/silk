@@ -22,10 +22,11 @@ import { type FloatingSide, type Placement, placeFloating, placedStyle } from '.
  * stays live under it (a pointer can still hover the anchor). Radix's
  * DismissableLayer closes it on a press or focus outside it and its anchor
  * and on Escape (the topmost layer only; it listens in the capture phase,
- * so a control inside sees Escape after it), and Radix's FocusScope (untrapped) moves focus in as it opens
- * unless `onOpenAutoFocus` prevents it. Silk adds closing on scrolling that
- * moves the anchor and on resizing the window, scrolls the item focus moved
- * to into view, and hands focus back to the anchor (not to what held focus before) when it closes holding focus.
+ * so a control inside sees Escape after it). Radix's FocusScope (untrapped)
+ * moves focus in as it opens unless `onOpenAutoFocus` prevents it. Silk adds
+ * closing on scrolling that moves the anchor and on resizing the window,
+ * scrolling the item that gets focus on open into view, and handing focus
+ * back to the anchor (not to what held focus before) as it closes holding it.
  */
 export function FloatingLayer({
   anchor,
@@ -94,11 +95,11 @@ export function FloatingLayer({
         // under a fixed anchor, doesn't.
         const opened = from.getBoundingClientRect();
         const onScroll = (event: Event) => {
-          // Only a scroll of something around the anchor can move it (a
-          // removed anchor is gone however it scrolled).
-          if (from.isConnected && event.target instanceof Node && !event.target.contains(from)) {
-            return;
-          }
+          // Only a scroll of something around the anchor can move it; a
+          // removed anchor closes it on any scroll but the layer's own.
+          const target = event.target instanceof Node ? event.target : null;
+          const around = from.isConnected ? target?.contains(from) : !layer.current?.contains(target);
+          if (!around) return;
           const now = from.getBoundingClientRect();
           if (now.top !== opened.top || now.left !== opened.left) dismiss.current();
         };

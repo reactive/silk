@@ -233,6 +233,24 @@ test('Popover closes on scrolling that moves its anchor, not on scrolling that l
   expect(popover()).toBeNull();
 });
 
+test('Popover whose anchor is removed closes on a scroll, but not its own', () => {
+  // A removed element measures as an empty box at the corner, as in a browser.
+  const rect = HTMLElement.prototype.getBoundingClientRect;
+  HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+    return this.isConnected ? new DOMRect(0, 10, 60, 20) : new DOMRect();
+  };
+  try {
+    const { rerender } = render(<LateAnchor anchored />);
+    rerender(<LateAnchor anchored={false} />);
+    fireEvent.scroll(popover()!);
+    expect(popover()).not.toBeNull();
+    fireEvent.scroll(document);
+    expect(popover()).toBeNull();
+  } finally {
+    HTMLElement.prototype.getBoundingClientRect = rect;
+  }
+});
+
 test('Popover renders nothing on a server, even open', () => {
   function Open() {
     const anchor = useRef<ComponentRef<typeof View>>(null);

@@ -105,7 +105,8 @@ function DialogContent({
   const close = () => onOpenChange(false);
   // Android recreates its dialog when animationType changes, so it is set
   // only while closed. Fading until the preference is known (it resolves a
-  // moment after mount) keeps a dialog mounted open from losing its fade.
+  // moment after mount) keeps a dialog mounted open from losing its fade; a
+  // reduced-motion user may see that one fade, before the answer arrives.
   const motion: 'none' | 'fade' = motionPreference === 'reduced' ? 'none' : 'fade';
   const [animationType, setAnimationType] = useState(motion);
   if (!open && animationType !== motion) setAnimationType(motion);
