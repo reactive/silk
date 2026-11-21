@@ -90,7 +90,6 @@ export interface SliderProps
 /** Which edge a value of `min` sits at. */
 type SlideFrom = 'left' | 'right' | 'bottom' | 'top';
 
-/** Which edge `min` sits at. */
 function slideFrom(vertical: boolean, rtl: boolean, inverted: boolean): SlideFrom {
   if (vertical) return inverted ? 'top' : 'bottom';
   // Right to left and inverted cancel out.
@@ -139,7 +138,8 @@ export function moveThumb(
 ): { values: number[]; index: number } | undefined {
   const places = Math.max(decimals(step), decimals(min));
   const snapped = Number((Math.round((next - min) / step) * step + min).toFixed(places));
-  const value = Math.min(max, Math.max(min, snapped));
+  // `+ 0` turns a -0 from the rounding into 0, which compares as the same value.
+  const value = Math.min(max, Math.max(min, snapped)) + 0;
   const moved = values.map((each, i) => (i === index ? value : each)).sort((a, b) => a - b);
   // Counted in whole steps, so a float difference (0.3 - 0.2) doesn't fall short of one.
   const apart = moved.every(

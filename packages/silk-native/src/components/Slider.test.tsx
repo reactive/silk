@@ -179,6 +179,9 @@ test('moveThumb snaps, clamps, sorts, and keeps whole steps apart despite float 
   expect(moveThumb([0.2, 0.3], 0.3, 0, bounds)).toBeUndefined();
   expect(moveThumb([0.2, 0.5], 0.93, 0, bounds)).toEqual({ values: [0.5, 0.9], index: 1 });
   expect(moveThumb([0.5], 7, 0, bounds)).toEqual({ values: [1], index: 0 });
+  // Rounding can give -0 (-0.9 + 3 * 0.3); it comes back as 0.
+  const zero = moveThumb([0.3], 0, 0, { min: -0.9, max: 0.9, step: 0.3, minSteps: 0 });
+  expect(Object.is(zero?.values[0], 0)).toBe(true);
 });
 
 test('a thumb sits by percent less a share of its size, so its center stays in bounds', () => {
@@ -193,6 +196,19 @@ test('a thumb sits by percent less a share of its size, so its center stays in b
   expect([half.left, half.marginLeft]).toEqual(['50%', '-10px']);
   const end = screen.getByRole('slider', { name: 'End' }).style;
   expect([end.left, end.marginLeft]).toEqual(['100%', '-20px']);
+});
+
+test('a vertical thumb sits from the bottom, an inverted one from the top', () => {
+  render(
+    <SilkProvider>
+      <Slider accessibilityLabel="Up" orientation="vertical" defaultValue={[25]} size="md" />
+      <Slider accessibilityLabel="Down" orientation="vertical" inverted defaultValue={[25]} size="md" />
+    </SilkProvider>,
+  );
+  const up = screen.getByRole('slider', { name: 'Up' }).style;
+  expect([up.bottom, up.marginBottom]).toEqual(['25%', '-5px']);
+  const down = screen.getByRole('slider', { name: 'Down' }).style;
+  expect([down.top, down.marginTop]).toEqual(['25%', '-5px']);
 });
 
 test('fractionAt inverts the placement: half a thumb in is min, half a thumb before the end is max', () => {
