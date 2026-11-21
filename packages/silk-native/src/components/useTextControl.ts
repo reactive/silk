@@ -12,6 +12,7 @@ import {
   useFieldControlRegistration,
   type AriaInvalid,
 } from './Field.js';
+import { assignRef } from './assignRef.js';
 
 type TextControlOptions = {
   readonly nativeID?: string | undefined;
@@ -63,11 +64,7 @@ export function useTextControl(
   const setRef = useCallback(
     (instance: ComponentRef<typeof TextInput> | null) => {
       controlRef.current = instance;
-      if (typeof options.ref === 'function') {
-        options.ref(instance);
-      } else if (options.ref) {
-        options.ref.current = instance;
-      }
+      assignRef(options.ref, instance);
     },
     [options.ref],
   );

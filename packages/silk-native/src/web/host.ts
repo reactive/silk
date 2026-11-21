@@ -33,7 +33,6 @@ export interface WebNode {
   contains(other: WebNode): boolean;
   /** A bit mask; `FOLLOWING` set when `other` comes after it in the page. */
   compareDocumentPosition?(other: WebNode): number;
-  /** Whether the element matches a CSS selector. */
   matches?(selector: string): boolean;
   readonly ownerDocument?: WebDocument;
 }

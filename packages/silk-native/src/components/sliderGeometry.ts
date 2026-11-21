@@ -9,7 +9,6 @@ import type { ViewStyle } from 'react-native';
 /** The edge of a slider that `min` sits at. */
 export type SliderEdge = 'left' | 'right' | 'bottom' | 'top';
 
-/** The far edge from each edge. */
 export const FAR: Record<SliderEdge, SliderEdge> = {
   left: 'right',
   right: 'left',

@@ -24,6 +24,7 @@ import { mapListboxItemStyle } from '../styles/mappers/overlay.js';
 import type { RnTextStyle } from '../styles/mappers/shared.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { assignRef } from './assignRef.js';
 import { usePopoverContext } from './Popover.js';
 import { CheckGlyph } from './glyphs.js';
 import { Pressable, type PressableProps } from './Pressable.js';
@@ -251,8 +252,7 @@ function ListboxItem({
   const setNode = useCallback(
     (node: ItemNode | null) => {
       register(value, node, disabled);
-      if (typeof ref === 'function') ref(node);
-      else if (ref) ref.current = node;
+      assignRef(ref, node);
     },
     [register, value, disabled, ref],
   );

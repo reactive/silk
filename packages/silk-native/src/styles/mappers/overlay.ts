@@ -10,12 +10,7 @@ import {
 } from '@reactive/silk-core';
 import { listboxRowMinHeightStep, resolveSpaceSum } from '../controlGeometry.js';
 import { elevationBackground } from './visual.js';
-import {
-  mapShadow,
-  type RnTextStyle,
-  type RnViewStyle,
-  spaceScale,
-} from './shared.js';
+import { mapShadow, type RnTextStyle, type RnViewStyle, spaceScale } from './shared.js';
 
 /** The floating-surface treatment every overlay shares (web: `floatingSurfaceClass`). */
 function floatingSurface(theme: Theme): RnViewStyle {
@@ -90,24 +85,21 @@ export function mapPopoverStyle(
   };
 }
 
-/** Widest a tooltip grows (web parity: `floatingSurfaceCompactClass`). */
 const TOOLTIP_WIDTH = 240;
 
 /**
  * Tooltip: the floating surface, compact, around a line or two at the label
  * role (web: `floatingSurfaceCompactClass`); the text is a `Text` with that role.
  */
-export function mapTooltipStyle(theme: Theme): { readonly surface: RnViewStyle } {
+export function mapTooltipStyle(theme: Theme): RnViewStyle {
   const { space } = theme.semantic;
   return {
-    surface: {
-      ...floatingSurface(theme),
-      paddingTop: space[1],
-      paddingBottom: space[1],
-      paddingLeft: space[2],
-      paddingRight: space[2],
-      maxWidth: TOOLTIP_WIDTH,
-    },
+    ...floatingSurface(theme),
+    paddingTop: space[1],
+    paddingBottom: space[1],
+    paddingLeft: space[2],
+    paddingRight: space[2],
+    maxWidth: TOOLTIP_WIDTH,
   };
 }
 

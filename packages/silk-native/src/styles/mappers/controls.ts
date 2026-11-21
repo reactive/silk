@@ -363,9 +363,8 @@ export function mapSliderStyle(
       ...(state.disabled ? { opacity: 0.55 } : {}),
     },
     track: {
-      ...(vertical
-        ? { width: trackThickness, flexGrow: 1 }
-        : { height: trackThickness, flexGrow: 1 }),
+      ...(vertical ? { width: trackThickness } : { height: trackThickness }),
+      flexGrow: 1,
       borderRadius: theme.semantic.radius.full,
       backgroundColor: theme.semantic.color.surfaceSunken,
     },

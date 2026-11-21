@@ -25,6 +25,7 @@ import {
   webDocument,
   webNode,
 } from '../web/host.js';
+import { assignRef } from './assignRef.js';
 import { Text } from './Text.js';
 import { useControllableValue } from './useControllableValue.js';
 
@@ -133,13 +134,7 @@ function TooltipRoot({
       webDocument()?.addEventListener(type, pressEnded, { capture: true, once: true });
     }
   }, [pressEnded]);
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current);
-      pressEnded();
-    },
-    [pressEnded],
-  );
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   // A change made now supersedes one a timer was waiting to make.
   const setOpen = useCallback((next: boolean) => {
@@ -218,8 +213,7 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
   const setRef = useCallback(
     (node: ComponentRef<typeof View> | null) => {
       anchor.current = node;
-      if (typeof ref === 'function') return ref(node);
-      if (ref) ref.current = node;
+      assignRef(ref, node);
     },
     [anchor, ref],
   );
@@ -337,7 +331,7 @@ function TooltipContent({
         role="tooltip"
         {...rest}
         {...own}
-        style={[mapTooltipStyle(theme).surface, style]}
+        style={[mapTooltipStyle(theme), style]}
       >
         {typeof children === 'string' || typeof children === 'number' ? (
           <Text role="label">{children}</Text>

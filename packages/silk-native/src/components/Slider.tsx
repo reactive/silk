@@ -93,10 +93,10 @@ export interface SliderProps
 
 /** Keys that move a thumb toward `min`, by the edge `min` sits at (Radix's). */
 const BACK_KEYS: Record<SliderEdge, readonly string[]> = {
-  left: ['Home', 'PageDown', 'ArrowDown', 'ArrowLeft'],
-  right: ['Home', 'PageDown', 'ArrowDown', 'ArrowRight'],
-  bottom: ['Home', 'PageDown', 'ArrowDown', 'ArrowLeft'],
-  top: ['Home', 'PageDown', 'ArrowUp', 'ArrowLeft'],
+  left: ['PageDown', 'ArrowDown', 'ArrowLeft'],
+  right: ['PageDown', 'ArrowDown', 'ArrowRight'],
+  bottom: ['PageDown', 'ArrowDown', 'ArrowLeft'],
+  top: ['PageDown', 'ArrowUp', 'ArrowLeft'],
 };
 const PAGE_KEYS = ['PageUp', 'PageDown'];
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
@@ -187,7 +187,7 @@ export function Slider({
 }: SliderProps): JSX.Element {
   const { theme, density } = useTheme();
   const defaults = useComponentDefaults('Slider');
-  const resolved: SliderVariantProps = {
+  const resolved = {
     size: size ?? defaults.size ?? sliderRecipe.defaults.size,
     tone: tone ?? defaults.tone ?? sliderRecipe.defaults.tone,
   };
@@ -211,11 +211,16 @@ export function Slider({
   const vertical = orientation === 'vertical';
   const rtl = (dir ?? (I18nManager.isRTL ? 'rtl' : 'ltr')) === 'rtl';
   const from = slideFrom(vertical, rtl, inverted);
-  const { root, track, range, thumb, thumbSize, crossSize } = mapSliderStyle(
-    theme,
-    resolved,
-    density,
-    { orientation, invalid: isInvalid, disabled: isDisabled },
+  // Memoized: a drag re-renders the slider on every move, and its styles don't change with the values.
+  const { root, track, range, thumb, thumbSize, crossSize } = useMemo(
+    () =>
+      mapSliderStyle(
+        theme,
+        { size: resolved.size, tone: resolved.tone },
+        density,
+        { orientation, invalid: isInvalid, disabled: isDisabled },
+      ),
+    [theme, resolved.size, resolved.tone, density, orientation, isInvalid, isDisabled],
   );
 
   // The values as last rendered, for gestures and keys that outlive a render.
@@ -230,17 +235,18 @@ export function Slider({
 
   /**
    * Moves thumb `index` of `base` (the rendered values unless a drag says) to
-   * `next` and reports the change; returns the values and where that thumb is
-   * now, or undefined if refused. Whoever moved it commits.
+   * `next` and reports the change; returns the values, where that thumb is
+   * now and whether they changed, or undefined if refused. Whoever moved it commits.
    */
   const setThumb: SetThumb = (next, index, base = latest.current) => {
     const moved = moveThumb(base, next, index, bounds);
     if (!moved) return undefined;
-    if (!sameItems(moved.values, base)) {
+    const changed = !sameItems(moved.values, base);
+    if (changed) {
       setUncontrolled(moved.values);
       onValueChange?.(moved.values);
     }
-    return moved;
+    return { ...moved, changed };
   };
   /**
    * A key or assistive action on thumb `focused` moving thumb `index`: it
@@ -248,10 +254,9 @@ export function Slider({
    * (one pushed past its neighbor takes its place; Home and End move the outer ones).
    */
   const keyMove = (next: number, index: number, focused = index) => {
-    const before = latest.current;
     const moved = setThumb(next, index);
     if (!moved) return;
-    if (!sameItems(moved.values, before)) onValueCommit?.(moved.values);
+    if (moved.changed) onValueCommit?.(moved.values);
     if (moved.index !== focused) focusThumb(moved.index);
   };
 
@@ -267,9 +272,8 @@ export function Slider({
     disabled: isDisabled,
   });
 
-  const nudge = (index: number, steps: number) => {
-    if (!isDisabled) keyMove(latest.current[index]! + steps * step, index);
-  };
+  const nudge = (index: number, steps: number) =>
+    keyMove(latest.current[index]! + steps * step, index);
   const onThumbKey = (index: number) => (event: WebKeyDownEvent) => {
     const { key, shiftKey } = event.nativeEvent;
     if (isDisabled) return;
@@ -283,6 +287,7 @@ export function Slider({
   };
   const onAction = (index: number) => (event: AccessibilityActionEvent) => {
     const { actionName } = event.nativeEvent;
+    if (isDisabled) return;
     if (actionName === 'increment') nudge(index, 1);
     else if (actionName === 'decrement') nudge(index, -1);
   };
@@ -425,7 +430,7 @@ type SetThumb = (
   next: number,
   index: number,
   base?: readonly number[],
-) => { values: number[]; index: number } | undefined;
+) => { values: number[]; index: number; changed: boolean } | undefined;
 
 interface SlideOptions {
   readonly vertical: boolean;
