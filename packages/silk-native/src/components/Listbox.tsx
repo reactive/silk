@@ -189,6 +189,7 @@ function ListboxRoot({
         {...rest}
         {...({ onKeyDown } as object)}
         // A pointer leaving clears the light, unless it is on the focused item.
+        // Not a finger: it leaves as it lifts, which would clear the row it just pressed.
         onPointerLeave={(event) => {
           onPointerLeave?.(event);
           if (event.nativeEvent.pointerType !== 'touch' && !holdsFocus()) unhighlight();
@@ -272,8 +273,9 @@ function ListboxItem({
         if (WEB && !list.isItem(to)) list.unhighlight();
       }}
       onPress={() => list.pick(value)}
-      // The light shows focus, as web Silk's menu items do.
-      focusRing={false}
+      // On the web the light shows focus, as web Silk's menu items do; native
+      // focus (D-pad, TalkBack) keeps the ring, which only those users see.
+      focusRing={WEB ? false : undefined}
       style={({ pressed }) => [
         mapListboxItemStyle(theme, list.variant, { ...state, pressed }).row,
         style,

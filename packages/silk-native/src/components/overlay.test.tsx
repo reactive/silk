@@ -362,6 +362,7 @@ test('Popover whose anchor mounts frames later is placed, and closes as it scrol
   expect(layer().style.opacity).toBe('0');
   rerender(<LateAnchor anchored />);
   await nextFrame();
+  // Placed: the unplaced style (unseen, at the window's corner) is gone.
   expect(layer().style.opacity).toBe('');
   screen.getByLabelText('Strength').getBoundingClientRect = () => new DOMRect(0, -40, 60, 20);
   fireEvent.scroll(document);
@@ -529,7 +530,9 @@ test('Listbox takes its size from the provider defaults', () => {
     unmount();
     return height;
   };
-  expect(rowHeight({ Listbox: { size: 'sm' } })).not.toBe(rowHeight());
+  // Space steps 6 + 1 and 7 at the default scale.
+  expect(rowHeight({ Listbox: { size: 'sm' } })).toBe('28px');
+  expect(rowHeight()).toBe('32px');
 });
 
 test('Listbox skips disabled items: Tab stop, autoFocus and arrows land on enabled ones', () => {

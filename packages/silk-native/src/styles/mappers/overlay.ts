@@ -97,7 +97,7 @@ export interface ListboxItemState {
 
 /**
  * Listbox item (Select's vocabulary: `size`, `density`): a row with an
- * indicator slot, lit while highlighted (web: `menuItemClass`).
+ * indicator slot, lit while highlighted or pressed (web: `menuItemClass`).
  */
 export function mapListboxItemStyle(
   theme: Theme,
