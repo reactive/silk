@@ -18,6 +18,7 @@ export {
   mapRadioGroupStyle,
   mapRadioItemStyle,
   mapSwitchStyle,
+  mapSliderStyle,
   mapTextareaStyle,
 } from './mappers/controls.js';
 export type {
@@ -48,5 +49,6 @@ export {
   mapDialogStyle,
   mapListboxItemStyle,
   mapPopoverStyle,
+  mapTooltipStyle,
 } from './mappers/overlay.js';
 export type { ListboxItemState } from './mappers/overlay.js';

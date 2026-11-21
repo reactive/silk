@@ -14,7 +14,6 @@ import {
   useState,
 } from 'react';
 import {
-  Platform,
   type StyleProp,
   View,
   type ViewProps,
@@ -25,25 +24,29 @@ import { mapListboxItemStyle } from '../styles/mappers/overlay.js';
 import type { RnTextStyle } from '../styles/mappers/shared.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { assignRef } from './assignRef.js';
 import { usePopoverContext } from './Popover.js';
 import { CheckGlyph } from './glyphs.js';
 import { Pressable, type PressableProps } from './Pressable.js';
+import { sameItems } from './sameItems.js';
 import { Text, type TextProps } from './Text.js';
+import {
+  FOLLOWING,
+  WEB,
+  type WebFocusEvent,
+  webDocument,
+  webKeyHandler,
+  type WebKeyDownEvent,
+  webNode,
+} from '../web/host.js';
 
-const WEB = Platform.OS === 'web';
 /** A listbox on the web; Android has none, so a radiogroup there. */
 const LIST_ROLE = (WEB ? 'listbox' : 'radiogroup') as ViewProps['role'];
 
 type ItemNode = ComponentRef<typeof View>;
 
-/**
- * A key pressed in the list: react-native-web's `onKeyDown`, which React
- * Native before 0.84 doesn't type on View.
- */
-export interface ListboxKeyDownEvent {
-  readonly nativeEvent: { readonly key: string };
-  preventDefault(): void;
-}
+/** A key pressed in the list: react-native-web's `onKeyDown`. */
+export type ListboxKeyDownEvent = WebKeyDownEvent;
 
 interface ListboxContextValue {
   readonly value: string | undefined;
@@ -192,7 +195,7 @@ function ListboxRoot({
         // React Native's role type lacks the web's listbox.
         role={LIST_ROLE}
         {...rest}
-        {...({ onKeyDown } as object)}
+        {...webKeyHandler(onKeyDown)}
         // A pointer leaving clears the light, unless it is on the focused item.
         // Not a finger: it leaves as it lifts, which would clear the row it just pressed.
         onPointerLeave={(event) => {
@@ -249,8 +252,7 @@ function ListboxItem({
   const setNode = useCallback(
     (node: ItemNode | null) => {
       register(value, node, disabled);
-      if (typeof ref === 'function') ref(node);
-      else if (ref) ref.current = node;
+      assignRef(ref, node);
     },
     [register, value, disabled, ref],
   );
@@ -281,7 +283,7 @@ function ListboxItem({
       onBlur={(event) => {
         onBlur?.(event);
         // Focus leaving the list (web, where the blur names where it went).
-        const to = (event.nativeEvent as { relatedTarget?: unknown }).relatedTarget;
+        const to = (event.nativeEvent as unknown as WebFocusEvent).relatedTarget;
         if (WEB && !list.isItem(to)) list.unhighlight();
       }}
       onPress={() => list.pick(value)}
@@ -354,14 +356,14 @@ function useItems() {
   const [enabledItems, setEnabledItems] = useState<readonly string[]>();
   useLayoutEffect(() => {
     const now = enabled();
-    setEnabledItems((was) => (was && sameList(was, now) ? was : now));
+    setEnabledItems((was) => (was && sameItems(was, now) ? was : now));
   });
   /** `target`, if it names an enabled item shown. */
   const ifEnabled = (target: string | undefined) =>
     target !== undefined && enabledItems?.includes(target) ? target : undefined;
   const focus = (target: string) => items.current.get(target)?.node.focus();
   const isItem = (node: unknown) => [...items.current.values()].some((item) => item.node === node);
-  const holdsFocus = () => isItem(activeElement());
+  const holdsFocus = () => isItem(webDocument()?.activeElement);
   // Stable, so an item's ref callback keeps its place in mount order across renders.
   const register = useCallback((itemValue: string, node: ItemNode | null, disabled: boolean) => {
     const was = items.current.get(itemValue);
@@ -377,17 +379,6 @@ function useItems() {
   return { enabledItems, enabled, ifEnabled, focus, isItem, holdsFocus, register };
 }
 
-/** react-native-web's focused DOM element (silk-native doesn't load DOM types). */
-function activeElement(): unknown {
-  return (globalThis as { document?: { activeElement?: unknown } }).document?.activeElement;
-}
-
-interface DomNode {
-  compareDocumentPosition?: (other: DomNode) => number;
-}
-/** `Node.DOCUMENT_POSITION_FOLLOWING`. */
-const FOLLOWING = 4;
-
 /**
  * The index in `order` that an arrow, Home or End moves to from `from`
  * (nothing focused yet moves to the first); nothing for any other key.
@@ -401,9 +392,6 @@ function moveTo(key: string, from: string | undefined, order: readonly string[])
   return undefined;
 }
 
-const sameList = (a: readonly string[], b: readonly string[]) =>
-  a.length === b.length && a.every((item, at) => item === b[at]);
-
 /**
  * The items in the order they appear: on the web, by their place in the
  * page (items mounted later may sit between earlier ones); elsewhere, by
@@ -412,9 +400,7 @@ const sameList = (a: readonly string[], b: readonly string[]) =>
 function inTreeOrder<V>(items: ReadonlyMap<string, V & { node: ItemNode }>): Array<[string, V]> {
   const entries = [...items.entries()];
   return entries.sort(([, a], [, b]) => {
-    const first = a.node as unknown as DomNode;
-    const second = b.node as unknown as DomNode;
-    const position = first.compareDocumentPosition?.(second);
+    const position = webNode(a.node).compareDocumentPosition?.(webNode(b.node));
     if (position === undefined) return 0;
     return position & FOLLOWING ? -1 : 1;
   });

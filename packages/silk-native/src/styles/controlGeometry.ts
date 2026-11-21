@@ -3,6 +3,7 @@ import type {
   CheckboxVariantProps,
   InputVariantProps,
   ProgressVariantProps,
+  SliderVariantProps,
   SpaceStep,
   SpinnerVariantProps,
 } from '@reactive/silk-core';
@@ -35,6 +36,7 @@ export const chEmApproximation = 0.6;
 type ControlSize = NonNullable<InputVariantProps['size']>;
 type ToggleSize = NonNullable<CheckboxVariantProps['size']>;
 type ProgressSize = NonNullable<ProgressVariantProps['size']>;
+type SliderSize = NonNullable<SliderVariantProps['size']>;
 type SpinnerSize = NonNullable<SpinnerVariantProps['size']>;
 
 /**
@@ -93,6 +95,17 @@ export const progressTrackStep: Readonly<Record<ProgressSize, SpaceStep>> = {
   sm: 1,
   md: 2,
   lg: 3,
+};
+
+/**
+ * Slider track thickness and thumb diameter as space steps (web: `--_track-h`
+ * space-1 / space-2, `--_thumb` space-4 / space-5).
+ */
+export const sliderGeometry: Readonly<
+  Record<SliderSize, { readonly trackStep: SpaceStep; readonly thumbStep: SpaceStep }>
+> = {
+  sm: { trackStep: 1, thumbStep: 4 },
+  md: { trackStep: 2, thumbStep: 5 },
 };
 
 /** Smallest tap target expanded via hitSlop (Apple HIG 44pt). */

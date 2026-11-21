@@ -2,6 +2,7 @@ import {
   checkboxRecipe,
   inputRecipe,
   radioGroupRecipe,
+  sliderRecipe,
   switchRecipe,
 } from '@reactive/silk-core';
 import {
@@ -9,10 +10,14 @@ import {
   Field,
   Input,
   RadioGroup,
+  Slider,
   Switch,
   Text,
   Textarea,
+  useSliderMarkStyle,
+  useTheme,
 } from '@reactive/silk-native';
+import { View } from 'react-native';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
 import { withNativeSilk } from './withNativeSilk';
 
@@ -83,6 +88,83 @@ export const SwitchSizes: Story = {
           style={{ marginBottom: 12 }}
         />
       ))}
+    </>
+  ),
+};
+
+export const SliderSizes: Story = {
+  render: () => (
+    <>
+      {sliderRecipe.variants.size.map((size) => (
+        <Field.Root key={size} style={{ marginBottom: 16 }}>
+          <Field.Label>Volume ({size})</Field.Label>
+          <Slider size={size} defaultValue={[40]} />
+        </Field.Root>
+      ))}
+      <Field.Root>
+        <Field.Label>Price range</Field.Label>
+        <Slider
+          defaultValue={[20, 80]}
+          step={5}
+          minStepsBetweenThumbs={2}
+          thumbLabels={['Minimum price', 'Maximum price']}
+        />
+      </Field.Root>
+    </>
+  ),
+};
+
+const TICK = 6;
+
+/** A dot under the thumb's center at `value`: a Slider child placed by `useSliderMarkStyle`. */
+function Tick({ value }: { readonly value: number }) {
+  const markStyle = useSliderMarkStyle();
+  const { theme } = useTheme();
+  return (
+    <View
+      style={[
+        {
+          position: 'absolute',
+          width: TICK,
+          height: TICK,
+          borderRadius: TICK / 2,
+          backgroundColor: theme.semantic.color.tones.neutral.border,
+        },
+        markStyle(value, -TICK / 2),
+      ]}
+    />
+  );
+}
+
+const STOPS = [0, 1, 2, 3, 4];
+
+export const SliderMarks: Story = {
+  render: () => (
+    <>
+      <Field.Root style={{ marginBottom: 16 }}>
+        <Field.Label>Strength (five stops)</Field.Label>
+        <Slider min={0} max={4} defaultValue={[1]}>
+          {STOPS.map((stop) => (
+            <Tick key={stop} value={stop} />
+          ))}
+        </Slider>
+      </Field.Root>
+      <Field.Root style={{ marginBottom: 16 }}>
+        <Field.Label>Right to left</Field.Label>
+        <Slider min={0} max={4} defaultValue={[1]} dir="rtl">
+          {STOPS.map((stop) => (
+            <Tick key={stop} value={stop} />
+          ))}
+        </Slider>
+      </Field.Root>
+      <Field.Root>
+        <Field.Label>Vertical, inverted</Field.Label>
+        <Slider min={0} max={4} defaultValue={[1]} orientation="vertical" inverted>
+          {STOPS.map((stop) => (
+            <Tick key={stop} value={stop} />
+          ))}
+        </Slider>
+      </Field.Root>
     </>
   ),
 };
