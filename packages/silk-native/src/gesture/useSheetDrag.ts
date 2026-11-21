@@ -79,6 +79,8 @@ export function useSheetDrag({
   const offset = useSharedValue(screen.height);
   const height = useSharedValue(screen.height);
   const sliding = useSharedValue(false);
+  // A finger holds the sheet: React's answers wait for its release.
+  const dragging = useSharedValue(false);
   const reduceMotion = useSharedValue(reduced);
   // Closed by its owner, or by a release until the owner answers: a release
   // then slides it out, however short.
@@ -134,8 +136,9 @@ export function useSheetDrag({
   };
 
   // Opening slides it up from below the screen; closing, unless a release
-  // already sent it sliding, slides it down.
+  // already sent it sliding, slides it down. Held, the release decides.
   useLayoutEffect(() => {
+    if (dragging.value) return;
     if (open) {
       sliding.value = false;
       springTo(0, 0);
@@ -143,7 +146,7 @@ export function useSheetDrag({
   }, [open]);
   // Asked to close but kept open: back to rest, from wherever it got to.
   useLayoutEffect(() => {
-    if (closeAsks > 0 && latest.current.open) {
+    if (closeAsks > 0 && latest.current.open && !dragging.value) {
       sliding.value = false;
       springTo(0, 0);
     }
@@ -161,6 +164,7 @@ export function useSheetDrag({
     onActivate: () => {
       'worklet';
       cancelAnimation(offset);
+      dragging.value = true;
       sliding.value = false;
       lastMoveAt.value = Date.now();
       dragFrom.value = offset.value;
@@ -174,6 +178,7 @@ export function useSheetDrag({
     },
     onDeactivate: (event) => {
       'worklet';
+      dragging.value = false;
       const velocity = event.canceled
         ? 0
         : releaseSpeed(event.velocityY, Date.now() - lastMoveAt.value);

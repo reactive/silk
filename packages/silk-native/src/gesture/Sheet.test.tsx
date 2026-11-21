@@ -219,6 +219,29 @@ test('flung shut and caught before its owner answers, a sheet goes on out', () =
   expect(mocked.springs.slice(1)).not.toContain(0);
 });
 
+test("flung shut and caught before its owner answers, a held sheet waits for the release", () => {
+  for (const keepOpen of [false, true]) {
+    const { unmount } = render(<Harness keepOpen={keepOpen} />);
+    mocked.finish = false;
+    let held = 0;
+    // One act: the owner's answer (and the render it brings) lands while the finger holds.
+    act(() => {
+      mocked.pan!.onActivate!();
+      mocked.pan!.onUpdate!({ changeY: 400 });
+      mocked.pan!.onDeactivate!({ canceled: false, velocityY: 1500 });
+      mocked.pan!.onActivate!();
+      held = mocked.springs.length;
+    });
+    expect(mocked.springs.length).toBe(held);
+    mocked.finish = true;
+    act(() => mocked.pan!.onDeactivate!({ canceled: false, velocityY: 0 }));
+    // Closed, it goes on out; kept open, it settles back.
+    expect(mocked.springs.at(-1)).toBe(keepOpen ? 0 : 600);
+    unmount();
+    mocked.springs.length = 0;
+  }
+});
+
 test('a sheet drags either way, so one caught sliding can be pushed back up', () => {
   render(<Harness />);
   expect(mocked.pan!.activeOffsetY).toEqual([-8, 8]);
