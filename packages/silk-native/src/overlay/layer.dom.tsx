@@ -175,15 +175,15 @@ export function FloatingLayer({
  * the document), after this layer closed on its keydown. Inside a Dialog only.
  */
 function swallowEscapeKeyUp() {
-  // A keyup lost to another window must not swallow a later Escape.
-  const release = () => {
-    window.removeEventListener('keyup', swallow, true);
-    window.removeEventListener('blur', release);
-  };
   const swallow = (event: KeyboardEvent) => {
     if (event.key !== 'Escape') return;
     event.stopPropagation();
     release();
+  };
+  // A keyup lost to another window must not swallow a later Escape.
+  const release = () => {
+    window.removeEventListener('keyup', swallow, true);
+    window.removeEventListener('blur', release);
   };
   window.addEventListener('keyup', swallow, true);
   window.addEventListener('blur', release);

@@ -12,6 +12,7 @@ import { Listbox } from './Listbox.js';
 import { Popover } from './Popover.js';
 import { Pressable } from './Pressable.js';
 import { Text } from './Text.js';
+import { Tooltip } from './Tooltip.js';
 
 const theme = createTheme({ colorScheme: 'dark' });
 
@@ -172,9 +173,7 @@ dialogTest('An Escape whose keyup went to another window leaves the next one to 
   const changes: string[] = [];
   const { rerender } = render(<DialogWithPopover />);
   press('Escape');
-  act(() => {
-    window.dispatchEvent(new Event('blur'));
-  });
+  fireEvent.blur(window);
   rerender(
     <DialogWithPopover
       popoverOpen={false}
@@ -183,6 +182,30 @@ dialogTest('An Escape whose keyup went to another window leaves the next one to 
   );
   press('Escape', 'keyup');
   expect(changes).toEqual(['dialog false']);
+});
+
+dialogTest('A tooltip inside a Dialog opens in its Modal, and Escape closes only the tooltip', () => {
+  const changes: string[] = [];
+  render(
+    <SilkProvider theme={theme}>
+      <Dialog.Root open onOpenChange={(open) => changes.push(`dialog ${open}`)}>
+        <Dialog.Content>
+          <Tooltip.Root defaultOpen onOpenChange={(open) => changes.push(`tooltip ${open}`)}>
+            <Tooltip.Trigger>
+              <Text>Moves on the board</Text>
+            </Tooltip.Trigger>
+            <Tooltip.Content>Only in Explore</Tooltip.Content>
+          </Tooltip.Root>
+        </Dialog.Content>
+      </Dialog.Root>
+    </SilkProvider>,
+  );
+  const tooltip = screen.getByRole('tooltip');
+  expect(document.querySelector('[aria-modal="true"]')?.contains(tooltip)).toBe(true);
+  press('Escape');
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['tooltip false']);
+  expect(screen.queryByRole('tooltip')).toBeNull();
 });
 
 // --- Popover + Listbox ---
