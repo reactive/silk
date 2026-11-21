@@ -70,6 +70,16 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **Public mapper helpers:** `mapBoxStyle` / `mapStackStyle` / `mapInlineStyle` / `mapTextStyle` / `mapButtonStyle` / `mapSurfaceStyle` / `mapCardStyle` / `mapHeadingStyle` / `mapBadgeStyle` / `mapSeparatorStyle` / `mapAvatarStyle` / `mapStatusDotStyle` / `mapSkeletonStyle` / `mapSpinnerStyle` / `mapProgressStyle` / `mapInputStyle` / `mapTextareaStyle` / `mapCheckboxStyle` / `mapSwitchStyle` / `mapRadioGroupStyle` / `mapRadioItemStyle`, plus `mapShadow` / `elevationBackground` / `resolveNativeFontFamily` / `checkboxIndicatorColor` / `mapFocusRingStyle` (RN-import-free). Control geometry constants stay package-internal.
 - **A11y compat helpers:** `a11yState` / `a11yValue` — emit RN object props + RNW/ARIA aliases (`aria-checked`, `aria-valuemin/max/now/text`). `useReducedMotion` subscribes to OS / `prefers-reduced-motion`; `useMotionPreference` (`'full' | 'reduced' | 'unresolved'`) exposes the native window before async `AccessibilityInfo` answers, so components that swap in a distinct reduced-motion appearance only do so on a confirmed `'reduced'`.
 
+## Native overlay additions
+
+- **`dialogRecipe.placement`** — `'center' | 'bottom'` (default `'center'`). `bottom` is a sheet: risen from the bottom edge, flush with it, top corners rounded. Web `Dialog.Content` emits `data-placement` and styles both.
+- **`silk-native` `Dialog`** — `Root` (`open`, `onOpenChange`, controlled), `Content` (`size`, `placement`, `overlayStyle`, View props), `Title`. React Native `Modal` on both platforms; `aria-modal` on the web; closes on a veil press, Escape (web) and the back button (Android).
+- **`silk-native` `Popover`** — `Root` (`open`, `onOpenChange`, `anchor` ref), `Content` (`size`, `side`, `align`, `sideOffset` 4, `collisionPadding` 8, View props). Non-modal on the web (Radix `DismissableLayer` in a body portal); a transparent `Modal` on native. Closes on a press outside it and its anchor, Escape/back, window resize, and scrolling that moves the anchor. Inside a `Dialog` is unsupported on the web for now (the dialog's focus trap takes focus back).
+- **`silk-native` `Listbox`** — `Root` (`value`, `onValueChange`, `onHighlightChange`, `autoFocus`, `size`/`density` from `selectRecipe`, View props), `Item` (`value`, `disabled`, Pressable props). Web: `listbox`/`option` with one Tab stop and arrow/Home/End/Space keys; native: `radiogroup`/`radio`. A pick or Tab closes an enclosing `Popover`.
+- **`SilkDefaults` keys (native):** `Dialog`, `Popover`, `Select` (Listbox items).
+- **Mappers:** `mapDialogStyle`, `mapPopoverStyle`, `mapListboxItemStyle` (+ `ListboxItemState`).
+- **Packaging:** `silk-native` depends on `@radix-ui/react-dismissable-layer` and takes `react-dom` as an optional peer; its web layer is chosen by the package `imports` entry `#floating-layer` (`react-native` condition → `Modal` layer, `default` → DOM layer).
+
 ## Stage 3 public additions
 
 - **Recipes:** `popoverRecipe` (`size`), `tabsRecipe` (`variant`), `selectRecipe` (`size`/`density`), `toastRecipe` (`tone`), `toggleRecipe` (`size`) — shared by Toggle and ToggleGroup.

@@ -6,6 +6,9 @@ import {
   cardRecipe,
   checkboxRecipe,
   createTheme,
+  dialogRecipe,
+  popoverRecipe,
+  selectRecipe,
   headingRecipe,
   inlineRecipe,
   inputRecipe,
@@ -30,6 +33,9 @@ import {
   mapButtonStyle,
   mapCardStyle,
   mapCheckboxStyle,
+  mapDialogStyle,
+  mapListboxItemStyle,
+  mapPopoverStyle,
   mapHeadingStyle,
   mapInlineStyle,
   mapInputStyle,
@@ -310,4 +316,40 @@ test('conformance: Checkbox / Switch / RadioGroup axes', () => {
       mapRadioGroupStyle(theme, { orientation }).root.flexDirection,
     ).toBeTruthy();
   }
+});
+
+test('conformance: every Dialog size and placement maps; a sheet meets the bottom edge', () => {
+  for (const size of dialogRecipe.variants.size) {
+    for (const placement of dialogRecipe.variants.placement) {
+      const { veil, panel } = mapDialogStyle(theme, { size, placement });
+      expect(veil.backgroundColor).toBe(theme.semantic.color.overlay);
+      expect(panel.width).toBe('100%');
+    }
+  }
+  const sheet = mapDialogStyle(theme, { placement: 'bottom' });
+  expect(sheet.veil.justifyContent).toBe('flex-end');
+  expect(sheet.panel.borderBottomLeftRadius).toBe(0);
+  expect(mapDialogStyle(theme, { placement: 'center' }).veil.justifyContent).toBe('center');
+});
+
+test('conformance: distinct Popover sizes differ in width', () => {
+  for (const [a, b] of distinctPairs(popoverRecipe.variants.size)) {
+    expect(mapPopoverStyle(theme, { size: a }).width).not.toBe(
+      mapPopoverStyle(theme, { size: b }).width,
+    );
+  }
+});
+
+test('conformance: every Select size and density maps a listbox item row', () => {
+  const resting = { highlighted: false, selected: false, disabled: false };
+  for (const size of selectRecipe.variants.size) {
+    for (const density of selectRecipe.variants.density) {
+      expect(mapListboxItemStyle(theme, { size, density }, resting).row.minHeight).toBeTypeOf(
+        'number',
+      );
+    }
+  }
+  const lit = mapListboxItemStyle(theme, {}, { ...resting, highlighted: true });
+  expect(lit.row.backgroundColor).toBe(theme.semantic.color.tones.accent.subtle);
+  expect(lit.label.color).toBe(theme.semantic.color.tones.accent.text);
 });
