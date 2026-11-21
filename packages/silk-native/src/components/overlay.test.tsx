@@ -242,6 +242,21 @@ test('Listbox server markup has one Tab stop, the chosen item', () => {
   expect(html).toMatch(/aria-selected="true"[^>]*tabindex="0"|tabindex="0"[^>]*aria-selected="true"/);
 });
 
+test('Listbox server markup with nothing chosen lets Tab reach every enabled item', () => {
+  const html = renderToString(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Steps" onValueChange={() => {}}>
+        {STEPS.map((step, index) => (
+          <Listbox.Item key={step} value={step} disabled={index === 0}>
+            {step}
+          </Listbox.Item>
+        ))}
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  expect(html.match(/tabindex="0"/g)).toHaveLength(STEPS.length - 1);
+});
+
 test('Popover closes when the window resizes', () => {
   render(<PickerHarness />);
   fireEvent.click(screen.getByLabelText('Strength'));

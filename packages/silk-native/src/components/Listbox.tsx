@@ -115,8 +115,9 @@ function ListboxRoot({
   const [, itemsChanged] = useReducer((count: number) => count + 1, 0);
   // The enabled items' values, recounted after each commit of Listbox.Root:
   // an item filtered out or disabled can't hold the Tab stop or take a key.
-  // Keys read the page order afresh, since a child can reorder its items
-  // without this list rendering. Unknown until the items commit.
+  // Keys start from an item in this list but read the page order afresh,
+  // since a child can reorder its items without this list rendering.
+  // Unknown until the items commit.
   const [enabledItems, setEnabledItems] = useState<readonly string[]>();
   useLayoutEffect(() => {
     const now = enabled();
@@ -175,7 +176,8 @@ function ListboxRoot({
     }
   };
 
-  // Before the items are counted (as on a server), the chosen one, else every one.
+  // Before the items are counted (as on a server), the chosen one, else every
+  // one; a disabled item never takes it.
   const tabStop = enabledItems ? (movesFrom ?? enabledItems[0]) : value;
   const variant: SelectVariantProps = {
     size: size ?? defaults.size ?? selectRecipe.defaults.size,
