@@ -85,7 +85,7 @@ export function SheetContent(props: DialogContentProps): JSX.Element {
  */
 function DraggableSheet({
   size,
-  // Chosen already (SheetContent); kept off the panel's view props.
+  // Taken out of `rest` so the panel's view never gets it; SheetContent already chose bottom.
   placement: _placement,
   style,
   overlayStyle,
@@ -150,10 +150,11 @@ function DraggableSheet({
       },
     );
   };
+  // Never up first: an upward release speed would lift it before it drops.
   const slideOut = (velocity: number) => {
     'worklet';
     sliding.value = true;
-    springTo(height.value, velocity, () => {
+    springTo(height.value, Math.max(0, velocity), () => {
       'worklet';
       sliding.value = false;
       scheduleOnRN(unmountIfClosed);
@@ -201,8 +202,8 @@ function DraggableSheet({
       'worklet';
       const velocity = event.canceled ? 0 : event.velocityY;
       if (shut.value) {
-        // Caught while sliding out after closing: it goes on out, never up first.
-        slideOut(Math.max(0, velocity));
+        // Caught while sliding out after closing: it goes on out.
+        slideOut(velocity);
         return;
       }
       if (offset.value <= 0) return;

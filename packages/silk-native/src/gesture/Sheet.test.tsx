@@ -122,6 +122,15 @@ test('flung down, a sheet asks to close and is gone once it has slid out', () =>
   render(<Harness />);
   fling(200, 1500);
   expect(asks()).toBe('1');
+  expect(mocked.speeds).toContain(1500);
+  expect(screen.queryByTestId('sheet')).toBeNull();
+});
+
+test('thrown past half its height but let go moving up, a sheet slides out without lifting first', () => {
+  render(<Harness />);
+  fling(400, -300);
+  expect(asks()).toBe('1');
+  expect(mocked.speeds.filter((speed) => speed < 0)).toEqual([]);
   expect(screen.queryByTestId('sheet')).toBeNull();
 });
 
@@ -151,7 +160,7 @@ test('caught as it slides out after closing, a sheet goes on out when let go sho
   // Pushed back up to a third of its height and flung up.
   fling(-400, -2000);
   expect(asks()).toBe('1');
-  expect(mocked.speeds.at(-1)).toBe(0);
+  expect(mocked.speeds.filter((speed) => speed < 0)).toEqual([]);
   expect(screen.queryByTestId('sheet')).toBeNull();
 });
 
