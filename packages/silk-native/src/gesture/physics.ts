@@ -10,6 +10,9 @@ const FLICK = 1000;
 /** Material's hide friction: how far ahead the release speed throws the sheet, in seconds. */
 const HIDE_FRICTION = 0.1;
 
+/** Android's and Flutter's velocity trackers: a pointer with no move this long (ms) before it lifts had stopped. */
+const STOPPED_AFTER = 40;
+
 /** Material 3's default spatial spring stiffness. */
 const STIFFNESS = 700;
 
@@ -41,6 +44,16 @@ export function releaseCloses(offset: number, velocity: number, height: number):
   if (velocity <= -FLING) return false;
   if (velocity >= FLICK) return true;
   return offset + HIDE_FRICTION * velocity > height / 2;
+}
+
+/**
+ * The speed a drag lets go at: Gesture Handler's `velocity`, or none when its
+ * last move came more than 40 ms before the release. A finger held still may
+ * send no moves, and Gesture Handler then still reports the speed of its last.
+ */
+export function releaseSpeed(velocity: number, sinceLastMove: number): number {
+  'worklet';
+  return sinceLastMove > STOPPED_AFTER ? 0 : velocity;
 }
 
 export interface DragStep {

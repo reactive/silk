@@ -48,7 +48,7 @@ import { mapDialogStyle } from '../styles/mappers/overlay.js';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { dragStep, releaseCloses, SHEET_SPRING } from './physics.js';
+import { dragStep, releaseCloses, releaseSpeed, SHEET_SPRING } from './physics.js';
 import type { SheetScrollViewProps } from './types.js';
 
 /** How far a press moves (Android's touch slop) before it is taken as dragging. */
@@ -122,6 +122,8 @@ function DraggableSheet({
   const shut = useSharedValue(!open);
   const inScroll = useSharedValue(false);
   const scrollY = useSharedValue(0);
+  // When the drag last moved (ms), so a finger held still lets go with no speed.
+  const lastMove = useSharedValue(0);
   const scrollRef = useAnimatedRef<ComponentRef<typeof RNScrollView>>();
 
   // The gesture is made once; these keep its calls into React current.
@@ -201,11 +203,14 @@ function DraggableSheet({
       'worklet';
       const step = dragStep(offset.value, event.changeY, inScroll.value, scrollY.value);
       offset.value = step.offset;
+      lastMove.value = Date.now();
       if (step.pinScroll) scrollTo(scrollRef, 0, 0, false);
     },
     onDeactivate: (event) => {
       'worklet';
-      const velocity = event.canceled ? 0 : event.velocityY;
+      const velocity = event.canceled
+        ? 0
+        : releaseSpeed(event.velocityY, Date.now() - lastMove.value);
       if (shut.value) {
         // Caught while sliding out after closing: it goes on out.
         slideOut(velocity);
@@ -279,7 +284,11 @@ export function SheetScrollView(props: SheetScrollViewProps): JSX.Element {
   return sheet ? <SheetScroll sheet={sheet} {...props} /> : <RNScrollView {...props} />;
 }
 
-function SheetScroll({ sheet, ref, ...props }: SheetScrollViewProps & { readonly sheet: SheetScrollLink }) {
+function SheetScroll({
+  sheet,
+  ref,
+  ...props
+}: SheetScrollViewProps & { readonly sheet: SheetScrollLink }) {
   useScrollOffset(sheet.scrollRef, sheet.scrollY);
   return (
     <AnimatedScrollView
