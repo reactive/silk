@@ -10,8 +10,8 @@ Silk is pre-1.0. This document defines what counts as **public API** and how bre
 | Semantic token names | `surface`, `textPrimary`, `tones.accent.solid`, space steps `0`–`10` | Renaming or removing a token key is breaking |
 | Public CSS variables | `--silk-color-surface`, `--silk-color-surface-sunken`, `--silk-color-overlay`, `--silk-shadow-raised`, `--silk-shadow-overlay`, `--silk-color-tone-*-text`, `--silk-space-2`, `--silk-button-bg`, `--silk-grid-min` | Removing or changing the meaning of a documented `--silk-*` variable is breaking |
 | Recipe shapes | `buttonRecipe.variants`, `stackRecipe.defaults` | Removing an axis or declared value is breaking |
-| Core utilities | `defineRecipe`, `createTheme`, `generateScale`, `generatePairedPalette`, `checkThemeContrast`, `contrastRatio`, `relativeLuminance`, `compactSpace`, `DensityName` | Signature or behavioral changes that affect consumers are breaking |
-| Package exports / subpaths | `@reactive/silk`, `@reactive/silk-core/tokens`, `@reactive/silk/styles.css`, `@reactive/silk-native` | Removing an export path is breaking |
+| Core utilities | `defineRecipe`, `createTheme`, `generateScale`, `generatePairedPalette`, `checkThemeContrast`, `contrastRatio`, `relativeLuminance`, `oklch`, `compactSpace`, `DensityName` | Signature or behavioral changes that affect consumers are breaking |
+| Package exports / subpaths | `@reactive/silk`, `@reactive/silk-core/tokens`, `@reactive/silk-core/color`, `@reactive/silk/styles.css`, `@reactive/silk-native` | Removing an export path is breaking |
 
 **Not public API** (may change without a major bump pre-1.0, but still prefer a changeset note):
 
@@ -55,7 +55,7 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **`generatePairedPalette(brandHex, options?)`** — tenant recipe → `{ light, dark }` palettes (`blue`/`gray` from brand; `red`/`green` default or optional seeds). Dark derivation is a full palette, not accent-only.
 - **`checkThemeContrast(theme)`** → `{ ok, violations }` with discriminated kinds `contrast` \| `unsupported-color` \| `distinctness`. Hex-only audit; non-hex semantic colors are diagnostics, not silent passes.
 - **`contrastRatio` / `relativeLuminance` / `parseCanonicalHex`** — platform-neutral hex contrast helpers.
-- **`oklch(l, c, h, alpha?)`** (also `@reactive/silk-core/color`, which imports nothing) — how Silk writes colors: OKLCH in, sRGB out (`#rrggbb`, or `rgba()` with `alpha`), because React Native can't parse `oklch()`. Stable: that output format, so `checkThemeContrast` and every renderer read it. Unspecified: the output for a color outside sRGB (today each channel is clipped). Built-in palettes are written with it.
+- **`oklch(l, c, h, alpha?)`** (also `@reactive/silk-core/color`, which imports nothing) — how Silk writes colors: OKLCH in, sRGB out (`#rrggbb`, or `rgba()` with `alpha`), because React Native can't parse `oklch()`. Stable: that output format, so `checkThemeContrast` and every renderer read it, and a `RangeError` for `l` or `alpha` outside 0–1, negative `c`, or a non-finite value. Unspecified: the output for a color outside sRGB (today each channel is clipped; the intended direction is to keep `l` and `h` and lower `c`, as `generateScale` does). Built-in palettes are written with it, inside sRGB.
 - **Theme scope channels** — `semanticVars` vs `customVars` on web theme scope (behavior change for named-inside-tenant portals: component hooks now inherit; semantic vars still drop).
 - **Public component CSS-var list frozen** in `silkComponentVarMeta` (documented in Theming.mdx). Removals/renames/meaning changes are breaking.
 

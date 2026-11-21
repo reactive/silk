@@ -3,6 +3,7 @@ import {
   fontFamilyNames,
   measureNames,
   motionNames,
+  oklch,
   spaceSteps,
   toneNames,
   type ShadowLayer,
@@ -22,7 +23,7 @@ function px(value: number): string {
  */
 function shadowLayerToCss(layer: ShadowLayer): string {
   const alpha = Math.min(1, Math.max(0, layer.opacity));
-  return `${px(layer.offsetX)} ${px(layer.offsetY)} ${px(layer.blur)} ${px(layer.spread)} oklch(0 0 0 / ${alpha})`;
+  return `${px(layer.offsetX)} ${px(layer.offsetY)} ${px(layer.blur)} ${px(layer.spread)} ${oklch(0, 0, 0, alpha)}`;
 }
 
 const themeCssVarsCache = new WeakMap<Theme, CssVarMap>();

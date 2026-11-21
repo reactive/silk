@@ -54,14 +54,14 @@ const rootClass: string = css`
   &:where([data-progress='indeterminate']) {
     ${shimmerFillCss(
       'silk-progress-indeterminate',
-      'color-mix(in oklch, var(--_tone-solid) 35%, transparent)',
+      'color-mix(in oklab, var(--_tone-solid) 35%, transparent)',
     )}
   }
 
   @media (prefers-reduced-motion: reduce) {
     &:where([data-progress='indeterminate']) {
       background-color: color-mix(
-        in oklch,
+        in oklab,
         var(--_tone-solid) 35%,
         var(--silk-color-surface-sunken)
       );

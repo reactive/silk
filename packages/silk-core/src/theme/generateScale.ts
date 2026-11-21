@@ -51,9 +51,8 @@ const NEUTRAL_DARK_L = [
 ] as const;
 
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
-// Silk's default sunken (light) and surface (dark) grays, as contrast targets.
-// The scales themselves are mapped into sRGB by lowering chroma
-// (`oklchChannelsToHex`), where `oklch()` would clip.
+// Silk's default sunken (light) and surface (dark) grays, as contrast targets,
+// so retuning the default grays moves these targets with them.
 const SUNKEN_PROXY = grayScale[3];
 const SURFACE_PROXY = grayScaleDark[1];
 

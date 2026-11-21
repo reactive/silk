@@ -58,8 +58,9 @@ const defaults: ButtonVariantProps = buttonRecipe.defaults;
   utilities
 - `@reactive/silk-core/recipes` — recipe definitions and variant types
 - `@reactive/silk-core/models` — shared composite data models
-- `@reactive/silk-core/color` — `oklch()`, which writes a color in OKLCH and
-  returns its sRGB form; imports nothing, for bundles that need only colors
+- `@reactive/silk-core/color` — dependency-free color primitives: `oklch()`,
+  which writes a color in OKLCH and returns its sRGB form. Imports nothing, for
+  bundles that need only colors
 
 See the [Silk documentation](https://reactive.github.io/silk/) or the
 [repository architecture](https://github.com/reactive/silk/blob/main/docs/ARCHITECTURE.md)

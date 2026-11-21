@@ -14,14 +14,20 @@ const hex = (n: number): string => n.toString(16).padStart(2, '0');
 
 /**
  * A color written in OKLCH, whose lightness `l` (0–1) is perceptual: two colors
- * with the same `l` look equally light whatever their chroma `c` and hue `h`
- * (degrees), so a light scheme and its dark twin pair by `l`. Returns the sRGB
- * form, `#rrggbb`, or `rgba(r, g, b, alpha)` when `alpha` is given, because
- * React Native drops `oklch()` strings.
+ * with the same `l` look equally light whatever their chroma `c` (0 or more)
+ * and hue `h` (degrees). Returns the sRGB form, `#rrggbb`, or
+ * `rgba(r, g, b, alpha)` when `alpha` (0–1) is given, because React Native
+ * drops `oklch()` strings. Throws a `RangeError` on input outside those ranges.
  *
- * Clips each channel of a color outside sRGB, so write colors inside it.
+ * Write colors inside sRGB: the output for one outside it is unspecified.
  */
 export function oklch(l: number, c: number, h: number, alpha?: number): string {
+  if (
+    !(l >= 0 && l <= 1 && c >= 0 && Number.isFinite(c) && Number.isFinite(h)) ||
+    (alpha !== undefined && !(alpha >= 0 && alpha <= 1))
+  ) {
+    throw new RangeError(`oklch(${[l, c, h, alpha].join(', ')}) is out of range`);
+  }
   const hue = (h * Math.PI) / 180;
   const a = c * Math.cos(hue);
   const b = c * Math.sin(hue);

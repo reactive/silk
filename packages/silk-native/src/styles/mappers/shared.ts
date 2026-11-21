@@ -176,6 +176,7 @@ export function mapShadow(
   }
   const layer = theme.semantic.shadow[level];
   return {
+    // A keyword, not oklch(): every native component imports this mapper.
     shadowColor: 'black',
     shadowOffset: { width: layer.offsetX, height: layer.offsetY },
     shadowOpacity: layer.opacity,

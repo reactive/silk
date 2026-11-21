@@ -20,7 +20,7 @@ const skeletonClass: string = css`
   user-select: none;
   ${shimmerFillCss(
     'silk-skeleton-shimmer',
-    'color-mix(in oklch, var(--silk-color-surface) 55%, transparent)',
+    'color-mix(in oklab, var(--silk-color-surface) 55%, transparent)',
   )}
 
   &:where([data-shape='text']) {

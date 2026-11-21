@@ -1,4 +1,3 @@
-import { white } from '../tokens/palette.js';
 import {
   defaultPalette,
   defaultPaletteDark,
@@ -15,6 +14,8 @@ import type {
   Theme,
   ToneName,
 } from '../tokens/index.js';
+// Not re-exported from tokens/index.js, which is the public /tokens subpath.
+import { white } from '../tokens/palette.js';
 import { oklch } from '../color/oklch.js';
 import { parseHexChannels } from './colorMath.js';
 
