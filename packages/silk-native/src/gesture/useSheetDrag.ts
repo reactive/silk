@@ -48,7 +48,7 @@ export interface SheetDrag {
   readonly panelMotion: ReturnType<typeof useAnimatedStyle>;
   /** The veil's color, fading as the panel leaves. */
   readonly veilMotion: ReturnType<typeof useAnimatedStyle>;
-  /** Records the panel's height, how far it slides out. */
+  /** Records the panel's height: how far it slides out, and over which the veil fades. */
   readonly onPanelLayout: (event: LayoutChangeEvent) => void;
   /** Asks the owner to close (`onOpenChange(false)`); kept open, the sheet settles back. */
   readonly requestClose: () => void;

@@ -54,6 +54,7 @@ import {
   mapTextStyle,
   mapTextareaStyle,
 } from './mapStyles.js';
+import { mapSheetHandleStyle } from './mappers/overlay.js';
 
 const theme = createTheme({ colorScheme: 'light' });
 
@@ -348,6 +349,18 @@ test('conformance: every Dialog size and placement maps; a sheet meets the botto
   expect(sheet.veil.justifyContent).toBe('flex-end');
   expect(sheet.panel.borderBottomLeftRadius).toBe(0);
   expect(mapDialogStyle(theme, { placement: 'center' }).veil.justifyContent).toBe('center');
+});
+
+test('conformance: a sheet handle is centered over the panel top, in the neutral border tone', () => {
+  const handle = mapSheetHandleStyle(theme);
+  expect(handle).toMatchObject({
+    position: 'absolute',
+    top: theme.semantic.space[2],
+    left: '50%',
+    borderRadius: theme.semantic.radius.full,
+    backgroundColor: theme.semantic.color.tones.neutral.border,
+  });
+  expect(handle.marginLeft).toBe(-(handle.width as number) / 2);
 });
 
 test('conformance: distinct Popover sizes differ in width', () => {

@@ -127,22 +127,28 @@ function DialogContent({
 
 /**
  * @internal A dialog's variants, each from its prop, else the provider's
- * defaults, else the recipe's, and the styles they map to.
+ * defaults, else the recipe's.
  */
-export function useDialogStyle({
+export function useDialogVariants({
   size,
   placement,
 }: {
   readonly size?: DialogVariantProps['size'] | undefined;
   readonly placement?: DialogVariantProps['placement'] | undefined;
-}): Required<DialogVariantProps> & ReturnType<typeof mapDialogStyle> {
-  const { theme, density } = useTheme();
+}): Required<DialogVariantProps> {
   const defaults = useComponentDefaults('Dialog');
-  const variants = {
+  return {
     size: size ?? defaults.size ?? dialogRecipe.defaults.size,
     placement: placement ?? defaults.placement ?? dialogRecipe.defaults.placement,
   };
-  return { ...variants, ...mapDialogStyle(theme, variants, density) };
+}
+
+/** @internal The veil and panel styles of a dialog's {@link useDialogVariants}. */
+export function useDialogStyle(
+  props: Parameters<typeof useDialogVariants>[0],
+): ReturnType<typeof mapDialogStyle> {
+  const { theme, density } = useTheme();
+  return mapDialogStyle(theme, useDialogVariants(props), density);
 }
 
 /** @internal What a dialog's `Modal` holds around its panel; see {@link DialogShell}. */

@@ -14,6 +14,7 @@ import {
   Dialog as RootDialog,
   useDialogContext,
   useDialogStyle,
+  useDialogVariants,
 } from '../components/Dialog.js';
 import { mapSheetHandleStyle } from '../styles/mappers/overlay.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
@@ -26,7 +27,7 @@ import { type SheetScrollLink, SheetScrollContext, useSheetDrag } from './useShe
  * root `Dialog`'s.
  */
 export function SheetContent(props: DialogContentProps): JSX.Element {
-  const { placement } = useDialogStyle(props);
+  const { placement } = useDialogVariants(props);
   if (placement === 'bottom') return <DraggableSheet {...props} />;
   // A centered dialog opened from a sheet scrolls on its own, not as the sheet's content.
   return (
