@@ -104,7 +104,7 @@ not core tokens. Avatar `mediaScale` sizes stay density-independent (content).
 | Indeterminate Progress 35% solid-over-sunken mix | Static `tone.subtle` fill under reduced motion |
 | Spinner 25% `color-mix` ring | `tone.subtle` + `tone.solid` (no color-string parsing) |
 | `accessibilityLiveRegion` | Android-only enhancement; use roles + labels cross-platform |
-| Slider (Radix array multi-thumb) | **Deferred** — do not ship a scalar fork |
+| Slider: Radix pointer capture, hidden form inputs | Responder drag from the slider's own location; no `name` / form inputs; Page and Shift keys on the web only |
 | Roving keyboard focus (RadioGroup) | Screen readers navigate elements directly |
 
 RNW tests assert ARIA aliases (`aria-checked`, `aria-valuenow`, …) via the
@@ -114,7 +114,7 @@ RNW tests assert ARIA aliases (`aria-checked`, `aria-valuenow`, …) via the
 
 **Layout:** Box, Stack, Inline · **Visual:** Text, Button, Surface, Card,
 Heading, Badge, Separator, Avatar, StatusDot, Skeleton, Spinner, Progress ·
-**Forms:** Input, Textarea, Field, Checkbox, Switch, RadioGroup ·
+**Forms:** Input, Textarea, Field, Checkbox, Switch, RadioGroup, Slider ·
 **Overlays:** Dialog, Popover, Listbox
 
 ## Overlays

@@ -2,6 +2,7 @@ import {
   checkboxRecipe,
   inputRecipe,
   radioGroupRecipe,
+  sliderRecipe,
   switchRecipe,
 } from '@reactive/silk-core';
 import {
@@ -9,6 +10,7 @@ import {
   Field,
   Input,
   RadioGroup,
+  Slider,
   Switch,
   Text,
   Textarea,
@@ -83,6 +85,28 @@ export const SwitchSizes: Story = {
           style={{ marginBottom: 12 }}
         />
       ))}
+    </>
+  ),
+};
+
+export const SliderSizes: Story = {
+  render: () => (
+    <>
+      {sliderRecipe.variants.size.map((size) => (
+        <Field.Root key={size} style={{ marginBottom: 16 }}>
+          <Field.Label>Volume ({size})</Field.Label>
+          <Slider size={size} defaultValue={[40]} />
+        </Field.Root>
+      ))}
+      <Field.Root>
+        <Field.Label>Price range</Field.Label>
+        <Slider
+          defaultValue={[20, 80]}
+          step={5}
+          minStepsBetweenThumbs={2}
+          thumbLabels={['Minimum price', 'Maximum price']}
+        />
+      </Field.Root>
     </>
   ),
 };

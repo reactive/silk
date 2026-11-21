@@ -56,6 +56,8 @@ export { Checkbox } from './components/Checkbox.js';
 export type { CheckboxProps, CheckedState } from './components/Checkbox.js';
 export { Switch } from './components/Switch.js';
 export type { SwitchProps } from './components/Switch.js';
+export { Slider } from './components/Slider.js';
+export type { SliderProps } from './components/Slider.js';
 export { RadioGroup } from './components/RadioGroup.js';
 export type {
   RadioGroupRootProps,
@@ -117,6 +119,7 @@ export {
   mapStatusDotStyle,
   mapSurfaceStyle,
   mapSwitchStyle,
+  mapSliderStyle,
   mapTextStyle,
   mapTextareaStyle,
   resolveNativeFontFamily,

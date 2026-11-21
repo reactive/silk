@@ -19,6 +19,7 @@ import type {
   StackVariantProps,
   StatusDotVariantProps,
   SurfaceVariantProps,
+  SliderVariantProps,
   SwitchVariantProps,
   TextVariantProps,
   TextareaVariantProps,
@@ -51,6 +52,7 @@ export interface SilkDefaults {
   readonly Textarea?: Partial<TextareaVariantProps>;
   readonly Checkbox?: Partial<CheckboxVariantProps>;
   readonly Switch?: Partial<SwitchVariantProps>;
+  readonly Slider?: Partial<SliderVariantProps>;
   readonly RadioGroup?: Partial<RadioGroupVariantProps>;
   readonly Dialog?: Partial<DialogVariantProps>;
   readonly Popover?: Partial<PopoverVariantProps>;

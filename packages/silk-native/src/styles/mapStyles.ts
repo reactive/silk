@@ -18,6 +18,7 @@ export {
   mapRadioGroupStyle,
   mapRadioItemStyle,
   mapSwitchStyle,
+  mapSliderStyle,
   mapTextareaStyle,
 } from './mappers/controls.js';
 export type {

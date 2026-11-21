@@ -3,6 +3,7 @@ import {
   checkboxRecipe,
   inputRecipe,
   radioGroupRecipe,
+  sliderRecipe,
   switchRecipe,
   textareaRecipe,
   type ButtonVariantProps,
@@ -10,6 +11,7 @@ import {
   type DensityName,
   type InputVariantProps,
   type RadioGroupVariantProps,
+  type SliderVariantProps,
   type SpaceStep,
   type SwitchVariantProps,
   type TextareaVariantProps,
@@ -21,6 +23,7 @@ import {
   controlMinHeightStep,
   controlSizePadding,
   resolveSpaceSum,
+  sliderGeometry,
   switchThumbInset,
   switchThumbTravel,
   switchTrackWidthStep,
@@ -310,6 +313,81 @@ export function mapSwitchStyle(
       ...mapShadow(theme, 'raised'),
     },
     travel,
+  };
+}
+
+/**
+ * Slider parts (web `Slider` parity): a sunken track, the range filled in the
+ * tone's solid color, and surface-colored thumbs ringed in it. `thumbSize`
+ * is the thumb's diameter: a thumb's center runs from `thumbSize / 2` past
+ * the track's start to `thumbSize / 2` before its end, as Radix keeps web
+ * thumbs in bounds, so marks laid out along the slider can line up with it.
+ */
+export function mapSliderStyle(
+  theme: Theme,
+  props: SliderVariantProps = {},
+  density: DensityName = 'comfortable',
+  state: {
+    readonly orientation?: 'horizontal' | 'vertical';
+    readonly invalid?: boolean;
+    readonly disabled?: boolean;
+  } = {},
+): {
+  root: RnViewStyle;
+  track: RnViewStyle;
+  range: RnViewStyle;
+  thumb: SizedViewStyle;
+  thumbSize: number;
+} {
+  const size = props.size ?? sliderRecipe.defaults.size;
+  const toneName = props.tone ?? sliderRecipe.defaults.tone;
+  const space = spaceScale(theme, density);
+  const { trackStep, thumbStep } = sliderGeometry[size];
+  const trackThickness = space[trackStep];
+  const thumbSize = space[thumbStep];
+  const tone = theme.semantic.color.tones[toneName];
+  const vertical = state.orientation === 'vertical';
+  const ring = state.invalid ? theme.semantic.color.tones.danger.solid : tone.solid;
+  return {
+    root: vertical
+      ? {
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: thumbSize,
+          minHeight: space[10] * 2,
+          ...(state.disabled ? { opacity: 0.55 } : {}),
+        }
+      : {
+          flexDirection: 'row',
+          alignItems: 'center',
+          alignSelf: 'stretch',
+          minHeight: space[6],
+          ...(state.disabled ? { opacity: 0.55 } : {}),
+        },
+    track: {
+      ...(vertical
+        ? { width: trackThickness, flexGrow: 1 }
+        : { height: trackThickness, flexGrow: 1 }),
+      borderRadius: theme.semantic.radius.full,
+      backgroundColor: theme.semantic.color.surfaceSunken,
+    },
+    range: {
+      position: 'absolute',
+      ...(vertical ? { left: 0, right: 0 } : { top: 0, bottom: 0 }),
+      borderRadius: theme.semantic.radius.full,
+      backgroundColor: tone.solid,
+    },
+    thumb: {
+      position: 'absolute',
+      width: thumbSize,
+      height: thumbSize,
+      borderRadius: theme.semantic.radius.full,
+      borderWidth: 2,
+      borderColor: ring,
+      backgroundColor: state.disabled ? tone.disabledBg : theme.semantic.color.surface,
+      ...mapShadow(theme, 'raised'),
+    },
+    thumbSize,
   };
 }
 
