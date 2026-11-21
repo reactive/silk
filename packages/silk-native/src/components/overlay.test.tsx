@@ -282,9 +282,8 @@ function serverTabStops(value: string | undefined, disabled?: string): string[] 
       </Listbox.Root>
     </SilkProvider>,
   );
-  // The chosen item's text starts with its check mark.
   return [...host.querySelectorAll('[role="option"][tabindex="0"]')].map(
-    (option) => option.textContent?.replace('✓', '') ?? '',
+    (option) => option.textContent ?? '',
   );
 }
 
@@ -695,6 +694,42 @@ test('Listbox.ItemText takes the item label color, which follows the item state'
   );
   const color = (id: string) => getComputedStyle(screen.getByTestId(id)).color;
   expect(color('b')).not.toBe(color('a'));
+});
+
+test('Listbox.ItemText tone="secondary" is the description, dimmed with a disabled item', () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Plans" value="a" onValueChange={() => {}}>
+        <Listbox.Item value="a">
+          <Listbox.ItemText testID="label">A</Listbox.ItemText>
+          <Listbox.ItemText tone="secondary" testID="on">One</Listbox.ItemText>
+        </Listbox.Item>
+        <Listbox.Item value="b" disabled>
+          <Listbox.ItemText testID="off-label">B</Listbox.ItemText>
+          <Listbox.ItemText tone="secondary" testID="off">Two</Listbox.ItemText>
+        </Listbox.Item>
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  const color = (id: string) => getComputedStyle(screen.getByTestId(id)).color;
+  expect(color('on')).not.toBe(color('label'));
+  expect(color('off')).toBe(color('off-label'));
+  expect(color('off')).not.toBe(color('on'));
+});
+
+test("only the chosen item draws a check in its indicator", () => {
+  render(
+    <SilkProvider theme={theme}>
+      <Listbox.Root accessibilityLabel="Steps" value="b" onValueChange={() => {}}>
+        <Listbox.Item value="a">A</Listbox.Item>
+        <Listbox.Item value="b">B</Listbox.Item>
+      </Listbox.Root>
+    </SilkProvider>,
+  );
+  const indicator = (name: string) =>
+    screen.getByRole('option', { name }).querySelector('[aria-hidden="true"]');
+  expect(indicator('A')?.childElementCount).toBe(0);
+  expect(indicator('B')?.childElementCount).toBe(1);
 });
 
 test('a finger sliding over an item leaves the highlight where it is', () => {

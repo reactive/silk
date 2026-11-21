@@ -32,8 +32,7 @@ const POPOVER_WIDTH = { sm: 220, md: 320, lg: 420 } as const;
 
 /**
  * Dialog: the veil filling the screen behind it, and its panel, centered or
- * risen from the bottom edge as a sheet (flush with it, top corners rounded,
- * its shadow cast upward). A sheet has no grab handle: it doesn't drag.
+ * risen from the bottom edge as a sheet (flush with it, top corners rounded).
  */
 export function mapDialogStyle(
   theme: Theme,
@@ -44,7 +43,7 @@ export function mapDialogStyle(
   const placement = props.placement ?? dialogRecipe.defaults.placement;
   const space = spaceScale(theme, density);
   const bottom = placement === 'bottom';
-  const { color, radius, shadow } = theme.semantic;
+  const { color, radius } = theme.semantic;
   return {
     veil: {
       flex: 1,
@@ -63,16 +62,7 @@ export function mapDialogStyle(
       maxHeight: bottom ? '88%' : '100%',
       overflow: 'hidden',
       ...(bottom
-        ? {
-            borderBottomWidth: 0,
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-            // More room at the bottom edge, which on a phone sits by the
-            // rounded corners and gesture bar.
-            paddingBottom: space[6],
-            // Lit from above like every surface, a sheet casts upward, over the page.
-            shadowOffset: { width: shadow.overlay.offsetX, height: -shadow.overlay.offsetY },
-          }
+        ? { borderBottomWidth: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }
         : {}),
     },
   };
@@ -94,12 +84,6 @@ export function mapPopoverStyle(
     flexShrink: 1,
   };
 }
-
-/** A view drawn as a glyph: the two borders and the turn that make a check. */
-export type RnGlyphStyle = RnViewStyle & {
-  borderLeftWidth?: number | undefined;
-  transform?: Array<{ rotate: string } | { translateY: number }> | undefined;
-};
 
 /** What a listbox item shows about itself. */
 export interface ListboxItemState {
@@ -125,7 +109,8 @@ export function mapListboxItemStyle(
 ): {
   readonly row: RnViewStyle;
   readonly indicator: RnViewStyle;
-  readonly check: RnGlyphStyle;
+  /** The chosen item's check, drawn in the indicator slot by `CheckGlyph`. */
+  readonly check: { readonly color: string; readonly size: number };
   readonly label: RnTextStyle;
   readonly description: RnTextStyle;
 } {
@@ -135,9 +120,8 @@ export function mapListboxItemStyle(
   const { color, radius, typography } = theme.semantic;
   const accent = color.tones.accent;
   const disabledFg = color.tones.neutral.disabledFg;
-  // The slot and its check are shapes, not whitespace: they hold at every density.
+  // The slot holds a shape, not whitespace: it keeps its size at every density.
   const slot = theme.semantic.space[4];
-  const stroke = Math.max(2, Math.round(slot * 0.12));
   return {
     row: {
       flexDirection: 'row',
@@ -160,15 +144,7 @@ export function mapListboxItemStyle(
       justifyContent: 'center',
       flexShrink: 0,
     },
-    // Checkbox's check, drawn rather than a font's ✓, so its weight and size hold on every platform.
-    check: {
-      width: slot * 0.55,
-      height: slot * 0.35,
-      borderLeftWidth: stroke,
-      borderBottomWidth: stroke,
-      borderColor: state.disabled ? disabledFg : accent.solid,
-      transform: [{ rotate: '-45deg' }, { translateY: -slot * 0.05 }],
-    },
+    check: { color: state.disabled ? disabledFg : accent.solid, size: slot },
     label: {
       color: state.disabled
         ? disabledFg

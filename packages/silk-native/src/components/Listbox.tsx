@@ -26,6 +26,7 @@ import type { RnTextStyle } from '../styles/mappers/shared.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { usePopoverContext } from './Popover.js';
+import { CheckGlyph } from './glyphs.js';
 import { Pressable, type PressableProps } from './Pressable.js';
 import { Text, type TextProps } from './Text.js';
 
@@ -216,10 +217,13 @@ export interface ListboxItemProps
 }
 
 /** The text styles of the item around, which follow its state. */
-const ItemLabelContext = createContext<{
+interface ItemTextStyles {
+  /** The item's label. */
   readonly label: RnTextStyle;
+  /** Secondary text under the label (`tone="secondary"`). */
   readonly description: RnTextStyle;
-} | null>(null);
+}
+const ItemTextContext = createContext<ItemTextStyles | null>(null);
 
 /** An item of a `Listbox`: a check in its indicator slot when chosen, lit while highlighted. */
 function ListboxItem({
@@ -290,22 +294,25 @@ function ListboxItem({
       ]}
       {...rnwAttrs({ 'data-highlighted': highlighted || undefined }, rest)}
     >
-      <ItemLabelContext.Provider value={itemStyle}>
+      <ItemTextContext.Provider value={itemStyle}>
         {/* Not part of the option's name; its state says it (aria-selected on the web, checked on native). */}
         <View style={itemStyle.indicator} aria-hidden importantForAccessibility="no-hide-descendants">
-          {selected ? <View style={itemStyle.check} /> : null}
+          {selected ? <CheckGlyph {...itemStyle.check} /> : null}
         </View>
         {typeof children === 'string' || typeof children === 'number' ? (
           <ListboxItemText>{children}</ListboxItemText>
         ) : (
           children
         )}
-      </ItemLabelContext.Provider>
+      </ItemTextContext.Provider>
     </Pressable>
   );
 }
 
-export type ListboxItemTextProps = TextProps;
+export type ListboxItemTextProps = Omit<TextProps, 'tone'> & {
+  /** `secondary` for a description under the label; otherwise the item's label color. */
+  readonly tone?: 'secondary' | undefined;
+};
 
 /**
  * Text in a `Listbox.Item` with custom children, colored as the item's own
@@ -320,7 +327,7 @@ function ListboxItemText({
   style,
   ...props
 }: ListboxItemTextProps): JSX.Element {
-  const item = useContext(ItemLabelContext);
+  const item = useContext(ItemTextContext);
   if (!item) throw new Error('Listbox.ItemText must be used within Listbox.Item');
   const text = tone === 'secondary' ? item.description : item.label;
   return <Text role={role} {...props} style={[text, style]} />;

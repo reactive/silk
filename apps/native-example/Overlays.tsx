@@ -19,7 +19,13 @@ const PLANS = [
 
 /** Dialog (centered and as a bottom sheet) and a Popover holding a Listbox. */
 export function Overlays(): JSX.Element {
-  const [dialog, setDialog] = useState<'center' | 'bottom'>();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  // Kept while closing, so a sheet fades out as a sheet.
+  const [placement, setPlacement] = useState<'center' | 'bottom'>('center');
+  const openDialog = (at: 'center' | 'bottom') => {
+    setPlacement(at);
+    setDialogOpen(true);
+  };
   const [picking, setPicking] = useState(false);
   const [plan, setPlan] = useState('pro');
   const anchor = useRef<ComponentRef<typeof View>>(null);
@@ -28,10 +34,10 @@ export function Overlays(): JSX.Element {
     <Stack gap="2">
       <Text role="heading">Overlays</Text>
       <Inline gap="2" wrap="wrap">
-        <Button size="sm" onPress={() => setDialog('center')} testID="open-dialog">
+        <Button size="sm" onPress={() => openDialog('center')} testID="open-dialog">
           Dialog
         </Button>
-        <Button size="sm" variant="outline" onPress={() => setDialog('bottom')} testID="open-sheet">
+        <Button size="sm" variant="outline" onPress={() => openDialog('bottom')} testID="open-sheet">
           Sheet
         </Button>
         <Button
@@ -45,8 +51,8 @@ export function Overlays(): JSX.Element {
           Plan: {chosen?.label}
         </Button>
       </Inline>
-      <Dialog.Root open={dialog !== undefined} onOpenChange={(open) => !open && setDialog(undefined)}>
-        <Dialog.Content placement={dialog ?? 'center'} testID="dialog">
+      <Dialog.Root open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog.Content placement={placement} testID="dialog">
           <Stack gap="5">
             <Stack gap="2">
               <Dialog.Title>Rename project</Dialog.Title>
@@ -55,10 +61,10 @@ export function Overlays(): JSX.Element {
               </Text>
             </Stack>
             <Inline gap="2" justify="end">
-              <Button variant="ghost" tone="neutral" onPress={() => setDialog(undefined)}>
+              <Button variant="ghost" tone="neutral" onPress={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onPress={() => setDialog(undefined)}>Rename</Button>
+              <Button onPress={() => setDialogOpen(false)}>Rename</Button>
             </Inline>
           </Stack>
         </Dialog.Content>
