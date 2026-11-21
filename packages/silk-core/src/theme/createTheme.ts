@@ -16,6 +16,7 @@ import type {
 } from '../tokens/index.js';
 // Not re-exported from tokens/index.js, which is the public /tokens subpath.
 import { white } from '../tokens/palette.js';
+import { oklabToRgb, rgbToOklab } from '../color/oklab.js';
 import { oklch } from '../color/oklch.js';
 import { parseHexChannels } from './colorMath.js';
 
@@ -64,7 +65,8 @@ function mergePalette(
 }
 
 /**
- * Blend `from` toward `to` in sRGB, weighting `to` by `amount`.
+ * Blend `from` toward `to` in OKLab, weighting `to` by `amount`, so the blend
+ * sits between the two in perceived lightness and keeps their hue.
  *
  * Interaction states need three visually distinct fills, but a tone's `solid`
  * can sit one step from the end of its scale (light solid is step 11 so white
@@ -81,11 +83,13 @@ function mixHex(from: string, to: string, amount: number): string {
   if (!start || !end) {
     return to;
   }
-  const channel = (index: number): string =>
-    Math.round(start[index]! + (end[index]! - start[index]!) * amount)
-      .toString(16)
-      .padStart(2, '0');
-  return `#${channel(0)}${channel(1)}${channel(2)}`;
+  const a = rgbToOklab(...start);
+  const b = rgbToOklab(...end);
+  return oklabToRgb([
+    a[0] + (b[0] - a[0]) * amount,
+    a[1] + (b[1] - a[1]) * amount,
+    a[2] + (b[2] - a[2]) * amount,
+  ]);
 }
 
 /**

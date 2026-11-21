@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { expect, test } from '@rstest/core';
 import { inGamut } from 'culori';
 import * as palette from './palette.js';
@@ -48,11 +47,20 @@ test('the built-in palettes resolve to their pinned sRGB values', () => {
 });
 
 test('every built-in color is written inside sRGB', () => {
-  const source = readFileSync(new URL('./palette.ts', import.meta.url), 'utf8');
-  const calls = [...source.matchAll(/oklch\(([\d.]+), ([\d.]+), ([\d.]+)\)/g)];
-  expect(calls.length).toBe(97);
   const inRgb = inGamut('rgb');
-  for (const [call, l, c, h] of calls) {
-    expect([call, inRgb({ mode: 'oklch', l: +l!, c: +c!, h: +h! })]).toEqual([call, true]);
+  const scales = Object.entries(palette).filter(([name]) =>
+    name.endsWith('Oklch'),
+  );
+  expect(scales.length).toBe(8);
+  for (const [name, scale] of scales) {
+    for (const [l, c, h] of scale as palette.OklchScale) {
+      expect([name, l, c, h, inRgb({ mode: 'oklch', l, c, h })]).toEqual([
+        name,
+        l,
+        c,
+        h,
+        true,
+      ]);
+    }
   }
 });

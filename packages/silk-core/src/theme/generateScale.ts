@@ -6,7 +6,14 @@ import {
   type PaletteScale,
   type PaletteStep,
 } from '../tokens/index.js';
-import { white } from '../tokens/palette.js';
+import {
+  blueScaleDarkOklch,
+  blueScaleOklch,
+  grayScaleDarkOklch,
+  grayScaleOklch,
+  white,
+  type OklchScale,
+} from '../tokens/palette.js';
 import {
   requireCanonicalHex,
   requireFiniteNonNegative,
@@ -19,36 +26,26 @@ import {
 } from './oklchUtil.js';
 
 /**
- * Lightness / relative-chroma templates distilled from Silk's default scales
- * (Radix-inspired). Relative chroma is C / C₉ so a seed's chroma can scale the
- * whole ramp while keeping the same shape.
+ * Lightness and relative-chroma curves, read from Silk's default blue and gray
+ * scales so the built-in coordinates live in one place (tokens/palette.ts).
+ * Relative chroma is C / C₉, so a seed's chroma can scale the whole ramp while
+ * keeping the same shape.
  */
-const CHROMATIC_LIGHT_L = [
-  0.993, 0.982, 0.96, 0.938, 0.905, 0.863, 0.81, 0.734, 0.649, 0.622, 0.556,
-  0.324,
-] as const;
-const CHROMATIC_LIGHT_C_REL = [
-  0.016, 0.047, 0.104, 0.181, 0.264, 0.352, 0.461, 0.627, 1, 0.948, 0.839,
-  0.497,
-] as const;
-const CHROMATIC_DARK_L = [
-  0.194, 0.213, 0.274, 0.32, 0.367, 0.416, 0.474, 0.541, 0.649, 0.688, 0.764,
-  0.907,
-] as const;
-const CHROMATIC_DARK_C_REL = [
-  0.13, 0.155, 0.342, 0.503, 0.549, 0.585, 0.632, 0.725, 1, 0.876, 0.653,
-  0.264,
-] as const;
+const lightness = (scale: OklchScale): readonly number[] =>
+  scale.map(([l]) => l);
+const relativeChroma = (scale: OklchScale): readonly number[] =>
+  scale.map(([, c]) => c / scale[8]![1]);
 
-/** Neutral (gray) L curves — darker step 11 so textSecondary clears sunken. */
-const NEUTRAL_LIGHT_L = [
-  0.991, 0.982, 0.955, 0.931, 0.907, 0.885, 0.851, 0.792, 0.643, 0.61, 0.48,
-  0.244,
-] as const;
-const NEUTRAL_DARK_L = [
-  0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.402, 0.489, 0.538, 0.583, 0.77,
-  0.949,
-] as const;
+const CHROMATIC_LIGHT_L = lightness(blueScaleOklch);
+const CHROMATIC_LIGHT_C_REL = relativeChroma(blueScaleOklch);
+const CHROMATIC_DARK_L = lightness(blueScaleDarkOklch);
+const CHROMATIC_DARK_C_REL = relativeChroma(blueScaleDarkOklch);
+/** Neutral L curves; light step 11 is darker than Silk's gray so a tinted
+ * textSecondary still clears 4.5:1 on sunken. */
+const NEUTRAL_LIGHT_L = lightness(grayScaleOklch).map((l, i) =>
+  i === 10 ? 0.48 : l,
+);
+const NEUTRAL_DARK_L = lightness(grayScaleDarkOklch);
 
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 // Silk's default sunken (light) and surface (dark) grays, as contrast targets,
@@ -137,9 +134,9 @@ export function generateScale(
 
   // Only shift chromatic mid-tones toward the seed's lightness; neutrals and
   // extreme seeds keep the template so surfaces/text stay on-contract.
-  const seedL = seedOklch.l ?? Ls[8];
+  const seedL = seedOklch.l ?? Ls[8]!;
   const lShift =
-    isNeutral || seedL < 0.25 || seedL > 0.9 ? 0 : seedL - Ls[8];
+    isNeutral || seedL < 0.25 || seedL > 0.9 ? 0 : seedL - Ls[8]!;
 
   const out = {} as Record<PaletteStep, string>;
   for (let i = 0; i < 12; i += 1) {

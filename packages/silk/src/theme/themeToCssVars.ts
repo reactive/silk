@@ -22,7 +22,8 @@ function px(value: number): string {
  * Ink is black modulated by opacity — dark schemes rely on surface + border.
  */
 function shadowLayerToCss(layer: ShadowLayer): string {
-  const alpha = Math.min(1, Math.max(0, layer.opacity));
+  // `|| 0` turns a NaN opacity into no shadow; oklch() would throw on it.
+  const alpha = Math.min(1, Math.max(0, layer.opacity)) || 0;
   return `${px(layer.offsetX)} ${px(layer.offsetY)} ${px(layer.blur)} ${px(layer.spread)} ${oklch(0, 0, 0, alpha)}`;
 }
 

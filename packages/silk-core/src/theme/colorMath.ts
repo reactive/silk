@@ -1,3 +1,5 @@
+import { linearize } from '../color/oklab.js';
+
 /**
  * sRGB hex contrast utilities (WCAG 2.x relative luminance).
  * Platform-neutral; hex-only — other CSS color syntaxes return null.
@@ -30,11 +32,6 @@ export function parseHexChannels(
     Number.parseInt(hex.slice(3, 5), 16),
     Number.parseInt(hex.slice(5, 7), 16),
   ];
-}
-
-function linearize(channel: number): number {
-  const c = channel / 255;
-  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
 }
 
 const luminanceCache = new Map<string, number>();

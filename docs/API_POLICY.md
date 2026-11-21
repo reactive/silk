@@ -55,7 +55,6 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **`generatePairedPalette(brandHex, options?)`** — tenant recipe → `{ light, dark }` palettes (`blue`/`gray` from brand; `red`/`green` default or optional seeds). Dark derivation is a full palette, not accent-only.
 - **`checkThemeContrast(theme)`** → `{ ok, violations }` with discriminated kinds `contrast` \| `unsupported-color` \| `distinctness`. Hex-only audit; non-hex semantic colors are diagnostics, not silent passes.
 - **`contrastRatio` / `relativeLuminance` / `parseCanonicalHex`** — platform-neutral hex contrast helpers.
-- **`oklch(l, c, h, alpha?)`** (also `@reactive/silk-core/color`, which imports nothing) — how Silk writes colors: OKLCH in, sRGB out (`#rrggbb`, or `rgba()` with `alpha`), because React Native can't parse `oklch()`. Stable: that output format, so `checkThemeContrast` and every renderer read it, and a `RangeError` for `l` or `alpha` outside 0–1, negative `c`, or a non-finite value. Unspecified: the output for a color outside sRGB (today each channel is clipped; the intended direction is to keep `l` and `h` and lower `c`, as `generateScale` does). Built-in palettes are written with it, inside sRGB.
 - **Theme scope channels** — `semanticVars` vs `customVars` on web theme scope (behavior change for named-inside-tenant portals: component hooks now inherit; semantic vars still drop).
 - **Public component CSS-var list frozen** in `silkComponentVarMeta` (documented in Theming.mdx). Removals/renames/meaning changes are breaking.
 
@@ -80,6 +79,11 @@ Every user-facing change gets a changeset (`yarn changeset`):
 - **`SilkDefaults` keys (native):** `Dialog`, `Popover`, `Listbox`.
 - **Mappers:** `mapDialogStyle`, `mapPopoverStyle`, `mapListboxItemStyle` (+ `ListboxItemState`).
 - **Packaging:** `silk-native` depends on `@radix-ui/react-dismissable-layer` and `@radix-ui/react-focus-scope` and takes `react-dom` as an optional peer; its web layer is chosen by the package `imports` entry `#floating-layer` (`react-native` condition → `Modal` layer, `default` → DOM layer).
+
+## OKLCH color additions
+
+- **`oklch(l, c, h, alpha?)`** (also `@reactive/silk-core/color`, which imports nothing) — how Silk writes colors: OKLCH in, sRGB out (`#rrggbb`, or `rgba()` with `alpha`), because React Native can't parse `oklch()`. Stable: that output format, so `checkThemeContrast` and every renderer read it, and a `RangeError` for `l` or `alpha` outside 0–1, negative `c`, or a non-finite value. Unspecified: the output for a color outside sRGB (today each channel is clipped; the intended direction is to keep `l` and `h` and lower `c`, as `generateScale` does). Built-in palettes are written with it, inside sRGB.
+- **Built-in palettes as OKLCH coordinates** — `generateScale` reads its curves from them, and interaction `hover` fills blend in OKLab rather than sRGB, so a hover sits between its two steps in perceived lightness and keeps their hue. Both may improve between minors, like `generateScale`'s curves. *breaking:* themes pinning the blended `hover` hex values (light tones, and neutral in both schemes) must re-derive them.
 
 ## Stage 3 public additions
 

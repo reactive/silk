@@ -3,7 +3,7 @@
   "budgets": {
     "cssRaw": 130000,
     "cssGzip": 15000,
-    "sharedBaselineGzip": 3300,
+    "sharedBaselineGzip": 3600,
     "ssrMedianMsSoft": 5,
     "nativeIsolatedGzip": {
       "Box": 1300,
@@ -61,11 +61,11 @@
     }
   },
   "measured": {
-    "generatedAt": "2026-11-21T19:23:32.409Z",
-    "sharedBaselineGzip": 3239,
+    "generatedAt": "2026-11-21T19:30:03.766Z",
+    "sharedBaselineGzip": 3506,
     "css": {
       "raw": 108365,
-      "gzip": 11834
+      "gzip": 11833
     },
     "isolated": {
       "Button": {
@@ -272,7 +272,7 @@
       }
     },
     "ssr": {
-      "medianMs": 0.969
+      "medianMs": 0.929
     }
   }
 }

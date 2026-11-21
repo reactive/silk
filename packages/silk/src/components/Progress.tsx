@@ -58,6 +58,7 @@ const rootClass: string = css`
     )}
   }
 
+  /* Oklab, not OKLCH: a hue blend toward a tinted gray can swing the tone's hue. */
   @media (prefers-reduced-motion: reduce) {
     &:where([data-progress='indeterminate']) {
       background-color: color-mix(
