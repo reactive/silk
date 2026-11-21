@@ -169,17 +169,42 @@ dialogTest('Escape closes a popover inside a Dialog, not the Dialog', () => {
   expect(changes).toEqual(['popover false', 'dialog false']);
 });
 
-dialogTest('An Escape whose keyup went to another window leaves the next one to the Dialog', () => {
+dialogTest('A held Escape closes a popover inside a Dialog, not the Dialog', () => {
   const changes: string[] = [];
-  const { rerender } = render(<DialogWithPopover />);
+  const onDialogChange = (open: boolean) => changes.push(`dialog ${open}`);
+  const { rerender } = render(
+    <DialogWithPopover
+      onDialogChange={onDialogChange}
+      onPopoverChange={(open) => changes.push(`popover ${open}`)}
+    />,
+  );
   press('Escape');
-  fireEvent.blur(window);
-  rerender(
+  rerender(<DialogWithPopover popoverOpen={false} onDialogChange={onDialogChange} />);
+  // The repeats come after the popover has closed, so nothing takes them.
+  for (let i = 0; i < 3; i++) {
+    act(() => {
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', repeat: true, bubbles: true }),
+      );
+    });
+  }
+  press('Escape', 'keyup');
+  expect(changes).toEqual(['popover false']);
+});
+
+dialogTest('An Escape a closed Dialog saw leaves the next Dialog to close on its own Escape', () => {
+  const changes: string[] = [];
+  const { unmount } = render(<DialogWithPopover />);
+  // A keydown with no keyup, as a test or a lost keyup leaves it.
+  press('Escape');
+  unmount();
+  render(
     <DialogWithPopover
       popoverOpen={false}
       onDialogChange={(open) => changes.push(`dialog ${open}`)}
     />,
   );
+  press('Escape');
   press('Escape', 'keyup');
   expect(changes).toEqual(['dialog false']);
 });

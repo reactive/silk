@@ -29,8 +29,7 @@ import { type FloatingSide, type Placement, placeFloating, placedStyle } from '.
  * stays live under it (a pointer can still hover the anchor). Radix's
  * DismissableLayer closes it on a press or focus outside it and its anchor
  * and on Escape (the topmost layer only; it listens in the capture phase,
- * so a control inside sees Escape after it; inside a Dialog,
- * `swallowEscapeKeyUp` keeps the dialog open). Radix's FocusScope (untrapped)
+ * so a control inside sees Escape after it). Radix's FocusScope (untrapped)
  * moves focus in as it opens unless `onOpenAutoFocus` prevents it. Silk adds
  * closing on scrolling that moves the anchor and on resizing the window,
  * scrolling the item that gets focus on open into view, and handing focus
@@ -158,7 +157,6 @@ export function FloatingLayer({
         onFocusOutside={(event) => {
           if (onAnchor(event.target)) event.preventDefault();
         }}
-        onEscapeKeyDown={host ? swallowEscapeKeyUp : undefined}
         onDismiss={onDismiss}
         style={{ ...styles.layer, ...(place ? placedStyle(place) : styles.unplaced) }}
       >
@@ -167,26 +165,6 @@ export function FloatingLayer({
     </FocusScope>,
     host ? element(host) : document.body,
   );
-}
-
-/**
- * Stops the coming Escape keyup in the capture phase, before it reaches any
- * listener on the page: react-native-web's Modal closes on it (listening on
- * the document), after this layer closed on its keydown. Inside a Dialog only.
- */
-function swallowEscapeKeyUp() {
-  const swallow = (event: KeyboardEvent) => {
-    if (event.key !== 'Escape') return;
-    event.stopPropagation();
-    release();
-  };
-  // A keyup lost to another window must not swallow a later Escape.
-  const release = () => {
-    window.removeEventListener('keyup', swallow, true);
-    window.removeEventListener('blur', release);
-  };
-  window.addEventListener('keyup', swallow, true);
-  window.addEventListener('blur', release);
 }
 
 const subscribeNever = () => () => {};
