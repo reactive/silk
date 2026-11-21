@@ -479,10 +479,12 @@ function useSlide({
   }>(undefined);
   const [active, setActive] = useState<number>();
 
-  const offsetOf = ({ nativeEvent }: GestureResponderEvent) =>
-    vertical
-      ? { location: nativeEvent.locationY - span.current.start, page: nativeEvent.pageY }
-      : { location: nativeEvent.locationX - span.current.start, page: nativeEvent.pageX };
+  const offsetOf = ({ nativeEvent }: GestureResponderEvent) => {
+    const [location, page] = vertical
+      ? [nativeEvent.locationY, nativeEvent.pageY]
+      : [nativeEvent.locationX, nativeEvent.pageX];
+    return { location: location - span.current.start, page };
+  };
   const valueAt = (offset: number) => {
     const fraction = fractionAt(offset, span.current.length, thumbSize);
     // Offsets run from the top-left corner; the slide may start at the other edge.
