@@ -22,9 +22,9 @@ import {
 // The platform's layer: `layer.modal` on native, `layer.dom` on the web (package.json `imports`).
 import { FloatingLayer } from '#floating-layer';
 import type { FloatingAlign, FloatingSide } from '../overlay/place.js';
+import { type FocusTarget, matchesFocusVisible } from '../styles/a11yProps.js';
 import { mapTooltipStyle } from '../styles/mappers/overlay.js';
 import { useTheme } from '../theme/ThemeProvider.js';
-import { type FocusTarget, matchesFocusVisible } from './Pressable.js';
 import { Text } from './Text.js';
 import { useControllableValue } from './useControllableValue.js';
 
@@ -86,6 +86,8 @@ function TooltipRoot({
     set(next);
     report?.(next);
   }, []);
+  // Asking for the state it is already in cancels a pending change and schedules
+  // nothing: a mouse passing over opens nothing, and one coming back keeps it open.
   const later = useCallback(
     (next: boolean, ms: number) => {
       clearTimeout(timer.current);
@@ -107,6 +109,14 @@ function TooltipRoot({
 }
 
 /** The Trigger's own handlers, which open and close it. */
+/** react-native-web hands Views DOM nodes and DOM focus events (silk-native doesn't load DOM types). */
+interface WebNode {
+  contains(other: WebNode): boolean;
+}
+interface WebFocusEvent {
+  readonly relatedTarget: WebNode | null;
+}
+
 type WebHandlers = 'onPointerEnter' | 'onPointerLeave' | 'onFocus' | 'onBlur';
 type TriggerHandlers = WebHandlers | 'onStartShouldSetResponder' | 'onResponderRelease';
 
@@ -157,8 +167,9 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
           },
           // Focus moving to another control inside keeps it open.
           onBlur: (event) => {
-            const next = (event.nativeEvent as { relatedTarget?: unknown }).relatedTarget;
-            if (!within(anchor.current, next)) closeNow();
+            const { relatedTarget } = event.nativeEvent as unknown as WebFocusEvent;
+            const box = anchor.current as unknown as WebNode | null;
+            if (!relatedTarget || !box?.contains(relatedTarget)) closeNow();
           },
         }
       : undefined;
@@ -174,12 +185,6 @@ function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.El
       {children}
     </View>
   );
-}
-
-/** Whether `node` is inside `box` (react-native-web: both are DOM nodes). */
-function within(box: unknown, node: unknown): boolean {
-  const contains = (box as { contains?: (other: unknown) => boolean } | null)?.contains;
-  return Boolean(node && contains?.call(box, node));
 }
 
 export interface TooltipContentProps

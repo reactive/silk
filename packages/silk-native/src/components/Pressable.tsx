@@ -18,6 +18,7 @@ import {
   type View,
   type ViewStyle,
 } from 'react-native';
+import { type FocusTarget, matchesFocusVisible } from '../styles/a11yProps.js';
 import { mapFocusRingStyle } from '../styles/mappers/focus.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
@@ -46,28 +47,6 @@ export interface PressableProps
    * @default 'accent'
    */
   readonly focusRing?: ToneName | false | undefined;
-}
-
-/** The DOM element react-native-web focuses (silk-native doesn't load DOM types). */
-export interface FocusTarget {
-  matches?: (selector: string) => boolean;
-  ownerDocument?: {
-    addEventListener(type: string, listener: () => void, capture: boolean): void;
-    removeEventListener(type: string, listener: () => void, capture: boolean): void;
-  };
-}
-
-/**
- * The browser decides whether focus should show (`:focus-visible`), so a click
- * doesn't ring a button but Tab does.
- */
-export function matchesFocusVisible(target: FocusTarget): boolean {
-  try {
-    return target.matches?.(':focus-visible') ?? true;
-  } catch {
-    // A browser too old for :focus-visible: show every focus.
-    return true;
-  }
 }
 
 /**

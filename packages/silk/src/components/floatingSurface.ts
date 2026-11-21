@@ -34,7 +34,7 @@ export const floatingSurfaceCompactClass: string = css`
   font-family: var(--silk-typography-label-family);
   font-size: var(--silk-typography-label-size);
   font-weight: var(--silk-typography-label-weight);
-  line-height: 1.3;
+  line-height: var(--silk-typography-label-line-height);
   max-width: 240px;
 `;
 

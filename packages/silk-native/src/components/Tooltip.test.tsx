@@ -102,6 +102,8 @@ test('an enabled control keeps its press', () => {
   );
   const go = screen.getByRole('button', { name: 'Go' });
   click(go);
+  // A press focuses what it lands on, which isn't keyboard focus.
+  act(() => go.focus());
   expect(presses).toEqual([1]);
   expect(tip()).toBeNull();
 });
@@ -130,7 +132,7 @@ test('keyboard focus opens it without taking focus, and Escape or leaving closes
   expect(tip()).toBeNull();
 });
 
-test('focus from a press does not open it; focus moving inside keeps it open', () => {
+test('focus that is not from the keyboard does not open it; focus moving inside keeps it open', () => {
   const changes: boolean[] = [];
   render(
     <SilkProvider>
