@@ -185,25 +185,17 @@ const PADDED = [
 export const SliderPadded: Story = {
   render: () => (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 24 }}>
-      <View style={{ width: 320, gap: 16 }}>
-        {PADDED.filter((each) => !each.vertical).map(({ name, rtl }) => (
-          <Slider
-            key={name}
-            testID={name}
-            accessibilityLabel={name}
-            defaultValue={[50]}
-            dir={rtl ? 'rtl' : 'ltr'}
-            style={INSET}
-          />
-        ))}
-      </View>
-      <Slider
-        testID="Padded, vertical"
-        accessibilityLabel="Padded, vertical"
-        defaultValue={[50]}
-        orientation="vertical"
-        style={[INSET, { height: 240 }]}
-      />
+      {PADDED.map(({ name, vertical, rtl }) => (
+        <Slider
+          key={name}
+          testID={name}
+          accessibilityLabel={name}
+          defaultValue={[50]}
+          orientation={vertical ? 'vertical' : 'horizontal'}
+          dir={rtl ? 'rtl' : 'ltr'}
+          style={[INSET, vertical ? { height: 240 } : { width: 240 }]}
+        />
+      ))}
     </View>
   ),
   play: async ({ canvas }) => {
@@ -225,7 +217,10 @@ export const SliderPadded: Story = {
   },
 };
 
-/** Where on the page a thumb's center sits at `value` (of 0 to 100) on a padded slider. */
+/**
+ * Where on the page a thumb's center sits at `value` (of 0 to 100) on a
+ * padded slider. Mirrors `slideFrom` for sliders that aren't inverted.
+ */
 function pressPoint(
   slider: HTMLElement,
   thumb: HTMLElement,

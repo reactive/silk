@@ -372,6 +372,7 @@ export function mapSliderStyle(
       flexGrow: 1,
       alignSelf: 'stretch',
       alignItems: 'center',
+      // Keeps the parts' left and right physical under React Native's RTL swap.
       direction: 'ltr',
     },
     track: {
