@@ -38,6 +38,7 @@ export function FloatingLayer({
   // measureInWindow's coordinates do (under the status bar unless the app is
   // edge-to-edge, which then lays the Modal out from the screen's top too).
   const [room, setRoom] = useState<Size>();
+  // Measured only while no box is given; a new given box needs no measuring.
   const measures = !given;
   useLayoutEffect(() => {
     if (!measures) return;

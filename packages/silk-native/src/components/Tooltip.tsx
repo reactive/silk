@@ -227,9 +227,9 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  *
  * Inside a line of text on native, it is a span of that text instead of a
  * box, so it keeps to the line: put words in it, not controls. A tap opens
- * the tooltip beside the line where it landed, the line taken to be as
- * tall as `body` text's. A span has no box, so its
- * style's padding, border and radius do nothing there; its background does.
+ * the tooltip beside the line where it landed, the line taken to be as tall
+ * as `body` text's. A span has no box, so its style's padding, border and
+ * radius do nothing there; its background does.
  *
  * The tooltip is not read by screen readers from the trigger: give the
  * control the same words (`accessibilityHint`, or `aria-describedby` to a
@@ -248,15 +248,21 @@ function TextTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Eleme
   const { openAt } = useTooltip('Trigger');
   const { theme } = useTheme();
   // The line it sits in is taken to be as tall as body text's.
-  const { lineHeight: line = 0 } = typographyStyle(theme, 'body');
+  const { lineHeight = 0 } = typographyStyle(theme, 'body');
   return (
     <RNText
       // A View's and a Text's refs are the same host node on native.
       ref={ref as Ref<ComponentRef<typeof RNText>>}
       {...(rest as RNTextProps)}
       onPress={({ nativeEvent: { pageX, pageY, locationY } }) =>
-        // The tap's height in the text (locationY) says where in its line it landed.
-        openAt({ x: pageX, y: pageY - (line ? locationY % line : 0), width: 0, height: line })
+        // Lines stack from the text's top, so the tap's height in the text
+        // (locationY) past a whole number of lines is how far into its line it landed.
+        openAt({
+          x: pageX,
+          y: pageY - (lineHeight ? locationY % lineHeight : 0),
+          width: 0,
+          height: lineHeight,
+        })
       }
     >
       {children}
