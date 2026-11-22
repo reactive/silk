@@ -31,3 +31,17 @@ test('inside a line of text, the trigger is a span of it, and a tap opens the to
   expect(screen.getByRole('tooltip').textContent).toBe('A small board');
   expect(opened).toEqual([true]);
 });
+
+test('inside a line of text, `open` with no tap shows nothing: there is no box to open beside', () => {
+  render(
+    <SilkProvider>
+      <Text>
+        <Tooltip.Root open>
+          <Tooltip.Trigger>Bf5</Tooltip.Trigger>
+          <Tooltip.Content>A small board</Tooltip.Content>
+        </Tooltip.Root>
+      </Text>
+    </SilkProvider>,
+  );
+  expect(screen.queryByRole('tooltip')).toBeNull();
+});

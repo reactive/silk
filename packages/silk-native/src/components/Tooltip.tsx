@@ -228,7 +228,7 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  * Inside a line of text on native, it is a span of that text instead of a
  * box, so it keeps to the line: put words in it, not controls. A tap opens
  * the tooltip beside the line where it landed, the line taken to be as tall
- * as `body` text's. A span has no box, so its style's padding, border and
+ * as `body` text's; with no tap (`open` alone) there it shows nothing. A span has no box, so its style's padding, border and
  * radius do nothing there; its background does.
  *
  * The tooltip is not read by screen readers from the trigger: give the
@@ -369,7 +369,10 @@ function TooltipContent({
 }: TooltipContentProps): JSX.Element | null {
   const { open, anchor, spot, openNow, closeNow, closeAfterGrace } = useTooltip('Content');
   const { theme } = useTheme();
-  if (!open) return null;
+  const inText = useInText();
+  // Inside text only a tap gives it a box to open beside: opened by `open`
+  // alone it would be an unplaced layer taking the next tap, so it waits.
+  if (!open || (inText && !spot)) return null;
   const own: Pick<ViewProps, ContentHandlers> = WEB
     ? {
         // A mouse can rest on it; a touch lifting off it is no leave.
