@@ -45,3 +45,17 @@ test('inside a line of text, `open` with no tap shows nothing: there is no box t
   );
   expect(screen.queryByRole('tooltip')).toBeNull();
 });
+
+test('with only the trigger inside the text, `open` with no tap still shows nothing', () => {
+  render(
+    <SilkProvider>
+      <Tooltip.Root open>
+        <Text>
+          <Tooltip.Trigger>Bf5</Tooltip.Trigger>
+        </Text>
+        <Tooltip.Content>A small board</Tooltip.Content>
+      </Tooltip.Root>
+    </SilkProvider>,
+  );
+  expect(screen.queryByRole('tooltip')).toBeNull();
+});

@@ -55,6 +55,9 @@ interface TooltipContextValue {
   readonly anchor: RefObject<ComponentRef<typeof View> | null>;
   /** Where a trigger with no box of its own was tapped: the box it opens beside. */
   readonly spot: Box | undefined;
+  /** Whether its trigger has no box of its own (a span inside text), so only a tap places it. */
+  readonly boxless: boolean;
+  readonly setBoxless: (boxless: boolean) => void;
   readonly openNow: () => void;
   /** Opens it beside `box`, for a trigger with no box of its own (words in a line). */
   readonly openAt: (box: Box) => void;
@@ -124,6 +127,7 @@ function TooltipRoot({
   const [open, setUncontrolled] = useControllableValue(openProp, defaultOpen);
   const anchor = useRef<ComponentRef<typeof View>>(null);
   const [spot, setSpot] = useState<Box>();
+  const [boxless, setBoxless] = useState(false);
   const pressing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   // The latest, for timers that fire after a render.
@@ -194,7 +198,10 @@ function TooltipRoot({
     }),
     [setOpen, later, delayDuration, pressStarted, pressEnded],
   );
-  const value = useMemo(() => ({ open, anchor, spot, ...actions }), [open, spot, actions]);
+  const value = useMemo(
+    () => ({ open, anchor, spot, boxless, setBoxless, ...actions }),
+    [open, spot, boxless, actions],
+  );
   return <TooltipContext.Provider value={value}>{children}</TooltipContext.Provider>;
 }
 
@@ -245,8 +252,13 @@ function TooltipTrigger(props: TooltipTriggerProps): JSX.Element {
  * and a span keeps to the line.
  */
 function TextTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
-  const { openAt } = useTooltip('Trigger');
+  const { openAt, setBoxless } = useTooltip('Trigger');
   const { theme } = useTheme();
+  // Content, wherever it sits, waits for a tap to place it.
+  useLayoutEffect(() => {
+    setBoxless(true);
+    return () => setBoxless(false);
+  }, [setBoxless]);
   // The line it sits in is taken to be as tall as body text's.
   const { lineHeight = 0 } = typographyStyle(theme, 'body');
   return (
@@ -367,12 +379,12 @@ function TooltipContent({
   ref,
   ...rest
 }: TooltipContentProps): JSX.Element | null {
-  const { open, anchor, spot, openNow, closeNow, closeAfterGrace } = useTooltip('Content');
+  const { open, anchor, spot, boxless, openNow, closeNow, closeAfterGrace } =
+    useTooltip('Content');
   const { theme } = useTheme();
-  const inText = useInText();
-  // Inside text only a tap gives it a box to open beside: opened by `open`
-  // alone it would be an unplaced layer taking the next tap, so it waits.
-  if (!open || (inText && !spot)) return null;
+  // A trigger inside text has no box: only a tap gives it one to open beside.
+  // Opened by `open` alone it would be an unplaced layer taking the next tap, so it waits.
+  if (!open || (boxless && !spot)) return null;
   const own: Pick<ViewProps, ContentHandlers> = WEB
     ? {
         // A mouse can rest on it; a touch lifting off it is no leave.
