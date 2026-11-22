@@ -27,7 +27,9 @@ export function FloatingLayer({
 }: FloatingLayerProps): JSX.Element {
   const screen = useWindowDimensions();
   const inText = useInText();
-  const [anchorBox, setAnchorBox] = useState<Box>();
+  // The anchor's box as measured, when it isn't given.
+  const [measured, setMeasured] = useState<Box>();
+  const anchorBox = given ?? measured;
   // Its size before it was placed picks the side; its size now (content
   // loading in, or shrunk to the room) places it on that side.
   const [natural, setNatural] = useState<Size>();
@@ -36,15 +38,13 @@ export function FloatingLayer({
   // measureInWindow's coordinates do (under the status bar unless the app is
   // edge-to-edge, which then lays the Modal out from the screen's top too).
   const [room, setRoom] = useState<Size>();
+  const measures = !given;
   useLayoutEffect(() => {
-    if (given) {
-      setAnchorBox(given);
-      return;
-    }
+    if (!measures) return;
     return withAnchor(anchor, (view) =>
-      view.measureInWindow((x, y, width, height) => setAnchorBox({ x, y, width, height })),
+      view.measureInWindow((x, y, width, height) => setMeasured({ x, y, width, height })),
     );
-  }, [anchor, given]);
+  }, [anchor, measures]);
 
   // The window it opened in: a new size (the device turned) moves the anchor.
   const opened = useRef(screen);

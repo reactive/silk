@@ -175,7 +175,11 @@ function TooltipRoot({
   );
   const actions = useMemo(
     () => ({
-      openNow: () => setOpen(true),
+      // Opened from the trigger's own box, not a spot an earlier tap left.
+      openNow: () => {
+        setSpot(undefined);
+        setOpen(true);
+      },
       openAt: (box: Box) => {
         setSpot(box);
         setOpen(true);
@@ -223,7 +227,8 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  *
  * Inside a line of text on native, it is a span of that text instead of a
  * box, so it keeps to the line: put words in it, not controls. A tap opens
- * the tooltip beside the line where it landed. A span has no box, so its
+ * the tooltip beside the line where it landed, the line taken to be as
+ * tall as `body` text's. A span has no box, so its
  * style's padding, border and radius do nothing there; its background does.
  *
  * The tooltip is not read by screen readers from the trigger: give the
