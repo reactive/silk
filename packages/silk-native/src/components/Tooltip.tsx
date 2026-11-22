@@ -128,8 +128,9 @@ function TooltipRoot({
   const anchor = useRef<ComponentRef<typeof View>>(null);
   const [spot, setSpot] = useState<Box>();
   const [boxless, setBoxless] = useState(false);
-  // A tap's spot belongs to the open it started: once closed (however, the
-  // owner's `open` included), a later open without a tap has none.
+  // A tap's spot lasts only as long as the open it started. Any close drops
+  // it, the owner's `open` turning false included (which no handler here
+  // sees, so it is dropped while rendering), and a later open alone has none.
   if (!open && spot) setSpot(undefined);
   const pressing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -258,7 +259,7 @@ function TooltipTrigger(props: TooltipTriggerProps): JSX.Element {
 function TextTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
   const { openAt, setBoxless } = useTooltip('Trigger');
   const { theme } = useTheme();
-  // Content, wherever it sits, waits for a tap to place it.
+  // Tells the Root this trigger has no box of its own.
   useLayoutEffect(() => {
     setBoxless(true);
     return () => setBoxless(false);
