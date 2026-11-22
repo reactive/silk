@@ -31,6 +31,10 @@
     "#floating-layer": {
       "react-native": "./dist/overlay/layer.modal.js",
       "default": "./dist/overlay/layer.dom.js"
+    },
+    "#in-text": {
+      "react-native": "./dist/components/inText.js",
+      "default": "./dist/components/inText.dom.js"
     }
   },
   "publishConfig": {

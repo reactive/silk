@@ -15,6 +15,7 @@ export default defineConfig({
     alias: {
       // The web layer: tests render through react-native-web.
       '#floating-layer': path.resolve(packageRoot, 'src/overlay/layer.dom.tsx'),
+      '#in-text': path.resolve(packageRoot, 'src/components/inText.dom.ts'),
       'react-native': path.resolve(
         monorepoRoot,
         'node_modules/react-native-web',

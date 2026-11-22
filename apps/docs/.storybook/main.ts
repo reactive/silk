@@ -48,10 +48,14 @@ const config: StorybookConfig = {
           '@reactive/silk$': '../../packages/silk/src/index.ts',
           '@reactive/silk-native$':
             '../../packages/silk-native/src/index.ts',
-          // silk-native's web layer (its package.json `imports`), from source too.
+          // silk-native's web twins (its package.json `imports`), from source too.
           '#floating-layer': path.resolve(
             monorepoRoot,
             'packages/silk-native/src/overlay/layer.dom.tsx',
+          ),
+          '#in-text': path.resolve(
+            monorepoRoot,
+            'packages/silk-native/src/components/inText.dom.ts',
           ),
           'react-native': path.resolve(
             monorepoRoot,

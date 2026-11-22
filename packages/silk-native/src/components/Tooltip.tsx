@@ -11,12 +11,23 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
-import { type StyleProp, View, type ViewProps, type ViewStyle } from 'react-native';
+import {
+  type StyleProp,
+  Text as RNText,
+  type TextProps as RNTextProps,
+  View,
+  type ViewProps,
+  type ViewStyle,
+} from 'react-native';
 // The platform's layer: `layer.modal` on native, `layer.dom` on the web (package.json `imports`).
 import { FloatingLayer } from '#floating-layer';
-import type { FloatingAlign, FloatingSide } from '../overlay/place.js';
+// Native: whether it is inside a line of text; always false on the web (package.json `imports`).
+import { useInText } from '#in-text';
+import type { Box, FloatingAlign, FloatingSide } from '../overlay/place.js';
 import { mapTooltipStyle } from '../styles/mappers/overlay.js';
+import { typographyStyle } from '../styles/mappers/shared.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import {
   matchesFocusVisible,
@@ -42,7 +53,11 @@ const PRESS_ENDS = ['click', 'contextmenu', 'pointercancel'] as const;
 interface TooltipContextValue {
   readonly open: boolean;
   readonly anchor: RefObject<ComponentRef<typeof View> | null>;
+  /** Where a trigger with no box of its own was tapped: the box it opens beside. */
+  readonly spot: Box | undefined;
   readonly openNow: () => void;
+  /** Opens it beside `box`, for a trigger with no box of its own (words in a line). */
+  readonly openAt: (box: Box) => void;
   /** Opens it once a mouse has rested for the delay, unless something changes it first. */
   readonly openAfterDelay: () => void;
   /** Closes it, unless a press inside the trigger is underway. */
@@ -108,6 +123,7 @@ function TooltipRoot({
   const delayDuration = delayProp ?? providerDelay;
   const [open, setUncontrolled] = useControllableValue(openProp, defaultOpen);
   const anchor = useRef<ComponentRef<typeof View>>(null);
+  const [spot, setSpot] = useState<Box>();
   const pressing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   // The latest, for timers that fire after a render.
@@ -160,6 +176,10 @@ function TooltipRoot({
   const actions = useMemo(
     () => ({
       openNow: () => setOpen(true),
+      openAt: (box: Box) => {
+        setSpot(box);
+        setOpen(true);
+      },
       openAfterDelay: () => later(true, delayDuration),
       closeNow: () => {
         if (!pressing.current) setOpen(false);
@@ -170,7 +190,7 @@ function TooltipRoot({
     }),
     [setOpen, later, delayDuration, pressStarted, pressEnded],
   );
-  const value = useMemo(() => ({ open, anchor, ...actions }), [open, actions]);
+  const value = useMemo(() => ({ open, anchor, spot, ...actions }), [open, spot, actions]);
   return <TooltipContext.Provider value={value}>{children}</TooltipContext.Provider>;
 }
 
@@ -201,11 +221,46 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  * Keyboard focus can't land on a disabled control, so on the web its tooltip
  * opens only for a mouse or a tap.
  *
+ * Inside a line of text on native, it is a span of that text instead of a
+ * box, so it keeps to the line: put words in it, not controls. A tap opens
+ * the tooltip beside the line where it landed. A span has no box, so its
+ * style's padding, border and radius do nothing there; its background does.
+ *
  * The tooltip is not read by screen readers from the trigger: give the
  * control the same words (`accessibilityHint`, or `aria-describedby` to a
  * description) so they reach everyone.
  */
-function TooltipTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
+function TooltipTrigger(props: TooltipTriggerProps): JSX.Element {
+  return useInText() ? <TextTrigger {...props} /> : <BoxTrigger {...props} />;
+}
+
+/**
+ * The trigger inside a line of text on native. React Native sets a View
+ * there with its bottom on the line's baseline, above the words around it,
+ * and a span keeps to the line.
+ */
+function TextTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
+  const { openAt } = useTooltip('Trigger');
+  const { theme } = useTheme();
+  // The line it sits in is taken to be as tall as body text's.
+  const { lineHeight: line = 0 } = typographyStyle(theme, 'body');
+  return (
+    <RNText
+      // A View's and a Text's refs are the same host node on native.
+      ref={ref as Ref<ComponentRef<typeof RNText>>}
+      {...(rest as RNTextProps)}
+      onPress={({ nativeEvent: { pageX, pageY, locationY } }) =>
+        // The tap's height in the text (locationY) says where in its line it landed.
+        openAt({ x: pageX, y: pageY - (line ? locationY % line : 0), width: 0, height: line })
+      }
+    >
+      {children}
+    </RNText>
+  );
+}
+
+/** The trigger anywhere else: a box. */
+function BoxTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Element {
   const { anchor, openNow, openAfterDelay, closeNow, closeAfterGrace, pressStarted, pressEnded } =
     useTooltip('Trigger');
   // A trigger gone mid-press holds the tooltip no longer.
@@ -301,7 +356,7 @@ function TooltipContent({
   ref,
   ...rest
 }: TooltipContentProps): JSX.Element | null {
-  const { open, anchor, openNow, closeNow, closeAfterGrace } = useTooltip('Content');
+  const { open, anchor, spot, openNow, closeNow, closeAfterGrace } = useTooltip('Content');
   const { theme } = useTheme();
   if (!open) return null;
   const own: Pick<ViewProps, ContentHandlers> = WEB
@@ -319,6 +374,7 @@ function TooltipContent({
   return (
     <FloatingLayer
       anchor={anchor}
+      anchorBox={spot}
       onDismiss={closeNow}
       side={side}
       align={align}
