@@ -30,6 +30,9 @@ const DIALOG_WIDTH = { sm: 360, md: 480, lg: 640 } as const;
 /** Widest a popover grows at each size (web parity). */
 const POPOVER_WIDTH = { sm: 220, md: 320, lg: 420 } as const;
 
+/** A sheet's drag handle: Material's 32 by 4. */
+const SHEET_HANDLE = { width: 32, height: 4 } as const;
+
 /**
  * Dialog: the veil filling the screen behind it, and its panel, centered or
  * risen from the bottom edge as a sheet (flush with it, top corners rounded).
@@ -65,6 +68,23 @@ export function mapDialogStyle(
         ? { borderBottomWidth: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }
         : {}),
     },
+  };
+}
+
+/**
+ * @internal A dragging sheet's handle, centered over the panel's top padding
+ * (the `/gesture` sheet only, so the root `Dialog` doesn't carry it).
+ */
+export function mapSheetHandleStyle(theme: Theme): RnViewStyle {
+  const { color, radius, space } = theme.semantic;
+  return {
+    ...SHEET_HANDLE,
+    position: 'absolute',
+    top: space[2],
+    left: '50%',
+    marginLeft: -SHEET_HANDLE.width / 2,
+    borderRadius: radius.full,
+    backgroundColor: color.tones.neutral.border,
   };
 }
 

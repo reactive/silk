@@ -1,6 +1,7 @@
 import { dialogRecipe, type DialogVariantProps } from '@reactive/silk-core';
 import {
   type ComponentRef,
+  type ComponentType,
   createContext,
   type JSX,
   type ReactNode,
@@ -41,7 +42,8 @@ interface DialogContextValue {
 
 const DialogContext = createContext<DialogContextValue | null>(null);
 
-function useDialogContext(part: string): DialogContextValue {
+/** The dialog's state, for its parts here and in the `/gesture` entry (not exported from the package). */
+export function useDialogContext(part: string): DialogContextValue {
   const dialog = useContext(DialogContext);
   if (!dialog) throw new Error(`Dialog.${part} must be used within Dialog.Root`);
   return dialog;
@@ -86,6 +88,8 @@ export interface DialogContentProps
  * wrap long content in a ScrollView. On the web, a popover or tooltip opened
  * inside it opens over it (`FloatingHostContext`), and an Escape something
  * inside takes (prevents) closes that, not the dialog (`useTakenEscape`).
+ * For a sheet that drags down to close, import `Dialog` from
+ * `@reactive/silk-native/gesture` instead.
  */
 function DialogContent({
   size,
@@ -96,20 +100,10 @@ function DialogContent({
   ref,
   ...rest
 }: DialogContentProps): JSX.Element {
-  const { open, onOpenChange, titleId, titled } = useDialogContext('Content');
-  const { theme, density } = useTheme();
-  const defaults = useComponentDefaults('Dialog');
+  const { open, onOpenChange } = useDialogContext('Content');
   const motionPreference = useMotionPreference();
-  const { veil, panel } = mapDialogStyle(
-    theme,
-    {
-      size: size ?? defaults.size ?? dialogRecipe.defaults.size,
-      placement: placement ?? defaults.placement ?? dialogRecipe.defaults.placement,
-    },
-    density,
-  );
+  const { veil, panel } = useDialogStyle({ size, placement });
   const close = () => onOpenChange(false);
-  const takeEscape = useTakenEscape(open);
   // Android recreates its dialog when animationType changes, so it is set
   // only while closed. Fading until the preference is known (it resolves a
   // moment after mount) keeps a dialog mounted open from losing its fade; a
@@ -117,40 +111,119 @@ function DialogContent({
   const motion: 'none' | 'fade' = motionPreference === 'reduced' ? 'none' : 'fade';
   const [animationType, setAnimationType] = useState(motion);
   if (!open && animationType !== motion) setAnimationType(motion);
+  return (
+    <DialogShell
+      visible={open}
+      animationType={animationType}
+      onClose={close}
+      veil={[veil, overlayStyle]}
+    >
+      <View ref={ref} {...rest} style={[panel, dialogShellStyles.overVeil, style]}>
+        {children}
+      </View>
+    </DialogShell>
+  );
+}
+
+/**
+ * @internal A dialog's variants, each from its prop, else the provider's
+ * defaults, else the recipe's.
+ */
+export function useDialogVariants({
+  size,
+  placement,
+}: {
+  readonly size?: DialogVariantProps['size'] | undefined;
+  readonly placement?: DialogVariantProps['placement'] | undefined;
+}): Required<DialogVariantProps> {
+  const defaults = useComponentDefaults('Dialog');
+  return {
+    size: size ?? defaults.size ?? dialogRecipe.defaults.size,
+    placement: placement ?? defaults.placement ?? dialogRecipe.defaults.placement,
+  };
+}
+
+/** @internal The veil and panel styles of a dialog's {@link useDialogVariants}. */
+export function useDialogStyle(
+  props: Parameters<typeof useDialogVariants>[0],
+): ReturnType<typeof mapDialogStyle> {
+  const { theme, density } = useTheme();
+  return mapDialogStyle(theme, useDialogVariants(props), density);
+}
+
+/** @internal What a dialog's `Modal` holds around its panel; see {@link DialogShell}. */
+export interface DialogShellProps {
+  /** Whether the `Modal` shows: open, or (a sheet) still sliding out. */
+  readonly visible: boolean;
+  readonly animationType: 'none' | 'fade';
+  /** Android's back, Escape (unless something inside took it), and a press on the veil. */
+  readonly onClose: () => void;
+  /** The veil, which lays out the panel. */
+  readonly veil: StyleProp<ViewStyle>;
+  /** The press catcher over the veil, behind the panel (a sheet's carries the veil's color, fading). */
+  readonly catcher?: StyleProp<ViewStyle>;
+  readonly Catcher?: ComponentType<ViewProps>;
+  /** Wraps everything inside the `Modal` (a sheet's gestures need a root of their own there). */
+  readonly Root?: ComponentType<{ readonly children: ReactNode }>;
+  /** The panel, over the veil (`dialogShellStyles.overVeil`). */
+  readonly children: ReactNode;
+}
+
+/**
+ * @internal The part of a dialog that isn't its panel, shared by `Dialog` and
+ * the `/gesture` sheet: the `Modal` named by the dialog's title, the veil and
+ * its press catcher, and on the web the host the floating layers (`Popover`,
+ * `Tooltip`) inside the panel open into, over it, with Escape left to a layer
+ * that takes it (`useTakenEscape`).
+ */
+export function DialogShell({
+  visible,
+  animationType,
+  onClose,
+  veil,
+  catcher,
+  Catcher = View,
+  Root = Bare,
+  children,
+}: DialogShellProps): JSX.Element {
+  const { open, titleId, titled } = useDialogContext('Content');
+  const takeEscape = useTakenEscape(open);
   // State, not a ref, so a layer already open inside re-renders into it once it mounts.
   const [floatingHost, setFloatingHost] = useState<ComponentRef<typeof View> | null>(null);
   return (
     <Modal
-      visible={open}
+      visible={visible}
       transparent
       statusBarTranslucent
       animationType={animationType}
       onRequestClose={() => {
-        if (!takeEscape()) close();
+        if (!takeEscape()) onClose();
       }}
       {...rnwAttrs({ 'aria-labelledby': titled ? titleId : undefined })}
     >
-      <View style={[veil, overlayStyle]}>
-        {/*
-         * A press on the veil closes it. Not a button: react-native-web's focus
-         * trap focuses the first focusable element, which must be the panel's.
-         */}
-        <View
-          style={StyleSheet.absoluteFill}
-          onStartShouldSetResponder={() => true}
-          onResponderRelease={close}
-        />
-        <View ref={ref} {...rest} style={[panel, styles.overVeil, style]}>
+      <Root>
+        <View style={veil}>
+          {/*
+           * A press on the veil closes it. Not a button: react-native-web's focus
+           * trap focuses the first focusable element, which must be the panel's.
+           */}
+          <Catcher
+            style={[StyleSheet.absoluteFill, catcher]}
+            onStartShouldSetResponder={() => true}
+            onResponderRelease={onClose}
+          />
           <FloatingHostContext.Provider value={floatingHost}>{children}</FloatingHostContext.Provider>
         </View>
-      </View>
-      {/* After the veil, so the layers in it paint over the panel. Native layers are Modals of their own. */}
-      {WEB ? (
-        <View ref={setFloatingHost} pointerEvents="box-none" style={styles.floatingHost} />
-      ) : null}
+        {/* After the veil, so the layers in it paint over the panel. Native layers are Modals of their own. */}
+        {WEB ? (
+          <View ref={setFloatingHost} pointerEvents="box-none" style={dialogShellStyles.floatingHost} />
+        ) : null}
+      </Root>
     </Modal>
   );
 }
+
+const Bare = ({ children }: { readonly children: ReactNode }) => <>{children}</>;
 
 /**
  * Answers, once, whether the Escape that react-native-web's Modal is closing
@@ -194,7 +267,11 @@ function DialogTitle({ level = '2', size = 'md', ...props }: DialogTitleProps): 
   return <Heading level={level} size={size} nativeID={titleId} {...props} />;
 }
 
-const styles = StyleSheet.create({
+/** @internal */
+export const dialogShellStyles: {
+  readonly overVeil: ViewStyle;
+  readonly floatingHost: ViewStyle;
+} = StyleSheet.create({
   // The veil's press catcher is positioned, so it would cover the panel otherwise.
   overVeil: { zIndex: 1 },
   // Takes no room and no presses; the layers in it are fixed to the window.

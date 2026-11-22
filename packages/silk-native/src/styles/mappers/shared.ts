@@ -74,7 +74,8 @@ export type RnViewStyle = {
   top?: number | undefined;
   right?: number | undefined;
   bottom?: number | undefined;
-  left?: number | undefined;
+  left?: number | `${number}%` | undefined;
+  marginLeft?: number | undefined;
 };
 
 export type RnTextStyle = {
