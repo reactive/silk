@@ -128,6 +128,9 @@ function TooltipRoot({
   const anchor = useRef<ComponentRef<typeof View>>(null);
   const [spot, setSpot] = useState<Box>();
   const [boxless, setBoxless] = useState(false);
+  // A tap's spot belongs to the open it started: once closed (however, the
+  // owner's `open` included), a later open without a tap has none.
+  if (!open && spot) setSpot(undefined);
   const pressing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   // The latest, for timers that fire after a render.
@@ -235,8 +238,9 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  * Inside a line of text on native, it is a span of that text instead of a
  * box, so it keeps to the line: put words in it, not controls. A tap opens
  * the tooltip beside the line where it landed, the line taken to be as tall
- * as `body` text's; with no tap (`open` alone) there it shows nothing. A span has no box, so its style's padding, border and
- * radius do nothing there; its background does.
+ * as `body` text's; with no tap (`open` alone) there it shows nothing. A
+ * span has no box, so its style's padding, border and radius do nothing
+ * there; its background does.
  *
  * The tooltip is not read by screen readers from the trigger: give the
  * control the same words (`accessibilityHint`, or `aria-describedby` to a

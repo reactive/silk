@@ -1,5 +1,6 @@
 import { expect, rs, test } from '@rstest/core';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Text } from './Text.js';
 import { Tooltip } from './Tooltip.js';
@@ -57,5 +58,31 @@ test('with only the trigger inside the text, `open` with no tap still shows noth
       </Tooltip.Root>
     </SilkProvider>,
   );
+  expect(screen.queryByRole('tooltip')).toBeNull();
+});
+
+test('a tap’s spot ends with its open: opened again by `open` alone, it shows nothing', () => {
+  let setOpen: (open: boolean) => void = () => {};
+  function Owned() {
+    const [open, set] = useState(false);
+    setOpen = set;
+    return (
+      <SilkProvider>
+        <Text>
+          <Tooltip.Root open={open} onOpenChange={set}>
+            <Tooltip.Trigger testID="trigger">Bf5</Tooltip.Trigger>
+            <Tooltip.Content>A small board</Tooltip.Content>
+          </Tooltip.Root>
+        </Text>
+      </SilkProvider>
+    );
+  }
+  render(<Owned />);
+  act(() => {
+    fireEvent.click(screen.getByTestId('trigger'));
+  });
+  expect(screen.getByRole('tooltip')).not.toBeNull();
+  act(() => setOpen(false));
+  act(() => setOpen(true));
   expect(screen.queryByRole('tooltip')).toBeNull();
 });
