@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Insets, LayoutChangeEvent } from 'react-native';
 import { useExclusiveGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useSharedValue } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { gestureConventions, releaseVelocity } from '../gesture/conventions.js';
 import { SUBPIXEL, springTo } from '../motion/springTo.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
@@ -125,14 +125,6 @@ export function useSliderDrag({
     },
   }));
 
-  // React's values, once no finger holds a thumb; `active` reruns it as a slide ends and
-  // `taps` after a tap, so values an owner turned down come back.
-  useLayoutEffect(() => {
-    if (held.current !== undefined || sameItems(values, pushed.current)) return;
-    pushed.current = values;
-    placed.set(values);
-  }, [values, active, taps]);
-
   const slop = useMemo<Insets>(
     () =>
       vertical
@@ -242,8 +234,25 @@ export function useSliderDrag({
       settle(0);
       scheduleOnRN(calls.tapped, moved.values);
     };
+    /**
+     * Takes values from React. A thumb still settling springs on from where
+     * it shows to its new value, so a value an owner turned down never shows.
+     */
+    const adopt = (next: readonly number[]) => {
+      'worklet';
+      if (dragging.get()) return;
+      placed.set(next);
+      const place = moving.get();
+      if (place === NONE) return;
+      if (place < next.length) settle(0);
+      else {
+        cancelAnimation(movingAt);
+        moving.set(NONE);
+      }
+    };
     const across = [-touchSlop, touchSlop] as [number, number];
     return {
+      adopt,
       pan: {
         enabled: !disabled,
         hitSlop: slop,
@@ -267,6 +276,14 @@ export function useSliderDrag({
       tap: { enabled: !WEB && !disabled, hitSlop: slop, maxDistance: touchSlop, onActivate: tap },
     };
   }, [vertical, slop, disabled, min, max, step, minSteps, from, thumbSize, snappy, reduced]);
+
+  // React's values, once no finger holds a thumb; `active` reruns it as a slide ends and
+  // `taps` after a tap, so values an owner turned down come back.
+  useLayoutEffect(() => {
+    if (held.current !== undefined || sameItems(values, pushed.current)) return;
+    pushed.current = values;
+    scheduleOnUI(configs.adopt, values);
+  }, [values, active, taps, configs]);
 
   const gesture = useExclusiveGestures(usePanGesture(configs.pan), useTapGesture(configs.tap));
   const track = useMemo(

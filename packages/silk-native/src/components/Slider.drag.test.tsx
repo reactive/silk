@@ -10,8 +10,9 @@ import type { SliderProps } from './Slider.js';
  * jsdom loads neither library's native module, so they're stood in for: the
  * gestures' configs are kept to be called by hand, a shared value is a plain
  * object, an animated style is worked out as the slider renders, and a spring
- * lands at once, reporting where it went and how fast it began. `web` picks
- * the platform the slider takes gestures as.
+ * lands at once, reporting where it went and how fast it began; it finishes
+ * at once too, unless `unfinished` keeps its callback to call later. `web`
+ * picks the platform the slider takes gestures as.
  */
 const mocked = rs.hoisted(() => ({
   web: true,
@@ -19,6 +20,7 @@ const mocked = rs.hoisted(() => ({
   tap: undefined as undefined | Record<string, unknown>,
   springs: [] as number[],
   speeds: [] as number[],
+  unfinished: undefined as undefined | ((finished: boolean) => void)[],
 }));
 
 rs.mock('react-native-gesture-handler', () => ({
@@ -50,7 +52,8 @@ rs.mock('react-native-reanimated', () => ({
     animation.onStart(animation, 0, 0, undefined);
     mocked.springs.push(animation.toValue);
     mocked.speeds.push(animation.velocity);
-    animation.callback?.(true);
+    if (animation.callback && mocked.unfinished) mocked.unfinished.push(animation.callback);
+    else animation.callback?.(true);
     return animation.toValue;
   },
   useAnimatedStyle: (style: () => object) => style(),
@@ -69,6 +72,7 @@ rs.mock('react-native-reanimated', () => ({
 
 rs.mock('react-native-worklets', () => ({
   scheduleOnRN: (run: (...args: unknown[]) => void, ...args: unknown[]) => run(...args),
+  scheduleOnUI: (run: (...args: unknown[]) => void, ...args: unknown[]) => run(...args),
 }));
 
 rs.mock('../web/host.js', () => ({
@@ -121,6 +125,7 @@ beforeEach(() => {
   mocked.web = true;
   mocked.springs.length = 0;
   mocked.speeds.length = 0;
+  mocked.unfinished = undefined;
   clock = 1000;
   rs.spyOn(Date, 'now').mockImplementation(() => clock);
 });
@@ -294,8 +299,10 @@ test('native: a controlled slider whose owner turns a tap down shows its own val
   const { rerender } = render(stuck());
   layOut();
   const box = () => screen.getByRole('slider').parentElement!.style;
+  // The spring toward the tap is still on its way as the owner keeps 50.
+  mocked.unfinished = [];
   act(() => (mocked.tap!.onActivate as Handler)(at(20)));
-  expect(mocked.springs).toEqual([20]);
+  expect(mocked.springs).toEqual([20, 50]);
   // The stand-in styles are worked out as it renders.
   rerender(stuck());
   expect(box().transform).toBe('translateX(90px)');
