@@ -2,9 +2,9 @@ import { sliderRecipe, type SliderVariantProps } from '@reactive/silk-core';
 import {
   type ComponentRef,
   createContext,
+  memo,
   useCallback,
   useContext,
-  memo,
   useMemo,
   useRef,
   type JSX,
@@ -36,9 +36,10 @@ import {
 import { Pressable } from './Pressable.js';
 import { sameItems } from './sameItems.js';
 import { fractionIn, PHYSICAL_FRAME, placeAt, type SliderEdge, slideFrom } from './sliderGeometry.js';
+import { type SliderTrack, useRangeMotion, useThumbMotion } from './sliderMotion.js';
 import { moveThumb, type SliderBounds } from './sliderValues.js';
 import { useControllableValue } from './useControllableValue.js';
-import { type SliderTrack, useRangeMotion, useSliderDrag, useThumbMotion } from './useSliderDrag.js';
+import { useSliderDrag } from './useSliderDrag.js';
 import { WEB, webKeyHandler, type WebKeyDownEvent } from '../web/host.js';
 
 type Thumb = ComponentRef<typeof View>;
@@ -201,7 +202,7 @@ export function Slider({
     vertical,
     from,
     thumbSize,
-    hitSlop: minTouchHitSlop(crossSize),
+    crossSlop: minTouchHitSlop(crossSize),
     disabled: isDisabled,
     onChange: report,
     onCommit: (next) => onValueCommit?.(next),

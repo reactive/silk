@@ -62,7 +62,7 @@ export function nearestThumb(values: readonly number[], value: number): number {
  * Where thumb `index` of `values` can be drawn while a finger holds it at
  * `value`: there, kept within bounds and `minSteps` steps from its neighbors.
  */
-export function reachable(
+export function clampToNeighbors(
   values: readonly number[],
   value: number,
   index: number,

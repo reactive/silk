@@ -220,7 +220,6 @@ export function DialogShell({
   );
 }
 
-
 /**
  * Answers, once, whether the Escape that react-native-web's Modal is closing
  * on (at its keyup) was taken by something inside: a popover or tooltip

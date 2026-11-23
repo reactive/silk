@@ -63,6 +63,12 @@ export function placeAt(
   };
 }
 
+/** How far a thumb's center runs along a slider `length` long: all of it but a thumb. */
+export function travel(length: number, thumbSize: number): number {
+  'worklet';
+  return Math.max(0, length - thumbSize);
+}
+
 /**
  * The fraction of the way from `edge` at `offset` (from the top-left end)
  * along a slider `length` long, clamped: `placeAt`'s inverse.
@@ -74,15 +80,15 @@ export function fractionAt(
   edge: SliderEdge,
 ): number {
   'worklet';
-  const travel = length - thumbSize;
-  const fromTopLeft = travel > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / travel)) : 0;
+  const runs = travel(length, thumbSize);
+  const fromTopLeft = runs > 0 ? Math.min(1, Math.max(0, (offset - thumbSize / 2) / runs)) : 0;
   return edge === 'right' || edge === 'bottom' ? 1 - fromTopLeft : fromTopLeft;
 }
 
 /** Where a thumb's center sits, `fraction` of the way from `min`'s edge along a slider `length` long. */
 export function centerAt(fraction: number, length: number, thumbSize: number): number {
   'worklet';
-  return thumbSize / 2 + fraction * (length - thumbSize);
+  return thumbSize / 2 + fraction * travel(length, thumbSize);
 }
 
 /** Which way along its axis (x or y, as the screen counts) a slider runs from `edge` toward max. */

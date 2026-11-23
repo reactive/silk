@@ -284,6 +284,23 @@ test('native: a tap springs the nearest thumb to its step there and commits once
   expect(commits).toEqual([[20, 70]]);
 });
 
+test('native: a controlled slider whose owner turns a tap down shows its own value again', () => {
+  mocked.web = false;
+  const stuck = () => (
+    <SilkProvider>
+      <Slider size="md" accessibilityLabel="Stuck" value={[50]} onValueChange={() => {}} />
+    </SilkProvider>
+  );
+  const { rerender } = render(stuck());
+  layOut();
+  const box = () => screen.getByRole('slider').parentElement!.style;
+  act(() => (mocked.tap!.onActivate as Handler)(at(20)));
+  expect(mocked.springs).toEqual([20]);
+  // The stand-in styles are worked out as it renders.
+  rerender(stuck());
+  expect(box().transform).toBe('translateX(90px)');
+});
+
 test('native: a slide starts where the finger is as it moves a touch slop', () => {
   mocked.web = false;
   const commits: number[][] = [];
