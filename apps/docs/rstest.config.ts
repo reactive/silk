@@ -25,6 +25,10 @@ export default defineConfig({
         monorepoRoot,
         'packages/silk-native/src/overlay/layer.dom.tsx',
       ),
+      '#in-text': path.resolve(
+        monorepoRoot,
+        'packages/silk-native/src/components/inText.dom.ts',
+      ),
     },
   },
 });

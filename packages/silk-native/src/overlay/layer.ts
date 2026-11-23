@@ -6,7 +6,7 @@ import {
   type RefObject,
 } from 'react';
 import type { View } from 'react-native';
-import type { PlaceOptions } from './place.js';
+import type { Box, PlaceOptions } from './place.js';
 
 /**
  * What both floating layers take (`layer.modal.tsx` on native,
@@ -15,6 +15,12 @@ import type { PlaceOptions } from './place.js';
  */
 export interface FloatingLayerProps extends PlaceOptions {
   readonly anchor: RefObject<ComponentRef<typeof View> | null>;
+  /**
+   * Native: the box it is placed beside instead of `anchor`'s, in window
+   * coordinates, for an anchor that has no box of its own (words inside a
+   * line of text). The web's anchors always have one.
+   */
+  readonly anchorBox?: Box | undefined;
   /** A press outside it and its anchor, Escape or the back button, scrolling that moves the anchor, a resized window. */
   readonly onDismiss: () => void;
   readonly children: ReactNode;
