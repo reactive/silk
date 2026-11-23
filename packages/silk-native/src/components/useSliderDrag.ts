@@ -241,9 +241,11 @@ export function useSliderDrag({
     const adopt = (next: readonly number[]) => {
       'worklet';
       if (dragging.get()) return;
+      const was = placed.get();
       placed.set(next);
       const place = moving.get();
-      if (place === NONE) return;
+      // Still heading to its value: the spring keeps its speed.
+      if (place === NONE || next[place] === was[place]) return;
       if (place < next.length) settle(0);
       else {
         cancelAnimation(movingAt);
