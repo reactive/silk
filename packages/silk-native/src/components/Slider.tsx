@@ -1,4 +1,4 @@
-import { sliderRecipe, type SliderVariantProps } from '@reactive/silk-core';
+import { sliderRecipe, type SliderVariantProps } from "@reactive/silk-core";
 import {
   type ComponentRef,
   createContext,
@@ -10,7 +10,7 @@ import {
   type JSX,
   type ReactNode,
   type Ref,
-} from 'react';
+} from "react";
 import {
   I18nManager,
   StyleSheet,
@@ -19,35 +19,41 @@ import {
   type StyleProp,
   type ViewProps,
   type ViewStyle,
-} from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
-import Animated from 'react-native-reanimated';
-import { a11yState, a11yValue, rnwAttrs } from '../styles/a11yProps.js';
-import { minTouchHitSlop } from '../styles/controlGeometry.js';
-import { mapSliderStyle } from '../styles/mappers/controls.js';
-import { useComponentDefaults } from '../theme/SilkProvider.js';
-import { useTheme } from '../theme/ThemeProvider.js';
+} from "react-native";
+import { GestureDetector } from "react-native-gesture-handler";
+import Animated from "react-native-reanimated";
+import { a11yState, a11yValue, rnwAttrs } from "../styles/a11yProps.js";
+import { minTouchHitSlop } from "../styles/controlGeometry.js";
+import { mapSliderStyle } from "../styles/mappers/controls.js";
+import { useComponentDefaults } from "../theme/SilkProvider.js";
+import { useTheme } from "../theme/ThemeProvider.js";
 import {
   fieldLabelAssociation,
   type FieldLabelAssociation,
   useFieldControlProps,
   useFieldControlRegistration,
-} from './Field.js';
-import { Pressable } from './Pressable.js';
-import { sameItems } from './sameItems.js';
-import { fractionIn, PHYSICAL_FRAME, placeAt, type SliderEdge, slideFrom } from './sliderGeometry.js';
-import { useRangeMotion, useThumbMotion } from './sliderMotion.js';
-import type { SliderTrack } from './sliderThumbs.js';
-import { moveThumb, type SliderBounds } from './sliderValues.js';
-import { useControllableValue } from './useControllableValue.js';
-import { useSliderDrag } from './useSliderDrag.js';
-import { WEB, webKeyHandler, type WebKeyDownEvent } from '../web/host.js';
+} from "./Field.js";
+import { Pressable } from "./Pressable.js";
+import { sameItems } from "./sameItems.js";
+import {
+  fractionIn,
+  PHYSICAL_FRAME,
+  placeAt,
+  type SliderEdge,
+  slideFrom,
+} from "./sliderGeometry.js";
+import { useRangeMotion, useThumbMotion } from "./sliderMotion.js";
+import type { SliderTrack } from "./sliderThumbs.js";
+import { moveThumb, type SliderBounds } from "./sliderValues.js";
+import { useControllableValue } from "./useControllableValue.js";
+import { useSliderDrag } from "./useSliderDrag.js";
+import { WEB, webKeyHandler, type WebKeyDownEvent } from "../web/host.js";
 
 type Thumb = ComponentRef<typeof View>;
 
 export interface SliderProps
   extends SliderVariantProps,
-    Omit<ViewProps, 'children' | 'style'> {
+    Omit<ViewProps, "children" | "style"> {
   readonly ref?: Ref<ComponentRef<typeof View>>;
   readonly style?: StyleProp<ViewStyle>;
   /**
@@ -73,9 +79,9 @@ export interface SliderProps
   /** How many steps apart neighboring thumbs stay. @default 0 */
   readonly minStepsBetweenThumbs?: number;
   /** @default 'horizontal' */
-  readonly orientation?: 'horizontal' | 'vertical';
+  readonly orientation?: "horizontal" | "vertical";
   /** Reading direction of a horizontal slider. @default the app's (I18nManager) */
-  readonly dir?: 'ltr' | 'rtl';
+  readonly dir?: "ltr" | "rtl";
   /** Runs from the end to the start (right to left, or top to bottom). */
   readonly inverted?: boolean;
   readonly disabled?: boolean;
@@ -84,18 +90,18 @@ export interface SliderProps
   readonly thumbLabels?: readonly string[];
   /** Per-thumb spoken values ("1,500 rating" for 1500). */
   readonly thumbValueText?: readonly string[];
-  readonly 'aria-describedby'?: string;
+  readonly "aria-describedby"?: string;
 }
 
 /** Keys that move a thumb toward `min`, by the edge `min` sits at (Radix's). */
 const BACK_KEYS: Record<SliderEdge, readonly string[]> = {
-  left: ['PageDown', 'ArrowDown', 'ArrowLeft'],
-  right: ['PageDown', 'ArrowDown', 'ArrowRight'],
-  bottom: ['PageDown', 'ArrowDown', 'ArrowLeft'],
-  top: ['PageDown', 'ArrowUp', 'ArrowLeft'],
+  left: ["PageDown", "ArrowDown", "ArrowLeft"],
+  right: ["PageDown", "ArrowDown", "ArrowRight"],
+  bottom: ["PageDown", "ArrowDown", "ArrowLeft"],
+  top: ["PageDown", "ArrowUp", "ArrowLeft"],
 };
-const PAGE_KEYS = ['PageUp', 'PageDown'];
-const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+const PAGE_KEYS = ["PageUp", "PageDown"];
+const ARROW_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
 /**
  * Picks one number, or several (a range), by sliding a thumb along a track:
@@ -119,7 +125,7 @@ export function Slider({
   max = 100,
   step: stepProp = 1,
   minStepsBetweenThumbs = 0,
-  orientation = 'horizontal',
+  orientation = "horizontal",
   dir,
   inverted = false,
   disabled,
@@ -133,34 +139,39 @@ export function Slider({
   accessibilityLabel,
   accessibilityHint,
   accessibilityLabelledBy,
-  'aria-describedby': ariaDescribedBy,
+  "aria-describedby": ariaDescribedBy,
   ...rest
 }: SliderProps): JSX.Element {
   const { theme, density } = useTheme();
-  const defaults = useComponentDefaults('Slider');
+  const defaults = useComponentDefaults("Slider");
   const resolved = {
     size: size ?? defaults.size ?? sliderRecipe.defaults.size,
     tone: tone ?? defaults.tone ?? sliderRecipe.defaults.tone,
   };
   const fieldProps = useFieldControlProps({
     disabled,
-    'aria-invalid': invalid,
+    "aria-invalid": invalid,
     nativeID,
     accessibilityLabel,
     accessibilityHint,
     accessibilityLabelledBy,
-    'aria-describedby': ariaDescribedBy,
+    "aria-describedby": ariaDescribedBy,
   });
   const isDisabled = Boolean(fieldProps.disabled);
   const isInvalid = Boolean(fieldProps.invalid);
   const [values, setUncontrolled] = useControllableValue<readonly number[]>(
     valueProp,
-    defaultValue ?? [min],
+    defaultValue ?? [min]
   );
   const step = stepProp > 0 ? stepProp : 1;
-  const bounds: SliderBounds = { min, max, step, minSteps: minStepsBetweenThumbs };
-  const vertical = orientation === 'vertical';
-  const rtl = (dir ?? (I18nManager.isRTL ? 'rtl' : 'ltr')) === 'rtl';
+  const bounds: SliderBounds = {
+    min,
+    max,
+    step,
+    minSteps: minStepsBetweenThumbs,
+  };
+  const vertical = orientation === "vertical";
+  const rtl = (dir ?? (I18nManager.isRTL ? "rtl" : "ltr")) === "rtl";
   const from = slideFrom(vertical, rtl, inverted);
   // Memoized: a drag re-renders the slider on every step, and its styles don't change with the values.
   const { root, parts, track, range, thumb, thumbSize, crossSize } = useMemo(
@@ -169,13 +180,24 @@ export function Slider({
         theme,
         { size: resolved.size, tone: resolved.tone },
         density,
-        { orientation, invalid: isInvalid, disabled: isDisabled },
+        { orientation, invalid: isInvalid, disabled: isDisabled }
       ),
-    [theme, resolved.size, resolved.tone, density, orientation, isInvalid, isDisabled],
+    [
+      theme,
+      resolved.size,
+      resolved.tone,
+      density,
+      orientation,
+      isInvalid,
+      isDisabled,
+    ]
   );
 
   const thumbs = useRef<(Thumb | null)[]>([]);
-  const focusThumb = useCallback((index: number) => thumbs.current[index]?.focus(), []);
+  const focusThumb = useCallback(
+    (index: number) => thumbs.current[index]?.focus(),
+    []
+  );
 
   const report = (next: number[]) => {
     setUncontrolled(next);
@@ -218,8 +240,8 @@ export function Slider({
   const onThumbKey = (index: number) => (event: WebKeyDownEvent) => {
     const { key, shiftKey } = event.nativeEvent;
     if (isDisabled) return;
-    if (key === 'Home') keyMove(min, 0, index);
-    else if (key === 'End') keyMove(max, values.length - 1, index);
+    if (key === "Home") keyMove(min, 0, index);
+    else if (key === "End") keyMove(max, values.length - 1, index);
     else if (PAGE_KEYS.includes(key) || ARROW_KEYS.includes(key)) {
       const times = PAGE_KEYS.includes(key) || shiftKey ? 10 : 1;
       nudge(index, BACK_KEYS[from].includes(key) ? -times : times);
@@ -229,8 +251,8 @@ export function Slider({
   const onAction = (index: number) => (event: AccessibilityActionEvent) => {
     const { actionName } = event.nativeEvent;
     if (isDisabled) return;
-    if (actionName === 'increment') nudge(index, 1);
-    else if (actionName === 'decrement') nudge(index, -1);
+    if (actionName === "increment") nudge(index, 1);
+    else if (actionName === "decrement") nudge(index, -1);
   };
 
   // A Field label focuses the first thumb.
@@ -240,19 +262,25 @@ export function Slider({
   useFieldControlRegistration(focusFirst);
 
   // Changes only with what places a mark, so marks don't re-render as the thumb slides.
+  const { scale } = drag.track;
   const markStyle = useMemo<MarkStyle>(
     () =>
       (value, offset = 0) =>
-        placeAt(fractionIn(value, min, max), thumbSize, offset, from),
-    [min, max, thumbSize, from],
+        placeAt(
+          fractionIn(value, scale.min, scale.max),
+          scale.thumbSize,
+          offset,
+          scale.from
+        ),
+    [scale]
   );
   const single = values.length === 1;
   // The web's pointer affordances, while it takes presses.
   const webLive = WEB && !isDisabled;
   // A thumb's box; its motion places it.
   const thumbBox = useMemo<ViewStyle>(
-    () => ({ position: 'absolute', width: thumbSize, height: thumbSize }),
-    [thumbSize],
+    () => ({ position: "absolute", width: thumbSize, height: thumbSize }),
+    [thumbSize]
   );
   return (
     <GestureDetector gesture={drag.gesture}>
@@ -264,20 +292,26 @@ export function Slider({
         style={[root, webLive ? WEB_SLIDER : undefined, style]}
         {...rnwAttrs(
           {
-            'data-orientation': orientation,
-            'data-disabled': isDisabled ? '' : undefined,
-            'data-invalid': isInvalid ? 'true' : undefined,
+            "data-orientation": orientation,
+            "data-disabled": isDisabled ? "" : undefined,
+            "data-invalid": isInvalid ? "true" : undefined,
           },
-          rest,
+          rest
         )}
       >
-        <View pointerEvents="none" style={[parts, PHYSICAL_FRAME]} onLayout={drag.measure}>
+        <View
+          pointerEvents="none"
+          style={[parts, PHYSICAL_FRAME]}
+          onLayout={drag.measure}
+        >
           <View style={[track, styles.clip]}>
             <Range track={drag.track} style={range} />
           </View>
           {children === undefined ? null : (
             <View style={StyleSheet.absoluteFill}>
-              <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
+              <MarkContext.Provider value={markStyle}>
+                {children}
+              </MarkContext.Provider>
             </View>
           )}
           {values.map((value, index) => {
@@ -285,9 +319,15 @@ export function Slider({
               thumbLabels?.[index] ??
               (single
                 ? fieldProps.accessibilityLabel
-                : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
+                : fieldProps.accessibilityLabel &&
+                  `${fieldProps.accessibilityLabel} (${index + 1})`);
             return (
-              <ThumbBox key={index} track={drag.track} place={index} style={thumbBox}>
+              <ThumbBox
+                key={index}
+                track={drag.track}
+                place={index}
+                style={thumbBox}
+              >
                 <Pressable
                   ref={(node) => {
                     thumbs.current[index] = node;
@@ -295,7 +335,7 @@ export function Slider({
                   pointerEvents="none"
                   focusable={!isDisabled}
                   disabled={isDisabled}
-                  focusRing={isInvalid ? 'danger' : resolved.tone}
+                  focusRing={isInvalid ? "danger" : resolved.tone}
                   accessibilityRole="adjustable"
                   accessibilityLabel={label}
                   accessibilityHint={fieldProps.accessibilityHint}
@@ -308,13 +348,18 @@ export function Slider({
                   accessibilityActions={ACTIONS}
                   onAccessibilityAction={onAction(index)}
                   {...a11yState({ disabled: isDisabled })}
-                  {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
+                  {...a11yValue({
+                    min,
+                    max,
+                    now: value,
+                    text: thumbValueText?.[index],
+                  })}
                   {...webKeyHandler(onThumbKey(index))}
                   {...rnwAttrs({
-                    'aria-orientation': orientation,
-                    'aria-describedby': fieldProps['aria-describedby'],
-                    'aria-invalid': fieldProps['aria-invalid'],
-                    'data-active': drag.active === index ? '' : undefined,
+                    "aria-orientation": orientation,
+                    "aria-describedby": fieldProps["aria-describedby"],
+                    "aria-invalid": fieldProps["aria-invalid"],
+                    "data-active": drag.active === index ? "" : undefined,
                   })}
                   style={thumb}
                 />
@@ -340,7 +385,9 @@ function ThumbBox({
   readonly children: ReactNode;
 }): JSX.Element {
   const [placement, motion] = useThumbMotion(track, place);
-  return <Animated.View style={[style, placement, motion]}>{children}</Animated.View>;
+  return (
+    <Animated.View style={[style, placement, motion]}>{children}</Animated.View>
+  );
 }
 
 /** The range between the thumbs, as the UI thread draws them, in a track that clips it; it renders only as its track or style change. */
@@ -361,7 +408,7 @@ const Range = memo(function Range({
 
 (Slider as typeof Slider & { [fieldLabelAssociation]: FieldLabelAssociation })[
   fieldLabelAssociation
-] = 'labelledby';
+] = "labelledby";
 
 /** Places a mark at `value` on the slider, `offset` further along. */
 type MarkStyle = (value: number, offset?: number) => ViewStyle;
@@ -379,11 +426,14 @@ const MarkContext = createContext<MarkStyle | null>(null);
  */
 export function useSliderMarkStyle(): MarkStyle {
   const markStyle = useContext(MarkContext);
-  if (!markStyle) throw new Error('useSliderMarkStyle must be used within a Slider\'s children');
+  if (!markStyle)
+    throw new Error(
+      "useSliderMarkStyle must be used within a Slider's children"
+    );
   return markStyle;
 }
 
-const ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const;
+const ACTIONS = [{ name: "increment" }, { name: "decrement" }] as const;
 
 /**
  * Web only: a press keeps focus where it put it. The mousedown's default would
@@ -395,6 +445,10 @@ const WEB_KEEP_FOCUS = {
 };
 
 /** Web only: a pointer over it, no text selected or page scrolled by a drag. */
-const WEB_SLIDER = { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as ViewStyle;
+const WEB_SLIDER = {
+  cursor: "pointer",
+  userSelect: "none",
+  touchAction: "none",
+} as ViewStyle;
 
-const styles = StyleSheet.create({ clip: { overflow: 'hidden' } });
+const styles = StyleSheet.create({ clip: { overflow: "hidden" } });
