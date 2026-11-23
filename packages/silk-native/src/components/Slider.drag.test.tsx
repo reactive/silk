@@ -263,6 +263,34 @@ test('a controlled slider whose owner turns the slide down shows its own value o
   expect(box().transform).toBe('translateX(90px)');
 });
 
+test('a slide whose hold and release land in one render still shows the value its owner keeps', () => {
+  const stuck = () => (
+    <SilkProvider>
+      <Slider size="md" accessibilityLabel="Stuck" value={[50]} onValueChange={() => {}} />
+    </SilkProvider>
+  );
+  const { rerender } = render(stuck());
+  layOut();
+  const box = () => screen.getByRole('slider').parentElement!.style;
+  // A busy JavaScript thread hears the whole slide at once.
+  act(() => {
+    (mocked.pan!.onBegin as Handler)(at(50));
+    (mocked.pan!.onUpdate as Handler)(at(80));
+    (mocked.pan!.onDeactivate as Handler)({ canceled: false, velocityX: 0 });
+  });
+  rerender(stuck());
+  expect(box().transform).toBe('translateX(90px)');
+});
+
+test('turned to run the other way, a thumb keeps no anchor at its old edge', () => {
+  const { rerender } = render(<Controlled initial={[30]} />);
+  const box = () => screen.getByRole('slider').parentElement!.style;
+  expect(box().left).not.toBe('');
+  rerender(<Controlled initial={[30]} inverted />);
+  expect(box().left).toBe('');
+  expect(box().right).not.toBe('');
+});
+
 test('disabled, a slider takes no gestures', () => {
   render(<Controlled initial={[50]} disabled />);
   expect(mocked.pan!.enabled).toBe(false);

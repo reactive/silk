@@ -279,7 +279,8 @@ export function Slider({
       >
         <View pointerEvents="none" style={[parts, PHYSICAL_FRAME]} onLayout={drag.measure}>
           <View style={[track, styles.clip]}>
-            <Range track={drag.track} style={range} />
+            {/* Keyed by the edge `min` sits at: an animated style keeps the anchors it last set. */}
+            <Range key={from} track={drag.track} style={range} />
           </View>
           {children === undefined ? null : (
             <View style={StyleSheet.absoluteFill}>
@@ -293,7 +294,7 @@ export function Slider({
                 ? fieldProps.accessibilityLabel
                 : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
             return (
-              <ThumbBox key={index} track={drag.track} place={index} style={thumbBox}>
+              <ThumbBox key={`${from}${index}`} track={drag.track} place={index} style={thumbBox}>
                 <Pressable
                   ref={(node) => {
                     thumbs.current[index] = node;

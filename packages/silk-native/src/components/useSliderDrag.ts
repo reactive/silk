@@ -92,8 +92,9 @@ export function useSliderDrag({
 
   // The held thumb, rendered (`data-active`); `held` is the same thumb, read at once by the calls below.
   const [active, setActive] = useState<number>();
-  // Counts taps, which, unlike a slide's release, change no other state.
-  const [taps, countTap] = useReducer((n: number) => n + 1, 0);
+  // Counts releases, a tap's included. A tap changes no other state, and a slide's hold and
+  // release can land in one render, leaving `active` as it was.
+  const [releases, countRelease] = useReducer((n: number) => n + 1, 0);
   // JavaScript's view of the UI thread: the thumb a finger holds, and the values it last placed.
   const held = useRef<number>(undefined);
   const pushed = useRef(values);
@@ -115,11 +116,12 @@ export function useSliderDrag({
       held.current = undefined;
       pushed.current = now;
       setActive(undefined);
+      countRelease();
       if (changed) latest.current.onCommit(now);
     },
     tapped: (next: number[]) => {
       pushed.current = next;
-      countTap();
+      countRelease();
       latest.current.onChange(next);
       latest.current.onCommit(next);
     },
@@ -279,13 +281,13 @@ export function useSliderDrag({
     };
   }, [vertical, slop, disabled, min, max, step, minSteps, from, thumbSize, snappy, reduced]);
 
-  // React's values, once no finger holds a thumb; `active` reruns it as a slide ends and
-  // `taps` after a tap, so values an owner turned down come back.
+  // React's values, once no finger holds a thumb; `releases` reruns it after each release
+  // and tap, so values an owner turned down come back.
   useLayoutEffect(() => {
     if (held.current !== undefined || sameItems(values, pushed.current)) return;
     pushed.current = values;
     scheduleOnUI(configs.adopt, values);
-  }, [values, active, taps, configs]);
+  }, [values, releases, configs]);
 
   const gesture = useExclusiveGestures(usePanGesture(configs.pan), useTapGesture(configs.tap));
   const track = useMemo(
