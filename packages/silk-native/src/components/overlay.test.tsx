@@ -7,7 +7,7 @@ import { ScrollView, View } from 'react-native';
 import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
 import { placeFloating } from '../overlay/place.js';
 import { type SilkDefaults, SilkProvider } from '../theme/SilkProvider.js';
-import { Dialog } from './Dialog.js';
+import { BaseDialog as Dialog } from './Dialog/BaseDialog.js';
 import { Listbox } from './Listbox.js';
 import { Popover } from './Popover.js';
 import { Pressable } from './Pressable.js';

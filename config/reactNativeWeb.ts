@@ -6,7 +6,7 @@ import path from 'node:path';
  * renderer, the `.web.*` twins Gesture Handler and Reanimated ship resolved
  * first, and Metro's `__DEV__` global defined.
  */
-export function reactNativeWeb(monorepoRoot: string, dev = true) {
+export function reactNativeWeb(monorepoRoot: string, { dev = true }: { dev?: boolean } = {}) {
   return {
     alias: { 'react-native': path.resolve(monorepoRoot, 'node_modules/react-native-web') },
     extensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],

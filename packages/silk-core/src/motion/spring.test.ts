@@ -40,12 +40,12 @@ test('springAt keeps momentum that points away from the target', () => {
 });
 
 test('sampleSpring runs from 0 to exactly 1 at 60 fps', () => {
-  const { durationMs, progress } = sampleSpring(smooth);
+  const { settleMs, progress } = sampleSpring(smooth);
   expect(progress[0]).toBe(0);
   expect(progress.at(-1)).toBe(1);
-  expect(durationMs).toBe(Math.round(((progress.length - 1) / 60) * 1000));
+  expect(settleMs).toBe(Math.round(((progress.length - 1) / 60) * 1000));
   // Settling takes longer than the time to (visually) arrive.
-  expect(durationMs).toBeGreaterThan(smooth.durationMs);
+  expect(settleMs).toBeGreaterThan(smooth.durationMs);
 });
 
 test('only a spring with bounce overshoots its target', () => {
@@ -53,6 +53,3 @@ test('only a spring with bounce overshoots its target', () => {
   expect(Math.max(...sampleSpring(snappy).progress)).toBeGreaterThan(1);
 });
 
-test('sampleSpring caches by value, not by object', () => {
-  expect(sampleSpring({ ...brisk })).toBe(sampleSpring(brisk));
-});

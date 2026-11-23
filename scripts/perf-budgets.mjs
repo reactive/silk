@@ -112,9 +112,7 @@ function loadBudgets() {
 function nativeComponentExports() {
   const source = readFileSync(nativeSourceEntry, 'utf8');
   const names = new Set();
-  // Components live in components/, except the root Dialog, composed in gesture/Dialog.ts with its sheet.
-  const componentExport =
-    /export\s*\{([^{}]*?)\}\s*from\s*['"]\.\/(?:components|gesture(?=\/Dialog\.js))\/([^'"]+)\.js['"];?/g;
+  const componentExport = /export\s*\{([^{}]*?)\}\s*from\s*['"]\.\/components\/([^'"]+)\.js['"];?/g;
   for (const match of source.matchAll(componentExport)) {
     const componentName = basename(match[2]);
     const exportedNames = match[1]

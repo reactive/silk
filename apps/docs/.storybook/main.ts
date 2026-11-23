@@ -4,7 +4,7 @@ import { mergeRsbuildConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import remarkGfm from 'remark-gfm';
 import type { StorybookConfig } from 'storybook-react-rsbuild';
-import { reactNativeWeb } from '../../../test/reactNativeWeb';
+import { reactNativeWeb } from '../../../config/reactNativeWeb';
 
 const docsRoot = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(docsRoot, '../../..');
@@ -35,7 +35,7 @@ const config: StorybookConfig = {
   },
   async rsbuildFinal(rsbuildConfig, { configType }) {
     const isProduction = configType === 'PRODUCTION';
-    const rnWeb = reactNativeWeb(monorepoRoot, !isProduction);
+    const rnWeb = reactNativeWeb(monorepoRoot, { dev: !isProduction });
 
     return mergeRsbuildConfig(rsbuildConfig, {
       plugins: [

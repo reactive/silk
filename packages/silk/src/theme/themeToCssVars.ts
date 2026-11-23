@@ -32,8 +32,8 @@ function shadowLayerToCss(layer: ShadowLayer): string {
 
 /** CSS has no spring: it plays one from rest as a `linear()` easing, over the time it takes to settle. */
 function springAsCss(spring: Spring): { durationMs: number; easing: string } {
-  const { durationMs, progress } = sampleSpring(spring);
-  return { durationMs, easing: `linear(${progress.join(', ')})` };
+  const { settleMs, progress } = sampleSpring(spring);
+  return { durationMs: settleMs, easing: `linear(${progress.join(', ')})` };
 }
 
 const themeCssVarsCache = new WeakMap<Theme, CssVarMap>();

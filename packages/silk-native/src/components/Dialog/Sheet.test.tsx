@@ -4,9 +4,9 @@ import { act, render, screen } from '@testing-library/react';
 import { type ComponentProps, use, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import type { MeasuredDimensions } from 'react-native-reanimated';
-import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
-import { FloatingHostContext } from '../overlay/layer.js';
-import { SilkProvider } from '../theme/SilkProvider.js';
+import { setPrefersReducedMotion } from '../../../../../test/rstest-setup';
+import { FloatingHostContext } from '../../overlay/layer.js';
+import { SilkProvider } from '../../theme/SilkProvider.js';
 
 /**
  * jsdom loads neither library's native module, so they're stood in for: the
@@ -317,7 +317,7 @@ test("a centered dialog opened from a sheet scrolls on its own, not as the sheet
   expect(mocked.scrolls).toEqual([]);
 });
 
-test("a sheet's overlayStyle lays out the panel, as the root dialog's does", () => {
+test("a sheet's overlayStyle lays out the panel, as the base dialog's does", () => {
   render(
     <SilkProvider theme={theme}>
       <Dialog.Root open onOpenChange={() => {}}>

@@ -20,17 +20,12 @@ import {
   useSharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { springTo } from '../motion/springTo.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import {
-  dragStep,
-  gestureThresholds,
-  pressIn,
-  releaseCloses,
-  releaseVelocity,
-} from './physics.js';
+import { gestureConventions, releaseVelocity } from '../../gesture/conventions.js';
+import { springTo } from '../../motion/springTo.js';
+import { useTheme } from '../../theme/ThemeProvider.js';
+import { dragStep, pressIn, releaseCloses } from './sheetPhysics.js';
 
-const SLOP = gestureThresholds.touchSlop;
+const { touchSlop } = gestureConventions;
 
 type Pan = ReturnType<typeof usePanGesture>;
 
@@ -162,8 +157,8 @@ export function useSheetDrag({
 
   const pan = usePanGesture({
     // Either way: a sheet caught sliding can be pushed back up.
-    activeOffsetY: [-SLOP, SLOP],
-    failOffsetX: [-SLOP, SLOP],
+    activeOffsetY: [-touchSlop, touchSlop],
+    failOffsetX: [-touchSlop, touchSlop],
     maxPointers: 1,
     onBegin: (event) => {
       'worklet';

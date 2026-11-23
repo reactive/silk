@@ -63,20 +63,19 @@ export type {
   RadioGroupRootProps,
   RadioGroupItemProps,
 } from './components/RadioGroup.js';
-// The bottom sheet drags on the UI thread (Gesture Handler and Reanimated).
-export { Dialog } from './gesture/Dialog.js';
-export type { GestureDialog, SheetScrollViewProps } from './gesture/types.js';
+export { Dialog } from './components/Dialog/Dialog.js';
 export type {
+  DialogNamespace,
   DialogRootProps,
   DialogContentProps,
   DialogTitleProps,
-} from './components/Dialog.js';
+  SheetScrollViewProps,
+} from './components/Dialog/Dialog.js';
 
 export { springTo } from './motion/springTo.js';
 export type { SpringToOptions } from './motion/springTo.js';
 export { useMotion } from './motion/useMotion.js';
 export type { Motion } from './motion/useMotion.js';
-export { gestureThresholds, releaseVelocity } from './gesture/physics.js';
 export { Popover } from './components/Popover.js';
 export type { PopoverRootProps, PopoverContentProps } from './components/Popover.js';
 export type { OpenAutoFocusEvent } from './overlay/layer.js';

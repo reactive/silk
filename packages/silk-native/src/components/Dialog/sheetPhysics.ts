@@ -4,24 +4,12 @@
  * Handler reports them.
  */
 import type { MeasuredDimensions } from 'react-native-reanimated';
+import { gestureConventions } from '../../gesture/conventions.js';
 
-/**
- * Android's gesture conventions, which a theme doesn't change. Speeds are in
- * points per second, as Gesture Handler reports them.
- */
-export const gestureThresholds = {
-  /** How far a press moves before it is taken as a drag (Android's touch slop). */
-  touchSlop: 8,
-  /** A fling at least this fast counts as one (Material's fling threshold). */
-  flingVelocity: 500,
-  /** A flick at least this fast closes a sheet wherever it is. */
-  flickVelocity: 1000,
-  /** How far ahead the release speed throws a surface, in seconds (Material's hide friction). */
-  throwSeconds: 0.1,
-} as const;
-
-/** Android's and Flutter's velocity trackers: a pointer with no move this long (ms) before it lifts had stopped. */
-const STOPPED_AFTER = 40;
+/** A flick at least this fast (points per second) closes a sheet wherever it is. */
+const FLICK_VELOCITY = 1000;
+/** How far ahead the release speed throws the sheet, in seconds (Material's hide friction). */
+const THROW_SECONDS = 0.1;
 
 /**
  * Whether a sheet let go of `offset` points below its rest, moving down at
@@ -37,23 +25,10 @@ export function releaseCloses(
   caughtAt: number,
 ): boolean {
   'worklet';
-  if (velocity <= -gestureThresholds.flingVelocity) return false;
-  if (velocity >= gestureThresholds.flickVelocity) return true;
+  if (velocity <= -gestureConventions.flingVelocity) return false;
+  if (velocity >= FLICK_VELOCITY) return true;
   if (offset <= caughtAt) return false;
-  return offset + gestureThresholds.throwSeconds * velocity > height / 2;
-}
-
-/**
- * The speed a drag lets go at: Gesture Handler's `velocity`, or none when it
- * last moved (or started) more than 40 ms before the release. A finger held
- * still may send no moves, and Gesture Handler then still reports the speed
- * of its last. Gesture Handler's events carry no time, so the caller times
- * them as they run on the UI thread: a hitch over 40 ms just before a
- * release also drops its speed.
- */
-export function releaseVelocity(velocity: number, msSinceLastMove: number): number {
-  'worklet';
-  return msSinceLastMove > STOPPED_AFTER ? 0 : velocity;
+  return offset + THROW_SECONDS * velocity > height / 2;
 }
 
 export interface DragStep {

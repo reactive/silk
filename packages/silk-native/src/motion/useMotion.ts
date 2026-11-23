@@ -1,8 +1,9 @@
-import { isSpringName, type MotionName, sampleSpring } from '@reactive/silk-core';
+import { isSpringName, type MotionName, sampleSpring, type Spring } from '@reactive/silk-core';
 import {
   type CSSTransitionTimingFunction,
   cubicBezier,
   linear,
+  steps,
 } from 'react-native-reanimated';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -13,19 +14,20 @@ export interface Motion {
 }
 
 const easings = new Map<string, CSSTransitionTimingFunction>();
-const springEasings = new WeakMap<readonly number[], CSSTransitionTimingFunction>();
+const springMotions = new WeakMap<Spring, Motion>();
 
 /**
- * A spring's sampled curve as Reanimated's `linear()` easing, built once per
- * curve: `sampleSpring` returns the same array for a spring, so it is the key.
+ * A spring played from rest, as the time it takes to settle and Reanimated's
+ * `linear()` easing: sampled once per token, which a theme keeps.
  */
-function springEasing(progress: readonly number[]): CSSTransitionTimingFunction {
-  let easing = springEasings.get(progress);
-  if (!easing) {
-    easing = linear(...progress);
-    springEasings.set(progress, easing);
+function springMotion(spring: Spring): Motion {
+  let motion = springMotions.get(spring);
+  if (!motion) {
+    const { settleMs, progress } = sampleSpring(spring);
+    motion = { durationMs: settleMs, easing: linear(...progress) };
+    springMotions.set(spring, motion);
   }
-  return easing;
+  return motion;
 }
 
 type LinearStop = Parameters<typeof linear>[number];
@@ -38,20 +40,33 @@ function linearStop(stop: string): LinearStop {
     : Number(output);
 }
 
+type StepsModifier = Parameters<typeof steps>[1];
+
+type EasingFunction = (args: readonly string[]) => CSSTransitionTimingFunction;
+
+/** Reanimated's object for each CSS easing function, from its arguments. */
+const easingFunctions = new Map<string, EasingFunction>([
+  [
+    'cubic-bezier',
+    ([x1, y1, x2, y2]) => cubicBezier(Number(x1), Number(y1), Number(x2), Number(y2)),
+  ],
+  ['linear', (stops) => linear(...stops.map(linearStop))],
+  ['steps', ([count, modifier]) => steps(Number(count), modifier as StepsModifier)],
+]);
+
 /**
  * A CSS easing as Reanimated's timing function: it takes the named curves as
- * strings, but `cubic-bezier(…)` and `linear(…)` only as its own objects.
+ * strings, but `cubic-bezier(…)`, `linear(…)` and `steps(…)` only as its own
+ * objects.
  */
 function easingOf(css: string): CSSTransitionTimingFunction {
   let easing = easings.get(css);
   if (!easing) {
-    const call = /^(cubic-bezier|linear)\((.*)\)$/.exec(css);
-    const args = call ? call[2]!.split(',').map((arg) => arg.trim()) : [];
-    if (call?.[1] === 'linear') easing = linear(...args.map(linearStop));
-    else if (call) {
-      const [x1, y1, x2, y2] = args.map(Number);
-      easing = cubicBezier(x1!, y1!, x2!, y2!);
-    } else easing = css as CSSTransitionTimingFunction;
+    const [, name = '', args = ''] = /^([a-z-]+)\((.*)\)$/.exec(css) ?? [];
+    const build = easingFunctions.get(name);
+    easing = build
+      ? build(args.split(',').map((arg) => arg.trim()))
+      : (css as CSSTransitionTimingFunction);
     easings.set(css, easing);
   }
   return easing;
@@ -69,8 +84,8 @@ export function useMotion(name: MotionName): Motion {
   const { motion } = useTheme().theme.semantic;
   const reduced = useMotionPreference() === 'reduced';
   if (isSpringName(name)) {
-    const { durationMs, progress } = sampleSpring(motion[name]);
-    return { durationMs: reduced ? 0 : durationMs, easing: springEasing(progress) };
+    const spring = springMotion(motion[name]);
+    return reduced ? { ...spring, durationMs: 0 } : spring;
   }
   const { durationMs, easing } = motion[name];
   return { durationMs, easing: easingOf(easing) };

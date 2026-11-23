@@ -26,21 +26,21 @@ function start(animation: Running, from: number, previous?: object): Running {
 }
 
 test('a release speed away from the target carries it further before it turns', () => {
-  const animation = start(run(springTo(0, smooth, { velocity: 2000 })), 100);
+  const animation = start(run(springTo(0, smooth, { reduceMotion: false, velocity: 2000 })), 100);
   animation.onFrame(animation, 16);
   expect(animation.current).toBeGreaterThan(100);
 });
 
 test('it starts at the speed of the animation it replaces', () => {
-  const first = start(run(springTo(0, smooth, { velocity: -800 })), 100);
+  const first = start(run(springTo(0, smooth, { reduceMotion: false, velocity: -800 })), 100);
   first.onFrame(first, 50);
-  const second = start(run(springTo(300, smooth)), first.current, first);
+  const second = start(run(springTo(300, smooth, { reduceMotion: false })), first.current, first);
   expect(second.velocity).toBe(first.velocity);
   expect(second.velocity).toBeLessThan(0);
 });
 
 test('clamped, it stops at the target instead of passing it', () => {
-  const animation = start(run(springTo(0, snappy, { overshootClamping: true })), 100);
+  const animation = start(run(springTo(0, snappy, { reduceMotion: false, overshootClamping: true })), 100);
   let done = false;
   for (let now = 0; !done && now < 2000; now += 16) {
     done = animation.onFrame(animation, now);
@@ -52,20 +52,20 @@ test('clamped, it stops at the target instead of passing it', () => {
 
 test('from rest it plays the same curve the web plays', () => {
   const { progress } = sampleSpring(snappy);
-  const animation = start(run(springTo(1000, snappy, { precision: 1e-6 })), 0);
+  const animation = start(run(springTo(1000, snappy, { reduceMotion: false, precision: 1e-6 })), 0);
   for (const frame of [5, 10, 20]) {
     animation.onFrame(animation, (frame / 60) * 1000);
     expect(animation.current / 1000).toBeCloseTo(progress[frame]!, 3);
   }
 });
 
-test('it passes reduced motion on to Reanimated, and leaves it to the system by default', () => {
+test('it passes reduced motion on to Reanimated', () => {
   expect(run(springTo(0, smooth, { reduceMotion: true })).reduceMotion).toBe(true);
-  expect(run(springTo(0, smooth)).reduceMotion).toBeUndefined();
+  expect(run(springTo(0, smooth, { reduceMotion: false })).reduceMotion).toBe(false);
 });
 
 test('a clamped spring on its target keeps a speed away from it, then stops on its way back', () => {
-  const fling = { velocity: -2000, overshootClamping: true };
+  const fling = { reduceMotion: false, velocity: -2000, overshootClamping: true };
   const onTarget = start(run(springTo(0, smooth, fling)), 0);
   const nearTarget = start(run(springTo(0, smooth, fling)), -1e-9);
   onTarget.onFrame(onTarget, 16);

@@ -60,25 +60,20 @@ const MAX_DURATIONS = 12;
 
 export interface SpringSamples {
   /**
-   * How long the spring takes to settle: always longer than the token's
+   * How long the spring takes to settle (ms): always longer than the token's
    * `durationMs` (time to arrive), more so when it bounces.
    */
-  readonly durationMs: number;
+  readonly settleMs: number;
   /** Progress from 0 to exactly 1 at 60 fps, from rest. Above 1 while it overshoots. */
   readonly progress: readonly number[];
 }
 
-const samples = new Map<string, SpringSamples>();
-
 /**
  * The spring played from rest to its target, sampled at 60 fps until it
  * settles: what a renderer without springs (CSS's `linear()` easing, a timing
- * curve) plays. Cached per `durationMs` and `bounce`.
+ * curve) plays. Renderers cache it per theme.
  */
 export function sampleSpring(spring: Spring): SpringSamples {
-  const key = `${spring.durationMs}/${spring.bounce}`;
-  const cached = samples.get(key);
-  if (cached) return cached;
   const progress = [0];
   const start: SpringState = { offset: 1, velocity: 0 };
   const maxFrames = (MAX_DURATIONS * spring.durationMs * SAMPLE_RATE) / 1000;
@@ -88,10 +83,5 @@ export function sampleSpring(spring: Spring): SpringSamples {
     progress.push(Math.round((1 - state.offset) * 1e4) / 1e4);
   }
   progress.push(1);
-  const result: SpringSamples = {
-    durationMs: Math.round(((progress.length - 1) / SAMPLE_RATE) * 1000),
-    progress,
-  };
-  samples.set(key, result);
-  return result;
+  return { settleMs: Math.round(((progress.length - 1) / SAMPLE_RATE) * 1000), progress };
 }

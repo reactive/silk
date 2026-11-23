@@ -1,5 +1,5 @@
 import { expect, test } from '@rstest/core';
-import { dragStep, pressIn, releaseCloses, releaseVelocity } from './physics.js';
+import { dragStep, pressIn, releaseCloses } from './sheetPhysics.js';
 
 test('a sheet let go of closes when flicked down or thrown past half its height', () => {
   const height = 500;
@@ -24,12 +24,6 @@ test('a drag moves the sheet, or scrolls its content, and hands off between them
   expect(dragStep(6, -10, true, 0)).toEqual({ offset: 0, pinScroll: true });
   // Then up again: the content scrolls.
   expect(dragStep(0, -10, true, 0)).toEqual({ offset: 0, pinScroll: false });
-});
-
-test('a drag held still before it lets go lets go with no speed', () => {
-  expect(releaseVelocity(1200, 16)).toBe(1200);
-  expect(releaseVelocity(1200, 40)).toBe(1200);
-  expect(releaseVelocity(1200, 41)).toBe(0);
 });
 
 test('a press is in the scroll view only within its box, across as well as down', () => {

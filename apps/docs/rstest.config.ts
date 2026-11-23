@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { defineConfig } from '@rstest/core';
-import { reactNativeWeb } from '../../test/reactNativeWeb';
+import { reactNativeWeb } from '../../config/reactNativeWeb';
 
 const docsRoot = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(docsRoot, '../..');

@@ -11,6 +11,12 @@ const SUBPIXEL = 0.25;
 
 export interface SpringToOptions {
   /**
+   * Jump straight to the target: pass Silk's `useMotionPreference() ===
+   * 'reduced'`, which can differ from Reanimated's own reading of the system
+   * setting on the web.
+   */
+  readonly reduceMotion: boolean;
+  /**
    * Speed to start at (units per second), such as a drag's release speed. Kept
    * even when it points away from the target, so a reversed fling turns
    * around instead of stalling. Default: the speed of whatever animation it
@@ -25,8 +31,6 @@ export interface SpringToOptions {
   readonly overshootClamping?: boolean;
   /** How close to the target (and how slow) it stops. Default 0.25, for a value in pixels. */
   readonly precision?: number;
-  /** Jump straight to the target. Default: the system's reduce-motion setting. */
-  readonly reduceMotion?: boolean;
 }
 
 interface SpringToAnimation extends AnimationObject<number> {
@@ -40,7 +44,7 @@ interface SpringToAnimation extends AnimationObject<number> {
 /**
  * An animation of a shared value from wherever it is to `target` on a
  * `motion` spring token, run on the UI thread:
- * `offset.set(springTo(0, theme.semantic.motion.smooth, { velocity }))`.
+ * `offset.set(springTo(0, theme.semantic.motion.smooth, { reduceMotion, velocity }))`.
  * Unlike Reanimated's `withSpring`, it keeps a speed that points away from
  * the target, and it plays the token's exact curve (the same one the web
  * plays as a CSS easing), whatever the distance or speed.
@@ -53,7 +57,7 @@ export function springTo(
     overshootClamping = false,
     precision = SUBPIXEL,
     reduceMotion,
-  }: SpringToOptions = {},
+  }: SpringToOptions,
   callback?: AnimationCallback,
 ): number {
   'worklet';
