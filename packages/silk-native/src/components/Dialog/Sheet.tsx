@@ -1,30 +1,36 @@
-import { type ComponentRef, type JSX, type ReactNode, use } from 'react';
-import { type LayoutChangeEvent, ScrollView as RNScrollView, StyleSheet, View } from 'react-native';
+import { type ComponentRef, type JSX, type ReactNode, type Ref, use } from 'react';
+import {
+  type LayoutChangeEvent,
+  ScrollView as RNScrollView,
+  type ScrollViewProps,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import {
   GestureDetector,
   GestureHandlerRootView,
   ScrollView as GHScrollView,
 } from 'react-native-gesture-handler';
 import Animated, { useScrollOffset } from 'react-native-reanimated';
-import { assignRef } from '../components/assignRef.js';
+import { assignRef } from '../assignRef.js';
 import {
   type DialogContentProps,
   DialogShell,
   dialogShellStyles,
-  Dialog as RootDialog,
+  BaseDialog,
   useDialogContext,
   useDialogStyle,
   useDialogVariants,
-} from '../components/Dialog.js';
-import { mapSheetHandleStyle } from '../styles/mappers/overlay.js';
-import { useMotionPreference } from '../styles/useReducedMotion.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import type { SheetScrollViewProps } from './types.js';
+} from './BaseDialog.js';
+import { mapSheetHandleStyle } from '../../styles/mappers/overlay.js';
+import { useMotionPreference } from '../../styles/useReducedMotion.js';
+import { useTheme } from '../../theme/ThemeProvider.js';
 import { type SheetScrollLink, SheetScrollContext, useSheetDrag } from './useSheetDrag.js';
 
 /**
  * `Dialog.Content`: a bottom sheet drags (below); any other placement is the
- * root `Dialog`'s.
+ * base dialog's.
  */
 export function SheetContent(props: DialogContentProps): JSX.Element {
   const { placement } = useDialogVariants(props);
@@ -32,12 +38,12 @@ export function SheetContent(props: DialogContentProps): JSX.Element {
   // A centered dialog opened from a sheet scrolls on its own, not as the sheet's content.
   return (
     <SheetScrollContext value={null}>
-      <RootDialog.Content {...props} />
+      <BaseDialog.Content {...props} />
     </SheetScrollContext>
   );
 }
 
-/** The bottom sheet: the root dialog's shell around a panel that drags ({@link useSheetDrag}). */
+/** The bottom sheet: the base dialog's shell around a panel that drags ({@link useSheetDrag}). */
 function DraggableSheet({
   size,
   // Taken out of `rest` so the panel's view never gets it; SheetContent already chose bottom.
@@ -52,7 +58,7 @@ function DraggableSheet({
   const { open, onOpenChange } = useDialogContext('Content');
   const { veil, panel } = useDialogStyle({ size, placement: 'bottom' });
   const { theme } = useTheme();
-  // Slides until reduced motion is known, as the root Dialog fades until then.
+  // Slides until reduced motion is known, as the base dialog fades until then.
   const reduced = useMotionPreference() === 'reduced';
   const sheet = useSheetDrag({ open, onOpenChange, reduced });
 
@@ -62,7 +68,8 @@ function DraggableSheet({
       animationType="none"
       onClose={sheet.requestClose}
       veil={[veil, overlayStyle, styles.clearVeil]}
-      catcher={[veil, overlayStyle, sheet.veilMotion]}
+      // Its Catcher is an Animated.View, which takes the animated style the shell's type doesn't name.
+      catcher={[veil, overlayStyle, sheet.veilMotion as unknown as ViewStyle]}
       Catcher={Animated.View}
       Root={GestureRoot}
     >
@@ -87,6 +94,10 @@ function DraggableSheet({
 /** A Modal is a window of its own on Android, so gestures need their own root in it. */
 function GestureRoot({ children }: { readonly children: ReactNode }) {
   return <GestureHandlerRootView style={styles.fill}>{children}</GestureHandlerRootView>;
+}
+
+export interface SheetScrollViewProps extends ScrollViewProps {
+  readonly ref?: Ref<ComponentRef<typeof RNScrollView>>;
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(GHScrollView);

@@ -112,8 +112,7 @@ function loadBudgets() {
 function nativeComponentExports() {
   const source = readFileSync(nativeSourceEntry, 'utf8');
   const names = new Set();
-  const componentExport =
-    /export\s*\{([\s\S]*?)\}\s*from\s*['"]\.\/components\/([^'"]+)\.js['"];?/g;
+  const componentExport = /export\s*\{([^{}]*?)\}\s*from\s*['"]\.\/components\/([^'"]+)\.js['"];?/g;
   for (const match of source.matchAll(componentExport)) {
     const componentName = basename(match[2]);
     const exportedNames = match[1]
@@ -178,7 +177,15 @@ async function main() {
             name,
             await measureIsolatedJs(name, tmpDir, {
               entryPath: nativeEntry,
-              external: ['react', 'react/jsx-runtime', 'react-native'],
+              // Peers too: the consumer already has them.
+              external: [
+                'react',
+                'react/jsx-runtime',
+                'react-native',
+                'react-native-gesture-handler',
+                'react-native-reanimated',
+                'react-native-worklets',
+              ],
               prefix: 'native-',
             }),
           ]),

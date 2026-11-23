@@ -7,8 +7,11 @@ objects instead of CSS variables.
 ## Install
 
 ```bash
-yarn add @reactive/silk-native @reactive/silk-core react react-native
+yarn add @reactive/silk-native @reactive/silk-core react react-native \
+  react-native-gesture-handler react-native-reanimated react-native-worklets
 ```
+
+Reanimated needs the worklets Babel plugin; Expo's Babel preset adds it.
 
 ## Quick start
 

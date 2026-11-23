@@ -35,6 +35,10 @@ test('themeToCssVars emits exhaustive canonical keys as strings', () => {
   // Looping feedback runs an order of magnitude slower than transitions.
   expect(vars['--silk-motion-loop-duration-ms']).toBe('1200ms');
   expect(vars['--silk-motion-loop-easing']).toBe('linear');
+  // Springs play as a linear() easing over the time they take to settle.
+  expect(vars['--silk-motion-snappy-easing']).toMatch(/^linear\(0, .*, 1\)$/);
+  expect(Number.parseInt(vars['--silk-motion-snappy-duration-ms']!)).toBeGreaterThan(250);
+  expect(vars['--silk-motion-smooth-easing']).toMatch(/^linear\(/);
   expect(vars['--silk-shadow-raised']).toContain('rgba(0, 0, 0,');
   expect(vars['--silk-shadow-overlay']).toContain('8px');
   expect(vars['--silk-focus-ring-width']).toBe('2px');

@@ -73,7 +73,7 @@ export function mapDialogStyle(
 
 /**
  * @internal A dragging sheet's handle, centered over the panel's top padding
- * (the `/gesture` sheet only, so the root `Dialog` doesn't carry it).
+ * (the dragging sheet only, so a centered `Dialog` doesn't carry it).
  */
 export function mapSheetHandleStyle(theme: Theme): RnViewStyle {
   const { color, radius, space } = theme.semantic;

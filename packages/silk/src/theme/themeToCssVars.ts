@@ -1,12 +1,15 @@
 import {
   compactSpace,
   fontFamilyNames,
+  isSpringName,
   measureNames,
   motionNames,
   oklch,
+  sampleSpring,
   spaceSteps,
   toneNames,
   type ShadowLayer,
+  type Spring,
   type Theme,
 } from '@reactive/silk-core';
 import { typographyRoles, typographyRoleVarKey } from './typographyCss';
@@ -25,6 +28,12 @@ function shadowLayerToCss(layer: ShadowLayer): string {
   // `|| 0` turns a NaN opacity into no shadow; oklch() would throw on it.
   const alpha = Math.min(1, Math.max(0, layer.opacity)) || 0;
   return `${px(layer.offsetX)} ${px(layer.offsetY)} ${px(layer.blur)} ${px(layer.spread)} ${oklch(0, 0, 0, alpha)}`;
+}
+
+/** CSS has no spring: it plays one from rest as a `linear()` easing, over the time it takes to settle. */
+function springAsCss(spring: Spring): { durationMs: number; easing: string } {
+  const { settleMs, progress } = sampleSpring(spring);
+  return { durationMs: settleMs, easing: `linear(${progress.join(', ')})` };
 }
 
 const themeCssVarsCache = new WeakMap<Theme, CssVarMap>();
@@ -114,9 +123,11 @@ function buildThemeCssVars(theme: Theme): CssVarMap {
   }
 
   for (const name of motionNames) {
-    const m = motion[name];
-    vars[`--silk-motion-${name}-duration-ms`] = `${m.durationMs}ms`;
-    vars[`--silk-motion-${name}-easing`] = m.easing;
+    const { durationMs, easing } = isSpringName(name)
+      ? springAsCss(motion[name])
+      : motion[name];
+    vars[`--silk-motion-${name}-duration-ms`] = `${durationMs}ms`;
+    vars[`--silk-motion-${name}-easing`] = easing;
   }
 
   for (const name of ['raised', 'overlay'] as const) {

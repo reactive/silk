@@ -91,3 +91,41 @@ test('blended hover fills are pinned to their OKLab blends', () => {
   expect(tones.accent.hover).toBe('#135297');
   expect(tones.neutral.hover).toBe('#404040');
 });
+
+test('createTheme ships springs and durations under motion', () => {
+  const { motion } = createTheme().semantic;
+  expect(motion.snappy).toEqual({ durationMs: 250, bounce: 0.15 });
+  expect(motion.smooth.bounce).toBe(0);
+  expect(motion.fast.easing).toContain('cubic-bezier');
+});
+
+test('createTheme retunes a spring leaf by leaf', () => {
+  const { motion } = createTheme({ semantic: { motion: { brisk: { durationMs: 350 } } } }).semantic;
+  expect(motion.brisk).toEqual({ durationMs: 350, bounce: 0.1 });
+});
+
+test('createTheme refuses springs that change meaning', () => {
+  // Seconds passed as milliseconds.
+  expect(() => createTheme({ semantic: { motion: { snappy: { durationMs: 0.25 } } } })).toThrow(
+    /motion.snappy/,
+  );
+  expect(() => createTheme({ semantic: { motion: { brisk: { bounce: 1 } } } })).toThrow(/motion.brisk/);
+  // So springy a toggle would take seconds to settle.
+  expect(() => createTheme({ semantic: { motion: { snappy: { bounce: 0.6 } } } })).toThrow(/motion.snappy/);
+  // Out of order: a toggle slower than a sheet.
+  expect(() => createTheme({ semantic: { motion: { snappy: { durationMs: 500 } } } })).toThrow(
+    /motion.brisk/,
+  );
+  // @ts-expect-error smooth never overshoots
+  expect(() => createTheme({ semantic: { motion: { smooth: { bounce: 0.2 } } } })).toThrow(
+    /motion.smooth/,
+  );
+});
+
+test('createTheme accepts springs at the edges of their meaning', () => {
+  const { motion } = createTheme({
+    semantic: { motion: { snappy: { bounce: 0.5 }, smooth: { durationMs: 2000, bounce: 0 } } },
+  }).semantic;
+  expect(motion.snappy.bounce).toBe(0.5);
+  expect(motion.smooth.durationMs).toBe(2000);
+});

@@ -22,14 +22,14 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { FLOATING_Z_INDEX, FloatingHostContext } from '../overlay/layer.js';
-import { rnwAttrs } from '../styles/a11yProps.js';
-import { mapDialogStyle } from '../styles/mappers/overlay.js';
-import { useMotionPreference } from '../styles/useReducedMotion.js';
-import { useComponentDefaults } from '../theme/SilkProvider.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import { WEB, webDocument, type WebKeyEvent } from '../web/host.js';
-import { Heading, type HeadingProps } from './Heading.js';
+import { FLOATING_Z_INDEX, FloatingHostContext } from '../../overlay/layer.js';
+import { rnwAttrs } from '../../styles/a11yProps.js';
+import { mapDialogStyle } from '../../styles/mappers/overlay.js';
+import { useMotionPreference } from '../../styles/useReducedMotion.js';
+import { useComponentDefaults } from '../../theme/SilkProvider.js';
+import { useTheme } from '../../theme/ThemeProvider.js';
+import { WEB, webDocument, type WebKeyEvent } from '../../web/host.js';
+import { Heading, type HeadingProps } from '../Heading.js';
 
 interface DialogContextValue {
   readonly open: boolean;
@@ -42,7 +42,7 @@ interface DialogContextValue {
 
 const DialogContext = createContext<DialogContextValue | null>(null);
 
-/** The dialog's state, for its parts here and in the `/gesture` entry (not exported from the package). */
+/** The dialog's state, for its parts here and in the sheet (not exported from the package). */
 export function useDialogContext(part: string): DialogContextValue {
   const dialog = useContext(DialogContext);
   if (!dialog) throw new Error(`Dialog.${part} must be used within Dialog.Root`);
@@ -84,12 +84,11 @@ export interface DialogContentProps
  * The dialog's panel over a veiled screen, on React Native's Modal (which
  * react-native-web renders as an `aria-modal` dialog that traps focus, hands
  * it back on close, and closes on Escape). Centered, or risen from the bottom
- * edge as a sheet (`placement="bottom"`). Its children lay out in the panel;
+ * edge as a sheet (`placement="bottom"`, which the package's `Dialog`
+ * renders as the dragging sheet instead). Its children lay out in the panel;
  * wrap long content in a ScrollView. On the web, a popover or tooltip opened
  * inside it opens over it (`FloatingHostContext`), and an Escape something
  * inside takes (prevents) closes that, not the dialog (`useTakenEscape`).
- * For a sheet that drags down to close, import `Dialog` from
- * `@reactive/silk-native/gesture` instead.
  */
 function DialogContent({
   size,
@@ -171,7 +170,7 @@ export interface DialogShellProps {
 
 /**
  * @internal The part of a dialog that isn't its panel, shared by `Dialog` and
- * the `/gesture` sheet: the `Modal` named by the dialog's title, the veil and
+ * the dragging sheet: the `Modal` named by the dialog's title, the veil and
  * its press catcher, and on the web the host the floating layers (`Popover`,
  * `Tooltip`) inside the panel open into, over it, with Escape left to a layer
  * that takes it (`useTakenEscape`).
@@ -286,13 +285,15 @@ export const dialogShellStyles: {
   },
 });
 
-export interface DialogNamespace {
+/** @internal The dialog without the sheet's drag, which `Dialog.ts` adds. */
+export interface BaseDialogNamespace {
   readonly Root: typeof DialogRoot;
   readonly Content: typeof DialogContent;
   readonly Title: typeof DialogTitle;
 }
 
-export const Dialog: DialogNamespace = {
+/** @internal See {@link BaseDialogNamespace}. */
+export const BaseDialog: BaseDialogNamespace = {
   Root: DialogRoot,
   Content: DialogContent,
   Title: DialogTitle,

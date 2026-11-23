@@ -585,6 +585,9 @@ console.log('packed-native-bundle: OK');
     alias: {
       'react-native': rnwEntry,
     },
+    // As a web bundler (Metro, webpack) picks them: the gesture and animation
+    // peers ship `.web.js` twins of their native-only modules.
+    resolveExtensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.js', '.json'],
     logLevel: 'silent',
   });
   run(`node ${nativeBundleOut}`, fixture);

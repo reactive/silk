@@ -4,37 +4,12 @@
  * Handler reports them.
  */
 import type { MeasuredDimensions } from 'react-native-reanimated';
+import { gestureConventions } from '../../gesture/conventions.js';
 
-/** Material's fling threshold: an upward fling at least this fast keeps the sheet open. */
-const FLING = 500;
-/** A downward flick at least this fast closes the sheet wherever it is. */
-const FLICK = 1000;
-/** Material's hide friction: how far ahead the release speed throws the sheet, in seconds. */
-const HIDE_FRICTION = 0.1;
-
-/** Android's and Flutter's velocity trackers: a pointer with no move this long (ms) before it lifts had stopped. */
-const STOPPED_AFTER = 40;
-
-/** Material 3's default spatial spring stiffness. */
-const STIFFNESS = 700;
-
-/**
- * The spring a sheet settles, slides in and slides out on: Material 3's
- * default spatial spring (damping ratio 0.9, stiffness 700), clamped so it
- * never lifts off the bottom edge. The release speed goes in as `velocity`.
- */
-export const SHEET_SPRING: {
-  readonly stiffness: number;
-  readonly damping: number;
-  readonly mass: number;
-  readonly overshootClamping: boolean;
-} = {
-  stiffness: STIFFNESS,
-  // Damping ratio 0.9: 2 × 0.9 × √(stiffness × mass).
-  damping: 2 * 0.9 * Math.sqrt(STIFFNESS),
-  mass: 1,
-  overshootClamping: true,
-};
+/** A flick at least this fast (points per second) closes a sheet wherever it is. */
+const FLICK_VELOCITY = 1000;
+/** How far ahead the release speed throws the sheet, in seconds (Material's hide friction). */
+const THROW_SECONDS = 0.1;
 
 /**
  * Whether a sheet let go of `offset` points below its rest, moving down at
@@ -50,23 +25,10 @@ export function releaseCloses(
   caughtAt: number,
 ): boolean {
   'worklet';
-  if (velocity <= -FLING) return false;
-  if (velocity >= FLICK) return true;
+  if (velocity <= -gestureConventions.flingVelocity) return false;
+  if (velocity >= FLICK_VELOCITY) return true;
   if (offset <= caughtAt) return false;
-  return offset + HIDE_FRICTION * velocity > height / 2;
-}
-
-/**
- * The speed a drag lets go at: Gesture Handler's `velocity`, or none when it
- * last moved (or started) more than 40 ms before the release. A finger held
- * still may send no moves, and Gesture Handler then still reports the speed
- * of its last. Gesture Handler's events carry no time, so the caller times
- * them as they run on the UI thread: a hitch over 40 ms just before a
- * release also drops its speed.
- */
-export function releaseSpeed(velocity: number, sinceLastMove: number): number {
-  'worklet';
-  return sinceLastMove > STOPPED_AFTER ? 0 : velocity;
+  return offset + THROW_SECONDS * velocity > height / 2;
 }
 
 export interface DragStep {
