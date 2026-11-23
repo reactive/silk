@@ -71,7 +71,16 @@ rs.mock('react-native-reanimated', () => ({
   useScrollOffset: (_ref: unknown, offset: { value: number }) => {
     offset.value = mocked.scrollY;
   },
-  useSharedValue: <T,>(value: T) => useRef({ value }).current,
+  useSharedValue: <T,>(value: T) =>
+    useRef({
+      value,
+      get() {
+        return this.value;
+      },
+      set(next: T) {
+        this.value = next;
+      },
+    }).current,
 }));
 
 rs.mock('react-native-worklets', () => ({

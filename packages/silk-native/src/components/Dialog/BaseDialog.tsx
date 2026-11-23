@@ -22,6 +22,7 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
+import { GestureRoot } from '../../overlay/GestureRoot.js';
 import { FLOATING_Z_INDEX, FloatingHostContext } from '../../overlay/layer.js';
 import { rnwAttrs } from '../../styles/a11yProps.js';
 import { mapDialogStyle } from '../../styles/mappers/overlay.js';
@@ -162,8 +163,6 @@ export interface DialogShellProps {
   /** The press catcher over the veil, behind the panel (a sheet's carries the veil's color, fading). */
   readonly catcher?: StyleProp<ViewStyle>;
   readonly Catcher?: ComponentType<ViewProps>;
-  /** Wraps everything inside the `Modal` (a sheet's gestures need a root of their own there). */
-  readonly Root?: ComponentType<{ readonly children: ReactNode }>;
   /** The panel, over the veil (`dialogShellStyles.overVeil`). */
   readonly children: ReactNode;
 }
@@ -182,7 +181,6 @@ export function DialogShell({
   veil,
   catcher,
   Catcher = View,
-  Root = Bare,
   children,
 }: DialogShellProps): JSX.Element {
   const { open, titleId, titled } = useDialogContext('Content');
@@ -200,7 +198,7 @@ export function DialogShell({
       }}
       {...rnwAttrs({ 'aria-labelledby': titled ? titleId : undefined })}
     >
-      <Root>
+      <GestureRoot>
         <View style={veil}>
           {/*
            * A press on the veil closes it. Not a button: react-native-web's focus
@@ -217,12 +215,10 @@ export function DialogShell({
         {WEB ? (
           <View ref={setFloatingHost} pointerEvents="box-none" style={dialogShellStyles.floatingHost} />
         ) : null}
-      </Root>
+      </GestureRoot>
     </Modal>
   );
 }
-
-const Bare = ({ children }: { readonly children: ReactNode }) => <>{children}</>;
 
 /**
  * Answers, once, whether the Escape that react-native-web's Modal is closing

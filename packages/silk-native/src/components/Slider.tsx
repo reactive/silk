@@ -2,12 +2,11 @@ import { sliderRecipe, type SliderVariantProps } from '@reactive/silk-core';
 import {
   type ComponentRef,
   createContext,
+  memo,
   useCallback,
   useContext,
   useMemo,
-  useLayoutEffect,
   useRef,
-  useState,
   type JSX,
   type ReactNode,
   type Ref,
@@ -17,12 +16,12 @@ import {
   StyleSheet,
   View,
   type AccessibilityActionEvent,
-  type GestureResponderEvent,
-  type LayoutChangeEvent,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 import { a11yState, a11yValue, rnwAttrs } from '../styles/a11yProps.js';
 import { minTouchHitSlop } from '../styles/controlGeometry.js';
 import { mapSliderStyle } from '../styles/mappers/controls.js';
@@ -36,16 +35,12 @@ import {
 } from './Field.js';
 import { Pressable } from './Pressable.js';
 import { sameItems } from './sameItems.js';
-import {
-  FAR,
-  fractionAt,
-  fractionIn,
-  PHYSICAL_FRAME,
-  placeAt,
-  type SliderEdge,
-  slideFrom,
-} from './sliderGeometry.js';
+import { fractionIn, PHYSICAL_FRAME, placeAt, type SliderEdge, slideFrom } from './sliderGeometry.js';
+import { useRangeMotion, useThumbMotion } from './sliderMotion.js';
+import type { SliderTrack } from './sliderThumbs.js';
+import { moveThumb, type SliderBounds } from './sliderValues.js';
 import { useControllableValue } from './useControllableValue.js';
+import { useSliderDrag } from './useSliderDrag.js';
 import { WEB, webKeyHandler, type WebKeyDownEvent } from '../web/host.js';
 
 type Thumb = ComponentRef<typeof View>;
@@ -102,50 +97,6 @@ const BACK_KEYS: Record<SliderEdge, readonly string[]> = {
 const PAGE_KEYS = ['PageUp', 'PageDown'];
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
-export interface SliderBounds {
-  readonly min: number;
-  readonly max: number;
-  readonly step: number;
-  /** The smallest gap between neighboring thumbs, in steps. */
-  readonly minSteps: number;
-}
-
-/** The decimal places `n` has, including those of an exponent (1e-7 has 7). */
-const decimals = (n: number): number => {
-  const [digits = '', exponent = '0'] = String(n).split('e');
-  return Math.max(0, (digits.split('.')[1] ?? '').length - Number(exponent));
-};
-
-/**
- * The values after moving thumb `index` to `next` (snapped to the step grid
- * from `min`, within bounds, then sorted), and where that thumb ended up; or
- * undefined if neighbors would come closer than `minSteps` steps. Pure.
- */
-export function moveThumb(
-  values: readonly number[],
-  next: number,
-  index: number,
-  { min, max, step, minSteps }: SliderBounds,
-): { values: number[]; index: number } | undefined {
-  const places = Math.max(decimals(step), decimals(min));
-  const snapped = Number((Math.round((next - min) / step) * step + min).toFixed(places));
-  // `+ 0` turns a -0 from the rounding into 0, which compares as the same value.
-  const value = Math.min(max, Math.max(min, snapped)) + 0;
-  const moved = values.map((each, i) => (i === index ? value : each)).sort((a, b) => a - b);
-  // Counted in steps with a hair's slack, so float error (0.3 - 0.2, or values near 1e7)
-  // doesn't fall short of a step; a half step to an off-grid `max` still does.
-  const apart = moved.every(
-    (each, i) => i === 0 || (each - moved[i - 1]!) / step >= minSteps - 1e-6,
-  );
-  return apart ? { values: moved, index: moved.indexOf(value) } : undefined;
-}
-
-/** The thumb nearest `value`, the first on a tie (Radix's). */
-export function nearestThumb(values: readonly number[], value: number): number {
-  const distances = values.map((each) => Math.abs(each - value));
-  return distances.indexOf(Math.min(...distances));
-}
-
 /**
  * Picks one number, or several (a range), by sliding a thumb along a track:
  * web `Slider`'s contract (Radix's), with one number per thumb. Drag a thumb,
@@ -153,9 +104,9 @@ export function nearestThumb(values: readonly number[], value: number): number {
  * keys move a focused thumb a step (ten with Shift, or Page Up and Page
  * Down), and Home and End send the first thumb to `min` and the last to
  * `max`, as Radix does. Assistive technology adjusts each thumb a step at a
- * time. While dragging, the thumb follows the pointer from the values it
- * last reported, and commits those on release; a controlled `value` that
- * differs applies again once the drag ends.
+ * time. A drag runs on the UI thread (`useSliderDrag`): the thumb follows the
+ * finger from the values it last reported, and commits those on release; a
+ * controlled `value` that differs applies again once the drag ends.
  */
 export function Slider({
   size,
@@ -211,7 +162,7 @@ export function Slider({
   const vertical = orientation === 'vertical';
   const rtl = (dir ?? (I18nManager.isRTL ? 'rtl' : 'ltr')) === 'rtl';
   const from = slideFrom(vertical, rtl, inverted);
-  // Memoized: a drag re-renders the slider on every move, and its styles don't change with the values.
+  // Memoized: a drag re-renders the slider on every step, and its styles don't change with the values.
   const { root, parts, track, range, thumb, thumbSize, crossSize } = useMemo(
     () =>
       mapSliderStyle(
@@ -223,62 +174,52 @@ export function Slider({
     [theme, resolved.size, resolved.tone, density, orientation, isInvalid, isDisabled],
   );
 
-  // The values as last rendered, for gestures and keys that outlive a render.
-  // Never ahead of the render: a controlled slider whose owner turns a change
-  // down stays where it is, and the next change starts from there.
-  const latest = useRef(values);
-  useLayoutEffect(() => {
-    latest.current = values;
-  });
   const thumbs = useRef<(Thumb | null)[]>([]);
   const focusThumb = useCallback((index: number) => thumbs.current[index]?.focus(), []);
 
-  /**
-   * Moves thumb `index` of `base` (the rendered values unless a drag says) to
-   * `next` and reports the change; returns the values, where that thumb is
-   * now and whether they changed, or undefined if refused. Whoever moved it commits.
-   */
-  const setThumb: SetThumb = (next, index, base = latest.current) => {
-    const moved = moveThumb(base, next, index, bounds);
-    if (!moved) return undefined;
-    const changed = !sameItems(moved.values, base);
-    if (changed) {
-      setUncontrolled(moved.values);
-      onValueChange?.(moved.values);
-    }
-    return { ...moved, changed };
+  const report = (next: number[]) => {
+    setUncontrolled(next);
+    onValueChange?.(next);
   };
   /**
-   * A key or assistive action on thumb `focused` moving thumb `index`: it
-   * commits at once, and focus follows the moved thumb when that is another
-   * (one pushed past its neighbor takes its place; Home and End move the outer ones).
+   * A key or assistive action on thumb `focused` moving thumb `index` of the
+   * rendered values: it reports and commits at once, and focus follows the
+   * moved thumb when that is another (one pushed past its neighbor takes its
+   * place; Home and End move the outer ones).
    */
   const keyMove = (next: number, index: number, focused = index) => {
-    const moved = setThumb(next, index);
+    const moved = moveThumb(values, next, index, bounds);
     if (!moved) return;
-    if (moved.changed) onValueCommit?.(moved.values);
+    if (!sameItems(moved.values, values)) {
+      report(moved.values);
+      onValueCommit?.(moved.values);
+    }
     if (moved.index !== focused) focusThumb(moved.index);
   };
 
-  const slide = useSlide({
+  const drag = useSliderDrag({
+    values,
+    bounds,
     vertical,
     from,
     thumbSize,
-    bounds,
-    latest,
-    setThumb,
-    focusThumb,
-    onValueCommit,
+    crossSlop: minTouchHitSlop(crossSize),
     disabled: isDisabled,
+    onChange: report,
+    onCommit: (next) => onValueCommit?.(next),
+    // Thumbs are keyed by place, so focus follows the held one past its neighbor, as keys do.
+    onHold: (index) => {
+      if (WEB) focusThumb(index);
+    },
   });
 
   const nudge = (index: number, steps: number) =>
-    keyMove(latest.current[index]! + steps * step, index);
+    keyMove(values[index]! + steps * step, index);
   const onThumbKey = (index: number) => (event: WebKeyDownEvent) => {
     const { key, shiftKey } = event.nativeEvent;
     if (isDisabled) return;
     if (key === 'Home') keyMove(min, 0, index);
-    else if (key === 'End') keyMove(max, latest.current.length - 1, index);
+    else if (key === 'End') keyMove(max, values.length - 1, index);
     else if (PAGE_KEYS.includes(key) || ARROW_KEYS.includes(key)) {
       const times = PAGE_KEYS.includes(key) || shiftKey ? 10 : 1;
       nudge(index, BACK_KEYS[from].includes(key) ? -times : times);
@@ -298,109 +239,126 @@ export function Slider({
   }, [isDisabled, focusThumb]);
   useFieldControlRegistration(focusFirst);
 
-  const fractions = values.map((value) => fractionIn(value, min, max));
   // Changes only with what places a mark, so marks don't re-render as the thumb slides.
+  const { scale } = drag.track;
   const markStyle = useMemo<MarkStyle>(
     () =>
       (value, offset = 0) =>
-        placeAt(fractionIn(value, min, max), thumbSize, offset, from),
-    [min, max, thumbSize, from],
+        placeAt(fractionIn(value, scale.min, scale.max), scale.thumbSize, offset, scale.from),
+    [scale],
   );
   const single = values.length === 1;
-  const hitSlop = minTouchHitSlop(crossSize);
   // The web's pointer affordances, while it takes presses.
   const webLive = WEB && !isDisabled;
-  const rangeStart = fractions[0]!;
-  const rangeEnd = fractions[fractions.length - 1]!;
+  // A thumb's box; its motion places it.
+  const thumbBox = useMemo<ViewStyle>(
+    () => ({ position: 'absolute', width: thumbSize, height: thumbSize }),
+    [thumbSize],
+  );
   return (
-    <View
-      ref={ref}
-      {...rest}
-      hitSlop={vertical ? { left: hitSlop, right: hitSlop } : { top: hitSlop, bottom: hitSlop }}
-      onStartShouldSetResponder={() => !isDisabled}
-      onResponderTerminationRequest={() => false}
-      onResponderGrant={slide.start}
-      onResponderMove={slide.move}
-      onResponderRelease={slide.end}
-      onResponderTerminate={slide.end}
-      {...(webLive ? WEB_KEEP_FOCUS : undefined)}
-      style={[root, webLive ? WEB_SLIDER : undefined, style]}
-      {...rnwAttrs(
-        {
-          'data-orientation': orientation,
-          'data-disabled': isDisabled ? '' : undefined,
-          'data-invalid': isInvalid ? 'true' : undefined,
-        },
-        rest,
-      )}
-    >
-      <View pointerEvents="none" style={[parts, PHYSICAL_FRAME]} onLayout={slide.measure}>
-        <View style={track}>
-          <View
-            style={[
-              range,
-              // A single thumb's range starts at the track's edge, not at a thumb center.
-              single ? { [from]: 0 } : placeAt(rangeStart, thumbSize, 0, from),
-              placeAt(1 - rangeEnd, thumbSize, 0, FAR[from]),
-            ]}
-          />
-        </View>
-        {children === undefined ? null : (
-          <View style={StyleSheet.absoluteFill}>
-            <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
-          </View>
+    <GestureDetector gesture={drag.gesture}>
+      <View
+        ref={ref}
+        {...rest}
+        hitSlop={drag.hitSlop}
+        {...(webLive ? WEB_KEEP_FOCUS : undefined)}
+        style={[root, webLive ? WEB_SLIDER : undefined, style]}
+        {...rnwAttrs(
+          {
+            'data-orientation': orientation,
+            'data-disabled': isDisabled ? '' : undefined,
+            'data-invalid': isInvalid ? 'true' : undefined,
+          },
+          rest,
         )}
-        {values.map((value, index) => {
-          const label =
-            thumbLabels?.[index] ??
-            (single
-              ? fieldProps.accessibilityLabel
-              : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
-          return (
-            <Pressable
-              key={index}
-              ref={(node) => {
-                thumbs.current[index] = node;
-              }}
-              pointerEvents="none"
-              focusable={!isDisabled}
-              disabled={isDisabled}
-              focusRing={isInvalid ? 'danger' : resolved.tone}
-              accessibilityRole="adjustable"
-              accessibilityLabel={label}
-              accessibilityHint={fieldProps.accessibilityHint}
-              accessibilityLabelledBy={
-                thumbLabels?.[index] === undefined && single
-                  ? fieldProps.accessibilityLabelledBy
-                  : undefined
-              }
-              nativeID={single ? fieldProps.nativeID : undefined}
-              accessibilityActions={ACTIONS}
-              onAccessibilityAction={onAction(index)}
-              {...a11yState({ disabled: isDisabled })}
-              {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
-              {...webKeyHandler(onThumbKey(index))}
-              {...rnwAttrs({
-                'aria-orientation': orientation,
-                'aria-describedby': fieldProps['aria-describedby'],
-                'aria-invalid': fieldProps['aria-invalid'],
-                'data-active': slide.active === index ? '' : undefined,
-              })}
-              style={[
-                thumb,
-                vertical
-                  ? { left: '50%', marginLeft: -thumbSize / 2 }
-                  : { top: '50%', marginTop: -thumbSize / 2 },
-                // Its box centered on the point.
-                placeAt(fractions[index]!, thumbSize, -thumbSize / 2, from),
-              ]}
-            />
-          );
-        })}
+      >
+        <View pointerEvents="none" style={[parts, PHYSICAL_FRAME]} onLayout={drag.measure}>
+          <View style={[track, styles.clip]}>
+            <Range track={drag.track} style={range} />
+          </View>
+          {children === undefined ? null : (
+            <View style={StyleSheet.absoluteFill}>
+              <MarkContext.Provider value={markStyle}>{children}</MarkContext.Provider>
+            </View>
+          )}
+          {values.map((value, index) => {
+            const label =
+              thumbLabels?.[index] ??
+              (single
+                ? fieldProps.accessibilityLabel
+                : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
+            return (
+              <ThumbBox key={index} track={drag.track} place={index} style={thumbBox}>
+                <Pressable
+                  ref={(node) => {
+                    thumbs.current[index] = node;
+                  }}
+                  pointerEvents="none"
+                  focusable={!isDisabled}
+                  disabled={isDisabled}
+                  focusRing={isInvalid ? 'danger' : resolved.tone}
+                  accessibilityRole="adjustable"
+                  accessibilityLabel={label}
+                  accessibilityHint={fieldProps.accessibilityHint}
+                  accessibilityLabelledBy={
+                    thumbLabels?.[index] === undefined && single
+                      ? fieldProps.accessibilityLabelledBy
+                      : undefined
+                  }
+                  nativeID={single ? fieldProps.nativeID : undefined}
+                  accessibilityActions={ACTIONS}
+                  onAccessibilityAction={onAction(index)}
+                  {...a11yState({ disabled: isDisabled })}
+                  {...a11yValue({ min, max, now: value, text: thumbValueText?.[index] })}
+                  {...webKeyHandler(onThumbKey(index))}
+                  {...rnwAttrs({
+                    'aria-orientation': orientation,
+                    'aria-describedby': fieldProps['aria-describedby'],
+                    'aria-invalid': fieldProps['aria-invalid'],
+                    'data-active': drag.active === index ? '' : undefined,
+                  })}
+                  style={thumb}
+                />
+              </ThumbBox>
+            );
+          })}
+        </View>
       </View>
-    </View>
+    </GestureDetector>
   );
 }
+
+/** A thumb's box, where the UI thread draws the thumb at `place`. */
+function ThumbBox({
+  track,
+  place,
+  style,
+  children,
+}: {
+  readonly track: SliderTrack;
+  readonly place: number;
+  readonly style: ViewStyle;
+  readonly children: ReactNode;
+}): JSX.Element {
+  const [placement, motion] = useThumbMotion(track, place);
+  return <Animated.View style={[style, placement, motion]}>{children}</Animated.View>;
+}
+
+/** The range between the thumbs, as the UI thread draws them, in a track that clips it; it renders only as its track or style change. */
+const Range = memo(function Range({
+  track,
+  style,
+}: {
+  readonly track: SliderTrack;
+  readonly style: ViewStyle;
+}): JSX.Element {
+  const { clip, bar } = useRangeMotion(track);
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, styles.clip, clip]}>
+      <Animated.View style={[style, ...bar]} />
+    </Animated.View>
+  );
+});
 
 (Slider as typeof Slider & { [fieldLabelAssociation]: FieldLabelAssociation })[
   fieldLabelAssociation
@@ -426,108 +384,6 @@ export function useSliderMarkStyle(): MarkStyle {
   return markStyle;
 }
 
-type SetThumb = (
-  next: number,
-  index: number,
-  base?: readonly number[],
-) => { values: number[]; index: number; changed: boolean } | undefined;
-
-interface SlideOptions {
-  readonly vertical: boolean;
-  readonly from: SliderEdge;
-  readonly thumbSize: number;
-  readonly bounds: SliderBounds;
-  readonly latest: { readonly current: readonly number[] };
-  readonly setThumb: SetThumb;
-  readonly focusThumb: (index: number) => void;
-  readonly onValueCommit: ((value: number[]) => void) | undefined;
-  /** A slider disabled mid-drag takes no more of it. */
-  readonly disabled: boolean;
-}
-
-/**
- * Dragging, through the responder system: a press brings the nearest thumb
- * there and focuses it (on the web), a move slides it, and the end commits
- * once if anything changed; a press before the slider is laid out does
- * nothing. The slider's parts take no touches, so the press's location is
- * the slider's own, less where its parts box starts (past any padding or
- * border); moves add the page distance from the press, so a pointer that
- * wanders off the slider keeps sliding. A drag keeps the values it last
- * reported, since a move may not have rendered yet when the next move or the
- * release comes.
- */
-function useSlide({
-  vertical,
-  from,
-  thumbSize,
-  bounds,
-  latest,
-  setThumb,
-  focusThumb,
-  onValueCommit,
-  disabled,
-}: SlideOptions) {
-  // Where the parts box runs along the slide, from the slider's top-left corner.
-  const span = useRef({ start: 0, length: 0 });
-  const sliding = useRef<{
-    index: number;
-    before: readonly number[];
-    values: readonly number[];
-    start: number;
-    page: number;
-  }>(undefined);
-  const [active, setActive] = useState<number>();
-
-  const offsetOf = ({ nativeEvent }: GestureResponderEvent) =>
-    vertical
-      ? { location: nativeEvent.locationY - span.current.start, page: nativeEvent.pageY }
-      : { location: nativeEvent.locationX - span.current.start, page: nativeEvent.pageX };
-  const valueAt = (offset: number) => {
-    const fraction = fractionAt(offset, span.current.length, thumbSize, from);
-    return bounds.min + fraction * (bounds.max - bounds.min);
-  };
-
-  return {
-    active,
-    measure: (event: LayoutChangeEvent) => {
-      const { x, y, width, height } = event.nativeEvent.layout;
-      span.current = vertical ? { start: y, length: height } : { start: x, length: width };
-    },
-    start: (event: GestureResponderEvent) => {
-      if (span.current.length === 0) return;
-      const { location, page } = offsetOf(event);
-      const value = valueAt(location);
-      const before = latest.current;
-      const nearest = nearestThumb(before, value);
-      const moved = setThumb(value, nearest);
-      const index = moved?.index ?? nearest;
-      sliding.current = { index, before, values: moved?.values ?? before, start: location, page };
-      setActive(index);
-      if (WEB) focusThumb(index);
-    },
-    move: (event: GestureResponderEvent) => {
-      const slide = sliding.current;
-      if (!slide || disabled) return;
-      const offset = slide.start + offsetOf(event).page - slide.page;
-      const moved = setThumb(valueAt(offset), slide.index, slide.values);
-      if (!moved) return;
-      slide.values = moved.values;
-      if (moved.index !== slide.index) {
-        slide.index = moved.index;
-        setActive(moved.index);
-        // Thumbs are keyed by place, so focus follows the dragged one past its neighbor, as keys do.
-        if (WEB) focusThumb(moved.index);
-      }
-    },
-    end: () => {
-      const slide = sliding.current;
-      sliding.current = undefined;
-      setActive(undefined);
-      if (slide && !sameItems(slide.values, slide.before)) onValueCommit?.([...slide.values]);
-    },
-  };
-}
-
 const ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const;
 
 /**
@@ -541,3 +397,5 @@ const WEB_KEEP_FOCUS = {
 
 /** Web only: a pointer over it, no text selected or page scrolled by a drag. */
 const WEB_SLIDER = { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as ViewStyle;
+
+const styles = StyleSheet.create({ clip: { overflow: 'hidden' } });

@@ -4,8 +4,9 @@ import { useState, type JSX } from 'react';
 import { View } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import { Field } from './Field.js';
-import { moveThumb, nearestThumb, Slider, type SliderProps, useSliderMarkStyle } from './Slider.js';
+import { Slider, type SliderProps, useSliderMarkStyle } from './Slider.js';
 import { fractionAt } from './sliderGeometry.js';
+import { moveThumb, nearestThumb } from './sliderValues.js';
 
 function Controlled(props: Omit<SliderProps, 'value' | 'onValueChange'> & { initial: number[] }): JSX.Element {
   const { initial, ...rest } = props;
@@ -18,6 +19,8 @@ function Controlled(props: Omit<SliderProps, 'value' | 'onValueChange'> & { init
 }
 
 const now = (thumb: HTMLElement) => Number(thumb.getAttribute('aria-valuenow'));
+/** Where a thumb is placed: the style of the box it sits in. */
+const placed = (name: string) => screen.getByRole('slider', { name }).parentElement!.style;
 
 test('a thumb is a slider with its value, bounds and spoken value', () => {
   render(
@@ -214,22 +217,23 @@ test('a thumb sits by percent less a share of its size, so its center stays in b
     </SilkProvider>,
   );
   // md thumb: 20px. Left edge at 50% - 10px puts its center at 50% (= 10 + 0.5 * (width - 20)).
-  const half = screen.getByRole('slider', { name: 'Half' }).style;
+  const half = placed('Half');
   expect([half.left, half.marginLeft]).toEqual(['50%', '-10px']);
-  const end = screen.getByRole('slider', { name: 'End' }).style;
+  const end = placed('End');
   expect([end.left, end.marginLeft]).toEqual(['100%', '-20px']);
 });
 
-test('a vertical thumb sits from the bottom, an inverted one from the top', () => {
+test('a vertical thumb sits from the bottom, an inverted one from the top (both placed from the top)', () => {
   render(
     <SilkProvider>
       <Slider accessibilityLabel="Up" orientation="vertical" defaultValue={[25]} size="md" />
       <Slider accessibilityLabel="Down" orientation="vertical" inverted defaultValue={[25]} size="md" />
     </SilkProvider>,
   );
-  const up = screen.getByRole('slider', { name: 'Up' }).style;
-  expect([up.bottom, up.marginBottom]).toEqual(['25%', '-5px']);
-  const down = screen.getByRole('slider', { name: 'Down' }).style;
+  const up = placed('Up');
+  // 25 up from the bottom is 75 down from the top; the box's top sits half a thumb above its center.
+  expect([up.top, up.marginTop]).toEqual(['75%', '-15px']);
+  const down = placed('Down');
   expect([down.top, down.marginTop]).toEqual(['25%', '-5px']);
 });
 
@@ -256,14 +260,13 @@ test('useSliderMarkStyle places a mark where the thumb centers, in the slider\'s
       </Slider>
     </SilkProvider>,
   );
-  const thumb = screen.getByRole('slider').style;
+  const thumb = placed('Rating');
   const mark = screen.getByTestId('mark-1500').style;
-  // Right to left, so both count from the right; the thumb's box sits half its size back.
-  expect(mark.right).toBe('50%');
-  expect(thumb.right).toBe('50%');
-  expect(parseFloat(mark.marginRight) - parseFloat(thumb.marginRight)).toBe(
-    parseFloat(thumb.width) / 2,
-  );
+  // Right to left, the mark counts from the right; the thumb's box is placed from the left. Both
+  // center on the middle: the mark there, the thumb's box half its size before it.
+  expect([mark.right, mark.marginRight]).toEqual(['50%', '0px']);
+  expect(thumb.left).toBe('50%');
+  expect(parseFloat(thumb.marginLeft)).toBe(-parseFloat(thumb.width) / 2);
 });
 
 test('its parts lay out left to right in any direction, so their left and right stay physical', () => {
@@ -273,7 +276,7 @@ test('its parts lay out left to right in any direction, so their left and right 
       <Slider accessibilityLabel="Rating" dir="rtl" testID="root" style={{ direction: 'rtl' }} />
     </SilkProvider>,
   );
-  const parts = screen.getByRole('slider').parentElement!;
+  const parts = screen.getByRole('slider').parentElement!.parentElement!;
   expect(parts.style.direction).toBe('ltr');
   expect(parts.parentElement).toBe(screen.getByTestId('root'));
   expect(screen.getByTestId('root').style.direction).toBe('rtl');
