@@ -188,7 +188,7 @@ export function useSliderDrag({
         hitSlop: slop,
         ...(WEB
           ? { maxPointers: 1, minDistance: 0, onBegin: start }
-          : { ...panAlong(vertical), onActivate: start }),
+          : panAlong(vertical, { onActivate: start })),
         onUpdate: update,
         onDeactivate: (event: { canceled: boolean; velocityX: number; velocityY: number }) => {
           'worklet';

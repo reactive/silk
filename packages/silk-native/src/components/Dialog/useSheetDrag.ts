@@ -154,46 +154,48 @@ export function useSheetDrag({
     }
   }, [closeAsks]);
 
-  const pan = usePanGesture({
-    // Either way: a sheet caught sliding can be pushed back up.
-    ...panAlong(true),
-    onBegin: (event) => {
-      'worklet';
-      inScroll.value = pressIn(measure(scrollRef), event.absoluteX, event.absoluteY);
-    },
-    onActivate: () => {
-      'worklet';
-      cancelAnimation(offset);
-      dragging.value = true;
-      sliding.value = false;
-      timer.moved();
-      dragFrom.value = offset.value;
-    },
-    onUpdate: (event) => {
-      'worklet';
-      const step = dragStep(offset.value, event.changeY, inScroll.value, scrollY.value);
-      offset.value = step.offset;
-      timer.moved();
-      if (step.pinScroll) scrollTo(scrollRef, 0, 0, false);
-    },
-    onDeactivate: (event) => {
-      'worklet';
-      dragging.value = false;
-      const velocity = timer.speed(event.canceled, event.velocityY);
-      if (shut.value) {
-        // Caught while sliding out after closing: it goes on out.
-        slideOut(velocity);
-        return;
-      }
-      if (offset.value <= 0) return;
-      if (!event.canceled && releaseCloses(offset.value, velocity, height.value, dragFrom.value)) {
-        // Shut now, not once React answers, so a catch before then still goes on out.
-        shut.value = true;
-        slideOut(velocity);
-        scheduleOnRN(requestClose);
-      } else settle(0, velocity);
-    },
-  });
+  // Either way: a sheet caught sliding can be pushed back up.
+  const pan = usePanGesture(
+    panAlong(true, {
+      onBegin: (event) => {
+        'worklet';
+        inScroll.value = pressIn(measure(scrollRef), event.absoluteX, event.absoluteY);
+      },
+      onActivate: () => {
+        'worklet';
+        cancelAnimation(offset);
+        dragging.value = true;
+        sliding.value = false;
+        timer.moved();
+        dragFrom.value = offset.value;
+      },
+      onUpdate: (event) => {
+        'worklet';
+        const step = dragStep(offset.value, event.changeY, inScroll.value, scrollY.value);
+        offset.value = step.offset;
+        timer.moved();
+        if (step.pinScroll) scrollTo(scrollRef, 0, 0, false);
+      },
+      onDeactivate: (event) => {
+        'worklet';
+        dragging.value = false;
+        const velocity = timer.speed(event.canceled, event.velocityY);
+        if (shut.value) {
+          // Caught while sliding out after closing: it goes on out.
+          slideOut(velocity);
+          return;
+        }
+        if (offset.value <= 0) return;
+        const closes = releaseCloses(offset.value, velocity, height.value, dragFrom.value);
+        if (!event.canceled && closes) {
+          // Shut now, not once React answers, so a catch before then still goes on out.
+          shut.value = true;
+          slideOut(velocity);
+          scheduleOnRN(requestClose);
+        } else settle(0, velocity);
+      },
+    }),
+  );
 
   // Dependency arrays let a web build without the worklets Babel plugin (Storybook's SWC build, or
   // an app's) run these styles; their only inputs are the shared values listed. Native warns on them.

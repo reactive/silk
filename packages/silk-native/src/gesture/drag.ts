@@ -3,24 +3,26 @@
  * it lets go at. The numbers are `conventions.ts`'s; this is their use.
  */
 import { useMemo } from 'react';
+import type { usePanGesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { gestureConventions, releaseVelocity } from './conventions.js';
 
 const SLOP: [number, number] = [-gestureConventions.touchSlop, gestureConventions.touchSlop];
 
+type PanConfig = NonNullable<Parameters<typeof usePanGesture>[0]>;
+
 /**
- * A one-finger pan's config along one axis: it starts once the finger moves
+ * `config` as a one-finger pan along one axis: it starts once the finger moves
  * a touch slop along it, and fails on one across, so a scroll view across it
- * keeps a scroll that starts on it.
+ * keeps a scroll that starts on it. Its callbacks say 'worklet' themselves.
+ *
+ * It merges here, not by a spread at the call: the worklets Babel plugin reads
+ * an object written for a gesture hook, and throws on a spread in it.
  */
-export function panAlong(
-  vertical: boolean,
-):
-  | { activeOffsetY: [number, number]; failOffsetX: [number, number]; maxPointers: 1 }
-  | { activeOffsetX: [number, number]; failOffsetY: [number, number]; maxPointers: 1 } {
+export function panAlong(vertical: boolean, config: PanConfig): PanConfig {
   return vertical
-    ? { activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
-    : { activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
+    ? { ...config, activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
+    : { ...config, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
 }
 
 export interface ReleaseTimer {
