@@ -36,7 +36,8 @@ import {
 import { Pressable } from './Pressable.js';
 import { sameItems } from './sameItems.js';
 import { fractionIn, PHYSICAL_FRAME, placeAt, type SliderEdge, slideFrom } from './sliderGeometry.js';
-import { type SliderTrack, useRangeMotion, useThumbMotion } from './sliderMotion.js';
+import { useRangeMotion, useThumbMotion } from './sliderMotion.js';
+import type { SliderTrack } from './sliderThumbs.js';
 import { moveThumb, type SliderBounds } from './sliderValues.js';
 import { useControllableValue } from './useControllableValue.js';
 import { useSliderDrag } from './useSliderDrag.js';
@@ -248,17 +249,10 @@ export function Slider({
   const single = values.length === 1;
   // The web's pointer affordances, while it takes presses.
   const webLive = WEB && !isDisabled;
-  // Across the slider, a thumb's box sits centered.
+  // A thumb's box; its motion places it.
   const thumbBox = useMemo<ViewStyle>(
-    () => ({
-      position: 'absolute',
-      width: thumbSize,
-      height: thumbSize,
-      ...(vertical
-        ? { left: '50%', marginLeft: -thumbSize / 2 }
-        : { top: '50%', marginTop: -thumbSize / 2 }),
-    }),
-    [thumbSize, vertical],
+    () => ({ position: 'absolute', width: thumbSize, height: thumbSize }),
+    [thumbSize],
   );
   return (
     <GestureDetector gesture={drag.gesture}>
@@ -279,8 +273,7 @@ export function Slider({
       >
         <View pointerEvents="none" style={[parts, PHYSICAL_FRAME]} onLayout={drag.measure}>
           <View style={[track, styles.clip]}>
-            {/* Keyed by the edge `min` sits at: an animated style keeps the anchors it last set. */}
-            <Range key={from} track={drag.track} style={range} />
+            <Range track={drag.track} style={range} />
           </View>
           {children === undefined ? null : (
             <View style={StyleSheet.absoluteFill}>
@@ -294,7 +287,7 @@ export function Slider({
                 ? fieldProps.accessibilityLabel
                 : fieldProps.accessibilityLabel && `${fieldProps.accessibilityLabel} (${index + 1})`);
             return (
-              <ThumbBox key={`${from}${index}`} track={drag.track} place={index} style={thumbBox}>
+              <ThumbBox key={index} track={drag.track} place={index} style={thumbBox}>
                 <Pressable
                   ref={(node) => {
                     thumbs.current[index] = node;

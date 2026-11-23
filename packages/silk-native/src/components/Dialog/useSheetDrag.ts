@@ -20,13 +20,11 @@ import {
   useSharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { gestureConventions, releaseVelocity } from '../../gesture/conventions.js';
+import { panAlong, useReleaseTimer } from '../../gesture/drag.js';
 import { springTo } from '../../motion/springTo.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
 import { dragStep, pressIn, releaseCloses } from './sheetPhysics.js';
-
-const { touchSlop } = gestureConventions;
 
 type Pan = ReturnType<typeof usePanGesture>;
 
@@ -91,8 +89,8 @@ export function useSheetDrag({
   const shut = useSharedValue(!open);
   const inScroll = useSharedValue(false);
   const scrollY = useSharedValue(0);
-  // When the drag started or last moved (ms, on the UI thread): a held finger lets go at rest.
-  const lastMoveAt = useSharedValue(0);
+  // Times the drag, so a held finger lets go at rest.
+  const timer = useReleaseTimer();
   // Where the drag caught the sheet, so one that ends no lower keeps it open.
   const dragFrom = useSharedValue(0);
   const scrollRef = useAnimatedRef<ComponentRef<typeof ScrollView>>();
@@ -158,9 +156,7 @@ export function useSheetDrag({
 
   const pan = usePanGesture({
     // Either way: a sheet caught sliding can be pushed back up.
-    activeOffsetY: [-touchSlop, touchSlop],
-    failOffsetX: [-touchSlop, touchSlop],
-    maxPointers: 1,
+    ...panAlong(true),
     onBegin: (event) => {
       'worklet';
       inScroll.value = pressIn(measure(scrollRef), event.absoluteX, event.absoluteY);
@@ -170,22 +166,20 @@ export function useSheetDrag({
       cancelAnimation(offset);
       dragging.value = true;
       sliding.value = false;
-      lastMoveAt.value = Date.now();
+      timer.moved();
       dragFrom.value = offset.value;
     },
     onUpdate: (event) => {
       'worklet';
       const step = dragStep(offset.value, event.changeY, inScroll.value, scrollY.value);
       offset.value = step.offset;
-      lastMoveAt.value = Date.now();
+      timer.moved();
       if (step.pinScroll) scrollTo(scrollRef, 0, 0, false);
     },
     onDeactivate: (event) => {
       'worklet';
       dragging.value = false;
-      const velocity = event.canceled
-        ? 0
-        : releaseVelocity(event.velocityY, Date.now() - lastMoveAt.value);
+      const velocity = timer.speed(event.canceled, event.velocityY);
       if (shut.value) {
         // Caught while sliding out after closing: it goes on out.
         slideOut(velocity);

@@ -2,33 +2,38 @@
  * Where a Slider's thumbs and range are drawn: from the values and the moving
  * thumb as the UI thread has them, so they follow a finger without React.
  */
-import { type SharedValue, useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
+import { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
 import { WEB } from '../web/host.js';
-import { along, centerAt, FAR, fractionIn, placeAt, type SliderEdge } from './sliderGeometry.js';
+import {
+  along,
+  centerOf,
+  FAR,
+  fractionIn,
+  placeAt,
+  type SliderScale,
+  thumbBoxAt,
+} from './sliderGeometry.js';
+import type { SliderTrack } from './sliderThumbs.js';
 
-/** No thumb is moving on its own: each is drawn at its value. */
-export const NONE = -1;
-
-/** What a slider's thumbs and range read to be drawn where the UI thread has them. */
-export interface SliderTrack {
-  /** Where the parts box runs along the slide, from the slider's top-left corner; 0 long until laid out. */
-  readonly span: SharedValue<{ readonly start: number; readonly length: number }>;
-  /** The values as the UI thread has them: ahead of React's while a slide reports them. */
-  readonly placed: SharedValue<readonly number[]>;
-  /** The place of the thumb drawn at `movingAt` instead of its value (held, or settling), or `NONE`. */
-  readonly moving: SharedValue<number>;
-  /** Where the moving thumb is drawn, in the slider's units. */
-  readonly movingAt: SharedValue<number>;
-  readonly min: number;
-  readonly max: number;
-  readonly thumbSize: number;
-  readonly from: SliderEdge;
+/**
+ * Thumb `place`'s value. A thumb React renders before the UI thread has its
+ * value (the owner just added it) sits at `min` until it does.
+ */
+function valueOf(values: readonly number[], place: number, { min }: SliderScale): number {
+  'worklet';
+  return values[place] ?? min;
 }
 
 /** Where thumb `place` is drawn: at `heldAt` if it is the moving one (`held`), else at its value. */
-function shownAt(values: readonly number[], held: number, heldAt: number, place: number): number {
+function shownAt(
+  values: readonly number[],
+  held: number,
+  heldAt: number,
+  place: number,
+  scale: SliderScale,
+): number {
   'worklet';
-  return held === place ? heldAt : values[place]!;
+  return held === place ? heldAt : valueOf(values, place, scale);
 }
 
 /**
@@ -41,14 +46,11 @@ function rangeEdges(
   held: number,
   heldAt: number,
   length: number,
-  min: number,
-  max: number,
-  thumbSize: number,
+  scale: SliderScale,
 ): { start: number; end: number } {
   'worklet';
   const last = values.length - 1;
-  const center = (place: number) =>
-    centerAt(fractionIn(shownAt(values, held, heldAt, place), min, max), length, thumbSize);
+  const center = (place: number) => centerOf(shownAt(values, held, heldAt, place, scale), length, scale);
   return { start: last > 0 ? center(0) : 0, end: center(last) };
 }
 
@@ -61,34 +63,35 @@ type AnimatedStyle = ReturnType<typeof useAnimatedStyle>;
 
 /**
  * The thumb at `place`, where the UI thread draws it. Until the slider is
- * laid out (on a server, too) it sits by percent, as `placeAt` places it;
+ * laid out (on a server, too) it sits by percent, as `thumbBoxAt` places it;
  * then at the edge `min` sits at, moved along by a transform, so following
  * the finger lays nothing out.
  */
 export function useThumbMotion(
-  { span, placed, moving, movingAt, min, max, thumbSize, from }: SliderTrack,
+  { span, placed, moving, movingAt, scale }: SliderTrack,
   place: number,
 ): readonly [placement: AnimatedStyle, motion: AnimatedStyle] {
   // Before layout nothing slides, so the placement follows the values alone.
   const placement = useAnimatedStyle(
     () => {
-      const fraction = span.get().length > 0 ? 0 : fractionIn(placed.get()[place]!, min, max);
-      return placeAt(fraction, thumbSize, -thumbSize / 2, from);
+      const value = valueOf(placed.get(), place, scale);
+      const fraction = span.get().length > 0 ? 0 : fractionIn(value, scale.min, scale.max);
+      return thumbBoxAt(fraction, scale.thumbSize, scale.from);
     },
-    WEB ? [span, placed, place, min, max, thumbSize, from] : undefined,
+    WEB ? [span, placed, place, scale] : undefined,
   );
   const offset = useDerivedValue(
     () => {
       const { length } = span.get();
       if (length === 0) return 0;
-      const value = shownAt(placed.get(), moving.get(), movingAt.get(), place);
-      return centerAt(fractionIn(value, min, max), length, thumbSize) - thumbSize / 2;
+      const value = shownAt(placed.get(), moving.get(), movingAt.get(), place, scale);
+      return centerOf(value, length, scale) - scale.thumbSize / 2;
     },
-    WEB ? [span, placed, moving, movingAt, place, min, max, thumbSize] : undefined,
+    WEB ? [span, placed, moving, movingAt, place, scale] : undefined,
   );
   const motion = useAnimatedStyle(
-    () => along(from, offset.get()),
-    WEB ? [offset, from] : undefined,
+    () => along(scale.from, offset.get()),
+    WEB ? [offset, scale] : undefined,
   );
   return [placement, motion];
 }
@@ -99,16 +102,7 @@ export function useThumbMotion(
  * range's start and `bar` (as long as the track) ends at its end, both moved
  * by transforms.
  */
-export function useRangeMotion({
-  span,
-  placed,
-  moving,
-  movingAt,
-  min,
-  max,
-  thumbSize,
-  from,
-}: SliderTrack): {
+export function useRangeMotion({ span, placed, moving, movingAt, scale }: SliderTrack): {
   readonly clip: AnimatedStyle;
   readonly bar: readonly [placement: AnimatedStyle, motion: AnimatedStyle];
 } {
@@ -116,6 +110,7 @@ export function useRangeMotion({
     () => {
       const values = placed.get();
       if (span.get().length > 0) return FILL;
+      const { min, max, thumbSize, from } = scale;
       const last = values.length - 1;
       return {
         ...FILL,
@@ -124,32 +119,29 @@ export function useRangeMotion({
         ...placeAt(1 - fractionIn(values[last]!, min, max), thumbSize, 0, FAR[from]),
       };
     },
-    WEB ? [span, placed, min, max, thumbSize, from] : undefined,
+    WEB ? [span, placed, scale] : undefined,
   );
-  const deps = WEB ? [span, placed, moving, movingAt, min, max, thumbSize] : undefined;
+  const deps = WEB ? [span, placed, moving, movingAt, scale] : undefined;
   const start = useDerivedValue(() => {
     const { length } = span.get();
     if (length === 0) return 0;
-    return rangeEdges(placed.get(), moving.get(), movingAt.get(), length, min, max, thumbSize)
-      .start;
+    return rangeEdges(placed.get(), moving.get(), movingAt.get(), length, scale).start;
   }, deps);
   // How far back from the track's far end the bar ends, at the range's end.
   const shift = useDerivedValue(() => {
     const { length } = span.get();
     if (length === 0) return 0;
-    const edges = rangeEdges(
-      placed.get(),
-      moving.get(),
-      movingAt.get(),
-      length,
-      min,
-      max,
-      thumbSize,
-    );
+    const edges = rangeEdges(placed.get(), moving.get(), movingAt.get(), length, scale);
     return edges.end - edges.start - length;
   }, deps);
-  const clip = useAnimatedStyle(() => along(from, start.get()), WEB ? [start, from] : undefined);
-  const motion = useAnimatedStyle(() => along(from, shift.get()), WEB ? [shift, from] : undefined);
+  const clip = useAnimatedStyle(
+    () => along(scale.from, start.get()),
+    WEB ? [start, scale] : undefined,
+  );
+  const motion = useAnimatedStyle(
+    () => along(scale.from, shift.get()),
+    WEB ? [shift, scale] : undefined,
+  );
   return { clip, bar: [placement, motion] };
 }
 

@@ -1,25 +1,17 @@
 import { useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Insets, LayoutChangeEvent } from 'react-native';
 import { useExclusiveGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
-import { cancelAnimation, useSharedValue } from 'react-native-reanimated';
+import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
-import { gestureConventions, releaseVelocity } from '../gesture/conventions.js';
-import { SUBPIXEL, springTo } from '../motion/springTo.js';
+import { gestureConventions } from '../gesture/conventions.js';
+import { panAlong, useReleaseTimer } from '../gesture/drag.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { WEB } from '../web/host.js';
 import { sameItems } from './sameItems.js';
-import { fractionAt, type SliderEdge, towardMax, travel } from './sliderGeometry.js';
-import { NONE, type SliderTrack } from './sliderMotion.js';
-import {
-  clampToNeighbors,
-  moveThumb,
-  nearestThumb,
-  type SliderBounds,
-  snap,
-} from './sliderValues.js';
-
-const { touchSlop } = gestureConventions;
+import type { SliderEdge, SliderScale } from './sliderGeometry.js';
+import { sliderThumbs, type SliderTrack, useSliderTrack } from './sliderThumbs.js';
+import type { SliderBounds } from './sliderValues.js';
 
 export interface SliderDragOptions {
   /** The values as React last rendered them. */
@@ -79,23 +71,26 @@ export function useSliderDrag({
 }: SliderDragOptions): SliderDrag {
   const snappy = useTheme().theme.semantic.motion.snappy;
   const reduced = useMotionPreference() === 'reduced';
-  const span = useSharedValue({ start: 0, length: 0 });
-  const placed = useSharedValue<readonly number[]>(values);
-  const moving = useSharedValue(NONE);
-  const movingAt = useSharedValue(0);
+  const scale = useMemo<SliderScale>(
+    () => ({ min, max, thumbSize, from }),
+    [min, max, thumbSize, from],
+  );
+  const track = useSliderTrack(values, scale);
   // A finger holds a thumb: React's values wait for its release.
   const dragging = useSharedValue(false);
   // The values when the slide began, so one that ends where it began commits nothing.
   const before = useSharedValue<readonly number[]>(values);
-  // When the slide began or last moved (ms, on the UI thread): a held finger lets go at rest.
-  const lastMoveAt = useSharedValue(0);
+  const timer = useReleaseTimer();
 
   // The held thumb, rendered (`data-active`); `held` is the same thumb, read at once by the calls below.
   const [active, setActive] = useState<number>();
   // Counts releases, a tap's included. A tap changes no other state, and a slide's hold and
   // release can land in one render, leaving `active` as it was.
   const [releases, countRelease] = useReducer((n: number) => n + 1, 0);
-  // JavaScript's view of the UI thread: the thumb a finger holds, and the values it last placed.
+  // JavaScript's view of the UI thread: the thumb a finger holds, and the values it last
+  // placed. Every gesture that writes the UI thread's values reports them here (`released`,
+  // `tapped`), so `pushed` matches them again once no report is on its way; until then
+  // `adopt` refuses React's values, and the report's rerun sends them again.
   const held = useRef<number>(undefined);
   const pushed = useRef(values);
   // The worklets call into React through these, made once; they read React's callbacks here.
@@ -135,148 +130,62 @@ export function useSliderDrag({
     [vertical, crossSlop],
   );
   const configs = useMemo(() => {
-    const bounds = { min, max, step, minSteps };
-    // The slider's units per pixel along a slider `length` long.
-    const perPixel = (length: number) => {
-      'worklet';
-      return (max - min) / Math.max(travel(length, thumbSize), 1);
-    };
-
-    /** The value under a point on the slider (its own coordinates), or undefined before layout. */
-    const valueAt = (x: number, y: number) => {
-      'worklet';
-      const { start, length } = span.get();
-      if (length === 0) return undefined;
-      return min + fractionAt((vertical ? y : x) - start, length, thumbSize, from) * (max - min);
-    };
-    /**
-     * Moves thumb `index` to `at` and draws it there as far as it reaches;
-     * returns where that thumb is now, and the values if they changed.
-     */
-    const slide = (at: number, index: number) => {
-      'worklet';
-      const now = placed.get();
-      // Most moves stay within a step: no new values to work out.
-      const moved = snap(at, bounds) === now[index] ? undefined : moveThumb(now, at, index, bounds);
-      const changed = moved && !sameItems(moved.values, now) ? moved.values : null;
-      if (changed) placed.set(changed);
-      const place = moved?.index ?? index;
-      moving.set(place);
-      movingAt.set(clampToNeighbors(placed.get(), at, place, bounds));
-      return { place, changed };
-    };
-    /**
-     * Springs the moving thumb to its value at `velocity` (units per second;
-     * undefined keeps the speed of the spring it replaces), then lets it go.
-     */
-    const settle = (velocity: number | undefined) => {
-      'worklet';
-      const target = placed.get()[moving.get()]!;
-      // Already there (held at a neighbor or a bound): it stays.
-      const speed = movingAt.get() === target ? 0 : velocity;
-      movingAt.set(
-        springTo(
-          target,
-          snappy,
-          {
-            ...(speed === undefined ? null : { velocity: speed }),
-            reduceMotion: reduced,
-            precision: SUBPIXEL * perPixel(span.get().length),
-          },
-          (finished?: boolean) => {
-            'worklet';
-            if (finished) moving.set(NONE);
-          },
-        ),
-      );
-    };
+    const thumbs = sliderThumbs(
+      track,
+      { min, max, step, minSteps },
+      { spring: snappy, reduced },
+    );
     const start = (event: { x: number; y: number }) => {
       'worklet';
-      const at = valueAt(event.x, event.y);
+      const at = thumbs.valueAt(vertical ? event.y : event.x);
       if (at === undefined) return;
-      cancelAnimation(movingAt);
-      const base = placed.get();
       dragging.set(true);
-      before.set(base);
-      lastMoveAt.set(Date.now());
-      const { place, changed } = slide(at, nearestThumb(base, at));
+      before.set(track.placed.get());
+      timer.moved();
+      const { place, changed } = thumbs.grab(at);
       scheduleOnRN(calls.holding, changed, place);
     };
     const update = (event: { x: number; y: number }) => {
       'worklet';
       if (!dragging.get()) return;
-      const at = valueAt(event.x, event.y);
+      const at = thumbs.valueAt(vertical ? event.y : event.x);
       if (at === undefined) return;
-      lastMoveAt.set(Date.now());
-      const was = moving.get();
-      const { place, changed } = slide(at, was);
-      if (changed || place !== was) scheduleOnRN(calls.holding, changed, place);
+      timer.moved();
+      const held = thumbs.hold(at);
+      if (held) scheduleOnRN(calls.holding, held.changed, held.place);
     };
     /** Lets go at `velocity` (px/s along the slider's axis). */
     const end = (velocity: number) => {
       'worklet';
       if (!dragging.get()) return;
       dragging.set(false);
-      const speed = releaseVelocity(velocity, Date.now() - lastMoveAt.get());
-      settle(towardMax(from) * speed * perPixel(span.get().length));
-      const now = placed.get();
+      const now = thumbs.release(velocity);
       scheduleOnRN(calls.released, [...now], !sameItems(now, before.get()));
     };
     /** Native: a press let go without sliding springs the nearest thumb to its value there. */
     const tap = (event: { x: number; y: number }) => {
       'worklet';
-      const at = valueAt(event.x, event.y);
+      const at = thumbs.valueAt(vertical ? event.y : event.x);
       if (at === undefined) return;
-      const base = placed.get();
-      const nearest = nearestThumb(base, at);
-      const moved = moveThumb(base, at, nearest, bounds);
-      if (!moved || sameItems(moved.values, base)) return;
-      // From where it shows: still settling from a slide, or at its value.
-      const shown = moving.get() === nearest ? movingAt.get() : base[nearest]!;
-      cancelAnimation(movingAt);
-      placed.set(moved.values);
-      moving.set(moved.index);
-      movingAt.set(shown);
-      settle(0);
-      scheduleOnRN(calls.tapped, moved.values);
+      const next = thumbs.jumpTo(at);
+      if (next) scheduleOnRN(calls.tapped, next);
     };
-    /**
-     * Takes values from React, unless a finger moved the thumbs since JavaScript
-     * last heard (`expected` is what it heard): that gesture reports its own. A
-     * thumb still settling springs on, at its speed, from where it shows to its
-     * new value, so a value an owner turned down never shows.
-     */
-    const adopt = (next: readonly number[], expected: readonly number[]) => {
-      'worklet';
-      const was = placed.get();
-      if (dragging.get() || !sameItems(was, expected)) return;
-      placed.set(next);
-      const place = moving.get();
-      if (place === NONE) return;
-      // Still heading to its value: the spring is left as it is.
-      if (next[place] === was[place]) return;
-      if (place < next.length) settle(undefined);
-      else {
-        cancelAnimation(movingAt);
-        moving.set(NONE);
-      }
-    };
-    const across = [-touchSlop, touchSlop] as [number, number];
     return {
-      adopt,
+      /** React's values, unless a finger holds a thumb (see `SliderThumbs.adopt`). */
+      adopt: (next: readonly number[], expected: readonly number[]) => {
+        'worklet';
+        if (!dragging.get()) thumbs.adopt(next, expected);
+      },
       pan: {
         enabled: !disabled,
         hitSlop: slop,
-        maxPointers: 1,
         ...(WEB
-          ? { minDistance: 0, onBegin: start }
-          : vertical
-          ? { activeOffsetY: across, failOffsetX: across, onActivate: start }
-          : { activeOffsetX: across, failOffsetY: across, onActivate: start }),
+          ? { maxPointers: 1, minDistance: 0, onBegin: start }
+          : { ...panAlong(vertical), onActivate: start }),
         onUpdate: update,
         onDeactivate: (event: { canceled: boolean; velocityX: number; velocityY: number }) => {
           'worklet';
-          end(event.canceled ? 0 : vertical ? event.velocityY : event.velocityX);
+          end(timer.speed(event.canceled, vertical ? event.velocityY : event.velocityX));
         },
         // A web press that never moved ends here, without deactivating.
         onFinalize: () => {
@@ -284,9 +193,14 @@ export function useSliderDrag({
           end(0);
         },
       },
-      tap: { enabled: !WEB && !disabled, hitSlop: slop, maxDistance: touchSlop, onActivate: tap },
+      tap: {
+        enabled: !WEB && !disabled,
+        hitSlop: slop,
+        maxDistance: gestureConventions.touchSlop,
+        onActivate: tap,
+      },
     };
-  }, [vertical, slop, disabled, min, max, step, minSteps, from, thumbSize, snappy, reduced]);
+  }, [track, vertical, slop, disabled, min, max, step, minSteps, snappy, reduced]);
 
   // React's values, once no finger holds a thumb; `releases` reruns it after each release
   // and tap, so values an owner turned down come back. (`configs` only changes with the
@@ -298,17 +212,13 @@ export function useSliderDrag({
   }, [values, releases, configs]);
 
   const gesture = useExclusiveGestures(usePanGesture(configs.pan), useTapGesture(configs.tap));
-  const track = useMemo(
-    () => ({ span, placed, moving, movingAt, min, max, thumbSize, from }),
-    [min, max, thumbSize, from],
-  );
   return {
     gesture,
     active,
     hitSlop: slop,
     measure: (event) => {
       const { x, y, width, height } = event.nativeEvent.layout;
-      span.set(vertical ? { start: y, length: height } : { start: x, length: width });
+      track.span.set(vertical ? { start: y, length: height } : { start: x, length: width });
     },
     track,
   };

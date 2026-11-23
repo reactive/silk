@@ -91,6 +91,48 @@ export function centerAt(fraction: number, length: number, thumbSize: number): n
   return thumbSize / 2 + fraction * travel(length, thumbSize);
 }
 
+/** What maps a slider's values to points along it: its bounds, its thumb's size, and the edge `min` sits at. */
+export interface SliderScale {
+  readonly min: number;
+  readonly max: number;
+  readonly thumbSize: number;
+  readonly from: SliderEdge;
+}
+
+/** The value at `offset` (from the top-left end) along a slider `length` long, clamped to its bounds. */
+export function valueAt(offset: number, length: number, scale: SliderScale): number {
+  'worklet';
+  const { min, max, thumbSize, from } = scale;
+  return min + fractionAt(offset, length, thumbSize, from) * (max - min);
+}
+
+/** Where the center of a thumb at `value` sits, in pixels from `min`'s edge of a slider `length` long. */
+export function centerOf(value: number, length: number, scale: SliderScale): number {
+  'worklet';
+  return centerAt(fractionIn(value, scale.min, scale.max), length, scale.thumbSize);
+}
+
+/** The slider's units per pixel along a slider `length` long (at least a pixel's travel, so never infinite). */
+export function unitsPerPixel(length: number, scale: SliderScale): number {
+  'worklet';
+  return (scale.max - scale.min) / Math.max(travel(length, scale.thumbSize), 1);
+}
+
+/**
+ * Places a thumb's box `fraction` of the way from `from`, centered across.
+ * It always sets the same edges (left and top, with their margins), so an
+ * animated style keeps none from before the slider changed direction.
+ */
+export function thumbBoxAt(fraction: number, thumbSize: number, from: SliderEdge): ViewStyle {
+  'worklet';
+  const center = -thumbSize / 2;
+  // A centered box `fraction` from the far edge sits where it would `1 - fraction` from the near one.
+  const fromTopLeft = towardMax(from) === 1 ? fraction : 1 - fraction;
+  return from === 'left' || from === 'right'
+    ? { ...placeAt(fromTopLeft, thumbSize, center, 'left'), top: '50%', marginTop: center }
+    : { ...placeAt(fromTopLeft, thumbSize, center, 'top'), left: '50%', marginLeft: center };
+}
+
 /** Which way along its axis (x or y, as the screen counts) a slider runs from `edge` toward max. */
 export function towardMax(edge: SliderEdge): 1 | -1 {
   'worklet';

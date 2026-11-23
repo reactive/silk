@@ -309,13 +309,12 @@ test('a slide whose hold and release land in one render still shows the value it
   expect(box().transform).toBe('translateX(90px)');
 });
 
-test('turned to run the other way, a thumb keeps no anchor at its old edge', () => {
+test('turned to run the other way, a thumb mirrors from the same edge, so no old anchor stays', () => {
   const { rerender } = render(<Controlled initial={[30]} />);
   const box = () => screen.getByRole('slider').parentElement!.style;
-  expect(box().left).not.toBe('');
+  expect(box().left).toBe('30%');
   rerender(<Controlled initial={[30]} inverted />);
-  expect(box().left).toBe('');
-  expect(box().right).not.toBe('');
+  expect([box().left, box().right]).toEqual(['70%', '']);
 });
 
 test('disabled, a slider takes no gestures', () => {
@@ -391,6 +390,54 @@ test('native: values from React that a tap overtakes on the UI thread are left t
   // The stand-in styles are worked out as it renders.
   act(() => redraw());
   expect(box().transform).toBe('translateX(144px)');
+});
+
+/** An owner of the slider's values that the test can set, and redraw (the stand-in styles are worked out as it renders). */
+function owned(initial: number[]) {
+  const owner = { set: (_: number[]) => {}, redraw: () => {} };
+  function Owner(): JSX.Element {
+    const [value, setValue] = useState(initial);
+    const [, count] = useReducer((n: number) => n + 1, 0);
+    owner.set = setValue;
+    owner.redraw = count;
+    return (
+      <SilkProvider>
+        <Slider size="md" accessibilityLabel="Owned" value={value} onValueChange={setValue} />
+      </SilkProvider>
+    );
+  }
+  render(<Owner />);
+  layOut();
+  return owner;
+}
+
+const boxes = () => screen.getAllByRole('slider').map((thumb) => thumb.parentElement!.style.transform);
+
+test('a thumb the owner adds sits at min until the UI thread has its value, then at it', () => {
+  const owner = owned([30]);
+  mocked.deferred = [];
+  act(() => owner.set([30, 70]));
+  expect(boxes()).toEqual(['translateX(54px)', 'translateX(0px)']);
+  act(() => mocked.deferred!.forEach((run) => run()));
+  act(() => owner.redraw());
+  expect(boxes()).toEqual(['translateX(54px)', 'translateX(126px)']);
+  mocked.deferred = undefined;
+  act(() => owner.set([30]));
+  expect(boxes()).toEqual(['translateX(54px)']);
+});
+
+test('values from React that a slide overtakes on the UI thread are left to the slide', () => {
+  const owner = owned([50]);
+  mocked.deferred = [];
+  act(() => owner.set([30]));
+  // Before the UI thread takes 30, a finger takes the thumb to 80, and the owner takes that.
+  pan('onBegin')(at(80));
+  act(() => mocked.deferred!.forEach((run) => run()));
+  mocked.deferred = undefined;
+  pan('onDeactivate')({ canceled: false, velocityX: 0 });
+  expect(values()).toEqual([80]);
+  act(() => owner.redraw());
+  expect(boxes()).toEqual(['translateX(144px)']);
 });
 
 test('native: a slide starts where the finger is as it moves a touch slop', () => {
