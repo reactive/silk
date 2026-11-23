@@ -23,6 +23,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { gestureConventions, releaseVelocity } from '../../gesture/conventions.js';
 import { springTo } from '../../motion/springTo.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
+import { WEB } from '../../web/host.js';
 import { dragStep, pressIn, releaseCloses } from './sheetPhysics.js';
 
 const { touchSlop } = gestureConventions;
@@ -201,14 +202,14 @@ export function useSheetDrag({
   });
 
   // Dependency arrays let a web build without the worklets Babel plugin (Storybook's SWC build, or
-  // an app's) run these styles; their only inputs are the shared values listed.
+  // an app's) run these styles; their only inputs are the shared values listed. Native warns on them.
   const panelMotion = useAnimatedStyle(
     () => ({ transform: [{ translateY: offset.value }] }),
-    [offset],
+    WEB ? [offset] : undefined,
   );
   const veilMotion = useAnimatedStyle(
     () => ({ opacity: interpolate(offset.value, [0, height.value], [1, 0], 'clamp') }),
-    [offset, height],
+    WEB ? [offset, height] : undefined,
   );
 
   return {

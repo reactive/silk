@@ -7,7 +7,7 @@ import { ScrollView, View } from 'react-native';
 import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
 import { placeFloating } from '../overlay/place.js';
 import { type SilkDefaults, SilkProvider } from '../theme/SilkProvider.js';
-import { BaseDialog as Dialog } from './Dialog/BaseDialog.js';
+import { BaseDialog } from './Dialog/BaseDialog.js';
 import { Listbox } from './Listbox.js';
 import { Popover } from './Popover.js';
 import { Pressable } from './Pressable.js';
@@ -60,12 +60,12 @@ function DialogHarness({
   return (
     <SilkProvider theme={theme} defaults={defaults}>
       <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => setOpen(true)} />
-      <Dialog.Root open={open} onOpenChange={setOpen}>
-        <Dialog.Content placement={placement} testID="panel">
-          <Dialog.Title>Settings</Dialog.Title>
+      <BaseDialog.Root open={open} onOpenChange={setOpen}>
+        <BaseDialog.Content placement={placement} testID="panel">
+          <BaseDialog.Title>Settings</BaseDialog.Title>
           <Pressable accessibilityRole="button" accessibilityLabel="Inside" />
-        </Dialog.Content>
-      </Dialog.Root>
+        </BaseDialog.Content>
+      </BaseDialog.Root>
     </SilkProvider>
   );
 }
@@ -121,16 +121,16 @@ function DialogWithPopover({
   const anchor = useRef<ComponentRef<typeof View>>(null);
   return (
     <SilkProvider theme={theme}>
-      <Dialog.Root open={open} onOpenChange={onDialogChange}>
-        <Dialog.Content>
+      <BaseDialog.Root open={open} onOpenChange={onDialogChange}>
+        <BaseDialog.Content>
           <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel="Strength" />
           <Popover.Root open={popoverOpen} onOpenChange={onPopoverChange} anchor={anchor}>
             <Popover.Content testID="popover">
               <Pressable accessibilityRole="button" accessibilityLabel="1500" />
             </Popover.Content>
           </Popover.Root>
-        </Dialog.Content>
-      </Dialog.Root>
+        </BaseDialog.Content>
+      </BaseDialog.Root>
     </SilkProvider>
   );
 }
@@ -220,16 +220,16 @@ dialogTest('A tooltip inside a Dialog opens in its Modal, and Escape closes only
   const changes: string[] = [];
   render(
     <SilkProvider theme={theme}>
-      <Dialog.Root open onOpenChange={(open) => changes.push(`dialog ${open}`)}>
-        <Dialog.Content>
+      <BaseDialog.Root open onOpenChange={(open) => changes.push(`dialog ${open}`)}>
+        <BaseDialog.Content>
           <Tooltip.Root defaultOpen onOpenChange={(open) => changes.push(`tooltip ${open}`)}>
             <Tooltip.Trigger>
               <Text>Moves on the board</Text>
             </Tooltip.Trigger>
             <Tooltip.Content>Only in Explore</Tooltip.Content>
           </Tooltip.Root>
-        </Dialog.Content>
-      </Dialog.Root>
+        </BaseDialog.Content>
+      </BaseDialog.Root>
     </SilkProvider>,
   );
   const tooltip = screen.getByRole('tooltip');

@@ -52,15 +52,13 @@ interface SpringToAnimation extends AnimationObject<number> {
 export function springTo(
   target: number,
   spring: Spring,
-  {
-    velocity,
-    overshootClamping = false,
-    precision = SUBPIXEL,
-    reduceMotion,
-  }: SpringToOptions,
+  { velocity, overshootClamping = false, precision, reduceMotion }: SpringToOptions,
   callback?: AnimationCallback,
 ): number {
   'worklet';
+  // Not a parameter default: on the UI thread a worklet's captured constants
+  // are bound in its body, after its defaults run.
+  const stopWithin = precision ?? SUBPIXEL;
   return defineAnimation<SpringToAnimation>(target, () => {
     'worklet';
     return {
@@ -77,7 +75,7 @@ export function springTo(
       onFrame(animation, now) {
         const state = springAt(spring, animation.start, (now - animation.startTime) / 1000);
         const crossed = overshootClamping && Math.sign(state.offset) === animation.overshootSign;
-        if (crossed || springAtRest(state, precision)) {
+        if (crossed || springAtRest(state, stopWithin)) {
           animation.current = target;
           animation.velocity = 0;
           return true;
