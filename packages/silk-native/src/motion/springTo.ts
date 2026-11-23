@@ -17,7 +17,11 @@ export interface SpringToOptions {
    * replaces on the same value, else 0.
    */
   readonly velocity?: number;
-  /** Stop at the target instead of overshooting it: for surfaces held to a screen edge. */
+  /**
+   * Stop on reaching the target instead of overshooting it: for surfaces held
+   * to a screen edge. Started on the target with a speed, it follows the speed
+   * out first and stops on the way back.
+   */
   readonly overshootClamping?: boolean;
   /** How close to the target (and how slow) it stops. Default 0.25, for a value in pixels. */
   readonly precision?: number;
@@ -27,8 +31,8 @@ export interface SpringToOptions {
 
 interface SpringToAnimation extends AnimationObject<number> {
   start: SpringState;
-  /** The side of the target it starts on; on the target, the side its speed heads to first. */
-  side: number;
+  /** The sign of the offset past the target, where a clamped spring stops. */
+  overshootSign: number;
   startTime: number;
   velocity: number;
 }
@@ -61,14 +65,14 @@ export function springTo(
         const carried = (previous as { velocity?: unknown } | undefined)?.velocity;
         const speed = velocity ?? (typeof carried === 'number' ? carried : 0);
         animation.start = { offset: from - target, velocity: speed };
-        animation.side = Math.sign(from - target) || Math.sign(speed);
+        animation.overshootSign = -(Math.sign(from - target) || Math.sign(speed));
         animation.startTime = now;
         animation.velocity = speed;
         animation.current = from;
       },
       onFrame(animation, now) {
         const state = springAt(spring, animation.start, (now - animation.startTime) / 1000);
-        const crossed = overshootClamping && Math.sign(state.offset) === -animation.side;
+        const crossed = overshootClamping && Math.sign(state.offset) === animation.overshootSign;
         if (crossed || springAtRest(state, precision)) {
           animation.current = target;
           animation.velocity = 0;
@@ -81,7 +85,7 @@ export function springTo(
       toValue: target,
       current: target,
       start: { offset: 0, velocity: 0 },
-      side: 0,
+      overshootSign: 0,
       startTime: 0,
       velocity: 0,
       callback,

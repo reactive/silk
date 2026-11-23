@@ -7,7 +7,7 @@ import { SilkProvider } from '../theme/SilkProvider.js';
 
 // Reanimated's easings are its own objects: tag them to see which one was built, from what.
 rs.mock('react-native-reanimated', () => ({
-  linear: (...points: number[]) => ({ linear: points }),
+  linear: (...points: unknown[]) => ({ linear: points }),
   cubicBezier: (...points: number[]) => ({ cubicBezier: points }),
 }));
 
@@ -17,6 +17,7 @@ const theme = createTheme({
   semantic: {
     motion: {
       fast: { durationMs: 120, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+      normal: { durationMs: 200, easing: 'linear(0, 0.5 25%, 1)' },
       slow: { durationMs: 400, easing: 'ease-out' },
     },
   },
@@ -45,4 +46,8 @@ test('a cubic-bezier easing becomes Reanimated’s object; a named one stays a s
     easing: { cubicBezier: [0.2, 0, 0, 1] },
   });
   expect(motionOf('slow')).toEqual({ durationMs: 400, easing: 'ease-out' });
+});
+
+test('a linear() easing keeps its positioned stops', () => {
+  expect(motionOf('normal').easing).toEqual({ linear: [0, [0.5, '25%'], 1] });
 });

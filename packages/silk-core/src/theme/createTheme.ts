@@ -281,9 +281,9 @@ const MAX_BOUNCE = 0.5;
 
 /**
  * Themes change a spring's values, never its meaning: each visually arrives
- * in 50 to 2000 ms (not seconds) with a bounce from 0 to 0.5, `smooth`
- * never overshoots, and small things move no slower
- * than surfaces (snappy <= brisk <= smooth).
+ * in 50 to 2000 ms (not seconds) with a bounce from 0 to 0.5, `smooth` never
+ * overshoots, and small things move no slower than surfaces (snappy <= brisk
+ * <= smooth).
  */
 function checkSprings(motion: MotionTokens): void {
   let last = 0;

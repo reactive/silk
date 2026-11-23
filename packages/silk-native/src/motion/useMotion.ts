@@ -17,8 +17,7 @@ const springEasings = new WeakMap<readonly number[], CSSTransitionTimingFunction
 
 /**
  * A spring's sampled curve as Reanimated's `linear()` easing, built once per
- * curve: `sampleSpring` caches the array, so it keys this cache directly,
- * with no string to build and parse back each render.
+ * curve: `sampleSpring` returns the same array for a spring, so it is the key.
  */
 function springEasing(progress: readonly number[]): CSSTransitionTimingFunction {
   let easing = springEasings.get(progress);
@@ -29,6 +28,16 @@ function springEasing(progress: readonly number[]): CSSTransitionTimingFunction 
   return easing;
 }
 
+type LinearStop = Parameters<typeof linear>[number];
+
+/** One `linear()` stop: an output, optionally with its input positions (`0.5 25%`). */
+function linearStop(stop: string): LinearStop {
+  const [output, ...positions] = stop.split(/\s+/);
+  return positions.length
+    ? ([Number(output), ...positions] as LinearStop)
+    : Number(output);
+}
+
 /**
  * A CSS easing as Reanimated's timing function: it takes the named curves as
  * strings, but `cubic-bezier(…)` and `linear(…)` only as its own objects.
@@ -37,10 +46,12 @@ function easingOf(css: string): CSSTransitionTimingFunction {
   let easing = easings.get(css);
   if (!easing) {
     const call = /^(cubic-bezier|linear)\((.*)\)$/.exec(css);
-    const numbers = call ? call[2]!.split(',').map(Number) : [];
-    if (call?.[1] === 'linear') easing = linear(...numbers);
-    else if (call) easing = cubicBezier(numbers[0]!, numbers[1]!, numbers[2]!, numbers[3]!);
-    else easing = css as CSSTransitionTimingFunction;
+    const args = call ? call[2]!.split(',').map((arg) => arg.trim()) : [];
+    if (call?.[1] === 'linear') easing = linear(...args.map(linearStop));
+    else if (call) {
+      const [x1, y1, x2, y2] = args.map(Number);
+      easing = cubicBezier(x1!, y1!, x2!, y2!);
+    } else easing = css as CSSTransitionTimingFunction;
     easings.set(css, easing);
   }
   return easing;
