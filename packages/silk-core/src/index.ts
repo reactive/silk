@@ -9,6 +9,7 @@ export type {
   MeasureName,
   MotionName,
   MotionRecord,
+  MotionTokens,
   Palette,
   PaletteScale,
   PaletteStep,
@@ -16,6 +17,8 @@ export type {
   SemanticTokens,
   ShadowLayer,
   SpaceStep,
+  Spring,
+  SpringName,
   Theme,
   ToneName,
   TypographyRecord,
@@ -42,16 +45,26 @@ export {
   grayScaleDark,
   greenScale,
   greenScaleDark,
+  isSpringName,
   motionNames,
   redScale,
   redScaleDark,
   sharedSemanticScales,
   spaceSteps,
   spaceVariantSteps,
+  springNames,
   toneNames,
 } from './tokens/index.js';
 
 export { oklch } from './color/index.js';
+
+export {
+  sampleSpring,
+  springAt,
+  springAtRest,
+  type SpringSamples,
+  type SpringState,
+} from './motion/spring.js';
 
 export {
   checkThemeContrast,

@@ -4,8 +4,9 @@ import type {
   FontFamilyName,
   MeasureName,
   MotionName,
-  MotionRecord,
+  MotionTokens,
   RadiusName,
+  SpringName,
   SemanticTokens,
   ShadowLayer,
   SpaceStep,
@@ -128,12 +129,32 @@ export const defaultShadow: Readonly<Record<ElevationName, ShadowLayer>> = {
   },
 };
 
-export const defaultMotion: Readonly<Record<MotionName, MotionRecord>> = {
+export const defaultMotion: MotionTokens = {
+  snappy: { durationMs: 250, bounce: 0.15 },
+  brisk: { durationMs: 300, bounce: 0.1 },
+  smooth: { durationMs: 400, bounce: 0 },
   fast: { durationMs: 120, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
   normal: { durationMs: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
   slow: { durationMs: 320, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
   loop: { durationMs: 1200, easing: 'linear' },
 };
+
+// Exhaustive by construction: adding a SpringName fails to compile until listed.
+const springNameSet: Readonly<Record<SpringName, true>> = {
+  snappy: true,
+  brisk: true,
+  smooth: true,
+};
+
+/** The spring motion names, fastest first — renderers iterate this instead of restating the keys. */
+export const springNames: readonly SpringName[] = Object.keys(
+  springNameSet,
+) as SpringName[];
+
+/** Whether a motion name is a spring (else a duration and an easing). */
+export function isSpringName(name: MotionName): name is SpringName {
+  return name in springNameSet;
+}
 
 /** Every motion name — renderers iterate this instead of restating the keys. */
 export const motionNames: readonly MotionName[] = Object.keys(

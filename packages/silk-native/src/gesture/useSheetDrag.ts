@@ -13,19 +13,24 @@ import {
   cancelAnimation,
   interpolate,
   measure,
-  ReduceMotion,
   scrollTo,
   type SharedValue,
   useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { dragStep, pressIn, releaseCloses, releaseSpeed, SHEET_SPRING } from './physics.js';
+import { springTo } from '../motion/springTo.js';
+import { useTheme } from '../theme/ThemeProvider.js';
+import {
+  dragStep,
+  gestureThresholds,
+  pressIn,
+  releaseCloses,
+  releaseVelocity,
+} from './physics.js';
 
-/** How far a press moves (Android's touch slop) before it is taken as dragging. */
-const SLOP = 8;
+const SLOP = gestureThresholds.touchSlop;
 
 type Pan = ReturnType<typeof usePanGesture>;
 
@@ -72,6 +77,7 @@ export function useSheetDrag({
   readonly reduced: boolean;
 }): SheetDrag {
   const screen = useWindowDimensions();
+  const smooth = useTheme().theme.semantic.motion.smooth;
 
   const [presented, setPresented] = useState(open);
   if (open && !presented) setPresented(true);
@@ -82,6 +88,8 @@ export function useSheetDrag({
   // A finger holds the sheet: React's answers wait for its release.
   const dragging = useSharedValue(false);
   const reduceMotion = useSharedValue(reduced);
+  // The gesture's worklets are made once: they read the theme's spring from here.
+  const spring = useSharedValue(smooth);
   // Closed by its owner, or by a release until the owner answers: a release
   // then slides it out, however short.
   const shut = useSharedValue(!open);
@@ -99,6 +107,7 @@ export function useSheetDrag({
   useLayoutEffect(() => {
     latest.current = { open, onOpenChange };
     reduceMotion.value = reduced;
+    spring.value = smooth;
     shut.value = !open;
   });
   const [requestClose] = useState(() => () => {
@@ -109,15 +118,13 @@ export function useSheetDrag({
     if (!latest.current.open) setPresented(false);
   });
 
-  const springTo = (to: number, velocity: number, done?: () => void) => {
+  // On the theme's `smooth` spring, never past its rest at the bottom edge.
+  const settle = (to: number, velocity: number, done?: () => void) => {
     'worklet';
-    offset.value = withSpring(
+    offset.value = springTo(
       to,
-      {
-        ...SHEET_SPRING,
-        velocity,
-        reduceMotion: reduceMotion.value ? ReduceMotion.Always : ReduceMotion.Never,
-      },
+      spring.value,
+      { velocity, overshootClamping: true, reduceMotion: reduceMotion.value },
       (finished?: boolean) => {
         'worklet';
         if (finished && done) done();
@@ -128,7 +135,7 @@ export function useSheetDrag({
   const slideOut = (velocity: number) => {
     'worklet';
     sliding.value = true;
-    springTo(height.value, Math.max(0, velocity), () => {
+    settle(height.value, Math.max(0, velocity), () => {
       'worklet';
       sliding.value = false;
       scheduleOnRN(unmountIfClosed);
@@ -141,7 +148,7 @@ export function useSheetDrag({
     if (dragging.value) return;
     if (open) {
       sliding.value = false;
-      springTo(0, 0);
+      settle(0, 0);
     } else if (!sliding.value) slideOut(0);
   }, [open]);
   // Asked to close but kept open: back to rest, from wherever it got to
@@ -149,7 +156,7 @@ export function useSheetDrag({
   useLayoutEffect(() => {
     if (closeAsks > 0 && latest.current.open && !dragging.value) {
       sliding.value = false;
-      springTo(0, 0);
+      settle(0, 0);
     }
   }, [closeAsks]);
 
@@ -182,7 +189,7 @@ export function useSheetDrag({
       dragging.value = false;
       const velocity = event.canceled
         ? 0
-        : releaseSpeed(event.velocityY, Date.now() - lastMoveAt.value);
+        : releaseVelocity(event.velocityY, Date.now() - lastMoveAt.value);
       if (shut.value) {
         // Caught while sliding out after closing: it goes on out.
         slideOut(velocity);
@@ -194,7 +201,7 @@ export function useSheetDrag({
         shut.value = true;
         slideOut(velocity);
         scheduleOnRN(requestClose);
-      } else springTo(0, velocity);
+      } else settle(0, velocity);
     },
   });
 

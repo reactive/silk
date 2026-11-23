@@ -7,7 +7,7 @@ export interface SheetScrollViewProps extends ScrollViewProps {
 }
 
 /**
- * The `/gesture` entry's `Dialog`: the root `Dialog`'s parts, whose bottom
+ * The package's `Dialog`: the base `Dialog`'s parts, whose bottom
  * sheet drags on native, and `ScrollView` for a sheet's content (one per
  * sheet), which hands a pull-down at its top to the sheet.
  */

@@ -1,9 +1,11 @@
 import {
   compactSpace,
   fontFamilyNames,
+  isSpringName,
   measureNames,
   motionNames,
   oklch,
+  sampleSpring,
   spaceSteps,
   toneNames,
   type ShadowLayer,
@@ -114,9 +116,17 @@ function buildThemeCssVars(theme: Theme): CssVarMap {
   }
 
   for (const name of motionNames) {
-    const m = motion[name];
-    vars[`--silk-motion-${name}-duration-ms`] = `${m.durationMs}ms`;
-    vars[`--silk-motion-${name}-easing`] = m.easing;
+    if (isSpringName(name)) {
+      // CSS has no spring: it plays the spring from rest as a `linear()` easing,
+      // over the time it takes to settle (longer than the token's duration when it bounces).
+      const { durationMs, progress } = sampleSpring(motion[name]);
+      vars[`--silk-motion-${name}-duration-ms`] = `${durationMs}ms`;
+      vars[`--silk-motion-${name}-easing`] = `linear(${progress.join(', ')})`;
+    } else {
+      const m = motion[name];
+      vars[`--silk-motion-${name}-duration-ms`] = `${m.durationMs}ms`;
+      vars[`--silk-motion-${name}-easing`] = m.easing;
+    }
   }
 
   for (const name of ['raised', 'overlay'] as const) {

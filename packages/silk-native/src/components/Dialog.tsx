@@ -42,7 +42,7 @@ interface DialogContextValue {
 
 const DialogContext = createContext<DialogContextValue | null>(null);
 
-/** The dialog's state, for its parts here and in the `/gesture` entry (not exported from the package). */
+/** The dialog's state, for its parts here and in `gesture/` (not exported from the package). */
 export function useDialogContext(part: string): DialogContextValue {
   const dialog = useContext(DialogContext);
   if (!dialog) throw new Error(`Dialog.${part} must be used within Dialog.Root`);
@@ -88,8 +88,7 @@ export interface DialogContentProps
  * wrap long content in a ScrollView. On the web, a popover or tooltip opened
  * inside it opens over it (`FloatingHostContext`), and an Escape something
  * inside takes (prevents) closes that, not the dialog (`useTakenEscape`).
- * For a sheet that drags down to close, import `Dialog` from
- * `@reactive/silk-native/gesture` instead.
+ * The package's `Dialog` (`gesture/Dialog.ts`) adds the bottom sheet's drag.
  */
 function DialogContent({
   size,
@@ -171,7 +170,7 @@ export interface DialogShellProps {
 
 /**
  * @internal The part of a dialog that isn't its panel, shared by `Dialog` and
- * the `/gesture` sheet: the `Modal` named by the dialog's title, the veil and
+ * the dragging sheet: the `Modal` named by the dialog's title, the veil and
  * its press catcher, and on the web the host the floating layers (`Popover`,
  * `Tooltip`) inside the panel open into, over it, with Escape left to a layer
  * that takes it (`useTakenEscape`).

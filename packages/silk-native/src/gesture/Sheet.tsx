@@ -1,5 +1,11 @@
 import { type ComponentRef, type JSX, type ReactNode, use } from 'react';
-import { type LayoutChangeEvent, ScrollView as RNScrollView, StyleSheet, View } from 'react-native';
+import {
+  type LayoutChangeEvent,
+  ScrollView as RNScrollView,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import {
   GestureDetector,
   GestureHandlerRootView,
@@ -62,7 +68,8 @@ function DraggableSheet({
       animationType="none"
       onClose={sheet.requestClose}
       veil={[veil, overlayStyle, styles.clearVeil]}
-      catcher={[veil, overlayStyle, sheet.veilMotion]}
+      // Its Catcher is an Animated.View, which takes the animated style the shell's type doesn't name.
+      catcher={[veil, overlayStyle, sheet.veilMotion as unknown as ViewStyle]}
       Catcher={Animated.View}
       Root={GestureRoot}
     >

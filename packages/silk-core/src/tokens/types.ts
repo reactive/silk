@@ -76,15 +76,43 @@ export interface TypographyRecord {
 }
 
 /**
- * `fast` / `normal` / `slow` are one-shot transition durations.
- * `loop` is one cycle of continuous indeterminate feedback (shimmer, spin) —
- * an order of magnitude longer, and linear so cycles join seamlessly.
+ * Springs move things; durations fade them. The name picks the kind:
+ *
+ * - `snappy` / `brisk` / `smooth` are springs, for anything that changes
+ *   position or size (a thumb, a row, a sheet).
+ * - `fast` / `normal` / `slow` are one-shot durations, for color, opacity and
+ *   shadow fades.
+ * - `loop` is one cycle of continuous indeterminate feedback (shimmer, spin) —
+ *   an order of magnitude longer, and linear so cycles join seamlessly.
  */
-export type MotionName = 'fast' | 'normal' | 'slow' | 'loop';
+export type SpringName = 'snappy' | 'brisk' | 'smooth';
+export type MotionName = SpringName | 'fast' | 'normal' | 'slow' | 'loop';
 
+/** A duration and an easing curve (CSS syntax, which native renderers parse). */
 export interface MotionRecord {
   readonly durationMs: number;
   readonly easing: string;
+}
+
+/**
+ * A spring as people perceive it (the same model as SwiftUI's and Motion's
+ * `duration`/`bounce` springs): a damped oscillator of mass 1.
+ */
+export interface Spring {
+  /** Time to visually reach the target (one period, 2π/ω); a bounce settles after it. */
+  readonly durationMs: number;
+  /** 0 never overshoots (critically damped); towards 1 is springier. Below 1. */
+  readonly bounce: number;
+}
+
+export interface MotionTokens
+  extends Readonly<Record<Exclude<MotionName, SpringName>, MotionRecord>> {
+  /** Small, light things: thumbs, chips, toggles, indicators. */
+  readonly snappy: Spring;
+  /** Items trading places, arriving or leaving in a layout. */
+  readonly brisk: Spring;
+  /** Surfaces that carry content: sheets, drawers, panels. Never overshoots. */
+  readonly smooth: Spring & { readonly bounce: 0 };
 }
 
 /**
@@ -128,7 +156,7 @@ export interface SemanticTokens {
    * stays platform-neutral and tracks the font a renderer actually resolves.
    */
   readonly measure: Readonly<Record<MeasureName, number>>;
-  readonly motion: Readonly<Record<MotionName, MotionRecord>>;
+  readonly motion: MotionTokens;
   readonly shadow: Readonly<Record<ElevationName, ShadowLayer>>;
   /** Shared focus-ring width/offset — color remains per-tone (`tones.*.focusRing`). */
   readonly focusRing: FocusRingGeometry;

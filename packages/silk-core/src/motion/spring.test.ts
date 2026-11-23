@@ -1,0 +1,58 @@
+import { expect, test } from '@rstest/core';
+import { defaultMotion } from '../tokens/scales.js';
+import { sampleSpring, springAt, springAtRest } from './spring.js';
+
+const { snappy, brisk, smooth } = defaultMotion;
+
+test('springAt starts where it was told, at the speed it was told', () => {
+  const { offset, velocity } = springAt(snappy, { offset: 10, velocity: 3 }, 0);
+  expect(offset).toBe(10);
+  expect(velocity).toBeCloseTo(3);
+});
+
+test('springAt matches stepping the stiffness and damping form', () => {
+  // m·x'' = -k·x - c·x', k = ω², c = 2ζω, ω = 2π / duration
+  for (const spring of [snappy, brisk, smooth]) {
+    const omega = (2 * Math.PI * 1000) / spring.durationMs;
+    const k = omega * omega;
+    const c = 2 * (1 - spring.bounce) * omega;
+    let x = 100;
+    let v = -50;
+    const dt = 1 / 20000;
+    for (let i = 0; i < 0.2 / dt; i++) {
+      v += (-k * x - c * v) * dt;
+      x += v * dt;
+    }
+    expect(springAt(spring, { offset: 100, velocity: -50 }, 0.2).offset).toBeCloseTo(x, 1);
+  }
+});
+
+test('every spring comes to rest at its target', () => {
+  for (const spring of [snappy, brisk, smooth])
+    expect(
+      springAtRest(springAt(spring, { offset: 100, velocity: 0 }, (spring.durationMs / 1000) * 4), 0.25),
+    ).toBe(true);
+});
+
+test('springAt keeps momentum that points away from the target', () => {
+  // Moving away at first, as a fling reversed mid-flight does.
+  expect(springAt(brisk, { offset: 10, velocity: 500 }, 1 / 60).offset).toBeGreaterThan(10);
+});
+
+test('sampleSpring runs from 0 to exactly 1 at 60 fps', () => {
+  const { durationMs, progress } = sampleSpring(smooth);
+  expect(progress[0]).toBe(0);
+  expect(progress.at(-1)).toBe(1);
+  expect(durationMs).toBe(Math.round(((progress.length - 1) / 60) * 1000));
+  // Settling takes longer than the time to (visually) arrive.
+  expect(durationMs).toBeGreaterThan(smooth.durationMs);
+});
+
+test('only a spring with bounce overshoots its target', () => {
+  expect(Math.max(...sampleSpring(smooth).progress)).toBe(1);
+  expect(Math.max(...sampleSpring(snappy).progress)).toBeGreaterThan(1);
+});
+
+test('sampleSpring caches by value, not by object', () => {
+  expect(sampleSpring({ ...brisk })).toBe(sampleSpring(brisk));
+});

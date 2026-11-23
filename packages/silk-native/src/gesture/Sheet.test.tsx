@@ -43,8 +43,24 @@ rs.mock('react-native-gesture-handler', () => ({
 
 rs.mock('react-native-reanimated', () => ({
   default: { View: LaidOutView, createAnimatedComponent: (component: unknown) => component },
-  ReduceMotion: { Always: 'always', Never: 'never' },
   cancelAnimation: () => {},
+  // springTo's animation, started at once: it reports where it went and how fast it began.
+  defineAnimation: (
+    _start: number,
+    factory: () => {
+      toValue: number;
+      velocity: number;
+      callback?: (finished: boolean) => void;
+      onStart: (animation: object, value: number, now: number, previous?: object) => void;
+    },
+  ) => {
+    const animation = factory();
+    animation.onStart(animation, 0, 0, undefined);
+    mocked.springs.push(animation.toValue);
+    mocked.speeds.push(animation.velocity);
+    if (mocked.finish) animation.callback?.(true);
+    return mocked.finish ? animation.toValue : (mocked.caughtAt ?? animation.toValue);
+  },
   interpolate: () => 1,
   measure: () => mocked.box,
   scrollTo: () => {},
@@ -56,12 +72,6 @@ rs.mock('react-native-reanimated', () => ({
     offset.value = mocked.scrollY;
   },
   useSharedValue: <T,>(value: T) => useRef({ value }).current,
-  withSpring: (to: number, config: { velocity: number }, done?: (finished: boolean) => void) => {
-    mocked.springs.push(to);
-    mocked.speeds.push(config.velocity);
-    if (mocked.finish) done?.(true);
-    return mocked.finish ? to : mocked.caughtAt ?? to;
-  },
 }));
 
 rs.mock('react-native-worklets', () => ({
@@ -76,7 +86,7 @@ function LaidOutView({ onLayout, ...props }: ComponentProps<typeof View>) {
   return <View {...props} />;
 }
 
-const { Dialog } = await import('./index.js');
+const { Dialog } = await import('./Dialog.js');
 
 const theme = createTheme({ colorScheme: 'dark' });
 

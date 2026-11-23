@@ -2,11 +2,13 @@ import {
   defaultPalette,
   defaultPaletteDark,
   sharedSemanticScales,
+  springNames,
 } from '../tokens/index.js';
 import type {
   ColorScheme,
   DeepPartial,
   InteractionToneColors,
+  MotionTokens,
   Palette,
   PaletteScale,
   SemanticTokens,
@@ -255,6 +257,9 @@ function mergeSemantic(
     },
     measure: { prose: override.measure?.prose ?? base.measure.prose },
     motion: {
+      snappy: { ...base.motion.snappy, ...override.motion?.snappy },
+      brisk: { ...base.motion.brisk, ...override.motion?.brisk },
+      smooth: { ...base.motion.smooth, ...override.motion?.smooth },
       fast: { ...base.motion.fast, ...override.motion?.fast },
       normal: { ...base.motion.normal, ...override.motion?.normal },
       slow: { ...base.motion.slow, ...override.motion?.slow },
@@ -269,6 +274,24 @@ function mergeSemantic(
       offset: override.focusRing?.offset ?? base.focusRing.offset,
     },
   };
+}
+
+/**
+ * Themes change a spring's values, never its meaning: each settles in 50 to
+ * 2000 ms (not seconds) with a bounce in [0, 1), `smooth` never overshoots,
+ * and small things move no slower than surfaces (snappy <= brisk <= smooth).
+ */
+function checkSprings(motion: MotionTokens): void {
+  let last = 0;
+  for (const name of springNames) {
+    const { durationMs, bounce } = motion[name];
+    if (
+      !(durationMs >= 50 && durationMs <= 2000 && durationMs >= last) ||
+      !(bounce >= 0 && bounce < (name === 'smooth' ? 1e-9 : 1))
+    )
+      throw new RangeError(`motion.${name} changes meaning: ${durationMs} ms, bounce ${bounce}`);
+    last = durationMs;
+  }
 }
 
 /**
@@ -292,6 +315,7 @@ export function createTheme(options: CreateThemeOptions = {}): Theme {
   };
 
   const semantic = mergeSemantic(derived, options.semantic);
+  checkSprings(semantic.motion);
 
   return { colorScheme, palette, semantic };
 }
