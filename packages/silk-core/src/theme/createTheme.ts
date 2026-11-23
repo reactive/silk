@@ -276,12 +276,13 @@ function mergeSemantic(
   };
 }
 
-const MAX_BOUNCE = 0.9;
+/** Springier springs take seconds to settle: 0.5 on a 250 ms spring settles in about 0.55 s. */
+const MAX_BOUNCE = 0.5;
 
 /**
  * Themes change a spring's values, never its meaning: each visually arrives
- * in 50 to 2000 ms (not seconds) with a bounce from 0 to 0.9 (springier ones
- * barely settle), `smooth` never overshoots, and small things move no slower
+ * in 50 to 2000 ms (not seconds) with a bounce from 0 to 0.5, `smooth`
+ * never overshoots, and small things move no slower
  * than surfaces (snappy <= brisk <= smooth).
  */
 function checkSprings(motion: MotionTokens): void {

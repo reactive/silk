@@ -205,7 +205,8 @@ export function useSheetDrag({
     },
   });
 
-  // Dependency arrays let the web run without the worklets Babel plugin (Storybook builds with SWC).
+  // Dependency arrays let a web build without the worklets Babel plugin (Storybook's SWC build, or
+  // an app's) run these styles; their only inputs are the shared values listed.
   const panelMotion = useAnimatedStyle(
     () => ({ transform: [{ translateY: offset.value }] }),
     [offset],

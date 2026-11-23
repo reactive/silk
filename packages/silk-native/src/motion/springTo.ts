@@ -27,6 +27,8 @@ export interface SpringToOptions {
 
 interface SpringToAnimation extends AnimationObject<number> {
   start: SpringState;
+  /** The side of the target it starts on; on the target, the side its speed heads to first. */
+  side: number;
   startTime: number;
   velocity: number;
 }
@@ -59,15 +61,14 @@ export function springTo(
         const carried = (previous as { velocity?: unknown } | undefined)?.velocity;
         const speed = velocity ?? (typeof carried === 'number' ? carried : 0);
         animation.start = { offset: from - target, velocity: speed };
+        animation.side = Math.sign(from - target) || Math.sign(speed);
         animation.startTime = now;
         animation.velocity = speed;
         animation.current = from;
       },
       onFrame(animation, now) {
         const state = springAt(spring, animation.start, (now - animation.startTime) / 1000);
-        // Signs, not a product: a start on the target (offset 0) still stops once it leaves.
-        const crossed =
-          overshootClamping && Math.sign(state.offset) !== Math.sign(animation.start.offset);
+        const crossed = overshootClamping && Math.sign(state.offset) === -animation.side;
         if (crossed || springAtRest(state, precision)) {
           animation.current = target;
           animation.velocity = 0;
@@ -80,6 +81,7 @@ export function springTo(
       toValue: target,
       current: target,
       start: { offset: 0, velocity: 0 },
+      side: 0,
       startTime: 0,
       velocity: 0,
       callback,

@@ -13,8 +13,21 @@ export interface Motion {
 }
 
 const easings = new Map<string, CSSTransitionTimingFunction>();
-/** Keyed by `sampleSpring`'s curve, which it caches per spring. */
 const springEasings = new WeakMap<readonly number[], CSSTransitionTimingFunction>();
+
+/**
+ * A spring's sampled curve as Reanimated's `linear()` easing, built once per
+ * curve: `sampleSpring` caches the array, so it keys this cache directly,
+ * with no string to build and parse back each render.
+ */
+function springEasing(progress: readonly number[]): CSSTransitionTimingFunction {
+  let easing = springEasings.get(progress);
+  if (!easing) {
+    easing = linear(...progress);
+    springEasings.set(progress, easing);
+  }
+  return easing;
+}
 
 /**
  * A CSS easing as Reanimated's timing function: it takes the named curves as
@@ -46,9 +59,7 @@ export function useMotion(name: MotionName): Motion {
   const reduced = useMotionPreference() === 'reduced';
   if (isSpringName(name)) {
     const { durationMs, progress } = sampleSpring(motion[name]);
-    let easing = springEasings.get(progress);
-    if (!easing) springEasings.set(progress, (easing = linear(...progress)));
-    return { durationMs: reduced ? 0 : durationMs, easing };
+    return { durationMs: reduced ? 0 : durationMs, easing: springEasing(progress) };
   }
   const { durationMs, easing } = motion[name];
   return { durationMs, easing: easingOf(easing) };

@@ -64,8 +64,18 @@ test('it passes reduced motion on to Reanimated, and leaves it to the system by 
   expect(run(springTo(0, smooth)).reduceMotion).toBeUndefined();
 });
 
-test('a clamped spring starting on its target stops there instead of leaving it', () => {
-  const animation = start(run(springTo(0, smooth, { velocity: -500, overshootClamping: true })), 0);
-  expect(animation.onFrame(animation, 16)).toBe(true);
-  expect(animation.current).toBe(0);
+test('a clamped spring on its target keeps a speed away from it, then stops on its way back', () => {
+  const fling = { velocity: -2000, overshootClamping: true };
+  const onTarget = start(run(springTo(0, smooth, fling)), 0);
+  const nearTarget = start(run(springTo(0, smooth, fling)), -1e-9);
+  onTarget.onFrame(onTarget, 16);
+  nearTarget.onFrame(nearTarget, 16);
+  expect(onTarget.current).toBeLessThan(-10);
+  expect(onTarget.current).toBeCloseTo(nearTarget.current, 6);
+  let done = false;
+  for (let now = 32; !done && now < 2000; now += 16) {
+    done = onTarget.onFrame(onTarget, now);
+    expect(onTarget.current).toBeLessThanOrEqual(0);
+  }
+  expect(done).toBe(true);
 });

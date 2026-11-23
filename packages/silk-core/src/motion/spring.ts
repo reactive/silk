@@ -55,7 +55,7 @@ export function springAtRest({ offset, velocity }: SpringState, precision: numbe
 
 /** How close to 1 a sampled curve must come before it ends. */
 const SAMPLE_PRECISION = 0.001;
-/** Safety cap, in durations: a bounce of 0.9 (createTheme's limit) settles in about 11. */
+/** Safety cap, in durations: springs within createTheme's bounce limit settle well before it. */
 const MAX_DURATIONS = 12;
 
 export interface SpringSamples {
