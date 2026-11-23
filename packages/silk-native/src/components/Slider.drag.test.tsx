@@ -175,6 +175,29 @@ test('the held thumb follows the finger between steps, by a transform, and sprin
   expect(mocked.speeds).toEqual([500]);
 });
 
+test('a settling thumb whose value its owner keeps springs on at its speed as the owner moves another', () => {
+  let set: (values: number[]) => void = () => {};
+  function Owner(): JSX.Element {
+    const [value, setValue] = useState([0, 100]);
+    set = setValue;
+    return (
+      <SilkProvider>
+        <Slider size="md" accessibilityLabel="Range" value={value} step={25} onValueChange={setValue} />
+      </SilkProvider>
+    );
+  }
+  render(<Owner />);
+  layOut();
+  mocked.unfinished = true;
+  pan('onBegin')(at(0));
+  pan('onUpdate')(at(40));
+  pan('onDeactivate')({ canceled: false, velocityX: 900 });
+  act(() => set([50, 75]));
+  expect(values()).toEqual([50, 75]);
+  expect(mocked.springs).toEqual([50]);
+  expect(mocked.speeds).toEqual([500]);
+});
+
 test('let go after holding still, the thumb settles from rest, however fast it moved', () => {
   render(<Controlled initial={[0]} accessibilityLabel="Strength" step={25} />);
   layOut();
