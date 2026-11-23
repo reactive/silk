@@ -158,8 +158,8 @@ export function useSliderDrag({
       const at = valueUnder(event);
       if (at === undefined) return;
       timer.moved();
-      const held = hold(at);
-      if (held) scheduleOnRN(holding, held.changed, held.place);
+      const moved = hold(at);
+      if (moved) scheduleOnRN(holding, moved.changed, moved.place);
     };
     /** Lets go at `velocity` (px/s along the slider's axis). */
     const end = (velocity: number) => {
