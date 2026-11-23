@@ -4,14 +4,7 @@
  */
 import { type SharedValue, useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
 import { WEB } from '../web/host.js';
-import {
-  along,
-  centerAt,
-  FAR,
-  fractionIn,
-  placeAt,
-  type SliderEdge,
-} from './sliderGeometry.js';
+import { along, centerAt, FAR, fractionIn, placeAt, type SliderEdge } from './sliderGeometry.js';
 
 /** No thumb is moving on its own: each is drawn at its value. */
 export const NONE = -1;

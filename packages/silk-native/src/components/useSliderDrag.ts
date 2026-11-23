@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Insets, LayoutChangeEvent } from 'react-native';
 import { useExclusiveGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useSharedValue } from 'react-native-reanimated';
@@ -92,9 +92,8 @@ export function useSliderDrag({
 
   // The held thumb, rendered (`data-active`); `held` is the same thumb, read at once by the calls below.
   const [active, setActive] = useState<number>();
-  // Counts releases and taps, each of which reruns the effect that brings back values an owner
-  // turned down.
-  const [releases, setReleases] = useState(0);
+  // Counts taps, which, unlike a slide's release, change no other state.
+  const [taps, countTap] = useReducer((n: number) => n + 1, 0);
   // JavaScript's view of the UI thread: the thumb a finger holds, and the values it last placed.
   const held = useRef<number>(undefined);
   const pushed = useRef(values);
@@ -116,24 +115,23 @@ export function useSliderDrag({
       held.current = undefined;
       pushed.current = now;
       setActive(undefined);
-      setReleases((n) => n + 1);
       if (changed) latest.current.onCommit(now);
     },
     tapped: (next: number[]) => {
       pushed.current = next;
-      setReleases((n) => n + 1);
+      countTap();
       latest.current.onChange(next);
       latest.current.onCommit(next);
     },
   }));
 
-  // React's values, once no finger holds a thumb; `releases` reruns it after a release or
-  // a tap, so values an owner turned down come back.
+  // React's values, once no finger holds a thumb; `active` reruns it as a slide ends and
+  // `taps` after a tap, so values an owner turned down come back.
   useLayoutEffect(() => {
     if (held.current !== undefined || sameItems(values, pushed.current)) return;
     pushed.current = values;
     placed.set(values);
-  }, [values, releases]);
+  }, [values, active, taps]);
 
   const slop = useMemo<Insets>(
     () =>
