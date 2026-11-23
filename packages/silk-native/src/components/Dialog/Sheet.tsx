@@ -1,4 +1,4 @@
-import { type ComponentRef, type JSX, type ReactNode, type Ref, use } from 'react';
+import { type ComponentRef, type JSX, type Ref, use } from 'react';
 import {
   type LayoutChangeEvent,
   ScrollView as RNScrollView,
@@ -7,11 +7,7 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import {
-  GestureDetector,
-  GestureHandlerRootView,
-  ScrollView as GHScrollView,
-} from 'react-native-gesture-handler';
+import { GestureDetector, ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import Animated, { useScrollOffset } from 'react-native-reanimated';
 import { assignRef } from '../assignRef.js';
 import {
@@ -71,7 +67,6 @@ function DraggableSheet({
       // Its Catcher is an Animated.View, which takes the animated style the shell's type doesn't name.
       catcher={[veil, overlayStyle, sheet.veilMotion as unknown as ViewStyle]}
       Catcher={Animated.View}
-      Root={GestureRoot}
     >
       <GestureDetector gesture={sheet.pan}>
         <Animated.View
@@ -89,11 +84,6 @@ function DraggableSheet({
       </GestureDetector>
     </DialogShell>
   );
-}
-
-/** A Modal is a window of its own on Android, so gestures need their own root in it. */
-function GestureRoot({ children }: { readonly children: ReactNode }) {
-  return <GestureHandlerRootView style={styles.fill}>{children}</GestureHandlerRootView>;
 }
 
 export interface SheetScrollViewProps extends ScrollViewProps {
@@ -133,7 +123,6 @@ function SheetScroll({
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   // The veil lays out the panel, with the caller's overlayStyle; its color
   // fades with the sheet's offset, on the press catcher.
   clearVeil: { backgroundColor: 'transparent' },

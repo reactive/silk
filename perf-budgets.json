@@ -31,7 +31,7 @@
       "Dialog": 5800,
       "Popover": 9800,
       "Listbox": 4400,
-      "Slider": 5400,
+      "Slider": 7800,
       "Tooltip": 11300
     },
     "isolatedGzip": {

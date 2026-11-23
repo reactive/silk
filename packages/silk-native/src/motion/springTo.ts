@@ -7,7 +7,7 @@ import {
 } from 'react-native-reanimated';
 
 /** Pixels: a spring moving things on screen stops once what's left is invisible. */
-const SUBPIXEL = 0.25;
+export const SUBPIXEL = 0.25;
 
 export interface SpringToOptions {
   /**

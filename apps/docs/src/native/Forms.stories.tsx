@@ -180,7 +180,8 @@ const PADDED = [
 
 /**
  * Presses on a slider with padding and a border bring the thumb to the
- * press: the slide runs along the box its thumbs sit in, inside both.
+ * press, and a drag slides it: the slide runs along the box its thumbs sit
+ * in, inside both.
  */
 export const SliderPadded: Story = {
   // Presses land by layout, which jsdom doesn't have; the browser run presses.
@@ -212,31 +213,58 @@ export const SliderPadded: Story = {
           const slider = canvas.getByTestId(row.name);
           const thumb = canvas.getByRole('slider', { name: row.name });
           const point = pressPoint(slider, thumb, value, row);
-          fireEvent.mouseDown(slider, { ...point, buttons: 1 });
-          fireEvent.mouseUp(document);
+          press(slider, point);
           expect(thumb).toHaveAttribute('aria-valuenow', String(value));
         });
       }
+      // A drag slides the thumb from where it went down, past the slider's end.
+      await waitFor(() => {
+        const slider = canvas.getByTestId(row.name);
+        const thumb = canvas.getByRole('slider', { name: row.name });
+        drag(slider, [
+          pressPoint(slider, thumb, 10, row),
+          pressPoint(slider, thumb, 40, row),
+          pressPoint(slider, thumb, 100, row, 20),
+        ]);
+        expect(thumb).toHaveAttribute('aria-valuenow', '100');
+      });
     }
   },
 };
 
+type Point = { clientX: number; clientY: number };
+
+/** A mouse press at `point` on `target`, let go where it went down, as Gesture Handler hears one. */
+function press(target: HTMLElement, point: Point) {
+  drag(target, [point]);
+}
+
+/** A mouse pressed at the first point on `target`, moved through the rest, and let go at the last. */
+function drag(target: HTMLElement, [first, ...rest]: readonly Point[]) {
+  const pointer = { pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
+  fireEvent.pointerDown(target, { ...pointer, ...first, buttons: 1 });
+  for (const point of rest) fireEvent.pointerMove(target, { ...pointer, ...point, buttons: 1 });
+  fireEvent.pointerUp(target, { ...pointer, ...(rest.at(-1) ?? first), buttons: 0 });
+}
+
 /**
  * Where on the page a thumb's center sits at `value` (of 0 to 100) on a
- * padded slider. Mirrors `slideFrom` for sliders that aren't inverted.
+ * padded slider, and `beyond` pixels further toward max. Mirrors
+ * `slideFrom` for sliders that aren't inverted.
  */
 function pressPoint(
   slider: HTMLElement,
   thumb: HTMLElement,
   value: number,
   { vertical, rtl }: (typeof PADDED)[number],
-): { clientX: number; clientY: number } {
+  beyond = 0,
+): Point {
   const box = slider.getBoundingClientRect();
   const thumbSize = thumb.getBoundingClientRect().width;
   const edge = INSET.padding + INSET.borderWidth;
   const travel = (vertical ? box.height : box.width) - 2 * edge - thumbSize;
   // From the end `min` sits at: the bottom, or the right when right to left.
-  const fromMin = edge + thumbSize / 2 + (value / 100) * travel;
+  const fromMin = edge + thumbSize / 2 + (value / 100) * travel + beyond;
   return vertical
     ? { clientX: box.left + box.width / 2, clientY: box.bottom - fromMin }
     : {

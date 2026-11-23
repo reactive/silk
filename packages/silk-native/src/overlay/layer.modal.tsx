@@ -8,6 +8,7 @@ import {
 import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useInText } from '../components/inText.js';
 import { Pressable } from '../components/Pressable.js';
+import { GestureRoot } from './GestureRoot.js';
 import { type FloatingLayerProps, withAnchor } from './layer.js';
 import { type Box, placedStyle, placeFloating, type Size } from './place.js';
 
@@ -62,35 +63,37 @@ export function FloatingLayer({
   const place = side && size && placeFloating(anchorBox, size, room, { ...options, side });
   const layer = (
     <Modal transparent visible onRequestClose={onDismiss}>
-      <Pressable
-        accessibilityLabel="Close"
-        accessibilityRole="button"
-        focusRing={false}
-        onPress={onDismiss}
-        onPointerDown={endHere}
-        onPointerUp={endHere}
-        onLayout={({ nativeEvent: { layout } }) =>
-          setRoom((was) =>
-            was?.width === layout.width && was.height === layout.height
-              ? was
-              : { width: layout.width, height: layout.height },
-          )
-        }
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        onLayout={({ nativeEvent: { layout } }) => {
-          const now = { width: layout.width, height: layout.height };
-          setNatural((was) => was ?? now);
-          setSize((was) => (was?.width === now.width && was.height === now.height ? was : now));
-        }}
-        style={[
-          styles.layer,
-          place ? placedStyle(place) : styles.unplaced,
-        ]}
-      >
-        {children}
-      </View>
+      <GestureRoot>
+        <Pressable
+          accessibilityLabel="Close"
+          accessibilityRole="button"
+          focusRing={false}
+          onPress={onDismiss}
+          onPointerDown={endHere}
+          onPointerUp={endHere}
+          onLayout={({ nativeEvent: { layout } }) =>
+            setRoom((was) =>
+              was?.width === layout.width && was.height === layout.height
+                ? was
+                : { width: layout.width, height: layout.height },
+            )
+          }
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          onLayout={({ nativeEvent: { layout } }) => {
+            const now = { width: layout.width, height: layout.height };
+            setNatural((was) => was ?? now);
+            setSize((was) => (was?.width === now.width && was.height === now.height ? was : now));
+          }}
+          style={[
+            styles.layer,
+            place ? placedStyle(place) : styles.unplaced,
+          ]}
+        >
+          {children}
+        </View>
+      </GestureRoot>
     </Modal>
   );
   // Inside a line of text, a Modal would be laid out as a box in the line

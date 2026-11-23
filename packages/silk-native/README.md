@@ -12,6 +12,8 @@ yarn add @reactive/silk-native @reactive/silk-core react react-native \
 ```
 
 Reanimated needs the worklets Babel plugin; Expo's Babel preset adds it.
+Wrap the app in Gesture Handler's `GestureHandlerRootView`, or `Slider` won't
+drag on Android (Silk's dialogs and popovers bring their own).
 
 ## Quick start
 
