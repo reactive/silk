@@ -165,17 +165,21 @@ export function useSliderDrag({
       movingAt.set(clampToNeighbors(placed.get(), at, place, bounds));
       return { place, changed };
     };
-    /** Springs the moving thumb to its value at `velocity` (units per second), then lets it go. */
-    const settle = (velocity: number) => {
+    /**
+     * Springs the moving thumb to its value at `velocity` (units per second;
+     * undefined keeps the speed of the spring it replaces), then lets it go.
+     */
+    const settle = (velocity: number | undefined) => {
       'worklet';
       const target = placed.get()[moving.get()]!;
+      // Already there (held at a neighbor or a bound): it stays.
+      const speed = movingAt.get() === target ? 0 : velocity;
       movingAt.set(
         springTo(
           target,
           snappy,
           {
-            // Already there (held at a neighbor or a bound): it stays.
-            velocity: movingAt.get() === target ? 0 : velocity,
+            ...(speed === undefined ? null : { velocity: speed }),
             reduceMotion: reduced,
             precision: SUBPIXEL * perPixel(span.get().length),
           },
@@ -237,18 +241,21 @@ export function useSliderDrag({
       scheduleOnRN(calls.tapped, moved.values);
     };
     /**
-     * Takes values from React. A thumb still settling springs on from where
-     * it shows to its new value, so a value an owner turned down never shows.
+     * Takes values from React, unless a finger moved the thumbs since JavaScript
+     * last heard (`expected` is what it heard): that gesture reports its own. A
+     * thumb still settling springs on, at its speed, from where it shows to its
+     * new value, so a value an owner turned down never shows.
      */
-    const adopt = (next: readonly number[]) => {
+    const adopt = (next: readonly number[], expected: readonly number[]) => {
       'worklet';
-      if (dragging.get()) return;
       const was = placed.get();
+      if (dragging.get() || !sameItems(was, expected)) return;
       placed.set(next);
       const place = moving.get();
-      // Still heading to its value: the spring keeps its speed.
-      if (place === NONE || next[place] === was[place]) return;
-      if (place < next.length) settle(0);
+      if (place === NONE) return;
+      // Still heading to its value: the spring is left as it is.
+      if (next[place] === was[place]) return;
+      if (place < next.length) settle(undefined);
       else {
         cancelAnimation(movingAt);
         moving.set(NONE);
@@ -282,11 +289,12 @@ export function useSliderDrag({
   }, [vertical, slop, disabled, min, max, step, minSteps, from, thumbSize, snappy, reduced]);
 
   // React's values, once no finger holds a thumb; `releases` reruns it after each release
-  // and tap, so values an owner turned down come back.
+  // and tap, so values an owner turned down come back. (`configs` only changes with the
+  // slider's props, when `values` likely match already.)
   useLayoutEffect(() => {
     if (held.current !== undefined || sameItems(values, pushed.current)) return;
+    scheduleOnUI(configs.adopt, values, pushed.current);
     pushed.current = values;
-    scheduleOnUI(configs.adopt, values);
   }, [values, releases, configs]);
 
   const gesture = useExclusiveGestures(usePanGesture(configs.pan), useTapGesture(configs.tap));

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, rs, test } from '@rstest/core';
 import { act, render, screen } from '@testing-library/react';
-import { type JSX, useRef, useState } from 'react';
+import { type JSX, useReducer, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { SilkProvider } from '../theme/SilkProvider.js';
 import * as host from '../web/host.js' with { rstest: 'importActual' };
@@ -21,6 +21,8 @@ const mocked = rs.hoisted(() => ({
   springs: [] as number[],
   speeds: [] as number[],
   unfinished: false,
+  /** Work sent to the UI thread, held while `deferred` until the test runs it. */
+  deferred: undefined as undefined | (() => void)[],
 }));
 
 rs.mock('react-native-gesture-handler', () => ({
@@ -73,7 +75,8 @@ const runNow = (run: (...args: unknown[]) => void, ...args: unknown[]) => run(..
 
 rs.mock('react-native-worklets', () => ({
   scheduleOnRN: runNow,
-  scheduleOnUI: runNow,
+  scheduleOnUI: (run: (...args: unknown[]) => void, ...args: unknown[]) =>
+    mocked.deferred ? mocked.deferred.push(() => run(...args)) : run(...args),
 }));
 
 rs.mock('../web/host.js', () => ({
@@ -127,6 +130,7 @@ beforeEach(() => {
   mocked.springs.length = 0;
   mocked.speeds.length = 0;
   mocked.unfinished = false;
+  mocked.deferred = undefined;
   clock = 1000;
   rs.spyOn(Date, 'now').mockImplementation(() => clock);
 });
@@ -358,6 +362,35 @@ test('native: a controlled slider whose owner turns a tap down shows its own val
   // The stand-in styles are worked out as it renders.
   rerender(stuck());
   expect(box().transform).toBe('translateX(90px)');
+});
+
+test('native: values from React that a tap overtakes on the UI thread are left to the tap', () => {
+  mocked.web = false;
+  let set: (values: number[]) => void = () => {};
+  let redraw = () => {};
+  function Owner(): JSX.Element {
+    const [value, setValue] = useState([50]);
+    const [, count] = useReducer((n: number) => n + 1, 0);
+    set = setValue;
+    redraw = count;
+    return (
+      <SilkProvider>
+        <Slider size="md" accessibilityLabel="Owned" value={value} onValueChange={setValue} />
+      </SilkProvider>
+    );
+  }
+  render(<Owner />);
+  layOut();
+  const box = () => screen.getByRole('slider').parentElement!.style;
+  mocked.deferred = [];
+  act(() => set([30]));
+  // Before the UI thread takes 30, a tap moves the thumb to 80, and the owner takes that.
+  act(() => (mocked.tap!.onActivate as Handler)(at(80)));
+  act(() => mocked.deferred!.forEach((run) => run()));
+  expect(values()).toEqual([80]);
+  // The stand-in styles are worked out as it renders.
+  act(() => redraw());
+  expect(box().transform).toBe('translateX(144px)');
 });
 
 test('native: a slide starts where the finger is as it moves a touch slop', () => {
