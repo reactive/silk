@@ -17,6 +17,7 @@ import {
   type StyleProp,
   Text as RNText,
   type TextProps as RNTextProps,
+  useWindowDimensions,
   View,
   type ViewProps,
   type ViewStyle,
@@ -239,9 +240,9 @@ export interface TooltipTriggerProps extends Omit<ViewProps, 'children' | Trigge
  * Inside a line of text on native, it is a span of that text instead of a
  * box, so it keeps to the line: put words in it, not controls. A tap opens
  * the tooltip beside the line where it landed, the line taken to be as tall
- * as `body` text's; with no tap (`open` alone) there it shows nothing. A
- * span has no box, so its style's padding, border and radius do nothing
- * there; its background does.
+ * as `body` text's at the system font size; with no tap (`open` alone)
+ * there it shows nothing. A span has no box, so its style's padding, border
+ * and radius do nothing there; its background does.
  *
  * The tooltip is not read by screen readers from the trigger: give the
  * control the same words (`accessibilityHint`, or `aria-describedby` to a
@@ -264,8 +265,10 @@ function TextTrigger({ ref, children, ...rest }: TooltipTriggerProps): JSX.Eleme
     setBoxless(true);
     return () => setBoxless(false);
   }, [setBoxless]);
-  // The line it sits in is taken to be as tall as body text's.
-  const { lineHeight = 0 } = typographyStyle(theme, 'body');
+  // The line it sits in is taken to be as tall as body text's, scaled by the
+  // system font size as React Native scales the text's own.
+  const { fontScale } = useWindowDimensions();
+  const lineHeight = (typographyStyle(theme, 'body').lineHeight ?? 0) * fontScale;
   return (
     <RNText
       // A View's and a Text's refs are the same host node on native.
