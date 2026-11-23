@@ -1,4 +1,4 @@
-import { type NodePath, parseSync, traverse, types as t } from '@babel/core';
+import { type NodePath, parseSync, transformSync, traverse, types as t } from '@babel/core';
 import { expect, test } from '@rstest/core';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -54,69 +54,34 @@ test('no worklet reads a captured value in a parameter default', () => {
   expect(early).toEqual([]);
 });
 
-// The worklets Babel plugin turns a worklet into a value that captures what it
-// reads when it is defined. A module-level worklet that reads a function or
-// constant declared below it throws while its module loads (on the UI thread
-// and in the app's own tests), though the jsdom tests here run it fine.
-test('no module-level worklet reads a declaration below it', () => {
-  let worklets = 0;
-  const early: string[] = [];
-  for (const { file, text } of sources()) {
-    if (!text.includes("'worklet'")) continue;
-    const ast = parseSync(text, {
-      filename: file,
-      babelrc: false,
-      configFile: false,
-      presets: ['@babel/preset-typescript'],
-    });
-    traverse(ast!, {
-      Function(fn) {
-        if (!isWorklet(fn) || fn.getFunctionParent()) return;
-        worklets++;
-        fn.get('body').traverse({
-          ReferencedIdentifier(id) {
-            const binding = id.scope.getBinding(id.node.name);
-            if (binding?.scope.path.isProgram() && binding.path.node.start! > fn.node.start!) {
-              early.push(`${path.basename(file)}: ${id.node.name}`);
-            }
-          },
-        });
-      },
-    });
-  }
-  expect(worklets).toBeGreaterThan(0);
-  expect(early).toEqual([]);
+/** Anything an import can be: every property, call and construction gives itself back. */
+const anything: unknown = new Proxy(() => {}, {
+  get: (_, key) => (key === Symbol.toPrimitive ? () => '' : anything),
+  apply: () => anything,
+  construct: () => anything as object,
 });
 
-// The same plugin adds 'worklet' to each callback of the object a gesture hook
-// takes, written into its call or in a constant the call names, and throws on a
-// spread there; `panAlong` merges a config for that reason.
-test('no object written into a gesture hook call spreads', () => {
-  let hooks = 0;
-  const spread: string[] = [];
+// Apps (and their tests) compile silk-native with the worklets Babel plugin, which these
+// tests otherwise skip. Its output can fail where the plain source runs: it throws on a spread
+// in the object a gesture hook takes, and turns each worklet into a value that captures what
+// it reads when defined, so a module-level worklet reading a declaration below it throws as
+// the module loads. Each module runs here as the plugin leaves it, its imports stood in for.
+test('every module loads as the worklets plugin compiles it', () => {
+  const failed: string[] = [];
   for (const { file, text } of sources()) {
-    if (!/use[A-Za-z]*Gesture\(/.test(text)) continue;
-    const ast = parseSync(text, {
-      filename: file,
-      babelrc: false,
-      configFile: false,
-      presets: [['@babel/preset-typescript', { isTSX: file.endsWith('.tsx'), allExtensions: true }]],
-    });
-    traverse(ast!, {
-      CallExpression(call) {
-        const { callee } = call.node;
-        if (!t.isIdentifier(callee) || !/^use[A-Za-z]+Gesture$/.test(callee.name)) return;
-        hooks++;
-        for (const arg of call.get('arguments')) {
-          const named = arg.isIdentifier() ? arg.scope.getBinding(arg.node.name)?.path : undefined;
-          const object = named?.isVariableDeclarator() ? named.node.init : arg.node;
-          if (t.isObjectExpression(object) && object.properties.some((p) => t.isSpreadElement(p))) {
-            spread.push(`${path.basename(file)}: ${callee.name}`);
-          }
-        }
-      },
-    });
+    try {
+      const { code } = transformSync(text, {
+        filename: file,
+        babelrc: false,
+        configFile: false,
+        presets: ['@babel/preset-typescript', ['@babel/preset-react', { runtime: 'automatic' }]],
+        plugins: ['react-native-worklets/plugin', '@babel/plugin-transform-modules-commonjs'],
+      })!;
+      const module = { exports: {} };
+      new Function('require', 'module', 'exports', code!)(() => anything, module, module.exports);
+    } catch (error) {
+      failed.push(`${path.basename(file)}: ${(error as Error).message.split('\n')[0]}`);
+    }
   }
-  expect(hooks).toBeGreaterThan(0);
-  expect(spread).toEqual([]);
+  expect(failed).toEqual([]);
 });

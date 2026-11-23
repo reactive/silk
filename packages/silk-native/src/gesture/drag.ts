@@ -3,13 +3,14 @@
  * it lets go at. The numbers are `conventions.ts`'s; this is their use.
  */
 import { useMemo } from 'react';
-import type { usePanGesture } from 'react-native-gesture-handler';
+import type { PanGestureConfig } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { gestureConventions, releaseVelocity } from './conventions.js';
 
 const SLOP: [number, number] = [-gestureConventions.touchSlop, gestureConventions.touchSlop];
 
-type PanConfig = NonNullable<Parameters<typeof usePanGesture>[0]>;
+/** What `panAlong` sets itself. */
+type AxisKeys = 'activeOffsetX' | 'activeOffsetY' | 'failOffsetX' | 'failOffsetY' | 'maxPointers';
 
 /**
  * `config` as a one-finger pan along one axis: it starts once the finger moves
@@ -19,7 +20,10 @@ type PanConfig = NonNullable<Parameters<typeof usePanGesture>[0]>;
  * It merges here, not by a spread at the call: the worklets Babel plugin reads
  * an object written for a gesture hook, and throws on a spread in it.
  */
-export function panAlong(vertical: boolean, config: PanConfig): PanConfig {
+export function panAlong(
+  vertical: boolean,
+  config: Omit<PanGestureConfig, AxisKeys>,
+): PanGestureConfig {
   return vertical
     ? { ...config, activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
     : { ...config, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
