@@ -4,6 +4,9 @@
     "rootDir": "src",
     "outDir": "dist",
     "lib": ["ES2022"],
+    // Bundler, not NodeNext: Reanimated's typings re-export through extensionless paths NodeNext
+    // can't follow. Every consumer bundles silk-native (Metro, or a web bundler with
+    // react-native-web), so its own imports still end in .js by convention, not for Node.
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",

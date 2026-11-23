@@ -65,7 +65,9 @@ export function springTo(
       },
       onFrame(animation, now) {
         const state = springAt(spring, animation.start, (now - animation.startTime) / 1000);
-        const crossed = overshootClamping && state.offset * animation.start.offset < 0;
+        // Signs, not a product: a start on the target (offset 0) still stops once it leaves.
+        const crossed =
+          overshootClamping && Math.sign(state.offset) !== Math.sign(animation.start.offset);
         if (crossed || springAtRest(state, precision)) {
           animation.current = target;
           animation.velocity = 0;

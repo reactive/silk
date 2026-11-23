@@ -4,6 +4,7 @@ import { mergeRsbuildConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import remarkGfm from 'remark-gfm';
 import type { StorybookConfig } from 'storybook-react-rsbuild';
+import { reactNativeWeb } from '../../../test/reactNativeWeb';
 
 const docsRoot = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(docsRoot, '../../..');
@@ -34,12 +35,15 @@ const config: StorybookConfig = {
   },
   async rsbuildFinal(rsbuildConfig, { configType }) {
     const isProduction = configType === 'PRODUCTION';
+    const rnWeb = reactNativeWeb(monorepoRoot, !isProduction);
 
     return mergeRsbuildConfig(rsbuildConfig, {
       plugins: [
         pluginReact(isProduction ? { reactCompiler: true } : undefined),
       ],
+      source: { define: rnWeb.define },
       resolve: {
+        extensions: rnWeb.extensions,
         alias: {
           // Source for HMR, Linaria extraction, and prop tables.
           // silk-core stays on package exports → dist (Linaria eval + runtime).
@@ -57,10 +61,7 @@ const config: StorybookConfig = {
             monorepoRoot,
             'packages/silk-native/src/components/inText.dom.ts',
           ),
-          'react-native': path.resolve(
-            monorepoRoot,
-            'node_modules/react-native-web',
-          ),
+          ...rnWeb.alias,
         },
       },
       output: {

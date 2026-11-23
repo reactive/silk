@@ -110,6 +110,8 @@ test('createTheme refuses springs that change meaning', () => {
     /motion.snappy/,
   );
   expect(() => createTheme({ semantic: { motion: { brisk: { bounce: 1 } } } })).toThrow(/motion.brisk/);
+  // So springy it would take seconds to settle (and cut off its web curve).
+  expect(() => createTheme({ semantic: { motion: { snappy: { bounce: 0.95 } } } })).toThrow(/motion.snappy/);
   // Out of order: a toggle slower than a sheet.
   expect(() => createTheme({ semantic: { motion: { snappy: { durationMs: 500 } } } })).toThrow(
     /motion.brisk/,

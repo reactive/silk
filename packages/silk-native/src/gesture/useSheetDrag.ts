@@ -205,10 +205,15 @@ export function useSheetDrag({
     },
   });
 
-  const panelMotion = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value }] }));
-  const veilMotion = useAnimatedStyle(() => ({
-    opacity: interpolate(offset.value, [0, height.value], [1, 0], 'clamp'),
-  }));
+  // Dependency arrays let the web run without the worklets Babel plugin (Storybook builds with SWC).
+  const panelMotion = useAnimatedStyle(
+    () => ({ transform: [{ translateY: offset.value }] }),
+    [offset],
+  );
+  const veilMotion = useAnimatedStyle(
+    () => ({ opacity: interpolate(offset.value, [0, height.value], [1, 0], 'clamp') }),
+    [offset, height],
+  );
 
   return {
     presented,

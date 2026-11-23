@@ -8,4 +8,4 @@ Springs join the `motion` tokens. `motion.snappy`, `brisk` and `smooth` are `Spr
 
 silk-native adds `springTo`, a Reanimated animation on a spring token that keeps a release speed pointing away from its target, and `useMotion`, a token as a duration and easing for Reanimated's CSS transitions. It also adds `gestureThresholds` and `releaseVelocity`, Android's gesture conventions. The bottom sheet now springs on `motion.smooth`.
 
-**Breaking:** `MotionName` widens, so motion object literals need the three springs. Code that iterates `motionNames` must branch on `isSpringName`.
+**Breaking:** `MotionName` widens. A full motion literal `{ fast, normal, slow, loop }` → `{ snappy, brisk, smooth, fast, normal, slow, loop }`, for example `snappy: { durationMs: 250, bounce: 0.15 }`. A loop over `motionNames` that reads `motion[name].easing` → branch on `isSpringName(name)` first, since springs have `durationMs` and `bounce` instead.

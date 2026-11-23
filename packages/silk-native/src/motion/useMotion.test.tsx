@@ -1,0 +1,48 @@
+import { createTheme, type MotionName, sampleSpring } from '@reactive/silk-core';
+import { expect, rs, test } from '@rstest/core';
+import { renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
+import { SilkProvider } from '../theme/SilkProvider.js';
+
+// Reanimated's easings are its own objects: tag them to see which one was built, from what.
+rs.mock('react-native-reanimated', () => ({
+  linear: (...points: number[]) => ({ linear: points }),
+  cubicBezier: (...points: number[]) => ({ cubicBezier: points }),
+}));
+
+const { useMotion } = await import('./useMotion.js');
+
+const theme = createTheme({
+  semantic: {
+    motion: {
+      fast: { durationMs: 120, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+      slow: { durationMs: 400, easing: 'ease-out' },
+    },
+  },
+});
+
+function wrapper({ children }: { children: ReactNode }) {
+  return <SilkProvider theme={theme}>{children}</SilkProvider>;
+}
+
+const motionOf = (name: MotionName) =>
+  renderHook(() => useMotion(name), { wrapper }).result.current;
+
+test('a spring plays its sampled curve over its settle time', () => {
+  const { durationMs, progress } = sampleSpring(theme.semantic.motion.snappy);
+  expect(motionOf('snappy')).toEqual({ durationMs, easing: { linear: progress } });
+});
+
+test('reduced motion takes a spring no time', () => {
+  setPrefersReducedMotion(true);
+  expect(motionOf('smooth').durationMs).toBe(0);
+});
+
+test('a cubic-bezier easing becomes Reanimated’s object; a named one stays a string', () => {
+  expect(motionOf('fast')).toEqual({
+    durationMs: 120,
+    easing: { cubicBezier: [0.2, 0, 0, 1] },
+  });
+  expect(motionOf('slow')).toEqual({ durationMs: 400, easing: 'ease-out' });
+});

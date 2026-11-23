@@ -63,3 +63,9 @@ test('it passes reduced motion on to Reanimated, and leaves it to the system by 
   expect(run(springTo(0, smooth, { reduceMotion: true })).reduceMotion).toBe(true);
   expect(run(springTo(0, smooth)).reduceMotion).toBeUndefined();
 });
+
+test('a clamped spring starting on its target stops there instead of leaving it', () => {
+  const animation = start(run(springTo(0, smooth, { velocity: -500, overshootClamping: true })), 0);
+  expect(animation.onFrame(animation, 16)).toBe(true);
+  expect(animation.current).toBe(0);
+});

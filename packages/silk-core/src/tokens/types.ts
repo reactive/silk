@@ -101,7 +101,7 @@ export interface MotionRecord {
 export interface Spring {
   /** Time to visually reach the target (one period, 2π/ω); a bounce settles after it. */
   readonly durationMs: number;
-  /** 0 never overshoots (critically damped); towards 1 is springier. Below 1. */
+  /** 0 never overshoots (critically damped); higher is springier, up to 0.9. */
   readonly bounce: number;
 }
 

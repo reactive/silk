@@ -276,10 +276,13 @@ function mergeSemantic(
   };
 }
 
+const MAX_BOUNCE = 0.9;
+
 /**
- * Themes change a spring's values, never its meaning: each settles in 50 to
- * 2000 ms (not seconds) with a bounce in [0, 1), `smooth` never overshoots,
- * and small things move no slower than surfaces (snappy <= brisk <= smooth).
+ * Themes change a spring's values, never its meaning: each visually arrives
+ * in 50 to 2000 ms (not seconds) with a bounce from 0 to 0.9 (springier ones
+ * barely settle), `smooth` never overshoots, and small things move no slower
+ * than surfaces (snappy <= brisk <= smooth).
  */
 function checkSprings(motion: MotionTokens): void {
   let last = 0;
@@ -287,7 +290,7 @@ function checkSprings(motion: MotionTokens): void {
     const { durationMs, bounce } = motion[name];
     if (
       !(durationMs >= 50 && durationMs <= 2000 && durationMs >= last) ||
-      !(bounce >= 0 && bounce < (name === 'smooth' ? 1e-9 : 1))
+      !(bounce >= 0 && bounce <= (name === 'smooth' ? 0 : MAX_BOUNCE))
     )
       throw new RangeError(`motion.${name} changes meaning: ${durationMs} ms, bounce ${bounce}`);
     last = durationMs;

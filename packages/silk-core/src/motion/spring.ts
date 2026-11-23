@@ -55,11 +55,14 @@ export function springAtRest({ offset, velocity }: SpringState, precision: numbe
 
 /** How close to 1 a sampled curve must come before it ends. */
 const SAMPLE_PRECISION = 0.001;
-/** Safety cap for springs that barely settle (bounce near 1), in durations. */
+/** Safety cap, in durations: a bounce of 0.9 (createTheme's limit) settles in about 11. */
 const MAX_DURATIONS = 12;
 
 export interface SpringSamples {
-  /** How long the spring takes to settle: longer than the token's `durationMs` when it bounces. */
+  /**
+   * How long the spring takes to settle: always longer than the token's
+   * `durationMs` (time to arrive), more so when it bounces.
+   */
   readonly durationMs: number;
   /** Progress from 0 to exactly 1 at 60 fps, from rest. Above 1 while it overshoots. */
   readonly progress: readonly number[];
