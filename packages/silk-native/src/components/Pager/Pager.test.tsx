@@ -553,7 +553,7 @@ test('pages relisted mid-spring, before React hears of the release, go on to the
   const proposals: string[] = [];
   const { rerender } = render(<Owner proposals={proposals} />);
   layOut();
-  heldBack(() => {
+  const waiting = heldBack(() => {
     // The spring to b is halfway there when a page is added before a.
     mocked.midway = 0.5;
     swipe(-240, 0, 100);
@@ -562,4 +562,17 @@ test('pages relisted mid-spring, before React hears of the release, go on to the
   });
   // b is the third page now.
   expect(mocked.springs.at(-1)).toBe(2);
+  act(() => waiting.forEach((run) => run()));
+  expect(proposals).toEqual(['b']);
+  expect(hidden('b')).toBe(false);
+});
+
+test('React rendering the page a spring is heading to leaves the spring alone', () => {
+  render(<Owner proposals={[]} />);
+  layOut();
+  // Still on its way to b when the owner's answer renders.
+  mocked.midway = 0.5;
+  swipe(-240, -800);
+  expect(mocked.springs).toEqual([1]);
+  expect(mocked.speeds).toEqual([2]);
 });
