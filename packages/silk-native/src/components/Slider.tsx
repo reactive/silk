@@ -395,7 +395,7 @@ const WEB_KEEP_FOCUS = {
   onMouseDown: (event: { preventDefault(): void }) => event.preventDefault(),
 };
 
-/** Web only: a pointer over it, no text selected or page scrolled by a drag. */
-const WEB_SLIDER = { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as ViewStyle;
+/** Web only: a pointer over it. Gesture Handler owns touch-action and user-select. */
+const WEB_SLIDER = { cursor: 'pointer' } as ViewStyle;
 
 const styles = StyleSheet.create({ clip: { overflow: 'hidden' } });

@@ -1,6 +1,12 @@
 import { useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Insets, LayoutChangeEvent } from 'react-native';
-import { useExclusiveGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
+import {
+  type ComposedGesture,
+  type PanGesture,
+  useExclusiveGestures,
+  usePanGesture,
+  useTapGesture,
+} from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { gestureConventions } from '../gesture/conventions.js';
@@ -32,7 +38,7 @@ export interface SliderDragOptions {
 }
 
 export interface SliderDrag {
-  readonly gesture: ReturnType<typeof useExclusiveGestures>;
+  readonly gesture: PanGesture | ComposedGesture;
   /** The thumb a press or slide holds. */
   readonly active: number | undefined;
   /** The slider's `hitSlop`, which its gestures take too. */
@@ -200,8 +206,9 @@ export function useSliderDrag({
           end(0);
         },
       },
+      // Attached on native only (see `gesture` below).
       tap: {
-        enabled: !WEB && !disabled,
+        enabled: !disabled,
         hitSlop: slop,
         maxDistance: gestureConventions.touchSlop,
         onActivate: tap,
@@ -218,7 +225,12 @@ export function useSliderDrag({
     pushed.current = values;
   }, [values, releases, configs]);
 
-  const gesture = useExclusiveGestures(usePanGesture(configs.pan), useTapGesture(configs.tap));
+  const pan = usePanGesture(configs.pan);
+  const panThenTap = useExclusiveGestures(pan, useTapGesture(configs.tap));
+  // The web leaves the tap out (its pan's press already moves the thumb). Gesture Handler
+  // writes every handler's touch-action onto the slider, and a disabled tap's default ('')
+  // would replace the pan's 'none', so a phone browser would scroll instead of dragging.
+  const gesture = WEB ? pan : panThenTap;
   return {
     gesture,
     active,
