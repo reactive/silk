@@ -5,8 +5,18 @@ Silk is a design system in three packages: `silk-core` (tokens, themes, recipes;
 - `docs/PRINCIPLES.md`: the charter. A change that conflicts with it is rejected or amends it. Run its "Drift checklist" on any significant change.
 - `docs/API_POLICY.md`: what is public API, how a change to it is versioned, and how to write its changeset.
 - `docs/ARCHITECTURE.md`: how the packages are built. `docs/COMPOSITES.md`: the standard for composites.
-- `README.md`, "Development": setup and commands. CI (`.github/workflows/ci.yml`) runs all of its test scripts.
 - `packages/silk-native/AGENTS.md`: gesture, worklet and test traps. Read it before changing anything in that package.
+
+## Commands
+
+```bash
+corepack enable && yarn install
+yarn build        # first: the other workspaces resolve silk-core from dist/
+yarn typecheck
+yarn test
+```
+
+CI (`.github/workflows/ci.yml`) also runs `yarn test:packed`, `yarn test:perf` and the Storybook tests.
 
 ## Every change
 
