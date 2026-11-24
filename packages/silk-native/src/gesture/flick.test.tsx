@@ -38,7 +38,7 @@ let flick: FlickGesture | undefined;
 
 function Flicked({
   direction,
-  enabled = true,
+  enabled,
 }: {
   readonly direction: FlickDirection;
   readonly enabled?: boolean;
@@ -46,7 +46,7 @@ function Flicked({
   flick = useFlickGesture({
     direction,
     onFlick: () => flicks++,
-    enabled,
+    ...(enabled === undefined ? null : { enabled }),
   });
   return null;
 }
@@ -95,7 +95,13 @@ test('a sideways fling reads the horizontal speed', () => {
   release({ velocityX: -700, velocityY: -900 });
   expect(flicks).toBe(1);
   release({ velocityX: 700 });
+  release({ velocityY: -900 });
   expect(flicks).toBe(1);
+  // A pan along the horizontal axis, keeping the browser's vertical panning.
+  expect(mocked.pan).toMatchObject({
+    activeOffsetX: [-8, 8],
+    failOffsetY: [-8, 8],
+  });
   expect(flick!.touchAction).toBe('pan-y');
 });
 
@@ -104,4 +110,21 @@ test('a disabled flick turns its pan off and leaves the browser its panning', ()
   expect(mocked.pan).toMatchObject({ enabled: false });
   // The browser keeps its scroll along the flick's axis too.
   expect(flick!.touchAction).toBe('auto');
+});
+
+test('on the web, the click a mouse drag ends with presses nothing beneath it', () => {
+  render(<Flicked direction="up" />);
+  let clicks = 0;
+  const count = () => clicks++;
+  document.body.addEventListener('click', count);
+  try {
+    release({ velocityY: -600 });
+    document.body.click();
+    expect(clicks).toBe(0);
+    // Only that one click.
+    document.body.click();
+    expect(clicks).toBe(1);
+  } finally {
+    document.body.removeEventListener('click', count);
+  }
 });

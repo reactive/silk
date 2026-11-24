@@ -57,6 +57,12 @@ export interface WebKeyEvent {
   readonly defaultPrevented: boolean;
 }
 
+/** A click as the page's listeners get it. */
+export interface WebClickEvent {
+  stopPropagation(): void;
+  preventDefault(): void;
+}
+
 /** The page's `document`: what listening on it, and finding focus, take. */
 export interface WebDocument {
   readonly activeElement?: unknown;
@@ -64,6 +70,11 @@ export interface WebDocument {
     type: 'keydown',
     listener: (event: WebKeyEvent) => void,
     options: boolean | { readonly capture: boolean; readonly once?: boolean },
+  ): void;
+  addEventListener(
+    type: 'click',
+    listener: (event: WebClickEvent) => void,
+    options: { readonly capture: boolean; readonly once?: boolean },
   ): void;
   addEventListener(
     type: string,
@@ -74,6 +85,11 @@ export interface WebDocument {
     type: 'keydown',
     listener: (event: WebKeyEvent) => void,
     options: boolean | { readonly capture: boolean },
+  ): void;
+  removeEventListener(
+    type: 'click',
+    listener: (event: WebClickEvent) => void,
+    options: { readonly capture: boolean },
   ): void;
   removeEventListener(
     type: string,
@@ -85,6 +101,24 @@ export interface WebDocument {
 /** The page's `document` on the web, or nothing on native. */
 export const webDocument = (): WebDocument | undefined =>
   (globalThis as { document?: WebDocument }).document;
+
+/**
+ * Keeps the click a mouse drag ends with from reaching what the button went
+ * down on: the browser clicks it when the button comes up, so a drag that
+ * began on a pressable would also press it. Call when the drag ends, before
+ * the browser's next task; a drag by touch ends without a click, so the
+ * listener goes at that task.
+ */
+export function swallowDragClick(): void {
+  const page = webDocument();
+  if (!page) return;
+  const swallow = (event: WebClickEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+  };
+  page.addEventListener('click', swallow, { capture: true, once: true });
+  setTimeout(() => page.removeEventListener('click', swallow, { capture: true }), 0);
+}
 
 /**
  * The browser decides whether focus should show (`:focus-visible`), so a click

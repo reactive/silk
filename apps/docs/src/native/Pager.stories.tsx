@@ -73,7 +73,7 @@ function PagerDemo({
 /** Swipe between the panes, or press a button: the pages spring to the value. */
 export const Controlled: Story = { render: () => <PagerDemo /> };
 
-/** A swipe passes the disabled page by; only its button shows it. */
+/** A swipe passes the disabled page by, to the page beyond; only its button shows it. */
 export const DisabledPage: Story = { render: () => <PagerDemo disabled="Notes" /> };
 
 /** The owner keeps its value, so a swipe settles back. */

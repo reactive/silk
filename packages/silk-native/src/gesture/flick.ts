@@ -36,7 +36,8 @@ export interface FlickGesture {
  * move, before the finger lets go, and judges no speed at release.)
  *
  * On the web the view keeps the browser's scroll across the axis only: a
- * vertical flick area doesn't scroll the page when swiped up or down.
+ * vertical flick area doesn't scroll the page when swiped up or down. A
+ * disabled one leaves the browser all of its scrolling.
  *
  * ```tsx
  * const flick = useFlickGesture({ direction: 'up', onFlick: openSettings });

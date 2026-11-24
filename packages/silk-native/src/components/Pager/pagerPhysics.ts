@@ -9,13 +9,22 @@ import { gestureConventions } from '../../gesture/conventions.js';
 /** How far a page lies beyond where a drag may go, as a share of the finger's travel. */
 const RESISTANCE = 1 / 3;
 
-/** The pages a drag from page `from` may reach: itself and an enabled neighbour on each side. */
+/** The first enabled page from page `from` going `step` (1 or -1), or `from` if none. */
+function nearestEnabled(from: number, step: number, enabled: readonly boolean[]): number {
+  'worklet';
+  for (let page = from + step; page >= 0 && page < enabled.length; page += step) {
+    if (enabled[page]) return page;
+  }
+  return from;
+}
+
+/**
+ * The pages a drag from page `from` may reach: itself and the nearest enabled
+ * page on each side, passing disabled ones by.
+ */
 export function reach(from: number, enabled: readonly boolean[]): { min: number; max: number } {
   'worklet';
-  return {
-    min: from > 0 && enabled[from - 1] ? from - 1 : from,
-    max: from < enabled.length - 1 && enabled[from + 1] ? from + 1 : from,
-  };
+  return { min: nearestEnabled(from, -1, enabled), max: nearestEnabled(from, 1, enabled) };
 }
 
 /**
@@ -41,10 +50,11 @@ export function dragPosition(
 }
 
 /**
- * The page a release at `position` lands on. A fling (`fling` above 0 toward
- * later pages, below 0 toward earlier ones, 0 for none) goes on to the next
- * page its way; a slower release settles on the nearest page. Never past
- * `reach`: a drag moves at most one page, and never onto a disabled one.
+ * The page a release at `position` lands on, one of `reach`'s: a drag moves
+ * at most one page (passing disabled ones by) and never lands on a disabled
+ * one. A fling (`fling` above 0 toward later pages, below 0 toward earlier
+ * ones, 0 for none) goes on to the next of them its way; a slower release
+ * settles on the nearest.
  */
 export function landing(
   position: number,
@@ -54,9 +64,21 @@ export function landing(
 ): number {
   'worklet';
   const { min, max } = reach(from, enabled);
-  const page =
-    fling > 0 ? Math.ceil(position) : fling < 0 ? Math.floor(position) : Math.round(position);
-  return Math.min(max, Math.max(min, page));
+  if (fling > 0) return position <= min ? min : position <= from ? from : max;
+  if (fling < 0) return position >= max ? max : position >= from ? from : min;
+  const nearer = (a: number, b: number) =>
+    Math.abs(position - a) <= Math.abs(position - b) ? a : b;
+  return nearer(from, nearer(min, max));
+}
+
+/**
+ * A release's `speed` for a spring from `position` to `page`: kept when it
+ * heads there, else 0, so pages settling back (from past the first or last
+ * page, or short of the next) don't first carry on the other way.
+ */
+export function speedToward(page: number, position: number, speed: number): number {
+  'worklet';
+  return (page - position) * speed > 0 ? speed : 0;
 }
 
 /**

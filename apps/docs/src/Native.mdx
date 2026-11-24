@@ -174,8 +174,9 @@ which follows the item's state the way a plain string label does.
 ## Paging
 
 `Pager` is controlled like the overlays: it shows the page `value` names, and
-a swipe only proposes the page it settles on. An owner that keeps `value` sees
-the pages settle back.
+a swipe only proposes the page it lands on. An owner that keeps `value` sees
+the pages settle back. Answer in the same update or in a transition: an answer
+that comes later (after an `await`) arrives after the pages settled back.
 
 ```tsx
 <Pager.Root value={pane} onValueChange={setPane} style={{ flex: 1 }}>
@@ -186,9 +187,10 @@ the pages settle back.
 
 The drag runs on the UI thread and moves at most one page; on release it
 springs to the nearest page, or to the next one on a fling, at the finger's
-speed. A page that isn't shown is hidden from screen readers (and `inert` on
+speed. A `disabled` page is passed by, to the next page beyond it. A page that isn't shown is hidden from screen readers (and `inert` on
 the web); inside it, `usePagerIsActive()` is false, so it can stop listening.
-On the web a mouse drag pages too, so the pager's text can't be selected.
+On the web a mouse drag pages too, so the pager's text can't be selected, and
+it doesn't also press what it began on.
 
 `useFlickGesture({ direction, onFlick })` returns `{ gesture, touchAction }`
 to spread onto a `GestureDetector`; `onFlick` runs once when a finger throws

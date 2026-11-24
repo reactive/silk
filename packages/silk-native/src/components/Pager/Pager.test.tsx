@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, rs, test } from '@rstest/core';
-import { act, render, screen } from '@testing-library/react';
-import { type JSX, type ReactNode, useRef, useState } from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { type JSX, type ReactNode, startTransition, useRef, useState } from 'react';
 import { I18nManager, Text, View } from 'react-native';
 import { SilkProvider } from '../../theme/SilkProvider.js';
 
@@ -8,14 +8,19 @@ import { SilkProvider } from '../../theme/SilkProvider.js';
  * jsdom loads neither library's native module, so they're stood in for as
  * in Slider.drag.test.tsx: the pan's config is kept to be called by hand, a
  * shared value is a plain object, an animated style is worked out as the
- * pager renders, and a spring lands at once, recording where it went and how
- * fast it began.
+ * pager renders, and a spring lands at once, recording where it went, how
+ * fast it began and whether it jumps for reduced motion.
  */
 const mocked = rs.hoisted(() => ({
   pan: undefined as undefined | Record<string, unknown>,
   touchAction: undefined as unknown,
   springs: [] as number[],
   speeds: [] as number[],
+  reduced: [] as boolean[],
+  /** The row's animated style as last worked out. */
+  row: undefined as unknown,
+  /** While set, a spring is still on its way, here, when the test looks. */
+  midway: undefined as number | undefined,
   /** While set, calls to the JavaScript thread wait here, as they would behind a busy thread. */
   toRN: undefined as undefined | (() => void)[],
 }));
@@ -40,6 +45,7 @@ rs.mock('react-native-reanimated', () => ({
       toValue: number;
       velocity: number;
       callback?: (finished: boolean) => void;
+      reduceMotion: boolean;
       onStart: (animation: object, value: number, now: number, previous?: object) => void;
     },
   ) => {
@@ -47,10 +53,12 @@ rs.mock('react-native-reanimated', () => ({
     animation.onStart(animation, 0, 0, undefined);
     mocked.springs.push(animation.toValue);
     mocked.speeds.push(animation.velocity);
+    mocked.reduced.push(animation.reduceMotion);
+    if (mocked.midway !== undefined) return mocked.midway;
     animation.callback?.(true);
     return animation.toValue;
   },
-  useAnimatedStyle: (style: () => object) => style(),
+  useAnimatedStyle: (style: () => object) => (mocked.row = style()),
   useSharedValue: <T,>(value: T) =>
     useRef({
       value,
@@ -81,19 +89,20 @@ function Page({ name }: { readonly name: string }): JSX.Element {
 
 /**
  * Three pages, `b` disabled while `bDisabled`, after a page `z` while
- * `withZ`. The owner takes each proposal unless `refuse`, and records them in
- * `proposals`.
+ * `withZ`. The owner records each proposal in `proposals` and answers it as
+ * `answer` says: taking it at once or in a transition, keeping its value, or
+ * throwing.
  */
 function Owner({
   initial = 'a',
-  refuse = false,
+  answer = 'take',
   bDisabled = false,
   withZ = false,
   proposals,
   set,
 }: {
   readonly initial?: string;
-  readonly refuse?: boolean;
+  readonly answer?: 'take' | 'transition' | 'refuse' | 'throw';
   readonly bDisabled?: boolean;
   readonly withZ?: boolean;
   readonly proposals: string[];
@@ -108,7 +117,9 @@ function Owner({
         value={value}
         onValueChange={(next) => {
           proposals.push(next);
-          if (!refuse) setValue(next);
+          if (answer === 'take') setValue(next);
+          else if (answer === 'transition') startTransition(() => setValue(next));
+          else if (answer === 'throw') throw new Error('owner failed');
         }}
       >
         {withZ && (
@@ -145,6 +156,15 @@ function layOut() {
 type Handler = (event?: object) => void;
 const pan = (name: string, event?: object) => act(() => (mocked.pan![name] as Handler)(event));
 
+/** Runs `during` with calls to the JavaScript thread held back, as behind a busy thread. */
+function heldBack(during: () => void): (() => void)[] {
+  mocked.toRN = [];
+  during();
+  const waiting = mocked.toRN;
+  mocked.toRN = undefined;
+  return waiting;
+}
+
 /** A drag of `dx` points (negative toward later pages), let go at `velocityX` after `heldMs` still. */
 function swipe(dx: number, velocityX = 0, heldMs = 0) {
   pan('onActivate', { translationX: 0 });
@@ -161,12 +181,14 @@ let clock = 0;
 beforeEach(() => {
   mocked.springs.length = 0;
   mocked.speeds.length = 0;
+  mocked.reduced.length = 0;
   clock = 1000;
   rs.spyOn(Date, 'now').mockImplementation(() => clock);
 });
 
 afterEach(() => {
   mocked.toRN = undefined;
+  mocked.midway = undefined;
   rs.restoreAllMocks();
 });
 
@@ -218,7 +240,7 @@ test('a short, slow swipe settles back and proposes nothing', () => {
 
 test('a page the owner turns down settles back', () => {
   const proposals: string[] = [];
-  render(<Owner refuse proposals={proposals} />);
+  render(<Owner answer="refuse" proposals={proposals} />);
   layOut();
   swipe(-300, 0, 100);
   expect(proposals).toEqual(['b']);
@@ -226,13 +248,14 @@ test('a page the owner turns down settles back', () => {
   expect(hidden('a')).toBe(false);
 });
 
-test('a swipe never lands on a disabled page', () => {
+test('a swipe passes a disabled page by, to the next page beyond it', () => {
   const proposals: string[] = [];
   render(<Owner bDisabled proposals={proposals} />);
   layOut();
   swipe(-380, -2000);
-  expect(proposals).toEqual([]);
-  expect(mocked.springs.at(-1)).toBe(0);
+  expect(proposals).toEqual(['c']);
+  expect(mocked.springs.at(-1)).toBe(2);
+  expect(hidden('b')).toBe(true);
 });
 
 test('a new value springs there; a finger holding the pages wins until it lets go', () => {
@@ -275,13 +298,12 @@ test('caught again before the owner hears of the last swipe, the pages stay on i
   const proposals: string[] = [];
   render(<Owner proposals={proposals} />);
   layOut();
-  mocked.toRN = [];
-  swipe(-240, 0, 100);
-  // Caught and let go where they are, while the report waits.
-  swipe(0, 0, 100);
+  const waiting = heldBack(() => {
+    swipe(-240, 0, 100);
+    // Caught and let go where they are, while the report waits.
+    swipe(0, 0, 100);
+  });
   expect(mocked.springs.slice(-2)).toEqual([1, 1]);
-  const waiting = mocked.toRN;
-  mocked.toRN = undefined;
   act(() => waiting.forEach((run) => run()));
   expect(proposals).toEqual(['b']);
   expect(mocked.springs.at(-1)).toBe(1);
@@ -373,4 +395,156 @@ test('a page added and named at once springs there', () => {
   // z is the first page now; the pages were at a, now the second.
   expect(mocked.springs.at(-1)).toBe(0);
   expect(hidden('z')).toBe(false);
+});
+
+test('two swipes before React hears of the first go straight on, with no pull back', () => {
+  const proposals: string[] = [];
+  render(<Owner proposals={proposals} />);
+  layOut();
+  const waiting = heldBack(() => {
+    swipe(-240, 0, 100);
+    swipe(-240, 0, 100);
+  });
+  // React renders b, the first page reported, while the pages are already on c.
+  for (const run of waiting) act(run);
+  expect(proposals).toEqual(['b', 'c']);
+  expect(mocked.springs).toEqual([1, 2]);
+});
+
+test('a release onto a page React removed or disabled meanwhile proposes nothing', () => {
+  const proposals: string[] = [];
+  const { rerender } = render(<Owner proposals={proposals} />);
+  layOut();
+  const waiting = heldBack(() => {
+    swipe(-240, 0, 100);
+    rerender(<Owner proposals={proposals} bDisabled />);
+  });
+  act(() => waiting.forEach((run) => run()));
+  expect(proposals).toEqual([]);
+  expect(mocked.springs.at(-1)).toBe(0);
+  expect(hidden('a')).toBe(false);
+});
+
+test('an owner that answers in a transition sees no bounce', async () => {
+  const proposals: string[] = [];
+  render(<Owner answer="transition" proposals={proposals} />);
+  layOut();
+  swipe(-240, 0, 100);
+  await act(async () => {});
+  expect(proposals).toEqual(['b']);
+  expect(mocked.springs).toEqual([1]);
+});
+
+test('an owner that throws still sees the pages settle back', () => {
+  rs.spyOn(console, 'error').mockImplementation(() => {});
+  render(<Owner answer="throw" proposals={[]} />);
+  layOut();
+  expect(() => swipe(-240, 0, 100)).toThrow(/owner failed/);
+  act(() => {});
+  expect(mocked.springs.at(-1)).toBe(0);
+});
+
+test('a canceled swipe settles back, proposing nothing', () => {
+  const proposals: string[] = [];
+  render(<Owner proposals={proposals} />);
+  layOut();
+  pan('onActivate', { translationX: 0 });
+  pan('onUpdate', { translationX: -300 });
+  pan('onDeactivate', { canceled: true, velocityX: -2000 });
+  expect(proposals).toEqual([]);
+  expect(mocked.springs.at(-1)).toBe(0);
+});
+
+test('settling back past the first page, the pages drop the speed carrying them out', () => {
+  render(<Owner proposals={[]} />);
+  layOut();
+  swipe(60, 2000);
+  expect(mocked.springs.at(-1)).toBe(0);
+  expect(mocked.speeds.at(-1)).toBe(0);
+});
+
+test('the page the owner named during one swipe is forgotten by the next', () => {
+  const set: { current?: (value: string) => void } = {};
+  render(<Owner proposals={[]} set={set} />);
+  layOut();
+  pan('onActivate', { translationX: 0 });
+  act(() => set.current!('c'));
+  clock += 100;
+  pan('onDeactivate', { canceled: false, velocityX: 0 });
+  expect(mocked.springs.at(-1)).toBe(2);
+  act(() => set.current!('a'));
+  // A short swipe from a: back to a, not to c.
+  swipe(-40, 0, 100);
+  expect(mocked.springs.at(-1)).toBe(0);
+});
+
+test('caught mid-flight, the pages stay under the finger', () => {
+  const { rerender } = render(<Owner proposals={[]} />);
+  layOut();
+  // The spring to b is halfway there when the finger catches it.
+  mocked.midway = 0.5;
+  swipe(-240, 0, 100);
+  pan('onActivate', { translationX: 0 });
+  pan('onUpdate', { translationX: 0 });
+  rerender(<Owner proposals={[]} />);
+  // Half a page of three: a sixth of the row.
+  expect(rowShift()).toMatch(/translateX\(-16\.66+\d*%\)/);
+});
+
+test('before layout, a drag moves nothing', () => {
+  const proposals: string[] = [];
+  const { rerender } = render(<Owner proposals={proposals} />);
+  pan('onActivate', { translationX: 0 });
+  pan('onUpdate', { translationX: -240 });
+  rerender(<Owner proposals={proposals} />);
+  expect(mocked.row).toEqual({ transform: [{ translateX: '0%' }] });
+});
+
+test('right to left, a fling toward later pages carries its speed that way', () => {
+  const layout = I18nManager as { isRTL?: boolean };
+  layout.isRTL = true;
+  try {
+    render(<Owner proposals={[]} />);
+    layOut();
+    swipe(40, 800);
+    expect(mocked.springs.at(-1)).toBe(1);
+    expect(mocked.speeds.at(-1)).toBe(2);
+  } finally {
+    layout.isRTL = undefined;
+  }
+});
+
+test('with reduced motion, the pages jump', () => {
+  const page = globalThis as { matchMedia?: unknown };
+  page.matchMedia = () => ({
+    matches: true,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  });
+  try {
+    render(<Owner proposals={[]} />);
+    layOut();
+    swipe(-240, 0, 100);
+    expect(mocked.reduced.at(-1)).toBe(true);
+  } finally {
+    delete page.matchMedia;
+  }
+});
+
+test('a mouse drag over a pressable does not also press it', () => {
+  const presses: string[] = [];
+  render(
+    <SilkProvider>
+      <Pager.Root testID="pager" value="a" onValueChange={() => {}}>
+        <Pager.Page value="a">
+          <Text onPress={() => presses.push('a')}>a</Text>
+        </Pager.Page>
+      </Pager.Root>
+    </SilkProvider>,
+  );
+  layOut();
+  swipe(-100, 0, 100);
+  // The browser clicks what the button went down on when it comes up.
+  fireEvent.click(screen.getByText('a'));
+  expect(presses).toEqual([]);
 });

@@ -20,7 +20,11 @@ import { usePagerDrag } from './usePagerDrag.js';
 export interface PagerRootProps extends Omit<ViewProps, 'children'> {
   /** The page shown, by its `Pager.Page` `value`. */
   readonly value: string;
-  /** A swipe settled on another page: the owner shows it by passing its `value` back. */
+  /**
+   * A swipe let go toward another page: the owner shows it by passing its
+   * `value` back, in the same update or a transition. An answer that comes
+   * later than that (after an `await`) arrives after the pages settled back.
+   */
   readonly onValueChange: (value: string) => void;
   /** The pages, in order: `Pager.Page` elements, each a direct child. */
   readonly children: ReactNode;
@@ -30,7 +34,7 @@ export interface PagerRootProps extends Omit<ViewProps, 'children'> {
 export interface PagerPageProps extends ViewProps {
   /** The page's name, which `Pager.Root`'s `value` shows; unique in its pager. */
   readonly value: string;
-  /** A swipe passes it by: it shows only when the owner names it. */
+  /** A swipe passes it by, to the next page beyond: it shows only when the owner names it. */
   readonly disabled?: boolean;
   readonly ref?: Ref<ComponentRef<typeof View>>;
 }
@@ -46,9 +50,9 @@ const ActivePage = createContext(true);
 
 /**
  * `Pager.Root`: pages side by side, one shown at a time, which a sideways
- * swipe moves between (one page per swipe, never onto a disabled page). It is
+ * swipe moves between (one page per swipe, passing disabled pages by). It is
  * controlled: it shows the page `value` names, springing there when that
- * changes, and a swipe only proposes the page it settles on through
+ * changes, and a swipe only proposes the page it lands on through
  * `onValueChange`; an owner that keeps `value` sees the pages settle back.
  * The motion runs on the UI thread (`usePagerDrag`). Each page is as wide as
  * the pager, which sizes like any `View` (give it `flex: 1` or a height).
@@ -77,8 +81,8 @@ function PagerRoot({
   const drag = usePagerDrag({
     index,
     keys,
-    lands: pages.map((page) => !page.props.disabled),
-    onSettle: onValueChange,
+    enabled: pages.map((page) => !page.props.disabled),
+    onLand: onValueChange,
     reduced: useMotionPreference() === 'reduced',
   });
   const frames = useFrames(index, pages.length);
