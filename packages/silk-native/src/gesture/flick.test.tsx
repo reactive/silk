@@ -38,7 +38,7 @@ let flick: FlickGesture | undefined;
 
 function Flicked({
   direction,
-  enabled,
+  enabled = true,
 }: {
   readonly direction: FlickDirection;
   readonly enabled?: boolean;
@@ -46,7 +46,7 @@ function Flicked({
   flick = useFlickGesture({
     direction,
     onFlick: () => flicks++,
-    ...(enabled === undefined ? null : { enabled }),
+    enabled,
   });
   return null;
 }
@@ -99,7 +99,9 @@ test('a sideways fling reads the horizontal speed', () => {
   expect(flick!.touchAction).toBe('pan-y');
 });
 
-test('a disabled flick turns its pan off', () => {
+test('a disabled flick turns its pan off and leaves the browser its panning', () => {
   render(<Flicked direction="up" enabled={false} />);
   expect(mocked.pan).toMatchObject({ enabled: false });
+  // The browser keeps its scroll along the flick's axis too.
+  expect(flick!.touchAction).toBe('auto');
 });

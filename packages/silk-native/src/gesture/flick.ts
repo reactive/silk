@@ -17,8 +17,11 @@ export interface FlickGestureConfig {
 /** What a `GestureDetector` takes for a flick: spread it onto one. */
 export interface FlickGesture {
   readonly gesture: ReturnType<typeof usePanGesture>;
-  /** On the web, the browser's own panning the view leaves alone: across the flick's axis. */
-  readonly touchAction: 'pan-x' | 'pan-y';
+  /**
+   * On the web, the browser's own panning the view leaves alone: across the
+   * flick's axis, or all of it while disabled.
+   */
+  readonly touchAction: 'pan-x' | 'pan-y' | 'auto';
 }
 
 /**
@@ -75,5 +78,6 @@ export function useFlickGesture({
     [vertical, enabled, sign, timer, flicked],
   );
   const gesture = usePanGesture(config);
-  return { gesture, touchAction: crossPanning(vertical) };
+  // Disabled, it leaves the browser all its panning.
+  return { gesture, touchAction: enabled ? crossPanning(vertical) : 'auto' };
 }

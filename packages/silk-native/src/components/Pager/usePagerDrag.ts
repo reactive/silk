@@ -63,7 +63,7 @@ export function usePagerDrag({
   const dragging = useSharedValue(false);
   // The position a drag caught the pages at, and the finger's travel by then (its touch slop).
   const start = useSharedValue(index);
-  const caughtAt = useSharedValue(0);
+  const slop = useSharedValue(0);
   // The page the owner named while a finger held the pages, or -1.
   const answer = useSharedValue(-1);
   // The worklets are made once: they read the pages and React's props from these.
@@ -124,6 +124,7 @@ export function usePagerDrag({
           position.value += shift;
         }
         if (dragging.value) answer.value = next;
+        // A relist can leave the pages short of `next` (mid-spring) with `heading` already there.
         else if (heading.value !== next || (relisted && position.value !== next)) settle(next);
       },
       pan: panAlong(false, {
@@ -133,14 +134,14 @@ export function usePagerDrag({
           dragging.value = true;
           answer.value = -1;
           start.value = position.value;
-          caughtAt.value = event.translationX;
+          slop.value = event.translationX;
           timer.moved();
         },
         onUpdate: (event) => {
           'worklet';
           timer.moved();
           if (width.value <= 0) return;
-          const raw = start.value - (forward * (event.translationX - caughtAt.value)) / width.value;
+          const raw = start.value - (forward * (event.translationX - slop.value)) / width.value;
           position.value = dragPosition(raw, start.value, heading.value, pageLands.value);
         },
         onDeactivate: (event) => {
