@@ -124,8 +124,7 @@ function Owner({
           else if (answer === 'late') {
             startTransition(() => setValue(next));
             renderUrgently((renders) => renders + 1);
-          }
-          else if (answer === 'throw') throw new Error('owner failed');
+          } else if (answer === 'throw') throw new Error('owner failed');
         }}
       >
         {withZ && (
