@@ -36,8 +36,18 @@ let clock = 0;
 let flicks = 0;
 let flick: FlickGesture | undefined;
 
-function Flicked({ direction }: { readonly direction: FlickDirection }): JSX.Element | null {
-  flick = useFlickGesture({ direction, onFlick: () => flicks++ });
+function Flicked({
+  direction,
+  enabled,
+}: {
+  readonly direction: FlickDirection;
+  readonly enabled?: boolean;
+}): JSX.Element | null {
+  flick = useFlickGesture({
+    direction,
+    onFlick: () => flicks++,
+    ...(enabled === undefined ? null : { enabled }),
+  });
   return null;
 }
 
@@ -87,4 +97,9 @@ test('a sideways fling reads the horizontal speed', () => {
   release({ velocityX: 700 });
   expect(flicks).toBe(1);
   expect(flick!.touchAction).toBe('pan-y');
+});
+
+test('a disabled flick turns its pan off', () => {
+  render(<Flicked direction="up" enabled={false} />);
+  expect(mocked.pan).toMatchObject({ enabled: false });
 });

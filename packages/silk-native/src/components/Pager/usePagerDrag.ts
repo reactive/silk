@@ -61,8 +61,9 @@ export function usePagerDrag({
   const heading = useSharedValue(index);
   const width = useSharedValue(0);
   const dragging = useSharedValue(false);
-  // The position a drag caught the pages at.
+  // The position a drag caught the pages at, and the finger's travel by then (its touch slop).
   const start = useSharedValue(index);
+  const caughtAt = useSharedValue(0);
   // The page the owner named while a finger held the pages, or -1.
   const answer = useSharedValue(-1);
   // The worklets are made once: they read the pages and React's props from these.
@@ -75,6 +76,8 @@ export function usePagerDrag({
   const timer = useReleaseTimer();
 
   const latest = useRef(onSettle);
+  // Counts reports, so React's page is sent again after each one: an owner that turned the
+  // page down renders the same `index`, which must still spring the pages back.
   const [reports, setReports] = useState(0);
   useLayoutEffect(() => {
     latest.current = onSettle;
@@ -109,38 +112,35 @@ export function usePagerDrag({
       show: (next: number, nextKeys: readonly string[], nextLands: readonly boolean[]) => {
         'worklet';
         pageLands.value = nextLands;
-        if (!sameItems(pageKeys.value, nextKeys)) {
-          const shown = pageKeys.value[heading.value]!;
+        const relisted = !sameItems(pageKeys.value, nextKeys);
+        if (relisted) {
+          // The pages move with the page they were at; one removed leaves them at `next`.
+          const kept = nextKeys.indexOf(pageKeys.value[heading.value]!);
           pageKeys.value = nextKeys;
-          if (!dragging.value) {
-            cancelAnimation(position);
-            heading.value = next;
-            position.value = next;
-            return;
-          }
-          const kept = nextKeys.indexOf(shown);
+          if (!dragging.value) cancelAnimation(position);
           const shift = (kept < 0 ? next : kept) - heading.value;
           heading.value += shift;
           start.value += shift;
           position.value += shift;
         }
         if (dragging.value) answer.value = next;
-        else if (heading.value !== next) settle(next);
+        else if (heading.value !== next || (relisted && position.value !== next)) settle(next);
       },
       pan: panAlong(false, {
-        onActivate: () => {
+        onActivate: (event) => {
           'worklet';
           cancelAnimation(position);
           dragging.value = true;
           answer.value = -1;
           start.value = position.value;
+          caughtAt.value = event.translationX;
           timer.moved();
         },
         onUpdate: (event) => {
           'worklet';
           timer.moved();
           if (width.value <= 0) return;
-          const raw = start.value - (forward * event.translationX) / width.value;
+          const raw = start.value - (forward * (event.translationX - caughtAt.value)) / width.value;
           position.value = dragPosition(raw, start.value, heading.value, pageLands.value);
         },
         onDeactivate: (event) => {

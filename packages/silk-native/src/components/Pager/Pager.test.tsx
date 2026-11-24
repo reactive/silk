@@ -147,7 +147,7 @@ const pan = (name: string, event?: object) => act(() => (mocked.pan![name] as Ha
 
 /** A drag of `dx` points (negative toward later pages), let go at `velocityX` after `heldMs` still. */
 function swipe(dx: number, velocityX = 0, heldMs = 0) {
-  pan('onActivate');
+  pan('onActivate', { translationX: 0 });
   pan('onUpdate', { translationX: dx });
   clock += heldMs;
   pan('onDeactivate', { canceled: false, velocityX });
@@ -242,7 +242,7 @@ test('a new value springs there; a finger holding the pages wins until it lets g
   act(() => set.current!('c'));
   expect(mocked.springs.at(-1)).toBe(2);
 
-  pan('onActivate');
+  pan('onActivate', { translationX: 0 });
   pan('onUpdate', { translationX: 40 });
   const before = mocked.springs.length;
   act(() => set.current!('a'));
@@ -346,4 +346,31 @@ test('children other than distinct Pager.Page elements throw, and so does a Page
     render(pager([<Pager.Page key="1" value="a" />, <Pager.Page key="2" value="a" />])),
   ).toThrow(/same value/);
   expect(() => render(<Pager.Page value="a" />)).toThrow(/child of Pager.Root/);
+});
+
+test('the pages follow the finger from where the swipe took hold, past its touch slop', () => {
+  const proposals: string[] = [];
+  render(<Owner proposals={proposals} />);
+  layOut();
+  // Gesture Handler counts the finger's travel from where it touched down: 205 points
+  // there, but 197 since the swipe took hold, short of half the page.
+  pan('onActivate', { translationX: -8 });
+  pan('onUpdate', { translationX: -205 });
+  clock += 100;
+  pan('onDeactivate', { canceled: false, velocityX: 0 });
+  expect(proposals).toEqual([]);
+  expect(mocked.springs.at(-1)).toBe(0);
+});
+
+test('a page added and named at once springs there', () => {
+  const set: { current?: (value: string) => void } = {};
+  const { rerender } = render(<Owner proposals={[]} set={set} />);
+  layOut();
+  act(() => {
+    set.current!('z');
+    rerender(<Owner proposals={[]} set={set} withZ />);
+  });
+  // z is the first page now; the pages were at a, now the second.
+  expect(mocked.springs.at(-1)).toBe(0);
+  expect(hidden('z')).toBe(false);
 });
