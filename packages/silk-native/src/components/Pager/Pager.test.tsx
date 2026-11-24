@@ -102,13 +102,15 @@ function Owner({
   set,
 }: {
   readonly initial?: string;
-  readonly answer?: 'take' | 'transition' | 'refuse' | 'throw';
+  /** `late`: in a transition, behind an urgent render of something else. */
+  readonly answer?: 'take' | 'transition' | 'late' | 'refuse' | 'throw';
   readonly bDisabled?: boolean;
   readonly withZ?: boolean;
   readonly proposals: string[];
   readonly set?: { current?: (value: string) => void };
 }): JSX.Element {
   const [value, setValue] = useState(initial);
+  const [, renderUrgently] = useState(0);
   if (set) set.current = setValue;
   return (
     <SilkProvider>
@@ -119,6 +121,10 @@ function Owner({
           proposals.push(next);
           if (answer === 'take') setValue(next);
           else if (answer === 'transition') startTransition(() => setValue(next));
+          else if (answer === 'late') {
+            startTransition(() => setValue(next));
+            renderUrgently((renders) => renders + 1);
+          }
           else if (answer === 'throw') throw new Error('owner failed');
         }}
       >
@@ -428,6 +434,16 @@ test('a release onto a page React removed or disabled meanwhile proposes nothing
 test('an owner that answers in a transition sees no bounce', async () => {
   const proposals: string[] = [];
   render(<Owner answer="transition" proposals={proposals} />);
+  layOut();
+  swipe(-240, 0, 100);
+  await act(async () => {});
+  expect(proposals).toEqual(['b']);
+  expect(mocked.springs).toEqual([1]);
+});
+
+test('an urgent render before an owner’s transition commits keeps the pages on its page', async () => {
+  const proposals: string[] = [];
+  render(<Owner answer="late" proposals={proposals} />);
   layOut();
   swipe(-240, 0, 100);
   await act(async () => {});

@@ -1,4 +1,4 @@
-import { startTransition, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { startTransition, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { I18nManager, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
@@ -84,16 +84,14 @@ export function usePagerDrag({
   useLayoutEffect(() => {
     latest.current = { onLand, keys, enabledPages };
   });
-  // The reports React has heard, sent with its page. Each report also renders, so React's
-  // page is sent again after it: an owner that turned the page down renders the same `index`,
-  // which must still spring the pages back. That render is a transition, so an owner that
-  // answers in one (a router) is rendered with it, and it is asked before the owner's call,
-  // so an owner that throws still gets it.
-  const heard = useRef(0);
-  const [, rerender] = useReducer((renders: number) => renders + 1, 0);
+  // The reports React has heard, sent with its page. Each report renders, so React's page is
+  // sent again after it: an owner that turned the page down renders the same `index`, which
+  // must still spring the pages back. The count is state in a transition, so it commits with
+  // an owner's answer in one (a router), and never with the page from before that answer;
+  // it is set before the owner's call, so an owner that throws still renders it.
+  const [heard, setHeard] = useState(0);
   const [report] = useState(() => (key: string, count: number) => {
-    heard.current = count;
-    startTransition(rerender);
+    startTransition(() => setHeard(count));
     // The page may have gone or been disabled since the UI thread landed on it.
     const { onLand: land, keys: now, enabledPages: open } = latest.current;
     const at = now.indexOf(key);
@@ -202,19 +200,19 @@ export function usePagerDrag({
 
   // Sends React's page on, when it or the pages changed, and after each report, so a page
   // the owner turned down springs back.
-  const sent = useRef({ index, keys, enabledPages, heard: 0 });
+  const sent = useRef({ index, keys, enabledPages, heard });
   useLayoutEffect(() => {
     const last = sent.current;
     if (
       last.index === index &&
-      last.heard === heard.current &&
+      last.heard === heard &&
       sameItems(last.keys, keys) &&
       sameItems(last.enabledPages, enabledPages)
     ) {
       return;
     }
-    sent.current = { index, keys, enabledPages, heard: heard.current };
-    scheduleOnUI(show, index, keys, enabledPages, heard.current);
+    sent.current = { index, keys, enabledPages, heard };
+    scheduleOnUI(show, index, keys, enabledPages, heard);
   });
 
   // In percent of the row, which is as wide as all the pages, so the page shows before layout.
