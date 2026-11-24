@@ -113,6 +113,12 @@ export function unitsPerPixel(length: number, scale: SliderScale): number {
   return (scale.max - scale.min) / Math.max(travel(length, scale.thumbSize), 1);
 }
 
+/** Which way along its axis (x or y, as the screen counts) a slider runs from `edge` toward max. */
+export function towardMax(edge: SliderEdge): 1 | -1 {
+  'worklet';
+  return edge === 'left' || edge === 'top' ? 1 : -1;
+}
+
 /**
  * Places a thumb's box `fraction` of the way from `from`, centered across.
  * It always sets the same edges (left and top, with their margins), so an
@@ -126,12 +132,6 @@ export function thumbBoxAt(fraction: number, thumbSize: number, from: SliderEdge
   return from === 'left' || from === 'right'
     ? { ...placeAt(fromTopLeft, thumbSize, center, 'left'), top: '50%', marginTop: center }
     : { ...placeAt(fromTopLeft, thumbSize, center, 'top'), left: '50%', marginLeft: center };
-}
-
-/** Which way along its axis (x or y, as the screen counts) a slider runs from `edge` toward max. */
-export function towardMax(edge: SliderEdge): 1 | -1 {
-  'worklet';
-  return edge === 'left' || edge === 'top' ? 1 : -1;
 }
 
 /** Moves a box `distance` from `edge` along the slider, by a transform. */
