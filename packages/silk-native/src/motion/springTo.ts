@@ -95,3 +95,16 @@ export function springTo(
     } as SpringToAnimation;
   }) as unknown as number;
 }
+
+/**
+ * How fast `value`'s running `springTo` moves now (units per second), or
+ * undefined when nothing runs: read it before a write that stops the spring,
+ * to start the next one at that speed. Reanimated keeps a value's running
+ * animation on `_animation`, on the UI thread.
+ */
+export function springSpeed(value: { readonly value: number }): number | undefined {
+  'worklet';
+  const running = (value as { readonly _animation?: { readonly velocity?: unknown } | null })
+    ._animation;
+  return typeof running?.velocity === 'number' ? running.velocity : undefined;
+}

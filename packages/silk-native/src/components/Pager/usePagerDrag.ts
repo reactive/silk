@@ -4,7 +4,7 @@ import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { crossPanning, panAlong, useReleaseTimer } from '../../gesture/drag.js';
-import { SUBPIXEL, springTo } from '../../motion/springTo.js';
+import { SUBPIXEL, springSpeed, springTo } from '../../motion/springTo.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
 import { sameItems } from '../sameItems.js';
@@ -118,7 +118,7 @@ export function usePagerDrag({
     /**
      * The pages are now `nextKeys`: they move with the page they were at, or
      * to `next` if it was removed, so the row stays still under them, and a
-     * spring on its way there goes on from where it was moved to.
+     * spring on its way there goes on from where it was moved to, as fast.
      */
     const relist = (next: number, nextKeys: readonly string[]) => {
       'worklet';
@@ -126,12 +126,13 @@ export function usePagerDrag({
       pageKeys.value = nextKeys;
       // Moving the pages stops their spring.
       const springing = !dragging.value && position.value !== heading.value;
+      const speed = springing ? springSpeed(position) : undefined;
       if (!dragging.value) cancelAnimation(position);
       const shift = (kept < 0 ? next : kept) - heading.value;
       heading.value += shift;
       start.value += shift;
       position.value += shift;
-      if (springing) settle(heading.value);
+      if (springing) settle(heading.value, speed);
     };
     return {
       /**

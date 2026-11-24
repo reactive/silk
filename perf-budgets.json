@@ -33,7 +33,7 @@
       "Listbox": 4400,
       "Slider": 8400,
       "Tooltip": 11300,
-      "Pager": 3500
+      "Pager": 3600
     },
     "isolatedGzip": {
       "Button": 3200,

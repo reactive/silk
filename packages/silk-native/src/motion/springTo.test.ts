@@ -6,7 +6,7 @@ rs.mock('react-native-reanimated', () => ({
   defineAnimation: (_start: number, factory: () => object) => factory(),
 }));
 
-const { springTo } = await import('./springTo.js');
+const { springSpeed, springTo } = await import('./springTo.js');
 
 interface Running {
   current: number;
@@ -78,4 +78,10 @@ test('a clamped spring on its target keeps a speed away from it, then stops on i
     expect(onTarget.current).toBeLessThanOrEqual(0);
   }
   expect(done).toBe(true);
+});
+
+test('a running spring’s speed is read from the value it animates', () => {
+  expect(springSpeed({ value: 0.4, _animation: { velocity: 3 } } as { value: number })).toBe(3);
+  expect(springSpeed({ value: 1, _animation: null } as { value: number })).toBeUndefined();
+  expect(springSpeed({ value: 1 })).toBeUndefined();
 });
