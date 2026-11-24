@@ -157,7 +157,7 @@ export function usePagerDrag({
               : 0;
           const page = event.canceled
             ? from
-            : landing(position.value, fling as -1 | 0 | 1, from, pageLands.value);
+            : landing(position.value, fling, from, pageLands.value);
           if (page === from) {
             // Back where it began, or to the page the owner named meanwhile.
             settle(answer.value < 0 ? from : answer.value, speed);

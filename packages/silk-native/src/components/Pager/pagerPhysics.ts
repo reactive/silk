@@ -39,14 +39,14 @@ export function dragPosition(
 }
 
 /**
- * The page a release at `position` lands on. A fling (`fling` 1 toward later
- * pages, -1 toward earlier ones, 0 for none) goes on to the next page its way;
- * a slower release settles on the nearest page. Never past `reach`: a drag
- * moves at most one page, and never onto a disabled one.
+ * The page a release at `position` lands on. A fling (`fling` above 0 toward
+ * later pages, below 0 toward earlier ones, 0 for none) goes on to the next
+ * page its way; a slower release settles on the nearest page. Never past
+ * `reach`: a drag moves at most one page, and never onto a disabled one.
  */
 export function landing(
   position: number,
-  fling: -1 | 0 | 1,
+  fling: number,
   from: number,
   enabled: readonly boolean[],
 ): number {
