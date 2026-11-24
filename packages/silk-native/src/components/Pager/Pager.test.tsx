@@ -591,3 +591,25 @@ test('React rendering the page a spring is heading to leaves the spring alone', 
   expect(mocked.springs).toEqual([1]);
   expect(mocked.speeds).toEqual([2]);
 });
+
+test('a page keeps its state when pages before it come and go', () => {
+  rs.spyOn(console, 'error').mockImplementation(() => {});
+  let mounts = 0;
+  function Counted(): JSX.Element {
+    useState(() => mounts++);
+    return <Text>counted</Text>;
+  }
+  // Pages without keys of their own, so their place names them.
+  const pager = (names: readonly string[]) => (
+    <SilkProvider>
+      <Pager.Root value="b" onValueChange={() => {}}>
+        {names.map((name) => (
+          <Pager.Page value={name}>{name === 'b' ? <Counted /> : <Page name={name} />}</Pager.Page>
+        ))}
+      </Pager.Root>
+    </SilkProvider>
+  );
+  const { rerender } = render(pager(['a', 'b']));
+  rerender(pager(['z', 'a', 'b']));
+  expect(mounts).toBe(1);
+});

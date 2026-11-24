@@ -100,7 +100,9 @@ function PagerRoot({
         <Animated.View style={[styles.row, { width: `${pages.length * 100}%` }, drag.rowMotion]}>
           {pages.map((page, at) => (
             <PageFrame key={page.props.value} value={frames[at]!}>
-              {page}
+              {/* Made again without the key `Children.toArray` gave it, which follows its
+                  place: a page that moves keeps its state. */}
+              <PagerPage {...page.props} />
             </PageFrame>
           ))}
         </Animated.View>
