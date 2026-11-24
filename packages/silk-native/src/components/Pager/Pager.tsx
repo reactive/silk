@@ -100,9 +100,7 @@ function PagerRoot({
         <Animated.View style={[styles.row, { width: `${pages.length * 100}%` }, drag.rowMotion]}>
           {pages.map((page, at) => (
             <PageFrame key={page.props.value} value={frames[at]!}>
-              {/* Made again without the key `Children.toArray` gave it, which follows its
-                  place: a page that moves keeps its state. */}
-              <PagerPage {...page.props} />
+              {page}
             </PageFrame>
           ))}
         </Animated.View>
@@ -119,13 +117,21 @@ function useFrames(index: number, count: number) {
   }, [index, count]);
 }
 
-/** `Pager.Root`'s children as its pages, in order. */
+/**
+ * `Pager.Root`'s children as its pages, in order. Not `Children.toArray`,
+ * which keys a page by its place: its frame is keyed by its value, so a page
+ * that moves keeps its state.
+ */
 function pagesOf(children: ReactNode): ReactElement<PagerPageProps>[] {
-  const pages = Children.toArray(children).map((child) => {
-    if (isValidElement<PagerPageProps>(child) && child.type === PagerPage) return child;
-    throw new Error(
-      'Pager.Root: each child must be a Pager.Page, not one inside a Fragment or another component.',
-    );
+  const pages: ReactElement<PagerPageProps>[] = [];
+  Children.forEach(children, (child) => {
+    if (child === null || child === undefined || typeof child === 'boolean') return;
+    if (isValidElement<PagerPageProps>(child) && child.type === PagerPage) pages.push(child);
+    else {
+      throw new Error(
+        'Pager.Root: each child must be a Pager.Page, not one inside a Fragment or another component.',
+      );
+    }
   });
   return pages;
 }

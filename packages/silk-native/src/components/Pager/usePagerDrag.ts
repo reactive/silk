@@ -117,17 +117,21 @@ export function usePagerDrag({
     };
     /**
      * The pages are now `nextKeys`: they move with the page they were at, or
-     * to `next` if it was removed, so the row stays still under them.
+     * to `next` if it was removed, so the row stays still under them, and a
+     * spring on its way there goes on from where it was moved to.
      */
     const relist = (next: number, nextKeys: readonly string[]) => {
       'worklet';
       const kept = nextKeys.indexOf(pageKeys.value[heading.value]!);
       pageKeys.value = nextKeys;
+      // Moving the pages stops their spring.
+      const springing = !dragging.value && position.value !== heading.value;
       if (!dragging.value) cancelAnimation(position);
       const shift = (kept < 0 ? next : kept) - heading.value;
       heading.value += shift;
       start.value += shift;
       position.value += shift;
+      if (springing) settle(heading.value);
     };
     return {
       /**
@@ -143,15 +147,11 @@ export function usePagerDrag({
       ) => {
         'worklet';
         pageEnabled.value = nextEnabled;
-        const relisted = !sameItems(pageKeys.value, nextKeys);
-        if (relisted) relist(next, nextKeys);
-        // A relist stops the pages, short of their page if they were springing there.
-        const stopped = relisted && !dragging.value && position.value !== heading.value;
+        if (!sameItems(pageKeys.value, nextKeys)) relist(next, nextKeys);
         // React hasn't heard where a release went: its page is older than the pages'.
-        if (heardReports < reported.value) {
-          if (stopped) settle(heading.value);
-        } else if (dragging.value) answer.value = next;
-        else if (heading.value !== next || stopped) settle(next);
+        if (heardReports < reported.value) return;
+        if (dragging.value) answer.value = next;
+        else if (heading.value !== next) settle(next);
       },
       pan: panAlong(false, {
         onActivate: (event) => {
