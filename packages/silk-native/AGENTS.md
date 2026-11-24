@@ -1,0 +1,9 @@
+Traps in `silk-native` that its code and tests do not make obvious. Paths are under this package.
+
+- Anything that moves under a finger runs on the UI thread: Gesture Handler for the gesture, Reanimated shared values for the position, and `springTo` for the release. Build a drag with `panAlong` and `useReleaseTimer` (`src/gesture/drag.ts`). The exception is a control that moves on press, as Slider's web pan does.
+- On the web, Gesture Handler writes each attached handler's `touch-action` and `user-select` onto the detector's view, a disabled handler's too, and the last write wins. Never compose a disabled gesture with an enabled one in one `GestureDetector`: leave it out of the composition (`src/components/useSliderDrag.ts`). Set `touch-action` through the detector's `touchAction` prop (as `useFlickGesture` returns it), not a style.
+- Tests run worklets uncompiled. `src/worklets.test.ts` (it covers `silk-core` too) pins what only the worklets Babel plugin's output breaks: read its comments before writing a worklet, and add each new failure there.
+- An animated style reruns only for shared values its own body reads. Read them there, pass plain numbers to helper worklets, and pass `WEB ? [those values] : undefined` as its dependencies (`src/components/sliderMotion.ts`).
+- Gesture tests mock Gesture Handler and call its configs by hand (copy `src/components/Slider.drag.test.tsx`). Only Storybook play tests run it for real, and there it hears pointer events, not mouse events (`apps/docs/src/native/Forms.stories.tsx`).
+- rstest refuses an async mock factory. Import the real module with `import * as x from '…' with { rstest: 'importActual' }`.
+- A mechanic this package owns because no behavior library provides it is listed under "Current bindings" in `docs/PRINCIPLES.md`, with a dated "Amendment log" entry, and pinned by a test.

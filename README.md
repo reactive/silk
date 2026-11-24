@@ -60,6 +60,9 @@ yarn test
 | `yarn build` | Build publishable workspaces |
 | `yarn typecheck` | Typecheck all workspaces |
 | `yarn test` | Run tests |
+| `yarn test:packed` | Check the packed packages install and load in a consumer |
+| `yarn test:perf` | Check bundle sizes against `perf-budgets.json` (`--write` records new measurements) |
+| `yarn test:storybook` | Run the Storybook tests (after `yarn docs:build`) |
 | `yarn docs` | Start Storybook docs site |
 | `yarn docs:build` | Build static Storybook (`apps/docs/storybook-static`) |
 | `yarn changeset` | Add a changeset for the next release |
