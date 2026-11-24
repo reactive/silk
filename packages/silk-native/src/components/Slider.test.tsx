@@ -330,3 +330,12 @@ test('children draw on the slider and take no touches', () => {
   expect(screen.getByTestId('root').contains(mark)).toBe(true);
   expect(getComputedStyle(mark.parentElement!).pointerEvents).toBe('none');
 });
+
+// Gesture Handler sets touch-action on the slider's box, or a phone browser takes a finger's
+// drag as a scroll and cancels it.
+test('a finger drag on the web moves the slider, not the page', () => {
+  render(<Controlled accessibilityLabel="Strength" initial={[50]} testID="root" />);
+  const { style } = screen.getByTestId('root');
+  expect(style.touchAction).toBe('none');
+  expect(style.userSelect).toBe('none');
+});
