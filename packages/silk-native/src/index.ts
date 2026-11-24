@@ -72,11 +72,11 @@ export type {
   SheetScrollViewProps,
 } from './components/Dialog/Dialog.js';
 
-export { Pager } from './components/Pager/Pager.js';
+export { Pager, usePagerIsActive } from './components/Pager/Pager.js';
 export type { PagerNamespace, PagerRootProps, PagerPageProps } from './components/Pager/Pager.js';
 export { gestureConventions } from './gesture/conventions.js';
-export { useFlingGesture } from './gesture/fling.js';
-export type { FlingDirection, FlingGesture, FlingGestureConfig } from './gesture/fling.js';
+export { useFlickGesture } from './gesture/flick.js';
+export type { FlickDirection, FlickGesture, FlickGestureConfig } from './gesture/flick.js';
 
 export { springTo } from './motion/springTo.js';
 export type { SpringToOptions } from './motion/springTo.js';

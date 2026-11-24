@@ -8,13 +8,10 @@ import {
   type ReactNode,
   type Ref,
   use,
-  useLayoutEffect,
-  useRef,
 } from 'react';
-import { type LayoutChangeEvent, StyleSheet, View, type ViewProps } from 'react-native';
+import { StyleSheet, View, type ViewProps } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
-import { assignRef } from '../assignRef.js';
 import { useMotionPreference } from '../../styles/useReducedMotion.js';
 import { WEB } from '../../web/host.js';
 import { usePagerDrag } from './usePagerDrag.js';
@@ -24,19 +21,26 @@ export interface PagerRootProps extends Omit<ViewProps, 'children'> {
   readonly value: string;
   /** A swipe settled on another page: the owner shows it by passing its `value` back. */
   readonly onValueChange: (value: string) => void;
-  /** The pages, in order: `Pager.Page` elements. */
+  /** The pages, in order: `Pager.Page` elements, each a direct child. */
   readonly children: ReactNode;
   readonly ref?: Ref<ComponentRef<typeof View>>;
 }
 
 export interface PagerPageProps extends ViewProps {
-  /** The page's name, which `Pager.Root`'s `value` shows. */
+  /** The page's name, which `Pager.Root`'s `value` shows; unique in its pager. */
   readonly value: string;
   /** A swipe passes it by: it shows only when the owner names it. */
   readonly disabled?: boolean;
+  readonly ref?: Ref<ComponentRef<typeof View>>;
 }
 
-/** Whether the page around the caller is the one shown (`Pager.useIsActive`). */
+/** The place `Pager.Root` gives a page: whether it shows, and its share of the row. */
+const PageFrame = createContext<{
+  readonly shown: boolean;
+  readonly width: `${number}%`;
+} | null>(null);
+
+/** Whether the page around the caller is shown, and every page around that one (`usePagerIsActive`). */
 const ActivePage = createContext(true);
 
 /**
@@ -45,11 +49,14 @@ const ActivePage = createContext(true);
  * controlled: it shows the page `value` names, springing there when that
  * changes, and a swipe only proposes the page it settles on through
  * `onValueChange`; an owner that keeps `value` sees the pages settle back.
- * The motion runs on the UI thread (`usePagerDrag`). Pages other than the
- * shown one are hidden from screen readers and can't take focus. Inside a
- * page, a vertical scroll still scrolls; a horizontal one competes with the
- * swipe. Each page is as wide as the pager, which sizes like any `View`
- * (give it `flex: 1` or a height).
+ * The motion runs on the UI thread (`usePagerDrag`). Each page is as wide as
+ * the pager, which sizes like any `View` (give it `flex: 1` or a height).
+ *
+ * Inside a page, a vertical scroll still scrolls; a horizontal one competes
+ * with the swipe. On the web the pager keeps the browser's vertical panning,
+ * and its text can't be selected, since a mouse drag pages (Gesture Handler's
+ * `user-select: none`). Right to left follows `I18nManager.isRTL`, which
+ * react-native-web leaves unset.
  */
 function PagerRoot({
   value,
@@ -57,40 +64,37 @@ function PagerRoot({
   children,
   style,
   onLayout,
-  ref,
   ...rest
 }: PagerRootProps): JSX.Element {
-  const pages = Children.toArray(children).filter(isPage);
-  const index = pages.findIndex((page) => page.props.value === value);
+  const pages = pagesOf(children);
+  const keys = pages.map((page) => page.props.value);
+  const index = keys.indexOf(value);
   if (index < 0) throw new Error(`Pager.Root: no Pager.Page has the value "${value}".`);
   const drag = usePagerDrag({
     index,
-    enabled: pages.map((page) => !page.props.disabled),
-    onSettle: (page) => {
-      const settled = pages[page];
-      if (settled) onValueChange(settled.props.value);
-    },
+    keys,
+    lands: pages.map((page) => !page.props.disabled),
+    onSettle: onValueChange,
     reduced: useMotionPreference() === 'reduced',
   });
-  const share = `${100 / pages.length}%` as const;
+  const width = `${100 / pages.length}%` as const;
 
   return (
     // On the web, a vertical swipe on a page stays the browser's scroll.
     <GestureDetector gesture={drag.pan} touchAction="pan-y">
       <View
-        ref={ref}
         {...rest}
-        onLayout={(event: LayoutChangeEvent) => {
+        onLayout={(event) => {
           drag.onLayout(event);
           onLayout?.(event);
         }}
         style={[styles.root, style]}
       >
-        <Animated.View
-          style={[styles.row, { width: `${pages.length * 100}%` }, drag.rowMotion]}
-        >
+        <Animated.View style={[styles.row, { width: `${pages.length * 100}%` }, drag.rowMotion]}>
           {pages.map((page, at) => (
-            <PageSlot key={page.props.value} {...page.props} shown={at === index} width={share} />
+            <PageFrame key={page.props.value} value={{ shown: at === index, width }}>
+              {page}
+            </PageFrame>
           ))}
         </Animated.View>
       </View>
@@ -98,73 +102,69 @@ function PagerRoot({
   );
 }
 
-const isPage = (child: ReturnType<typeof Children.toArray>[number]): child is ReactElement<PagerPageProps> =>
-  isValidElement<PagerPageProps>(child) && typeof child.props.value === 'string';
-
-/**
- * `Pager.Page`: one page of a `Pager.Root`, which lays it out; it renders
- * nothing elsewhere.
- */
-function PagerPage(_props: PagerPageProps): null {
-  return null;
+/** `Pager.Root`'s children as its pages, in order. */
+function pagesOf(children: ReactNode): ReactElement<PagerPageProps>[] {
+  const pages = Children.toArray(children).map((child) => {
+    if (isValidElement<PagerPageProps>(child) && child.type === PagerPage) return child;
+    throw new Error(
+      'Pager.Root: each child must be a Pager.Page, not one inside a Fragment or another component.'
+    );
+  });
+  if (new Set(pages.map((page) => page.props.value)).size < pages.length) {
+    throw new Error('Pager.Root: two Pager.Page children have the same value.');
+  }
+  return pages;
 }
 
-/** A page in its place in the row: shown, or hidden from screen readers and focus. */
-function PageSlot({
+/**
+ * `Pager.Page`: one page of the `Pager.Root` it is a child of. Pages other
+ * than the shown one are hidden from screen readers, and on the web are
+ * `inert`, so focus skips them.
+ */
+function PagerPage({
   value: _value,
   disabled: _disabled,
-  shown,
-  width,
   style,
   children,
-  ref,
   ...rest
-}: PagerPageProps & {
-  readonly shown: boolean;
-  readonly width: `${number}%`;
-  readonly ref?: Ref<ComponentRef<typeof View>>;
-}): JSX.Element {
-  const node = useRef<ComponentRef<typeof View>>(null);
-  // React Native for Web passes no `inert`; on the web it is the element's own property.
-  useLayoutEffect(() => {
-    if (WEB && node.current) (node.current as unknown as HTMLElement).inert = !shown;
-  }, [shown]);
+}: PagerPageProps): JSX.Element {
+  const frame = use(PageFrame);
+  const outerShown = use(ActivePage);
+  if (!frame) throw new Error('Pager.Page: render it as a child of Pager.Root.');
+  const hidden = !frame.shown;
   return (
     <View
-      ref={(view) => {
-        node.current = view;
-        assignRef(ref, view);
-      }}
       {...rest}
-      aria-hidden={!shown}
-      importantForAccessibility={shown ? 'auto' : 'no-hide-descendants'}
-      accessibilityElementsHidden={!shown}
-      style={[{ width }, style]}
+      aria-hidden={hidden}
+      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+      accessibilityElementsHidden={hidden}
+      // React Native's View types lack `inert`; react-native-web passes it to the element.
+      {...(WEB ? { inert: hidden } : null)}
+      style={[{ width: frame.width }, style]}
     >
-      <ActivePage value={shown}>{children}</ActivePage>
+      {/* A Page among this one's children belongs to no pager until it is in a Root. */}
+      <PageFrame value={null}>
+        <ActivePage value={outerShown && frame.shown}>{children}</ActivePage>
+      </PageFrame>
     </View>
   );
 }
 
 /**
- * Whether the page around the caller is the one its pager shows (true outside
- * a pager), so a hidden page can stop listening for keys or updates.
+ * Whether the page around the caller is the one its pager shows, inside
+ * every pager around it (true outside a pager), so a hidden page can stop
+ * listening for keys or updates.
  */
-function usePagerIsActive(): boolean {
+export function usePagerIsActive(): boolean {
   return use(ActivePage);
 }
 
 export interface PagerNamespace {
   readonly Root: typeof PagerRoot;
   readonly Page: typeof PagerPage;
-  readonly useIsActive: typeof usePagerIsActive;
 }
 
-export const Pager: PagerNamespace = {
-  Root: PagerRoot,
-  Page: PagerPage,
-  useIsActive: usePagerIsActive,
-};
+export const Pager: PagerNamespace = { Root: PagerRoot, Page: PagerPage };
 
 const styles = StyleSheet.create({
   root: { overflow: 'hidden' },

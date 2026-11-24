@@ -4,54 +4,56 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { gestureConventions } from './conventions.js';
 import { panAlong, useReleaseTimer } from './drag.js';
 
-export type FlingDirection = 'up' | 'down' | 'left' | 'right';
+export type FlickDirection = 'up' | 'down' | 'left' | 'right';
 
-export interface FlingGestureConfig {
+export interface FlickGestureConfig {
   /** The way the finger throws. */
-  readonly direction: FlingDirection;
+  readonly direction: FlickDirection;
   /** The finger let go moving that way at least as fast as a fling (`gestureConventions.flingVelocity`). */
-  readonly onFling: () => void;
+  readonly onFlick: () => void;
   readonly enabled?: boolean;
 }
 
-/** What a `GestureDetector` takes for a fling: spread it onto one. */
-export interface FlingGesture {
+/** What a `GestureDetector` takes for a flick: spread it onto one. */
+export interface FlickGesture {
   readonly gesture: ReturnType<typeof usePanGesture>;
-  /** On the web, the browser's own panning the view leaves alone: across the fling's axis. */
+  /** On the web, the browser's own panning the view leaves alone: across the flick's axis. */
   readonly touchAction: 'pan-x' | 'pan-y';
 }
 
 /**
- * A gesture for `GestureDetector` that calls `onFling` when a finger throws
+ * A gesture for `GestureDetector` that calls `onFlick` when a finger throws
  * the view `direction`: it starts once the finger moves a touch slop along
  * that axis (one across it fails, so a scroll across keeps it), and counts
  * only a release at least Material's fling speed that way (a finger held
  * still before letting go has none). Nothing moves while it drags; taps and
  * holds on the view's children still work. The release is judged on the UI
- * thread and `onFling` runs once, on the JavaScript thread.
+ * thread and `onFlick` runs once, on the JavaScript thread. (Gesture
+ * Handler's own `useFlingGesture` is a different gesture: it fires on a fast
+ * move, before the finger lets go, and judges no speed at release.)
  *
  * On the web the view keeps the browser's scroll across the axis only: a
- * vertical fling area doesn't scroll the page when swiped up or down.
+ * vertical flick area doesn't scroll the page when swiped up or down.
  *
  * ```tsx
- * const fling = useFlingGesture({ direction: 'up', onFling: openSettings });
- * <GestureDetector {...fling}><Bar /></GestureDetector>
+ * const flick = useFlickGesture({ direction: 'up', onFlick: openSettings });
+ * <GestureDetector {...flick}><Bar /></GestureDetector>
  * ```
  */
-export function useFlingGesture({
+export function useFlickGesture({
   direction,
-  onFling,
+  onFlick,
   enabled = true,
-}: FlingGestureConfig): FlingGesture {
+}: FlickGestureConfig): FlickGesture {
   const vertical = direction === 'up' || direction === 'down';
   // Gesture Handler's speeds grow rightward and downward.
   const sign = direction === 'up' || direction === 'left' ? -1 : 1;
   const timer = useReleaseTimer();
-  const latest = useRef(onFling);
+  const latest = useRef(onFlick);
   useLayoutEffect(() => {
-    latest.current = onFling;
+    latest.current = onFlick;
   });
-  const [fling] = useState(() => () => latest.current());
+  const [flicked] = useState(() => () => latest.current());
   const gesture = usePanGesture(
     panAlong(vertical, {
       enabled,
@@ -66,9 +68,9 @@ export function useFlingGesture({
       onDeactivate: (event) => {
         'worklet';
         const speed = timer.speed(event.canceled, vertical ? event.velocityY : event.velocityX);
-        if (sign * speed >= gestureConventions.flingVelocity) scheduleOnRN(fling);
+        if (sign * speed >= gestureConventions.flingVelocity) scheduleOnRN(flicked);
       },
-    }),
+    })
   );
   return { gesture, touchAction: vertical ? 'pan-x' : 'pan-y' };
 }

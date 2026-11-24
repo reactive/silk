@@ -32,7 +32,8 @@
       "Popover": 9800,
       "Listbox": 4400,
       "Slider": 8200,
-      "Tooltip": 11300
+      "Tooltip": 11300,
+      "Pager": 3400
     },
     "isolatedGzip": {
       "Button": 3200,
@@ -279,6 +280,10 @@
       "Tooltip": {
         "raw": 32665,
         "gzip": 10912
+      },
+      "Pager": {
+        "raw": 6840,
+        "gzip": 3050
       }
     },
     "ssr": {

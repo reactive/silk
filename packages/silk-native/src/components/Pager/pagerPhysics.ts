@@ -20,14 +20,23 @@ export function reach(from: number, enabled: readonly boolean[]): { min: number;
 
 /**
  * Where the pages stand with the finger at `raw` (the position it would put
- * them at with nothing in the way): there, inside `reach`; past it, they
- * follow at a third of the finger's travel.
+ * them at with nothing in the way), for a drag that caught them at `start`
+ * heading to page `from`: there, between `reach` and `start`; past both, they
+ * follow at a third of the finger's travel. Including `start` keeps a catch
+ * mid-flight, outside `reach`, from jumping under the finger.
  */
-export function dragPosition(raw: number, from: number, enabled: readonly boolean[]): number {
+export function dragPosition(
+  raw: number,
+  start: number,
+  from: number,
+  enabled: readonly boolean[]
+): number {
   'worklet';
   const { min, max } = reach(from, enabled);
-  if (raw < min) return min - (min - raw) * RESISTANCE;
-  if (raw > max) return max + (raw - max) * RESISTANCE;
+  const low = Math.min(min, start);
+  const high = Math.max(max, start);
+  if (raw < low) return low - (low - raw) * RESISTANCE;
+  if (raw > high) return high + (raw - high) * RESISTANCE;
   return raw;
 }
 
@@ -43,11 +52,15 @@ export function landing(
   speed: number,
   pageWidth: number,
   from: number,
-  enabled: readonly boolean[],
+  enabled: readonly boolean[]
 ): number {
   'worklet';
   const { min, max } = reach(from, enabled);
   const fling = pageWidth > 0 && Math.abs(speed) * pageWidth >= gestureConventions.flingVelocity;
-  const page = fling ? (speed > 0 ? Math.ceil(position) : Math.floor(position)) : Math.round(position);
+  const page = fling
+    ? speed > 0
+      ? Math.ceil(position)
+      : Math.floor(position)
+    : Math.round(position);
   return Math.min(max, Math.max(min, page));
 }
