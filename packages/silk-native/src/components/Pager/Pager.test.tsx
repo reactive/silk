@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, rs, test } from '@rstest/core';
 import { act, render, screen } from '@testing-library/react';
-import { type JSX, useRef, useState } from 'react';
+import { type JSX, type ReactNode, useRef, useState } from 'react';
 import { I18nManager, Text, View } from 'react-native';
 import { SilkProvider } from '../../theme/SilkProvider.js';
 
@@ -41,7 +41,7 @@ rs.mock('react-native-reanimated', () => ({
       velocity: number;
       callback?: (finished: boolean) => void;
       onStart: (animation: object, value: number, now: number, previous?: object) => void;
-    }
+    },
   ) => {
     const animation = factory();
     animation.onStart(animation, 0, 0, undefined);
@@ -138,7 +138,7 @@ function layOut() {
   act(() =>
     root.__reactLayoutHandler({
       nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 300 } },
-    })
+    }),
   );
 }
 
@@ -317,7 +317,7 @@ test('a page inside a hidden page is inactive', () => {
           </Pager.Root>
         </Pager.Page>
       </Pager.Root>
-    </SilkProvider>
+    </SilkProvider>,
   );
   expect(active.a).toBe(true);
   expect(active.inner).toBe(false);
@@ -325,7 +325,7 @@ test('a page inside a hidden page is inactive', () => {
 
 test('children other than distinct Pager.Page elements throw, and so does a Page outside a Root', () => {
   rs.spyOn(console, 'error').mockImplementation(() => {});
-  const pager = (children: JSX.Element) => (
+  const pager = (children: ReactNode) => (
     <SilkProvider>
       <Pager.Root value="a" onValueChange={() => {}}>
         {children}
@@ -337,20 +337,13 @@ test('children other than distinct Pager.Page elements throw, and so does a Page
       pager(
         <>
           <Pager.Page value="a" />
-        </>
-      )
-    )
+        </>,
+      ),
+    ),
   ).toThrow(/each child must be a Pager.Page/);
   expect(() => render(pager(<View />))).toThrow(/each child must be a Pager.Page/);
   expect(() =>
-    render(
-      <SilkProvider>
-        <Pager.Root value="a" onValueChange={() => {}}>
-          <Pager.Page value="a" />
-          <Pager.Page value="a" />
-        </Pager.Root>
-      </SilkProvider>
-    )
+    render(pager([<Pager.Page key="1" value="a" />, <Pager.Page key="2" value="a" />])),
   ).toThrow(/same value/);
   expect(() => render(<Pager.Page value="a" />)).toThrow(/child of Pager.Root/);
 });

@@ -29,6 +29,14 @@ export function panAlong(
     : { ...config, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
 }
 
+/**
+ * On the web, the browser's own panning a `panAlong` drag leaves to it: across
+ * its axis, as a `GestureDetector`'s `touchAction`.
+ */
+export function crossPanning(vertical: boolean): 'pan-x' | 'pan-y' {
+  return vertical ? 'pan-x' : 'pan-y';
+}
+
 export interface ReleaseTimer {
   /** The drag started or moved (call from its worklets). */
   readonly moved: () => void;

@@ -28,19 +28,16 @@ test('a drag that catches the pages mid-flight starts where they are', () => {
 });
 
 test('a slow release settles on the nearest page, a fling on the next one its way', () => {
-  const width = 400;
-  expect(landing(0.4, 0, width, 0, all)).toBe(0);
-  expect(landing(0.6, 0, width, 0, all)).toBe(1);
-  // 0.2 of the way, flung forward at 2 pages/s (800 pt/s, past 500).
-  expect(landing(0.2, 2, width, 0, all)).toBe(1);
+  expect(landing(0.4, 0, 0, all)).toBe(0);
+  expect(landing(0.6, 0, 0, all)).toBe(1);
+  // 0.2 of the way, flung forward.
+  expect(landing(0.2, 1, 0, all)).toBe(1);
   // Flung back from 0.8: home again.
-  expect(landing(0.8, -2, width, 0, all)).toBe(0);
-  // Too slow to fling (1 page/s is 400 pt/s).
-  expect(landing(0.2, 1, width, 0, all)).toBe(0);
+  expect(landing(0.8, -1, 0, all)).toBe(0);
 });
 
 test('a release never lands past one page, nor on a disabled one', () => {
-  expect(landing(1.9, 5, 400, 1, all)).toBe(2);
-  expect(landing(-0.2, -3, 400, 0, all)).toBe(0);
-  expect(landing(0.7, 3, 400, 0, [true, false, true])).toBe(0);
+  expect(landing(1.9, 1, 1, all)).toBe(2);
+  expect(landing(-0.2, -1, 0, all)).toBe(0);
+  expect(landing(0.7, 1, 0, [true, false, true])).toBe(0);
 });

@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { gestureConventions } from './conventions.js';
-import { panAlong, useReleaseTimer } from './drag.js';
+import { crossPanning, panAlong, useReleaseTimer } from './drag.js';
 
 export type FlickDirection = 'up' | 'down' | 'left' | 'right';
 
@@ -54,23 +54,26 @@ export function useFlickGesture({
     latest.current = onFlick;
   });
   const [flicked] = useState(() => () => latest.current());
-  const gesture = usePanGesture(
-    panAlong(vertical, {
-      enabled,
-      onActivate: () => {
-        'worklet';
-        timer.moved();
-      },
-      onUpdate: () => {
-        'worklet';
-        timer.moved();
-      },
-      onDeactivate: (event) => {
-        'worklet';
-        const speed = timer.speed(event.canceled, vertical ? event.velocityY : event.velocityX);
-        if (sign * speed >= gestureConventions.flingVelocity) scheduleOnRN(flicked);
-      },
-    })
+  const config = useMemo(
+    () =>
+      panAlong(vertical, {
+        enabled,
+        onActivate: () => {
+          'worklet';
+          timer.moved();
+        },
+        onUpdate: () => {
+          'worklet';
+          timer.moved();
+        },
+        onDeactivate: (event) => {
+          'worklet';
+          const speed = timer.speed(event.canceled, vertical ? event.velocityY : event.velocityX);
+          if (sign * speed >= gestureConventions.flingVelocity) scheduleOnRN(flicked);
+        },
+      }),
+    [vertical, enabled, sign, timer, flicked],
   );
-  return { gesture, touchAction: vertical ? 'pan-x' : 'pan-y' };
+  const gesture = usePanGesture(config);
+  return { gesture, touchAction: crossPanning(vertical) };
 }

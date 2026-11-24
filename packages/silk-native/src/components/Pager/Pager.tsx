@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type Ref,
   use,
+  useMemo,
 } from 'react';
 import { StyleSheet, View, type ViewProps } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -68,6 +69,9 @@ function PagerRoot({
 }: PagerRootProps): JSX.Element {
   const pages = pagesOf(children);
   const keys = pages.map((page) => page.props.value);
+  if (new Set(keys).size < keys.length) {
+    throw new Error('Pager.Root: two Pager.Page children have the same value.');
+  }
   const index = keys.indexOf(value);
   if (index < 0) throw new Error(`Pager.Root: no Pager.Page has the value "${value}".`);
   const drag = usePagerDrag({
@@ -77,11 +81,10 @@ function PagerRoot({
     onSettle: onValueChange,
     reduced: useMotionPreference() === 'reduced',
   });
-  const width = `${100 / pages.length}%` as const;
+  const frames = useFrames(index, pages.length);
 
   return (
-    // On the web, a vertical swipe on a page stays the browser's scroll.
-    <GestureDetector gesture={drag.pan} touchAction="pan-y">
+    <GestureDetector gesture={drag.pan} touchAction={drag.touchAction}>
       <View
         {...rest}
         onLayout={(event) => {
@@ -92,7 +95,7 @@ function PagerRoot({
       >
         <Animated.View style={[styles.row, { width: `${pages.length * 100}%` }, drag.rowMotion]}>
           {pages.map((page, at) => (
-            <PageFrame key={page.props.value} value={{ shown: at === index, width }}>
+            <PageFrame key={page.props.value} value={frames[at]!}>
               {page}
             </PageFrame>
           ))}
@@ -102,17 +105,22 @@ function PagerRoot({
   );
 }
 
+/** Each page's place, kept while `index` and the count stay, so the pages needn't render again. */
+function useFrames(index: number, count: number) {
+  return useMemo(() => {
+    const width = `${100 / count}%` as const;
+    return Array.from({ length: count }, (_, at) => ({ shown: at === index, width }));
+  }, [index, count]);
+}
+
 /** `Pager.Root`'s children as its pages, in order. */
 function pagesOf(children: ReactNode): ReactElement<PagerPageProps>[] {
   const pages = Children.toArray(children).map((child) => {
     if (isValidElement<PagerPageProps>(child) && child.type === PagerPage) return child;
     throw new Error(
-      'Pager.Root: each child must be a Pager.Page, not one inside a Fragment or another component.'
+      'Pager.Root: each child must be a Pager.Page, not one inside a Fragment or another component.',
     );
   });
-  if (new Set(pages.map((page) => page.props.value)).size < pages.length) {
-    throw new Error('Pager.Root: two Pager.Page children have the same value.');
-  }
   return pages;
 }
 
@@ -136,8 +144,6 @@ function PagerPage({
     <View
       {...rest}
       aria-hidden={hidden}
-      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
-      accessibilityElementsHidden={hidden}
       // React Native's View types lack `inert`; react-native-web passes it to the element.
       {...(WEB ? { inert: hidden } : null)}
       style={[{ width: frame.width }, style]}
