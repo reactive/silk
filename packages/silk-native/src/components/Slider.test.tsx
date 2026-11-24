@@ -334,11 +334,14 @@ test('children draw on the slider and take no touches', () => {
 // Gesture Handler writes touch-action and user-select on the slider's box. While the slider is
 // live they must be 'none', or a phone browser takes a finger's drag as a scroll and cancels it.
 test('a live slider on the web keeps a finger\'s drag from the browser', () => {
-  const { rerender } = render(<Controlled accessibilityLabel="Strength" initial={[50]} testID="root" />);
+  const slider = (disabled: boolean) => (
+    <Controlled accessibilityLabel="Strength" initial={[50]} testID="root" disabled={disabled} />
+  );
+  const { rerender } = render(slider(false));
   const { style } = screen.getByTestId('root');
   expect([style.touchAction, style.userSelect]).toEqual(['none', 'none']);
-  rerender(<Controlled accessibilityLabel="Strength" initial={[50]} testID="root" disabled />);
+  rerender(slider(true));
   expect([style.touchAction, style.userSelect]).toEqual(['', '']);
-  rerender(<Controlled accessibilityLabel="Strength" initial={[50]} testID="root" />);
+  rerender(slider(false));
   expect([style.touchAction, style.userSelect]).toEqual(['none', 'none']);
 });
