@@ -51,8 +51,9 @@ export function dragPosition(
 
 /**
  * The page a release at `position` lands on, one of `reach`'s: a drag moves
- * at most one page (passing disabled ones by) and never lands on a disabled
- * one. A fling (`fling` above 0 toward later pages, below 0 toward earlier
+ * at most one page, passing disabled ones by, so a release that moves the
+ * pages lands on an enabled one (one that doesn't keeps the owner's page,
+ * whatever it is). A fling (`fling` above 0 toward later pages, below 0 toward earlier
  * ones, 0 for none) goes on to the next of them its way; a slower release
  * settles on the nearest.
  */

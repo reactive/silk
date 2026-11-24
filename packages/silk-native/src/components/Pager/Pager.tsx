@@ -81,7 +81,7 @@ function PagerRoot({
   const drag = usePagerDrag({
     index,
     keys,
-    enabled: pages.map((page) => !page.props.disabled),
+    enabledPages: pages.map((page) => !page.props.disabled),
     onLand: onValueChange,
     reduced: useMotionPreference() === 'reduced',
   });

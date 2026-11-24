@@ -548,3 +548,18 @@ test('a mouse drag over a pressable does not also press it', () => {
   fireEvent.click(screen.getByText('a'));
   expect(presses).toEqual([]);
 });
+
+test('pages relisted mid-spring, before React hears of the release, go on to their page', () => {
+  const proposals: string[] = [];
+  const { rerender } = render(<Owner proposals={proposals} />);
+  layOut();
+  heldBack(() => {
+    // The spring to b is halfway there when a page is added before a.
+    mocked.midway = 0.5;
+    swipe(-240, 0, 100);
+    mocked.midway = undefined;
+    rerender(<Owner proposals={proposals} withZ />);
+  });
+  // b is the third page now.
+  expect(mocked.springs.at(-1)).toBe(2);
+});

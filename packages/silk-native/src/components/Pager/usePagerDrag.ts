@@ -1,4 +1,4 @@
-import { startTransition, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { I18nManager, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
@@ -43,7 +43,7 @@ const UNLAID_PRECISION = 0.001;
 export function usePagerDrag({
   index,
   keys,
-  enabled,
+  enabledPages,
   onLand,
   reduced,
 }: {
@@ -51,7 +51,7 @@ export function usePagerDrag({
   /** Each page's key, in order. */
   readonly keys: readonly string[];
   /** Which pages a drag may land on, one entry per page. */
-  readonly enabled: readonly boolean[];
+  readonly enabledPages: readonly boolean[];
   /** A release landed on the page with this key, which React renders and which is enabled. */
   readonly onLand: (key: string) => void;
   readonly reduced: boolean;
@@ -72,7 +72,7 @@ export function usePagerDrag({
   const reported = useSharedValue(0);
   // The worklets are made once: they read the pages and React's props from these.
   const pageKeys = useSharedValue(keys);
-  const pageEnabled = useSharedValue(enabled);
+  const pageEnabled = useSharedValue(enabledPages);
   const spring = useSharedValue(brisk);
   const reduceMotion = useSharedValue(reduced);
   // Later pages lie to the left in a right-to-left layout, where a row runs that way.
@@ -80,9 +80,9 @@ export function usePagerDrag({
   const timer = useReleaseTimer();
 
   // React's props as last committed, which a report reads when it arrives.
-  const latest = useRef({ onLand, keys, enabled });
+  const latest = useRef({ onLand, keys, enabledPages });
   useLayoutEffect(() => {
-    latest.current = { onLand, keys, enabled };
+    latest.current = { onLand, keys, enabledPages };
   });
   // The reports React has heard, sent with its page. Each report also renders, so React's
   // page is sent again after it: an owner that turned the page down renders the same `index`,
@@ -90,13 +90,14 @@ export function usePagerDrag({
   // answers in one (a router) is rendered with it, and it is asked before the owner's call,
   // so an owner that throws still gets it.
   const heard = useRef(0);
-  const [, rerender] = useState(0);
+  const [, rerender] = useReducer((renders: number) => renders + 1, 0);
   const [report] = useState(() => (key: string, count: number) => {
     heard.current = count;
-    startTransition(() => rerender(count));
+    startTransition(rerender);
     // The page may have gone or been disabled since the UI thread landed on it.
-    const { onLand: land, keys: now, enabled: open } = latest.current;
-    if (open[now.indexOf(key)]) land(key);
+    const { onLand: land, keys: now, enabledPages: open } = latest.current;
+    const at = now.indexOf(key);
+    if (at >= 0 && open[at]) land(key);
   });
 
   // Made once, so neither Gesture Handler nor Reanimated sets the gesture up again each render.
@@ -144,13 +145,15 @@ export function usePagerDrag({
       ) => {
         'worklet';
         pageEnabled.value = nextEnabled;
-        if (!sameItems(pageKeys.value, nextKeys)) relist(next, nextKeys);
+        const relisted = !sameItems(pageKeys.value, nextKeys);
+        if (relisted) relist(next, nextKeys);
+        // A relist stops the pages, short of their page if they were springing there.
+        const stopped = relisted && !dragging.value && position.value !== heading.value;
         // React hasn't heard where a release went: its page is older than the pages'.
-        if (heardReports < reported.value) return;
-        if (dragging.value) answer.value = next;
-        // Also when `heading` is there already: a relist can stop the pages short of it. A
-        // spring still on its way starts again from where it is, at its speed: the same curve.
-        else if (heading.value !== next || position.value !== next) settle(next);
+        if (heardReports < reported.value) {
+          if (stopped) settle(heading.value);
+        } else if (dragging.value) answer.value = next;
+        else if (heading.value !== next || stopped) settle(next);
       },
       pan: panAlong(false, {
         onActivate: (event) => {
@@ -199,19 +202,19 @@ export function usePagerDrag({
 
   // Sends React's page on, when it or the pages changed, and after each report, so a page
   // the owner turned down springs back.
-  const sent = useRef({ index, keys, enabled, heard: 0 });
+  const sent = useRef({ index, keys, enabledPages, heard: 0 });
   useLayoutEffect(() => {
     const last = sent.current;
     if (
       last.index === index &&
       last.heard === heard.current &&
       sameItems(last.keys, keys) &&
-      sameItems(last.enabled, enabled)
+      sameItems(last.enabledPages, enabledPages)
     ) {
       return;
     }
-    sent.current = { index, keys, enabled, heard: heard.current };
-    scheduleOnUI(show, index, keys, enabled, heard.current);
+    sent.current = { index, keys, enabledPages, heard: heard.current };
+    scheduleOnUI(show, index, keys, enabledPages, heard.current);
   });
 
   // In percent of the row, which is as wide as all the pages, so the page shows before layout.

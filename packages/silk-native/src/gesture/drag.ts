@@ -28,7 +28,7 @@ export function panAlong(
   config: Omit<PanGestureConfig, AxisKeys>,
 ): PanGestureConfig {
   const { onDeactivate } = config;
-  const ended: Omit<PanGestureConfig, AxisKeys> = {
+  const guarded: Omit<PanGestureConfig, AxisKeys> = {
     ...config,
     onDeactivate: (event) => {
       'worklet';
@@ -37,8 +37,8 @@ export function panAlong(
     },
   };
   return vertical
-    ? { ...ended, activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
-    : { ...ended, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
+    ? { ...guarded, activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
+    : { ...guarded, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
 }
 
 /**

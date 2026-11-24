@@ -46,6 +46,7 @@ function Flicked({
   flick = useFlickGesture({
     direction,
     onFlick: () => flicks++,
+    // Left out when unset, so the hook's own default is what's tested.
     ...(enabled === undefined ? null : { enabled }),
   });
   return null;
