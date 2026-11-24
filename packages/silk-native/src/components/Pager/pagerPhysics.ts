@@ -4,6 +4,8 @@
  * between the second and the third. Pure worklets, so tests run them in Node.
  */
 
+import { gestureConventions } from '../../gesture/conventions.js';
+
 /** How far a page lies beyond where a drag may go, as a share of the finger's travel. */
 const RESISTANCE = 1 / 3;
 
@@ -55,4 +57,20 @@ export function landing(
   const page =
     fling > 0 ? Math.ceil(position) : fling < 0 ? Math.floor(position) : Math.round(position);
   return Math.min(max, Math.max(min, page));
+}
+
+/**
+ * A release at `pointsPerSecond` toward later pages, in a pager `pageWidth`
+ * wide: its `speed` in pages a second, and its `fling` direction (1 or -1 when
+ * at least Material's fling speed, else 0) for `landing`. Before layout it has
+ * neither.
+ */
+export function releaseInPages(
+  pointsPerSecond: number,
+  pageWidth: number,
+): { speed: number; fling: number } {
+  'worklet';
+  if (pageWidth <= 0) return { speed: 0, fling: 0 };
+  const flung = Math.abs(pointsPerSecond) >= gestureConventions.flingVelocity;
+  return { speed: pointsPerSecond / pageWidth, fling: flung ? Math.sign(pointsPerSecond) : 0 };
 }

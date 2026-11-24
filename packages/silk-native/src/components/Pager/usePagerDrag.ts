@@ -3,13 +3,12 @@ import { I18nManager, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
-import { gestureConventions } from '../../gesture/conventions.js';
 import { crossPanning, panAlong, useReleaseTimer } from '../../gesture/drag.js';
 import { SUBPIXEL, springTo } from '../../motion/springTo.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
 import { sameItems } from '../sameItems.js';
-import { dragPosition, landing } from './pagerPhysics.js';
+import { dragPosition, landing, releaseInPages } from './pagerPhysics.js';
 
 export interface PagerDrag {
   readonly pan: ReturnType<typeof usePanGesture>;
@@ -104,6 +103,20 @@ export function usePagerDrag({
         velocity === undefined ? options : { ...options, velocity },
       );
     };
+    /**
+     * The pages are now `nextKeys`: they move with the page they were at, or
+     * to `next` if it was removed, so the row stays still under them.
+     */
+    const relist = (next: number, nextKeys: readonly string[]) => {
+      'worklet';
+      const kept = nextKeys.indexOf(pageKeys.value[heading.value]!);
+      pageKeys.value = nextKeys;
+      if (!dragging.value) cancelAnimation(position);
+      const shift = (kept < 0 ? next : kept) - heading.value;
+      heading.value += shift;
+      start.value += shift;
+      position.value += shift;
+    };
     return {
       /**
        * React's page `next` of the pages `nextKeys`. A new list keeps the page
@@ -113,16 +126,7 @@ export function usePagerDrag({
         'worklet';
         pageLands.value = nextLands;
         const relisted = !sameItems(pageKeys.value, nextKeys);
-        if (relisted) {
-          // The pages move with the page they were at; one removed leaves them at `next`.
-          const kept = nextKeys.indexOf(pageKeys.value[heading.value]!);
-          pageKeys.value = nextKeys;
-          if (!dragging.value) cancelAnimation(position);
-          const shift = (kept < 0 ? next : kept) - heading.value;
-          heading.value += shift;
-          start.value += shift;
-          position.value += shift;
-        }
+        if (relisted) relist(next, nextKeys);
         if (dragging.value) answer.value = next;
         // A relist can leave the pages short of `next` (mid-spring) with `heading` already there.
         else if (heading.value !== next || (relisted && position.value !== next)) settle(next);
@@ -148,14 +152,10 @@ export function usePagerDrag({
           'worklet';
           dragging.value = false;
           const from = heading.value;
-          const pageWidth = width.value;
-          // Points a second toward later pages.
-          const toward = -forward * timer.speed(event.canceled, event.velocityX);
-          const speed = pageWidth > 0 ? toward / pageWidth : 0;
-          const fling =
-            pageWidth > 0 && Math.abs(toward) >= gestureConventions.flingVelocity
-              ? Math.sign(toward)
-              : 0;
+          const { speed, fling } = releaseInPages(
+            -forward * timer.speed(event.canceled, event.velocityX),
+            width.value,
+          );
           const page = event.canceled
             ? from
             : landing(position.value, fling, from, pageLands.value);

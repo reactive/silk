@@ -1,5 +1,5 @@
 import { expect, test } from '@rstest/core';
-import { dragPosition, landing, reach } from './pagerPhysics.js';
+import { dragPosition, landing, reach, releaseInPages } from './pagerPhysics.js';
 
 const all = [true, true, true];
 
@@ -40,4 +40,12 @@ test('a release never lands past one page, nor on a disabled one', () => {
   expect(landing(1.9, 1, 1, all)).toBe(2);
   expect(landing(-0.2, -1, 0, all)).toBe(0);
   expect(landing(0.7, 1, 0, [true, false, true])).toBe(0);
+});
+
+test('a release is a fling from 500 points a second, and its speed is in pages', () => {
+  expect(releaseInPages(800, 400)).toEqual({ speed: 2, fling: 1 });
+  expect(releaseInPages(-500, 400)).toEqual({ speed: -1.25, fling: -1 });
+  expect(releaseInPages(400, 400)).toEqual({ speed: 1, fling: 0 });
+  // Before layout there are no pages to measure in.
+  expect(releaseInPages(800, 0)).toEqual({ speed: 0, fling: 0 });
 });
