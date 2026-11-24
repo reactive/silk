@@ -206,6 +206,7 @@ export function useSliderDrag({
           end(0);
         },
       },
+      // Attached on native only (see `gesture` below).
       tap: {
         enabled: !disabled,
         hitSlop: slop,
@@ -225,11 +226,11 @@ export function useSliderDrag({
   }, [values, releases, configs]);
 
   const pan = usePanGesture(configs.pan);
-  const either = useExclusiveGestures(pan, useTapGesture(configs.tap));
+  const panThenTap = useExclusiveGestures(pan, useTapGesture(configs.tap));
   // The web leaves the tap out (its pan's press already moves the thumb). Gesture Handler
   // writes every handler's touch-action onto the slider, and a disabled tap's default ('')
   // would replace the pan's 'none', so a phone browser would scroll instead of dragging.
-  const gesture = WEB ? pan : either;
+  const gesture = WEB ? pan : panThenTap;
   return {
     gesture,
     active,
