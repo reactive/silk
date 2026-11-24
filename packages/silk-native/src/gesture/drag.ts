@@ -5,6 +5,8 @@
 import { useMemo } from 'react';
 import type { PanGestureConfig } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
+import { swallowDragClick, WEB } from '../web/host.js';
 import { gestureConventions, releaseVelocity } from './conventions.js';
 
 const SLOP: [number, number] = [-gestureConventions.touchSlop, gestureConventions.touchSlop];
@@ -15,7 +17,8 @@ type AxisKeys = 'activeOffsetX' | 'activeOffsetY' | 'failOffsetX' | 'failOffsetY
 /**
  * `config` as a one-finger pan along one axis: it starts once the finger moves
  * a touch slop along it, and fails on one across, so a scroll view across it
- * keeps a scroll that starts on it. Its callbacks say 'worklet' themselves.
+ * keeps a scroll that starts on it. On the web, a mouse drag that began on a
+ * pressable doesn't also press it. Its callbacks say 'worklet' themselves.
  *
  * It merges here, not by a spread at the call: the worklets Babel plugin reads
  * an object written for a gesture hook, and throws on a spread in it.
@@ -24,9 +27,26 @@ export function panAlong(
   vertical: boolean,
   config: Omit<PanGestureConfig, AxisKeys>,
 ): PanGestureConfig {
+  const { onDeactivate } = config;
+  const guarded: Omit<PanGestureConfig, AxisKeys> = {
+    ...config,
+    onDeactivate: (event) => {
+      'worklet';
+      if (WEB) scheduleOnRN(swallowDragClick);
+      onDeactivate?.(event);
+    },
+  };
   return vertical
-    ? { ...config, activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
-    : { ...config, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
+    ? { ...guarded, activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
+    : { ...guarded, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
+}
+
+/**
+ * On the web, the browser's own panning a `panAlong` drag leaves to it: across
+ * its axis, as a `GestureDetector`'s `touchAction`.
+ */
+export function crossPanning(vertical: boolean): 'pan-x' | 'pan-y' {
+  return vertical ? 'pan-x' : 'pan-y';
 }
 
 export interface ReleaseTimer {

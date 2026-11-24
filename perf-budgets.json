@@ -28,11 +28,12 @@
       "Switch": 3700,
       "RadioGroup": 3850,
       "Field": 3200,
-      "Dialog": 5800,
+      "Dialog": 6000,
       "Popover": 9800,
       "Listbox": 4400,
-      "Slider": 8200,
-      "Tooltip": 11300
+      "Slider": 8400,
+      "Tooltip": 11300,
+      "Pager": 3600
     },
     "isolatedGzip": {
       "Button": 3200,
@@ -279,6 +280,10 @@
       "Tooltip": {
         "raw": 32665,
         "gzip": 10912
+      },
+      "Pager": {
+        "raw": 6988,
+        "gzip": 3100
       }
     },
     "ssr": {
