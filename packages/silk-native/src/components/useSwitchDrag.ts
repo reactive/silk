@@ -96,8 +96,8 @@ export function useSwitchDrag({
     };
     /**
      * Lets go at `speed` points a second toward on: lands by `switchLandsOn`,
-     * or back where it began if `canceled`, and reports a landing on the side
-     * React doesn't already have.
+     * or back where it began if `canceled`, and reports a landing on the end
+     * the thumb wasn't at or heading to.
      */
     const release = (canceled: boolean, speed: number) => {
       'worklet';

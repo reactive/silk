@@ -108,8 +108,7 @@ export const SwitchDrag: Story = {
     const across = async (from: number, by: number) => {
       const track = canvas.getByTestId('drag');
       const { left, width, top, height } = track.getBoundingClientRect();
-      const pointer = { pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
-      const at = (x: number) => ({ ...pointer, clientX: x, clientY: top + height / 2 });
+      const at = (x: number) => ({ ...MOUSE, clientX: x, clientY: top + height / 2 });
       const start = left + width * from;
       // The pan starts here, and the thumb follows from here on.
       const caught = start + Math.sign(by) * 10;
@@ -281,6 +280,9 @@ export const SliderPadded: Story = {
 
 type Point = { clientX: number; clientY: number };
 
+/** The primary mouse button, as the stories' synthetic pointers press it. */
+const MOUSE = { pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
+
 /** A mouse press at `point` on `target`, let go where it went down, as Gesture Handler hears one. */
 function press(target: HTMLElement, point: Point) {
   drag(target, [point]);
@@ -288,10 +290,9 @@ function press(target: HTMLElement, point: Point) {
 
 /** A mouse pressed at the first point on `target`, moved through the rest, and let go at the last. */
 function drag(target: HTMLElement, [first, ...rest]: readonly Point[]) {
-  const pointer = { pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
-  fireEvent.pointerDown(target, { ...pointer, ...first, buttons: 1 });
-  for (const point of rest) fireEvent.pointerMove(target, { ...pointer, ...point, buttons: 1 });
-  fireEvent.pointerUp(target, { ...pointer, ...(rest.at(-1) ?? first), buttons: 0 });
+  fireEvent.pointerDown(target, { ...MOUSE, ...first, buttons: 1 });
+  for (const point of rest) fireEvent.pointerMove(target, { ...MOUSE, ...point, buttons: 1 });
+  fireEvent.pointerUp(target, { ...MOUSE, ...(rest.at(-1) ?? first), buttons: 0 });
 }
 
 /**

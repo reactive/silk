@@ -588,6 +588,8 @@ console.log('packed-native-bundle: OK');
     // As a web bundler (Metro, webpack) picks them: the gesture and animation
     // peers ship `.web.js` twins of their native-only modules.
     resolveExtensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.js', '.json'],
+    // Every React Native bundler defines it, and Gesture Handler (which Switch loads) reads it.
+    define: { __DEV__: 'false' },
     logLevel: 'silent',
   });
   run(`node ${nativeBundleOut}`, fixture);
