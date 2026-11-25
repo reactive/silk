@@ -13,9 +13,11 @@ const springMotions = new WeakMap<Spring, Motion>();
 
 /**
  * A spring played from rest, as the time it takes to settle and Reanimated's
- * `linear()` easing: sampled once per token, which a theme keeps.
+ * `linear()` easing, for CSS transitions and keyframes: sampled once per
+ * spring object, which a theme keeps. `useMotion` gives a theme's springs this
+ * way; call it for a spring of one's own, held in a constant.
  */
-function springMotion(spring: Spring): Motion {
+export function springMotion(spring: Spring): Motion {
   let motion = springMotions.get(spring);
   if (!motion) {
     const { settleMs, progress } = sampleSpring(spring);

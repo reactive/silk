@@ -83,7 +83,7 @@ export type { FlickDirection, FlickGesture, FlickGestureConfig } from './gesture
 
 export { springTo } from './motion/springTo.js';
 export type { SpringToOptions } from './motion/springTo.js';
-export { useMotion } from './motion/useMotion.js';
+export { springMotion, useMotion } from './motion/useMotion.js';
 export type { Motion } from './motion/useMotion.js';
 export { Popover } from './components/Popover.js';
 export type { PopoverRootProps, PopoverContentProps } from './components/Popover.js';
