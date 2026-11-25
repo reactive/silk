@@ -78,9 +78,12 @@ test('a row leaving mid-arrival fades out from the opacity it reached, not from 
 test('a glide starts on the frame showing now, so a list rendering every frame still moves', () => {
   const { el, animations } = row('');
   Object.defineProperty(document, 'timeline', { value: { currentTime: 1234 }, configurable: true });
-  glide(el, defaultMotion.brisk, from, still, { lifted: false });
-  expect(animations.at(-1)?.startTime).toBe(1234);
-  Reflect.deleteProperty(document, 'timeline');
+  try {
+    glide(el, defaultMotion.brisk, from, still, { lifted: false });
+    expect(animations.at(-1)?.startTime).toBe(1234);
+  } finally {
+    Reflect.deleteProperty(document, 'timeline');
+  }
 });
 
 test("landing leaves a z-index React set mid-glide, not the row's old one", () => {
@@ -91,16 +94,28 @@ test("landing leaves a z-index React set mid-glide, not the row's old one", () =
   expect(node.style.zIndex).toBe('');
 });
 
-test('a fade whose easing the browser refuses plays linearly instead of throwing', () => {
-  const node = document.createElement('div');
-  const easings: unknown[] = [];
-  node.animate = (_keyframes, options) => {
-    const { easing } = options as KeyframeAnimationOptions;
-    if (easing !== 'linear') throw new TypeError(`Invalid easing ${easing}`);
-    easings.push(easing);
-    return new EventTarget() as Animation;
+test('a fade whose easing the browser refuses plays linearly, keeping its fill', () => {
+  const list = document.createElement('div');
+  document.body.append(list);
+  const played: KeyframeAnimationOptions[] = [];
+  const refusing = () => {
+    const node = document.createElement('div');
+    node.animate = (_keyframes, options) => {
+      const timing = options as KeyframeAnimationOptions;
+      if (timing.easing !== 'linear') throw new TypeError(`Invalid easing ${timing.easing}`);
+      played.push(timing);
+      return Object.assign(new EventTarget(), { finished: new Promise(() => {}) }) as Animation;
+    };
+    return node as unknown as MotionElement;
   };
   const refused = { durationMs: 200, easing: 'cubic-bezier(1.5, 0, 0.5, 1)' };
-  arrive(node as unknown as MotionElement, refused);
-  expect(easings).toEqual(['linear']);
+  arrive(refusing(), refused);
+  const position = { at: still, velocity: still, width: 10, height: 10 };
+  const parent = list as unknown as MotionElement;
+  leave([{ ...position, el: refusing(), parent }], refused);
+  expect(played.map(({ easing, fill }) => [easing, fill])).toEqual([
+    ['linear', 'auto'],
+    ['linear', 'forwards'],
+  ]);
+  list.remove();
 });

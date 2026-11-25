@@ -70,11 +70,12 @@ test('sampleSpringOffsets stops sooner for a coarser precision', () => {
   );
 });
 
-test('sampleSpringOffsets lands at once on a spring or start it cannot play', () => {
+test('sampleSpringOffsets lands at once on a spring, start or precision it cannot play', () => {
   const start = { offset: 40, velocity: 0 };
+  const landed = { settleMs: 0, offsets: [0, 0] };
   const endless = { ...brisk, durationMs: Number.POSITIVE_INFINITY };
-  expect(sampleSpringOffsets(endless, start, 0.25)).toEqual({ settleMs: 0, offsets: [40, 0] });
-  const lost = { offset: Number.NaN, velocity: 0 };
-  expect(sampleSpringOffsets(brisk, lost, 0.25)).toEqual({ settleMs: 0, offsets: [0, 0] });
-  expect(sampleSpringOffsets(brisk, start, 0).offsets).toEqual([40, 0]);
+  expect(sampleSpringOffsets(endless, start, 0.25)).toEqual(landed);
+  expect(sampleSpringOffsets({ ...brisk, bounce: Number.NaN }, start, 0.25)).toEqual(landed);
+  expect(sampleSpringOffsets(brisk, { offset: Number.NaN, velocity: 0 }, 0.25)).toEqual(landed);
+  expect(sampleSpringOffsets(brisk, start, 0)).toEqual(landed);
 });

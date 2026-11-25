@@ -46,8 +46,9 @@ interface Glide {
   readonly unlifted: string | undefined;
 }
 const glides = new WeakMap<Element, Glide>();
-/** The inline `z-index` a lifted glide gives its element. */
+/** The inline `z-index`es the motion sets: a lifted glide over its siblings, a leaver over both. */
 const LIFTED = '1';
+const LEAVING = '2';
 
 const dom = (el: MotionElement) => el as unknown as HTMLElement;
 
@@ -153,7 +154,9 @@ function animateFade(
   const timing = { duration: fade.durationMs, easing: fade.easing, fill };
   try {
     return node.animate(keyframes, timing);
-  } catch {
+  } catch (error) {
+    // `animate` throws a TypeError for an easing it can't parse
+    if (!(error instanceof TypeError)) throw error;
     return node.animate(keyframes, { ...timing, easing: 'linear' });
   }
 }
@@ -204,7 +207,7 @@ export function leave(positions: readonly Position[], fade: MotionRecord): void 
       width: `${width}px`,
       height: `${height}px`,
       pointerEvents: 'none',
-      zIndex: '2',
+      zIndex: LEAVING,
     });
     stillHost(parent!).append(node);
   }

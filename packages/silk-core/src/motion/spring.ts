@@ -77,12 +77,10 @@ export function sampleSpringOffsets(
   start: SpringState,
   precision: number,
 ): SpringOffsets {
-  // A spring createTheme would refuse, or a start or precision that isn't a
-  // number, lands at once rather than looping or sampling NaN.
-  const inputs = [spring.durationMs, start.offset, start.velocity, precision];
-  if (!inputs.every(Number.isFinite) || !(precision > 0)) {
-    return { settleMs: 0, offsets: [Number.isFinite(start.offset) ? start.offset : 0, 0] };
-  }
+  // Input that isn't a finite number, or no precision, would sample NaN or
+  // never settle: land at once instead.
+  const inputs = [spring.durationMs, spring.bounce, start.offset, start.velocity, precision];
+  if (!inputs.every(Number.isFinite) || precision <= 0) return { settleMs: 0, offsets: [0, 0] };
   const offsets = [start.offset];
   const maxFrames = (MAX_DURATIONS * spring.durationMs * SAMPLE_RATE) / 1000;
   for (let frame = 1; frame < maxFrames; frame++) {
