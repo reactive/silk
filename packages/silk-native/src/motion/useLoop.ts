@@ -3,10 +3,10 @@ import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useMotion } from './useMotion.js';
 
 /**
- * `keyframes` repeated for as long as the style is applied, one cycle per
- * `loop` motion token, as a style for a Reanimated `Animated.View`: a CSS
- * animation, which Reanimated plays on the UI thread (and the browser as CSS).
- * None until full motion is confirmed, so the view rests on its own style.
+ * A Reanimated `Animated.View` style repeating `keyframes`, one cycle per
+ * `loop` motion token (a keyframe's own `animationTimingFunction` wins over the
+ * token's easing). Reanimated plays it on the UI thread, the browser as CSS.
+ * None until full motion is confirmed.
  */
 export function useLoop(keyframes: CSSAnimationKeyframes): CSSAnimationProperties | undefined {
   const { durationMs, easing } = useMotion('loop');

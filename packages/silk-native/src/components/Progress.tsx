@@ -24,19 +24,17 @@ const SWEEP_WIDTH = 40;
 const SWEEP_END = ((100 - SWEEP_WIDTH) / SWEEP_WIDTH) * 100;
 
 /**
- * The indeterminate sweep, in from beyond the track's start and out to its
+ * The indeterminate sweep, from beyond the track's start to flush with its
  * end. A translate's percent is of the view's own width, so it needs no
- * measured track. The indicator rests at the start (the right in an RTL app)
- * and a translate is physical, so RTL mirrors it.
+ * measured track. It is physical, so RTL (where the indicator rests at the
+ * right) flips its sign.
  */
-const sweep: CSSAnimationKeyframes = {
-  from: { transform: [{ translateX: '-100%' }] },
-  to: { transform: [{ translateX: `${SWEEP_END}%` }] },
-};
-const sweepRtl: CSSAnimationKeyframes = {
-  from: { transform: [{ translateX: '100%' }] },
-  to: { transform: [{ translateX: `${-SWEEP_END}%` }] },
-};
+const sweepToward = (sign: 1 | -1): CSSAnimationKeyframes => ({
+  from: { transform: [{ translateX: `${-100 * sign}%` }] },
+  to: { transform: [{ translateX: `${SWEEP_END * sign}%` }] },
+});
+const sweep = sweepToward(1);
+const sweepRtl = sweepToward(-1);
 
 export interface ProgressProps
   extends ProgressVariantProps, Omit<ViewProps, 'children' | 'style'> {
