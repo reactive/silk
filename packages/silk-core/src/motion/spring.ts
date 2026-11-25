@@ -70,7 +70,8 @@ export interface SpringOffsets {
  * The spring played from `start` (offset and speed), sampled at 60 fps until
  * it is within `precision` of rest: keyframes for a renderer that moves
  * something by its offset from where it lands (the web's Web Animations),
- * keeping the speed it had.
+ * keeping the speed it had. A spring, start or precision that isn't a finite
+ * number (or no precision) lands at once: offsets `[0, 0]` in 0 ms.
  */
 export function sampleSpringOffsets(
   spring: Spring,

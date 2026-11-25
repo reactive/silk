@@ -63,7 +63,7 @@ function parseEasing(css: string): { readonly name: string; readonly args: reado
   return { name, args: args.split(',').map((arg) => arg.trim()) };
 }
 
-/** The CSS easing keywords, as the functions CSS defines them as. */
+/** The CSS easing keywords, as the functions CSS defines them as, which `timingEasing` parses. */
 const keywordFunctions = new Map([
   ['ease', 'cubic-bezier(0.25, 0.1, 0.25, 1)'],
   ['ease-in', 'cubic-bezier(0.42, 0, 1, 1)'],

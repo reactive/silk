@@ -70,7 +70,10 @@ test('a linear() easing keeps its positioned stops', () => {
 
 test("timingEasing plays a token's Bezier, keyword or steps curve, and any other linearly", () => {
   expect(timingEasing('cubic-bezier(0.2, 0, 0, 1)')).toEqual({ bezier: [0.2, 0, 0, 1] });
+  expect(timingEasing('ease')).toEqual({ bezier: [0.25, 0.1, 0.25, 1] });
+  expect(timingEasing('ease-in')).toEqual({ bezier: [0.42, 0, 1, 1] });
   expect(timingEasing('ease-out')).toEqual({ bezier: [0, 0, 0.58, 1] });
+  expect(timingEasing('ease-in-out')).toEqual({ bezier: [0.42, 0, 0.58, 1] });
   expect(timingEasing('steps(4, start)')).toEqual({ easingSteps: [4, true] });
   expect(timingEasing('steps(4)')).toEqual({ easingSteps: [4, false] });
   expect(timingEasing('linear')).toBe('Easing.linear');

@@ -34,7 +34,7 @@ export type MotionKey = string | number;
  * motion owns its translate and opacity, and on the web lifts its `z-index`
  * while it crosses other items. A view may hold other views of its list;
  * on the web, a `MotionList` inside another list's view is unspecified, and
- * a view fades out only when it is the element React removes.
+ * a view fades out only when it is, or is inside, a view React removes.
  */
 export interface MotionViewProps extends Omit<ViewProps, 'id'> {
   readonly id: MotionKey;

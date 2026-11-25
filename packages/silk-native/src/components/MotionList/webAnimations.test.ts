@@ -109,13 +109,16 @@ test('a fade whose easing the browser refuses plays linearly, keeping its fill',
     return node as unknown as MotionElement;
   };
   const refused = { durationMs: 200, easing: 'cubic-bezier(1.5, 0, 0.5, 1)' };
-  arrive(refusing(), refused);
   const position = { at: still, velocity: still, width: 10, height: 10 };
   const parent = list as unknown as MotionElement;
-  leave([{ ...position, el: refusing(), parent }], refused);
-  expect(played.map(({ easing, fill }) => [easing, fill])).toEqual([
-    ['linear', 'auto'],
-    ['linear', 'forwards'],
-  ]);
-  list.remove();
+  try {
+    arrive(refusing(), refused);
+    leave([{ ...position, el: refusing(), parent }], refused);
+    expect(played.map(({ easing, fill }) => [easing, fill])).toEqual([
+      ['linear', 'auto'],
+      ['linear', 'forwards'],
+    ]);
+  } finally {
+    list.remove();
+  }
 });
