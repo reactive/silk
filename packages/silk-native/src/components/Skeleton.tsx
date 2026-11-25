@@ -2,17 +2,20 @@ import {
   skeletonRecipe,
   type SkeletonVariantProps,
 } from '@reactive/silk-core';
-import { useEffect, useRef, type JSX } from 'react';
-import {
-  Animated,
-  type StyleProp,
-  type ViewProps,
-  type ViewStyle,
-} from 'react-native';
+import type { JSX } from 'react';
+import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
+import Animated, { type CSSAnimationKeyframes } from 'react-native-reanimated';
+import { useLoop } from '../motion/useLoop.js';
 import { mapSkeletonStyle } from '../styles/mappers/visual.js';
-import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+
+/** Dims and brightens once per loop, easing in and out of each turn. */
+const pulse: CSSAnimationKeyframes = {
+  from: { opacity: 1, animationTimingFunction: 'ease-in-out' },
+  '50%': { opacity: 0.55, animationTimingFunction: 'ease-in-out' },
+  to: { opacity: 1 },
+};
 
 export interface SkeletonProps
   extends SkeletonVariantProps, Omit<ViewProps, 'children' | 'style' | 'ref'> {
@@ -34,41 +37,14 @@ export function Skeleton({
     shape: shape ?? defaults.shape ?? skeletonRecipe.defaults.shape,
   };
   const mapped = mapSkeletonStyle(theme, resolved, density);
-  const reduced = useReducedMotion();
-  const opacity = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (reduced) {
-      opacity.setValue(1);
-      return;
-    }
-    const loop = theme.semantic.motion.loop.durationMs;
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 0.55,
-          duration: loop / 2,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: loop / 2,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    animation.start();
-    return () => {
-      animation.stop();
-    };
-  }, [reduced, opacity, theme.semantic.motion.loop.durationMs]);
+  const pulsing = useLoop(pulse);
 
   return (
     <Animated.View
       {...rest}
       accessible={false}
       importantForAccessibility="no"
-      style={[mapped, { opacity }, style]}
+      style={[mapped, pulsing, style]}
     />
   );
 }

@@ -20,6 +20,7 @@ import {
   Text,
 } from '@reactive/silk-native';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
+import { expect } from 'storybook/test';
 import { withNativeSilk } from './withNativeSilk';
 
 const meta = {
@@ -124,4 +125,25 @@ export const ProgressStates: Story = {
       <Progress label="Indeterminate" style={{ marginTop: 8 }} />
     </>
   ),
+};
+
+/** The loading loops, each a CSS animation that Reanimated plays (on the UI thread on a phone). */
+export const LoadingLoops: Story = {
+  // jsdom has no CSS animations, and Reanimated skips them under test: the browser test runner plays it.
+  tags: ['needs-layout'],
+  render: () => (
+    <>
+      <Spinner testID="spinner" />
+      <Skeleton testID="skeleton" shape="text" style={{ marginVertical: 8 }} />
+      <Progress testID="progress" label="Indeterminate" />
+    </>
+  ),
+  play: async ({ canvas }) => {
+    const running = (element: Element | null) =>
+      element?.getAnimations().filter((animation) => animation.playState === 'running').length;
+    await expect(running(canvas.getByTestId('spinner'))).toBe(1);
+    await expect(running(canvas.getByTestId('skeleton'))).toBe(1);
+    // The indicator inside the track sweeps.
+    await expect(running(canvas.getByTestId('progress').firstElementChild)).toBe(1);
+  },
 };
