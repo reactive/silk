@@ -39,7 +39,7 @@ test('a flick leaves the browser its panning across the flick', () => {
   expect(touchAction('flicked')).toBe('');
 });
 
-function Drags({ disabled }: { readonly disabled: boolean }): JSX.Element {
+function Drags({ switchDisabled }: { readonly switchDisabled: boolean }): JSX.Element {
   return (
     <SilkProvider>
       <Pager.Root value="a" onValueChange={() => {}} testID="pager">
@@ -52,7 +52,7 @@ function Drags({ disabled }: { readonly disabled: boolean }): JSX.Element {
         onCheckedChange={() => {}}
         accessibilityLabel="On"
         testID="switch"
-        disabled={disabled}
+        disabled={switchDisabled}
       />
       <Dialog.Root open>
         <Dialog.Content placement="bottom" testID="sheet">
@@ -64,11 +64,11 @@ function Drags({ disabled }: { readonly disabled: boolean }): JSX.Element {
 }
 
 test('a pager and a switch leave the browser its vertical panning, a sheet its sideways', () => {
-  const { rerender } = render(<Drags disabled={false} />);
+  const { rerender } = render(<Drags switchDisabled={false} />);
   expect(touchAction('pager')).toBe('pan-y');
   expect(touchAction('switch')).toBe('pan-y');
   expect(touchAction('sheet')).toBe('pan-x');
   // A disabled switch leaves the browser all its panning.
-  rerender(<Drags disabled />);
+  rerender(<Drags switchDisabled />);
   expect(touchAction('switch')).toBe('');
 });
