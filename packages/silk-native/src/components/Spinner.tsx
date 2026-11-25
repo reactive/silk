@@ -1,16 +1,17 @@
 import { spinnerRecipe, type SpinnerVariantProps } from '@reactive/silk-core';
-import { useEffect, useMemo, useRef, type JSX } from 'react';
-import {
-  Animated,
-  Easing,
-  type StyleProp,
-  type ViewProps,
-  type ViewStyle,
-} from 'react-native';
+import type { JSX } from 'react';
+import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
+import Animated, { type CSSAnimationKeyframes } from 'react-native-reanimated';
+import { useLoop } from '../motion/useLoop.js';
 import { mapSpinnerStyle } from '../styles/mappers/visual.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+
+const spin: CSSAnimationKeyframes = {
+  from: { transform: [{ rotate: '0deg' }] },
+  to: { transform: [{ rotate: '360deg' }] },
+};
 
 export interface SpinnerProps
   extends SpinnerVariantProps, Omit<ViewProps, 'children' | 'style' | 'ref'> {
@@ -37,44 +38,10 @@ export function Spinner({
     size: size ?? defaults.size ?? spinnerRecipe.defaults.size,
     tone: tone ?? defaults.tone ?? spinnerRecipe.defaults.tone,
   };
-  const preference = useMotionPreference();
+  const reduced = useMotionPreference() === 'reduced';
   const resolvedLabel = label ?? accessibilityLabel ?? 'Loading';
-  const mapped = mapSpinnerStyle(
-    theme,
-    resolved,
-    density,
-    preference === 'reduced',
-  );
-  const rotation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (preference !== 'full') {
-      rotation.setValue(0);
-      return;
-    }
-    const loop = theme.semantic.motion.loop.durationMs;
-    const animation = Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: loop,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    animation.start();
-    return () => {
-      animation.stop();
-    };
-  }, [preference, rotation, theme.semantic.motion.loop.durationMs]);
-
-  const rotate = useMemo(
-    () =>
-      rotation.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['0deg', '360deg'],
-      }),
-    [rotation],
-  );
+  const mapped = mapSpinnerStyle(theme, resolved, density, reduced);
+  const spinning = useLoop(spin, style);
 
   return (
     <Animated.View
@@ -84,7 +51,7 @@ export function Spinner({
       role="status"
       // Android-only live region enhancement.
       accessibilityLiveRegion="polite"
-      style={[mapped, { transform: [{ rotate }] }, style]}
+      style={[mapped, spinning, style]}
     />
   );
 }
