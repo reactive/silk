@@ -12,7 +12,7 @@ import { gestureConventions, releaseVelocity } from './conventions.js';
 const SLOP: [number, number] = [-gestureConventions.touchSlop, gestureConventions.touchSlop];
 
 /** What `panAlong` sets itself. */
-type AxisKeys =
+type OwnKeys =
   | 'activeOffsetX'
   | 'activeOffsetY'
   | 'failOffsetX'
@@ -37,10 +37,10 @@ type AxisKeys =
  */
 export function panAlong(
   vertical: boolean,
-  config: Omit<PanGestureConfig, AxisKeys>,
+  config: Omit<PanGestureConfig, OwnKeys>,
 ): PanGestureConfig {
   const { onDeactivate } = config;
-  const guarded: Omit<PanGestureConfig, AxisKeys> = {
+  const guarded: Omit<PanGestureConfig, OwnKeys> = {
     ...config,
     onDeactivate: (event) => {
       'worklet';

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
+import { Dialog } from '../components/Dialog/Dialog.js';
 import { Pager } from '../components/Pager/Pager.js';
 import { Switch } from '../components/Switch.js';
 import { SilkProvider } from '../theme/SilkProvider.js';
@@ -38,17 +39,36 @@ test('a flick leaves the browser its panning across the flick', () => {
   expect(touchAction('flicked')).toBe('');
 });
 
-test('a pager and a switch leave the browser its vertical panning', () => {
-  render(
+function Drags({ disabled }: { readonly disabled: boolean }): JSX.Element {
+  return (
     <SilkProvider>
       <Pager.Root value="a" onValueChange={() => {}} testID="pager">
         <Pager.Page value="a">
           <View />
         </Pager.Page>
       </Pager.Root>
-      <Switch checked={false} onCheckedChange={() => {}} accessibilityLabel="On" testID="switch" />
-    </SilkProvider>,
+      <Switch
+        checked={false}
+        onCheckedChange={() => {}}
+        accessibilityLabel="On"
+        testID="switch"
+        disabled={disabled}
+      />
+      <Dialog.Root open>
+        <Dialog.Content placement="bottom" testID="sheet">
+          <Dialog.Title>Settings</Dialog.Title>
+        </Dialog.Content>
+      </Dialog.Root>
+    </SilkProvider>
   );
+}
+
+test('a pager and a switch leave the browser its vertical panning, a sheet its sideways', () => {
+  const { rerender } = render(<Drags disabled={false} />);
   expect(touchAction('pager')).toBe('pan-y');
   expect(touchAction('switch')).toBe('pan-y');
+  expect(touchAction('sheet')).toBe('pan-x');
+  // A disabled switch leaves the browser all its panning.
+  rerender(<Drags disabled />);
+  expect(touchAction('switch')).toBe('');
 });
