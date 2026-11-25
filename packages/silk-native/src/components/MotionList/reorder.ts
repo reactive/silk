@@ -55,6 +55,7 @@ export function reorder(
   motion: ListMotion,
   { fades }: { readonly fades: boolean },
 ): void {
+  // read before `stop` puts the lifted glides down
   const wereCrossing = new Set([...items.values()].filter(isCrossing));
   // the final layout, without glides in flight, before measuring it
   for (const el of items.values()) stop(el);
@@ -79,18 +80,20 @@ export function reorder(
     const lifted =
       length > NUDGE &&
       (wereCrossing.has(el) || (length >= farthest / 2 && passesAnother(el, moves)));
-    glide(el, motion.glide, from, velocity, lifted);
+    glide(el, motion.glide, from, velocity, { lifted });
   }
   if (!fades) return;
   leave(
     [...before].filter(([key]) => !items.has(key)).map(([, position]) => position),
     motion.leave,
   );
-  // an arrival holding an item that moves in shows at once, or its fade would hide that glide
-  const holding = new Set<MotionElement>();
+  // an arrival holding an item that moves in shows at once, or its fade would hide that glide;
+  // a walk up stops at an ancestor already added, whose own ancestors were added with it
+  const ancestorsOfMoving = new Set<MotionElement>();
   for (const { el } of planned)
-    for (let up = el.parentElement; up && !holding.has(up); up = up.parentElement) holding.add(up);
-  for (const el of arrivals) if (!holding.has(el)) arrive(el, motion.arrive);
+    for (let up = el.parentElement; up && !ancestorsOfMoving.has(up); up = up.parentElement)
+      ancestorsOfMoving.add(up);
+  for (const el of arrivals) if (!ancestorsOfMoving.has(el)) arrive(el, motion.arrive);
 }
 
 interface Move {

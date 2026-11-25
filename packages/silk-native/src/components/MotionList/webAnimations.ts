@@ -68,7 +68,7 @@ export function glide(
   spring: Spring,
   from: Point,
   velocity: Point,
-  lifted: boolean,
+  { lifted }: { readonly lifted: boolean },
 ): void {
   stop(el);
   const node = dom(el);

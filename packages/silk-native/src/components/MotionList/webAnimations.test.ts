@@ -21,7 +21,7 @@ const still = { x: 0, y: 0 };
 
 test("a lifted glide raises the row while it crosses, then puts back the row's own z-index", () => {
   const { node, el, land } = row('5');
-  glide(el, defaultMotion.brisk, from, still, true);
+  glide(el, defaultMotion.brisk, from, still, { lifted: true });
   expect(node.style.zIndex).toBe('1');
   expect(isCrossing(el)).toBe(true);
   land();
@@ -31,10 +31,10 @@ test("a lifted glide raises the row while it crosses, then puts back the row's o
 
 test('stopping a lifted glide puts the row down; a glide that never lifted leaves its z-index', () => {
   const { node, el, land } = row('5');
-  glide(el, defaultMotion.brisk, from, still, true);
+  glide(el, defaultMotion.brisk, from, still, { lifted: true });
   stop(el);
   expect(node.style.zIndex).toBe('5');
-  glide(el, defaultMotion.brisk, from, still, false);
+  glide(el, defaultMotion.brisk, from, still, { lifted: false });
   expect(node.style.zIndex).toBe('5');
   land();
   expect(node.style.zIndex).toBe('5');

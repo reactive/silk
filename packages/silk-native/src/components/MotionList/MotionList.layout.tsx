@@ -26,7 +26,7 @@ import { useTheme } from '../../theme/ThemeProvider.js';
 import type { MotionListProps, MotionViewProps } from './types.js';
 
 /** The animations a list's items take, made once per list from the theme. */
-interface ListMotion {
+interface ListAnimations {
   readonly layout: LayoutAnimationFunction;
   readonly entering: EntryExitAnimationFunction;
 }
@@ -34,7 +34,7 @@ interface ListMotion {
 /** What a list tells the items mounting in a render: whether they arrive with its change. */
 interface ListRender {
   readonly arriving: boolean;
-  readonly motion: ListMotion;
+  readonly motion: ListAnimations;
 }
 
 export function MotionList(props: MotionListProps): JSX.Element {

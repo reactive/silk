@@ -27,7 +27,7 @@ rs.mock('./webAnimations.js', () => ({
     height: mocked.hidden.has(el) ? 0 : 10,
   }),
   glide: (...args: unknown[]) => {
-    if (args[4]) mocked.crossing.add(args[0]);
+    if ((args[4] as { lifted: boolean }).lifted) mocked.crossing.add(args[0]);
     mocked.call('glide', args);
   },
   isCrossing: (el: unknown) => mocked.crossing.has(el),
@@ -61,7 +61,10 @@ function element(at: Point, parent: MotionElement | null = null): MotionElement 
 }
 
 /** The elements glided lifted, over the others. */
-const lifted = () => named('glide').filter((args) => args[4]).map(([el]) => el);
+const lifted = () =>
+  named('glide')
+    .filter((args) => (args[4] as { lifted: boolean }).lifted)
+    .map(([el]) => el);
 
 const named = (name: string) =>
   mocked.calls.filter(([call]) => call === name).map(([, ...args]) => args);
@@ -80,7 +83,9 @@ describe('reorder', () => {
     const before = measure(new Map([['a', row]]));
     mocked.layout.set(row, { x: 0, y: 40 });
     reorder(before, new Map([['a', row]]), motion, { fades: true });
-    expect(named('glide')).toEqual([[row, motion.glide, { x: 0, y: -40 }, { x: 0, y: 0 }, false]]);
+    expect(named('glide')).toEqual([
+      [row, motion.glide, { x: 0, y: -40 }, { x: 0, y: 0 }, { lifted: false }],
+    ]);
   });
 
   test('moves an item inside a moving one only the rest of the way', () => {
@@ -130,7 +135,9 @@ describe('reorder', () => {
     const before = measure(new Map([['a', row]]));
     mocked.layout.set(row, { x: 0, y: -40 });
     reorder(before, new Map([['a', row]]), motion, { fades: false });
-    expect(named('glide')).toEqual([[row, motion.glide, { x: 0, y: 40 }, { x: 0, y: 300 }, false]]);
+    expect(named('glide')).toEqual([
+      [row, motion.glide, { x: 0, y: 40 }, { x: 0, y: 300 }, { lifted: false }],
+    ]);
   });
 
   test('takes an item with no box before the change for an arrival, not a glide from the corner', () => {
@@ -193,7 +200,9 @@ describe('reorder', () => {
       motion,
       { fades: false },
     );
-    expect(named('glide')).toEqual([[moved, motion.glide, { x: 0, y: -40 }, { x: 0, y: 0 }, false]]);
+    expect(named('glide')).toEqual([
+      [moved, motion.glide, { x: 0, y: -40 }, { x: 0, y: 0 }, { lifted: false }],
+    ]);
     expect(named('arrive')).toEqual([]);
     expect(named('leave')).toEqual([]);
   });
