@@ -17,7 +17,7 @@ test("nothing animates with React Native's Animated", () => {
   const users = readdirSync(root, { recursive: true, encoding: 'utf8' })
     .filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file))
     .filter((file) =>
-      /import\s*\{[^}]*\bAnimated\b[^}]*\}\s*from\s*'react-native'/.test(
+      /import\s*\{[^}]*\bAnimated\b[^}]*\}\s*from\s*['"]react-native['"]/.test(
         readFileSync(path.join(root, file), 'utf8'),
       ),
     )

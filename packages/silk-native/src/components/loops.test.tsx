@@ -2,9 +2,10 @@ import { createTheme } from '@reactive/silk-core';
 import { beforeEach, expect, rs, test } from '@rstest/core';
 import { render } from '@testing-library/react';
 import type { JSX } from 'react';
-import { I18nManager, StyleSheet, View, type ViewProps } from 'react-native';
+import { AccessibilityInfo, I18nManager, StyleSheet, View, type ViewProps } from 'react-native';
 import * as reanimated from 'react-native-reanimated' with { rstest: 'importActual' };
 import { setPrefersReducedMotion } from '../../../../test/rstest-setup';
+import { resetNativeMotionPreference } from '../styles/useReducedMotion.js';
 import { SilkProvider } from '../theme/SilkProvider.js';
 
 /**
@@ -87,6 +88,24 @@ test('reduced motion leaves every loop still', () => {
   setPrefersReducedMotion(true);
   for (const element of [<Spinner />, <Skeleton />, <Progress />]) {
     expect(styleOf(element)).not.toHaveProperty('animationName');
+  }
+});
+
+test('on a phone, every loop waits for the OS to answer whether motion is reduced', () => {
+  const { matchMedia } = globalThis;
+  const { isReduceMotionEnabled } = AccessibilityInfo;
+  // @ts-expect-error -- React Native has no matchMedia
+  delete globalThis.matchMedia;
+  AccessibilityInfo.isReduceMotionEnabled = () => new Promise(() => {});
+  resetNativeMotionPreference();
+  try {
+    for (const element of [<Spinner />, <Skeleton />, <Progress />]) {
+      expect(styleOf(element)).not.toHaveProperty('animationName');
+    }
+  } finally {
+    globalThis.matchMedia = matchMedia;
+    AccessibilityInfo.isReduceMotionEnabled = isReduceMotionEnabled;
+    resetNativeMotionPreference();
   }
 });
 
