@@ -82,6 +82,7 @@ test("a consumer's style that sets an animated property stops that loop, as it c
     'animationName',
   );
   expect(styleOf(<Spinner style={{ margin: 4 }} />)).toHaveProperty('animationName');
+  expect(styleOf(<Skeleton style={{ opacity: undefined }} />)).toHaveProperty('animationName');
 });
 
 test('reduced motion leaves every loop still', () => {

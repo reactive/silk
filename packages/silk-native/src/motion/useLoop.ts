@@ -1,7 +1,8 @@
 import { type StyleProp, StyleSheet, type ViewStyle } from 'react-native';
 import type { CSSAnimationKeyframes, CSSAnimationProperties } from 'react-native-reanimated';
 import { useReducedMotion } from '../styles/useReducedMotion.js';
-import { useMotion } from './useMotion.js';
+import { useTheme } from '../theme/ThemeProvider.js';
+import { cssEasing } from './easing.js';
 
 /**
  * A Reanimated `Animated.View` style repeating `keyframes`, one cycle per
@@ -15,21 +16,21 @@ export function useLoop(
   keyframes: CSSAnimationKeyframes,
   style?: StyleProp<ViewStyle>,
 ): CSSAnimationProperties | undefined {
-  const { durationMs, easing } = useMotion('loop');
+  const { durationMs, easing } = useTheme().theme.semantic.motion.loop;
   if (useReducedMotion() || setsAnimated(keyframes, style)) return undefined;
   return {
     animationName: keyframes,
     animationDuration: durationMs,
-    animationTimingFunction: easing,
+    animationTimingFunction: cssEasing(easing),
     animationIterationCount: 'infinite',
   };
 }
 
-/** Whether `style` sets a property that `keyframes` animates. */
+/** Whether `style` gives a value to a property that `keyframes` animates. */
 function setsAnimated(keyframes: CSSAnimationKeyframes, style: StyleProp<ViewStyle>): boolean {
   if (!style) return false;
-  const set = StyleSheet.flatten(style);
+  const given = StyleSheet.flatten(style) as Record<string, unknown>;
   return Object.values(keyframes).some((frame) =>
-    Object.keys(frame).some((key) => key !== 'animationTimingFunction' && key in set),
+    Object.keys(frame).some((key) => key !== 'animationTimingFunction' && given[key] !== undefined),
   );
 }

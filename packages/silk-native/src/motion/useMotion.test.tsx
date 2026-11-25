@@ -17,7 +17,8 @@ rs.mock('react-native-reanimated', () => ({
   },
 }));
 
-const { timingEasing, useMotion } = await import('./useMotion.js');
+const { timingEasing } = await import('./easing.js');
+const { useMotion } = await import('./useMotion.js');
 
 const theme = createTheme({
   semantic: {
