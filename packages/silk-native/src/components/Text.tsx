@@ -15,6 +15,13 @@ export interface TextProps
   readonly children?: ReactNode;
 }
 
+/**
+ * Natively a Text with onPress takes the press as the responder. On the web
+ * its onPress is a click, which claims none, so it claims the responder too:
+ * what wraps it (a Tooltip.Trigger) takes only presses nothing inside took.
+ */
+const CLAIM = { onStartShouldSetResponder: () => true };
+
 export function Text({
   role,
   tone,
@@ -32,12 +39,8 @@ export function Text({
     measure: measure ?? defaults.measure ?? textRecipe.defaults.measure,
   };
   const mapped = mapTextStyle(theme, resolved);
-  // Natively a Text with onPress takes the press as the responder. On the web
-  // its onPress is a click, which claims none, so it claims the responder
-  // too: what wraps it (a Tooltip.Trigger) takes only presses nothing inside took.
-  const claim = WEB && rest.onPress ? { onStartShouldSetResponder: () => true } : null;
   return (
-    <RNText ref={ref} {...claim} {...rest} style={[mapped, style]}>
+    <RNText ref={ref} {...(WEB && rest.onPress ? CLAIM : null)} {...rest} style={[mapped, style]}>
       {children}
     </RNText>
   );

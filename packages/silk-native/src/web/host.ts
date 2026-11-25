@@ -45,7 +45,6 @@ export interface WebNode {
   /** A bit mask; `FOLLOWING` set when `other` comes after it in the page. */
   compareDocumentPosition?(other: WebNode): number;
   matches?(selector: string): boolean;
-  getAttribute?(name: string): string | null;
   readonly ownerDocument?: WebDocument;
 }
 

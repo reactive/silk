@@ -4,7 +4,7 @@ import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
 import { crossPanning, panAlong, useReleaseTimer } from '../../gesture/drag.js';
-import { speedToward, springSpeed, springTo } from '../../motion/springTo.js';
+import { springSpeed, springTo } from '../../motion/springTo.js';
 import { SUBPIXEL } from '../../motion/subpixel.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
@@ -88,20 +88,20 @@ export function usePagerDrag({
 
   // Made once, so neither Gesture Handler nor Reanimated sets the gesture up again each render.
   const { show, pan } = useMemo(() => {
-    /** Springs to `page`, at `velocity` pages a second, or carrying the speed it had. */
-    const settle = (page: number, velocity?: number) => {
+    /**
+     * Springs to `page`, at `velocity` pages a second, or carrying the speed
+     * it had; `speedAway` as `springTo` takes it.
+     */
+    const settle = (page: number, velocity?: number, speedAway?: 'drop') => {
       'worklet';
       heading.value = page;
-      const options = {
+      position.value = springTo(page, spring.value, {
+        ...(velocity === undefined ? null : { velocity }),
+        speedAway,
         reduceMotion: reduceMotion.value,
         // A quarter point, in pages.
         precision: width.value > 0 ? SUBPIXEL / width.value : UNLAID_PRECISION,
-      };
-      position.value = springTo(
-        page,
-        spring.value,
-        velocity === undefined ? options : { ...options, velocity },
-      );
+      });
     };
     /**
      * The pages are now `nextKeys`: they move with the page they were at, or
@@ -172,7 +172,8 @@ export function usePagerDrag({
             : landing(position.value, fling, from, pageEnabled.value);
           // Back where it began, or to the page the owner named meanwhile.
           const to = page === from && answer.value >= 0 ? answer.value : page;
-          settle(to, speedToward(to, position.value, speed));
+          // Back short of the next page or past the last: no carrying on the other way.
+          settle(to, speed, 'drop');
           // A page the owner named meanwhile is already its: no proposal.
           if (page !== from && page !== answer.value) report(pageKeys.value[page]!);
         },

@@ -23,8 +23,8 @@ import {
   matchesFocusVisible,
   WEB,
   type WebKeyDownEvent,
+  webKeyHandler,
   type WebNode,
-  webNode,
 } from '../web/host.js';
 import { mapFocusRingStyle } from '../styles/mappers/focus.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -103,32 +103,32 @@ function useFocusVisible(): {
  * Roles a browser presses with Space as well as Enter. react-native-web
  * presses them only with Enter: it takes Space for `button` and `menuitem`.
  */
-const SPACE_ROLES: ReadonlySet<string | null | undefined> = new Set([
+const SPACE_ROLES: ReadonlySet<string | undefined> = new Set([
   'checkbox',
   'radio',
   'switch',
 ]);
 
 /**
- * On the web, a key handler in which Space presses a checkbox, radio or
- * switch when it goes down, once however long it is held, without scrolling
- * the page. It calls `onKeyDown` (the caller's) first, and leaves a key that
- * handler took (prevented) alone.
+ * On the web, `onKeyDown` (the caller's) with Space pressing a pressable whose
+ * `role` is a checkbox, radio or switch: when the key goes down on it, once
+ * however long it is held, without scrolling the page, and unless the
+ * caller's handler took the key (prevented it).
  */
-function spacePress(
-  press: ((event: GestureResponderEvent) => void) | null | undefined,
-  disabled: boolean,
+function withSpacePress(
+  { onPress, disabled, role, accessibilityRole }: RNPressableProps,
   onKeyDown: ((event: WebKeyDownEvent) => void) | undefined,
 ): ((event: WebKeyDownEvent) => void) | undefined {
-  if (!WEB || !press || disabled) return onKeyDown;
+  if (!WEB || !onPress || disabled || !SPACE_ROLES.has(role ?? accessibilityRole)) {
+    return onKeyDown;
+  }
   return (event) => {
     onKeyDown?.(event);
     if (event.isDefaultPrevented?.()) return;
     // Its own key: not one a focused part inside it hears.
     if (event.nativeEvent.key !== ' ' || event.target !== event.currentTarget) return;
-    if (!SPACE_ROLES.has(webNode(event.currentTarget).getAttribute?.('role'))) return;
     event.preventDefault();
-    if (!event.nativeEvent.repeat) press(event as unknown as GestureResponderEvent);
+    if (!event.nativeEvent.repeat) onPress(event as unknown as GestureResponderEvent);
   };
 }
 
@@ -153,9 +153,8 @@ export function Pressable({
   const { theme } = useTheme();
   const { focusVisible, onFocus: trackFocus, onBlur: trackBlur } =
     useFocusVisible();
-  const onKeyDown = spacePress(
-    rest.onPress,
-    Boolean(rest.disabled),
+  const onKeyDown = withSpacePress(
+    rest,
     (rest as { onKeyDown?: (event: WebKeyDownEvent) => void }).onKeyDown,
   );
   const handleFocus = useCallback<NonNullable<RNPressableProps['onFocus']>>(
@@ -188,7 +187,7 @@ export function Pressable({
     <RNPressable
       ref={ref}
       {...rest}
-      {...(onKeyDown ? { onKeyDown } : null)}
+      {...(onKeyDown ? webKeyHandler(onKeyDown) : null)}
       onFocus={handleFocus}
       onBlur={handleBlur}
       style={(state) => [

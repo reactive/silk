@@ -29,7 +29,7 @@ export interface SpringToOptions {
    * such as a switch's or a slider's thumb.
    * @default 'keep'
    */
-  readonly speedAway?: 'keep' | 'drop';
+  readonly speedAway?: 'keep' | 'drop' | undefined;
   /**
    * Stop on reaching the target instead of overshooting it: for surfaces held
    * to a screen edge. Started on the target with a speed, it follows the speed
@@ -56,7 +56,7 @@ interface SpringToAnimation extends AnimationObject<number> {
  * Declared above `springTo`, whose worklet calls it: the worklets plugin
  * turns a worklet function declaration into a constant, which isn't hoisted.
  */
-export function speedToward(target: number, position: number, speed: number): number {
+function speedToward(target: number, position: number, speed: number): number {
   'worklet';
   return (target - position) * speed > 0 ? speed : 0;
 }
