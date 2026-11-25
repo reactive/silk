@@ -55,7 +55,9 @@ const ActivePage = createContext(true);
  * changes, and a swipe only proposes the page it lands on through
  * `onValueChange`; an owner that keeps `value` sees the pages settle back.
  * The motion runs on the UI thread (`usePagerDrag`). Each page is as wide as
- * the pager, which sizes like any `View` (give it `flex: 1` or a height).
+ * the pager, which sizes like any `View` (give it `flex: 1` or a height), and
+ * as tall as the pager when it has a height; otherwise the pager is as tall
+ * as its tallest page.
  *
  * Inside a page, a vertical scroll still scrolls; a horizontal one competes
  * with the swipe. On the web the pager keeps the browser's vertical panning,
@@ -186,7 +188,7 @@ export const Pager: PagerNamespace = { Root: PagerRoot, Page: PagerPage };
 
 const styles = StyleSheet.create({
   root: { overflow: 'hidden' },
-  // As tall as the root and no taller, so a page's scrolling content scrolls within it. On
-  // the web a flex item can't shrink below its content without both of these.
-  row: { flexDirection: 'row', flexGrow: 1, flexShrink: 1, minHeight: 0 },
+  // As tall as the root when it has a height, so a page's scroll view scrolls inside it: a View
+  // doesn't shrink by default.
+  row: { flexDirection: 'row', flexGrow: 1, flexShrink: 1 },
 });
