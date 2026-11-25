@@ -81,16 +81,17 @@ export function useSwitchDrag({
 
   const { show, pan } = useMemo(() => {
     /**
-     * Springs to `end`, at `velocity` positions a second, or carrying the speed
-     * it had if that heads to `end`: carried away from it, the thumb would pass
-     * the track's other end, which `overshootClamping` doesn't guard.
+     * Springs to `end`, keeping `velocity` (positions a second; by default the
+     * speed it had) only if that heads to `end`: carried away from it, the
+     * thumb would pass the track's other end, which `overshootClamping`
+     * doesn't guard.
      */
     const settle = (end: number, velocity?: number) => {
       'worklet';
       heading.set(end);
       position.set(
         springTo(end, spring.get(), {
-          velocity: velocity ?? speedToward(end, position.get(), springSpeed(position) ?? 0),
+          velocity: speedToward(end, position.get(), velocity ?? springSpeed(position) ?? 0),
           reduceMotion: reduceMotion.get(),
           overshootClamping: true,
           // A quarter point, in positions (a track narrower than its thumb has no travel).
@@ -111,7 +112,7 @@ export function useSwitchDrag({
       // Back where it began, or to the end the owner named meanwhile.
       const named = answer.get();
       const to = end === from && named !== NONE ? named : end;
-      settle(to, speedToward(to, position.get(), speed / Math.max(span.get(), 1)));
+      settle(to, speed / Math.max(span.get(), 1));
       if (end !== from && end !== named) report(end === 1);
     };
     return {
