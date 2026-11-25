@@ -72,16 +72,6 @@ export function landing(
 }
 
 /**
- * A release's `speed` for a spring from `position` to `page`: kept when it
- * heads there, else 0, so pages settling back (from past the first or last
- * page, or short of the next) don't first carry on the other way.
- */
-export function speedToward(page: number, position: number, speed: number): number {
-  'worklet';
-  return (page - position) * speed > 0 ? speed : 0;
-}
-
-/**
  * A release at `pointsPerSecond` toward later pages, in a pager `pageWidth`
  * wide: its `speed` in pages a second, and its `fling` direction (1 or -1 when
  * at least Material's fling speed, else 0) for `landing`. Before layout it has

@@ -1,18 +1,8 @@
 import { switchRecipe, type SwitchVariantProps } from '@reactive/silk-core';
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type JSX,
-} from 'react';
-import {
-  Animated,
-  I18nManager,
-  type LayoutChangeEvent,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { useCallback, useState, type JSX } from 'react';
+import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 import { a11yState, rnwAttrs } from '../styles/a11yProps.js';
 import {
   minTouchHitSlop,
@@ -20,7 +10,7 @@ import {
   switchThumbTravel,
 } from '../styles/controlGeometry.js';
 import { mapSwitchStyle } from '../styles/mappers/controls.js';
-import { useReducedMotion } from '../styles/useReducedMotion.js';
+import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { Pressable, type PressableProps } from './Pressable.js';
@@ -29,6 +19,7 @@ import {
   useFieldControlRegistration,
 } from './Field.js';
 import { useControllableValue } from './useControllableValue.js';
+import { useSwitchDrag } from './useSwitchDrag.js';
 
 export interface SwitchProps
   extends SwitchVariantProps,
@@ -104,91 +95,71 @@ export function Switch({
     layoutWidth > 0
       ? switchThumbTravel(layoutWidth, thumbSize)
       : defaultTravel;
-  const reduced = useReducedMotion();
-  const rtl = I18nManager.isRTL;
-  const signedTravel = (rtl ? -1 : 1) * travel;
 
   const onLayout = (event: LayoutChangeEvent): void => {
     setLayoutWidth(event.nativeEvent.layout.width);
     onLayoutProp?.(event);
   };
-  const offset = useRef(new Animated.Value(checked ? signedTravel : 0)).current;
-
-  useEffect(() => {
-    const toValue = checked ? signedTravel : 0;
-    if (reduced) {
-      offset.setValue(toValue);
-      return;
-    }
-    const animation = Animated.timing(offset, {
-      toValue,
-      duration: theme.semantic.motion.fast.durationMs,
-      useNativeDriver: true,
-    });
-    animation.start();
-    return () => {
-      animation.stop();
-    };
-  }, [
-    checked,
-    signedTravel,
-    reduced,
-    offset,
-    theme.semantic.motion.fast.durationMs,
-  ]);
-
-  const hitSlop = minTouchHitSlop(track.height);
   const stateProps = a11yState({
     ...accessibilityState,
     checked: Boolean(checked),
     disabled: isDisabled,
   });
 
-  const toggle = useCallback((): void => {
-    if (isDisabled) return;
-    const next = !checked;
-    setUncontrolled(next);
-    onCheckedChange?.(next);
-  }, [checked, isDisabled, onCheckedChange, setUncontrolled]);
+  const turn = useCallback(
+    (next: boolean): void => {
+      if (isDisabled) return;
+      setUncontrolled(next);
+      onCheckedChange?.(next);
+    },
+    [isDisabled, onCheckedChange, setUncontrolled],
+  );
+  const toggle = useCallback((): void => turn(!checked), [turn, checked]);
+  const hitSlop = minTouchHitSlop(track.height);
   useFieldControlRegistration(toggle);
+  const reduced = useMotionPreference() === 'reduced';
+  const drag = useSwitchDrag({
+    checked: Boolean(checked),
+    travel,
+    disabled: isDisabled,
+    reduced,
+    hitSlop,
+    onLand: turn,
+  });
 
   return (
-    <Pressable
-      ref={ref}
-      {...rest}
-      {...stateProps}
-      accessibilityRole="switch"
-      accessibilityLabel={fieldProps.accessibilityLabel}
-      accessibilityHint={fieldProps.accessibilityHint}
-      accessibilityLabelledBy={fieldProps.accessibilityLabelledBy}
-      nativeID={fieldProps.nativeID}
-      disabled={isDisabled}
-      hitSlop={hitSlop}
-      focusRing={isInvalid ? 'danger' : resolved.tone}
-      onPress={toggle}
-      onLayout={onLayout}
-      // The ring replaces the invalid outline while focused (web parity).
-      style={({ focusVisible }) => [
-        focusVisible ? trackWithoutOutline : track,
-        style,
-      ]}
-      {...rnwAttrs({
-        'aria-describedby': fieldProps['aria-describedby'],
-        'aria-invalid': fieldProps['aria-invalid'],
-        'aria-required': fieldProps['aria-required'],
-        'data-invalid': isInvalid ? 'true' : undefined,
-        'data-state': checked ? 'checked' : 'unchecked',
-      }, rest)}
-    >
-      <Animated.View
-        style={[
-          thumb,
-          {
-            marginStart: switchThumbInset,
-            transform: [{ translateX: offset }],
-          },
+    <GestureDetector gesture={drag.pan} touchAction={drag.touchAction}>
+      <Pressable
+        ref={ref}
+        {...rest}
+        {...stateProps}
+        accessibilityRole="switch"
+        accessibilityLabel={fieldProps.accessibilityLabel}
+        accessibilityHint={fieldProps.accessibilityHint}
+        accessibilityLabelledBy={fieldProps.accessibilityLabelledBy}
+        nativeID={fieldProps.nativeID}
+        disabled={isDisabled}
+        hitSlop={hitSlop}
+        focusRing={isInvalid ? 'danger' : resolved.tone}
+        onPress={toggle}
+        onLayout={onLayout}
+        // The ring replaces the invalid outline while focused (web parity).
+        style={({ focusVisible }) => [
+          focusVisible ? trackWithoutOutline : track,
+          style,
         ]}
-      />
-    </Pressable>
+        {...rnwAttrs({
+          'aria-describedby': fieldProps['aria-describedby'],
+          'aria-invalid': fieldProps['aria-invalid'],
+          'aria-required': fieldProps['aria-required'],
+          'data-invalid': isInvalid ? 'true' : undefined,
+          'data-state': checked ? 'checked' : 'unchecked',
+        }, rest)}
+      >
+        <Animated.View
+          style={[thumb, { marginStart: switchThumbInset }, drag.thumbMotion]}
+        />
+      </Pressable>
+    </GestureDetector>
   );
 }

@@ -1,15 +1,17 @@
-import { startTransition, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { I18nManager, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
+import { scheduleOnUI } from 'react-native-worklets';
+import { speedToward } from '../../gesture/conventions.js';
 import { crossPanning, panAlong, useReleaseTimer } from '../../gesture/drag.js';
 import { springSpeed, springTo } from '../../motion/springTo.js';
 import { SUBPIXEL } from '../../motion/subpixel.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
 import { sameItems } from '../sameItems.js';
-import { dragPosition, landing, releaseInPages, speedToward } from './pagerPhysics.js';
+import { useOwnerReports } from '../useOwnerReports.js';
+import { dragPosition, landing, releaseInPages } from './pagerPhysics.js';
 
 export interface PagerDrag {
   readonly pan: ReturnType<typeof usePanGesture>;
@@ -69,8 +71,6 @@ export function usePagerDrag({
   const slop = useSharedValue(0);
   // The page the owner named while a finger held the pages, or -1.
   const answer = useSharedValue(-1);
-  // How many releases the UI thread has reported.
-  const reported = useSharedValue(0);
   // The worklets are made once: they read the pages and React's props from these.
   const pageKeys = useSharedValue(keys);
   const pageEnabled = useSharedValue(enabledPages);
@@ -80,23 +80,11 @@ export function usePagerDrag({
   const forward = I18nManager.isRTL ? -1 : 1;
   const timer = useReleaseTimer();
 
-  // React's props as last committed, which a report reads when it arrives.
-  const latest = useRef({ onLand, keys, enabledPages });
-  useLayoutEffect(() => {
-    latest.current = { onLand, keys, enabledPages };
-  });
-  // The reports React has heard, sent with its page. Each report renders, so React's page is
-  // sent again after it: an owner that turned the page down renders the same `index`, which
-  // must still spring the pages back. The count is state in a transition, so it commits with
-  // an owner's answer in one (a router), and never with the page from before that answer;
-  // it is set before the owner's call, so an owner that throws still renders it.
-  const [heard, setHeard] = useState(0);
-  const [report] = useState(() => (key: string, count: number) => {
-    startTransition(() => setHeard(count));
+  // Reads React's props as last committed when a report arrives.
+  const { heard, report, stale } = useOwnerReports((key: string) => {
     // The page may have gone or been disabled since the UI thread landed on it.
-    const { onLand: land, keys: now, enabledPages: open } = latest.current;
-    const at = now.indexOf(key);
-    if (at >= 0 && open[at]) land(key);
+    const at = keys.indexOf(key);
+    if (at >= 0 && enabledPages[at]) onLand(key);
   });
 
   // Made once, so neither Gesture Handler nor Reanimated sets the gesture up again each render.
@@ -151,7 +139,7 @@ export function usePagerDrag({
         pageEnabled.value = nextEnabled;
         if (!sameItems(pageKeys.value, nextKeys)) relist(next, nextKeys);
         // React hasn't heard where a release went: its page is older than the pages'.
-        if (heardReports < reported.value) return;
+        if (stale(heardReports)) return;
         if (dragging.value) answer.value = next;
         else if (heading.value !== next) settle(next);
       },
@@ -186,14 +174,11 @@ export function usePagerDrag({
           // Back where it began, or to the page the owner named meanwhile.
           const to = page === from && answer.value >= 0 ? answer.value : page;
           settle(to, speedToward(to, position.value, speed));
-          if (page === from) return;
-          const count = reported.value + 1;
-          reported.value = count;
-          scheduleOnRN(report, pageKeys.value[page]!, count);
+          if (page !== from) report(pageKeys.value[page]!);
         },
       }),
     };
-  }, [forward, timer, report]);
+  }, [forward, timer, report, stale]);
 
   useLayoutEffect(() => {
     spring.value = brisk;

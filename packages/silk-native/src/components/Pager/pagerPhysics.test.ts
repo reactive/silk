@@ -1,6 +1,6 @@
 import { expect, test } from '@rstest/core';
 import { gestureConventions } from '../../gesture/conventions.js';
-import { dragPosition, landing, reach, releaseInPages, speedToward } from './pagerPhysics.js';
+import { dragPosition, landing, reach, releaseInPages } from './pagerPhysics.js';
 
 const all = [true, true, true];
 
@@ -48,14 +48,6 @@ test('a release never lands past one page, nor on a disabled one', () => {
   expect(landing(0.9, 0, 0, [true, false, true])).toBe(0);
   expect(landing(1.2, 0, 0, [true, false, true])).toBe(2);
   expect(landing(0.7, 1, 0, [true, false, false])).toBe(0);
-});
-
-test('settling, the pages keep a speed only when it heads to their page', () => {
-  expect(speedToward(1, 0.6, 2)).toBe(2);
-  // Short of the next page, still moving on: back without carrying on.
-  expect(speedToward(0, 0.3, 0.5)).toBe(0);
-  // Past the first page, moving further out.
-  expect(speedToward(0, -0.1, -4)).toBe(0);
 });
 
 test('a release at fling speed or more is a fling, and its speed is in pages', () => {

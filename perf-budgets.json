@@ -25,7 +25,7 @@
       "Input": 2800,
       "Textarea": 2900,
       "Checkbox": 3750,
-      "Switch": 3700,
+      "Switch": 5450,
       "RadioGroup": 3850,
       "Field": 3200,
       "Dialog": 6000,
@@ -251,8 +251,8 @@
         "gzip": 3649
       },
       "Switch": {
-        "raw": 8683,
-        "gzip": 3636
+        "raw": 13068,
+        "gzip": 5344
       },
       "RadioGroup": {
         "raw": 9523,
@@ -283,8 +283,8 @@
         "gzip": 10912
       },
       "Pager": {
-        "raw": 6988,
-        "gzip": 3100
+        "raw": 8303,
+        "gzip": 3572
       }
     },
     "ssr": {

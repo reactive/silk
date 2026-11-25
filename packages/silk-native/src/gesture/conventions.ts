@@ -24,3 +24,14 @@ export function releaseVelocity(velocity: number, msSinceLastMove: number): numb
   'worklet';
   return msSinceLastMove > STOPPED_AFTER ? 0 : velocity;
 }
+
+/**
+ * A release's `speed` for a spring from `position` to `target`: kept when it
+ * heads there, else 0, so a part settling back (a pager past its last page or
+ * short of the next, a switch's thumb flung on past its end) doesn't first
+ * carry on the other way.
+ */
+export function speedToward(target: number, position: number, speed: number): number {
+  'worklet';
+  return (target - position) * speed > 0 ? speed : 0;
+}
