@@ -46,6 +46,8 @@ interface Glide {
   readonly unlifted: string | undefined;
 }
 const glides = new WeakMap<Element, Glide>();
+/** The inline `z-index` a lifted glide gives its element. */
+const LIFTED = '1';
 
 const dom = (el: MotionElement) => el as unknown as HTMLElement;
 
@@ -91,9 +93,13 @@ export function glide(
     translate: `${x.offsets[i] ?? 0}px ${y.offsets[i] ?? 0}px`,
   }));
   const animation = node.animate(keyframes, { duration: Math.max(x.settleMs, y.settleMs) });
+  // Start on the frame showing now, not the next one: a list that renders
+  // every frame replaces each glide before a pending one would have moved.
+  const now = node.ownerDocument.timeline?.currentTime;
+  if (now != null) animation.startTime = now;
   glides.set(node, { animation, spring, start, unlifted: lifted ? node.style.zIndex : undefined });
   if (!lifted) return;
-  node.style.zIndex = '1';
+  node.style.zIndex = LIFTED;
   // Only a glide that lands: one stopped first is put down by `stop`.
   animation.addEventListener('finish', () => {
     if (glides.get(node)?.animation === animation) stop(el);
@@ -124,16 +130,37 @@ export function stop(el: MotionElement): void {
   const current = glides.get(node);
   if (!current) return;
   current.animation.cancel();
-  if (current.unlifted !== undefined) node.style.zIndex = current.unlifted;
+  // Unless React has set another z-index since: that one is the row's own now.
+  if (current.unlifted !== undefined && node.style.zIndex === LIFTED) {
+    node.style.zIndex = current.unlifted;
+  }
   glides.delete(node);
 }
 
 const ARRIVE: Keyframe[] = [{ opacity: 0 }, { opacity: 1 }];
 
+/**
+ * Plays a fade on `fade`, a duration token, linearly if the browser refuses
+ * its easing (a theme can hold one it can't play, such as `linear(…)` in an
+ * older browser), rather than throwing out of the list's commit.
+ */
+function animateFade(
+  node: HTMLElement,
+  keyframes: Keyframe[],
+  fade: MotionRecord,
+  fill: FillMode = 'auto',
+): Animation {
+  const timing = { duration: fade.durationMs, easing: fade.easing, fill };
+  try {
+    return node.animate(keyframes, timing);
+  } catch {
+    return node.animate(keyframes, { ...timing, easing: 'linear' });
+  }
+}
+
 /** Fades a new item in on `fade`, a duration token. */
 export function arrive(el: MotionElement, fade: MotionRecord): void {
-  if (!canAnimate(el)) return;
-  dom(el).animate(ARRIVE, { duration: fade.durationMs, easing: fade.easing });
+  if (canAnimate(el)) animateFade(dom(el), ARRIVE, fade);
 }
 
 // Where a leaving item ends, on a duration token quicker than the glide into
@@ -191,7 +218,6 @@ export function leave(positions: readonly Position[], fade: MotionRecord): void 
     node.style.left = `${at.x - origin.left}px`;
     node.style.top = `${at.y - origin.top}px`;
     const gone = () => node.remove();
-    const timing = { duration: fade.durationMs, easing: fade.easing, fill: 'forwards' } as const;
-    node.animate([{ opacity }, LEAVE], timing).finished.then(gone, gone);
+    animateFade(node, [{ opacity }, LEAVE], fade, 'forwards').finished.then(gone, gone);
   }
 }

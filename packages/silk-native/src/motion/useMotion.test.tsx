@@ -79,4 +79,9 @@ test("timingEasing plays a token's Bezier, keyword or steps curve, and any other
   // malformed: falls back rather than handing Reanimated NaN
   expect(timingEasing('cubic-bezier(0.2, 0, 0, x)')).toBe('Easing.linear');
   expect(timingEasing('cubic-bezier(0.2, 0, 0)')).toBe('Easing.linear');
+  expect(timingEasing('cubic-bezier(0.2, , 0, 1)')).toBe('Easing.linear');
+  // CSS refuses an x outside [0, 1], and Reanimated's bezier throws on one.
+  expect(timingEasing('cubic-bezier(1.5, 0, 0.5, 1)')).toBe('Easing.linear');
+  expect(timingEasing('step-start')).toEqual({ easingSteps: [1, true] });
+  expect(timingEasing('step-end')).toEqual({ easingSteps: [1, false] });
 });

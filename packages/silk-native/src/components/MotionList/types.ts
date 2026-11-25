@@ -15,7 +15,8 @@ import type { View, ViewProps } from 'react-native';
 export interface MotionListProps {
   /**
    * The change whose new items fade in on `motion.normal` (and, on the web,
-   * whose removed items fade out on `motion.fast`): the list, or what decides
+   * whose removed items fade out on `motion.fast`, when the `MotionView` is
+   * the element React removes, not one inside it): the list, or what decides
    * it. Items mounting or unmounting on any other change appear and go at
    * once. Key the list by its subject (`key={…}`), so a list rebuilt for a new
    * one mounts afresh instead of taking the change of subject for this change.
@@ -32,7 +33,8 @@ export type MotionKey = string | number;
  * named `id` (the web follows it by `id` even when React remounts it
  * elsewhere; native follows the view itself). Use it like a `View`; the
  * motion owns its translate and opacity, and on the web lifts its `z-index`
- * while it crosses other items.
+ * while it crosses other items. Nest views in a view of the same list; a
+ * `MotionList` inside another list's view is unspecified on the web.
  */
 export interface MotionViewProps extends Omit<ViewProps, 'id'> {
   readonly id: MotionKey;

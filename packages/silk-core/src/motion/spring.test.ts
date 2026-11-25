@@ -69,3 +69,12 @@ test('sampleSpringOffsets stops sooner for a coarser precision', () => {
     sampleSpringOffsets(smooth, start, 0.01).offsets.length,
   );
 });
+
+test('sampleSpringOffsets lands at once on a spring or start it cannot play', () => {
+  const start = { offset: 40, velocity: 0 };
+  const endless = { ...brisk, durationMs: Number.POSITIVE_INFINITY };
+  expect(sampleSpringOffsets(endless, start, 0.25)).toEqual({ settleMs: 0, offsets: [40, 0] });
+  const lost = { offset: Number.NaN, velocity: 0 };
+  expect(sampleSpringOffsets(brisk, lost, 0.25)).toEqual({ settleMs: 0, offsets: [0, 0] });
+  expect(sampleSpringOffsets(brisk, start, 0).offsets).toEqual([40, 0]);
+});
