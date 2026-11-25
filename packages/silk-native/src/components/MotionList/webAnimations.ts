@@ -137,8 +137,9 @@ export function arrive(el: MotionElement, fade: MotionRecord): void {
 }
 
 // On a duration token quicker than the glide into its place, so its text is
-// mostly gone before the item taking its place gets there.
-const LEAVE: Keyframe[] = [{ opacity: 1 }, { opacity: 0, translate: '-12px 0' }];
+// mostly gone before the item taking its place gets there. It starts from the
+// opacity the item has, so one leaving mid-arrival fades on from there.
+const LEAVE: Keyframe = { opacity: 0, translate: '-12px 0' };
 
 /**
  * Where an item that left goes back: its old parent, or the parent of the
@@ -182,12 +183,13 @@ export function leave(positions: readonly Position[], fade: MotionRecord): void 
     stillHost(parent!).append(node);
   }
   const origins = leaving.map(({ el }) => dom(el).getBoundingClientRect());
+  const opacities = leaving.map(({ el }) => getComputedStyle(dom(el)).opacity);
   leaving.forEach(({ el, at }, i) => {
     const node = dom(el);
     node.style.left = `${at.x - origins[i]!.left}px`;
     node.style.top = `${at.y - origins[i]!.top}px`;
     const gone = () => node.remove();
     const timing = { duration: fade.durationMs, easing: fade.easing, fill: 'forwards' } as const;
-    node.animate(LEAVE, timing).finished.then(gone, gone);
+    node.animate([{ opacity: opacities[i] }, LEAVE], timing).finished.then(gone, gone);
   });
 }
