@@ -61,6 +61,10 @@ const config: StorybookConfig = {
             monorepoRoot,
             'packages/silk-native/src/components/inText.dom.ts',
           ),
+          '#motion-list': path.resolve(
+            monorepoRoot,
+            'packages/silk-native/src/components/MotionList/MotionList.dom.tsx',
+          ),
           ...rnWeb.alias,
         },
       },

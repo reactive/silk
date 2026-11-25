@@ -72,6 +72,13 @@ export type {
   SheetScrollViewProps,
 } from './components/Dialog/Dialog.js';
 
+export { MotionList, MotionView } from './components/MotionList/MotionList.js';
+export type {
+  MotionKey,
+  MotionListProps,
+  MotionViewProps,
+} from './components/MotionList/types.js';
+
 export { Pager, usePagerIsActive } from './components/Pager/Pager.js';
 export type { PagerNamespace, PagerRootProps, PagerPageProps } from './components/Pager/Pager.js';
 export { gestureConventions } from './gesture/conventions.js';

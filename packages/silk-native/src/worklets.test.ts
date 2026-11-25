@@ -54,8 +54,11 @@ test('no worklet reads a captured value in a parameter default', () => {
   expect(early).toEqual([]);
 });
 
-/** Anything an import can be: every property, call and construction gives itself back. */
-const anything: unknown = new Proxy(() => {}, {
+/**
+ * Anything an import can be: every property, call and construction gives itself back. A
+ * function, not an arrow, so a class can extend it (React's `Component`).
+ */
+const anything: unknown = new Proxy(function () {}, {
   get: (_, key) => (key === Symbol.toPrimitive ? () => '' : anything),
   apply: () => anything,
   construct: () => anything as object,

@@ -20,6 +20,7 @@ export default defineConfig({
       ...rnWeb.alias,
       '#floating-layer': path.resolve(packageRoot, 'src/overlay/layer.dom.tsx'),
       '#in-text': path.resolve(packageRoot, 'src/components/inText.dom.ts'),
+      '#motion-list': path.resolve(packageRoot, 'src/components/MotionList/MotionList.dom.tsx'),
     },
   },
 });
