@@ -2,29 +2,39 @@ import {
   progressRecipe,
   type ProgressVariantProps,
 } from '@reactive/silk-core';
+import type { ComponentRef, JSX, Ref } from 'react';
 import {
-  type ComponentRef,
-  useEffect,
-  useRef,
-  useState,
-  type JSX,
-  type Ref,
-} from 'react';
-import {
-  Animated,
-  Easing,
   I18nManager,
   View,
-  type LayoutChangeEvent,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
+import Animated, { type CSSAnimationKeyframes } from 'react-native-reanimated';
+import { useLoop } from '../motion/useLoop.js';
 import { a11yValue } from '../styles/a11yProps.js';
 import { mapProgressStyle } from '../styles/mappers/visual.js';
 import { useMotionPreference } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+
+/** The indeterminate indicator's width, in percent of the track. */
+const SWEEP_WIDTH = 40;
+/** Where the sweep ends, flush with the far end, in percent of the indicator's own width. */
+const SWEEP_END = ((100 - SWEEP_WIDTH) / SWEEP_WIDTH) * 100;
+
+/**
+ * The indeterminate sweep, from beyond the track's start to flush with its
+ * end. A translate's percent is of the view's own width, so it needs no
+ * measured track. It is physical, so RTL (where the indicator rests at the
+ * right) flips its sign.
+ */
+const sweepToward = (sign: 1 | -1): CSSAnimationKeyframes => ({
+  from: { transform: [{ translateX: `${-100 * sign}%` }] },
+  to: { transform: [{ translateX: `${SWEEP_END * sign}%` }] },
+});
+const sweep = sweepToward(1);
+const sweepRtl = sweepToward(-1);
 
 export interface ProgressProps
   extends ProgressVariantProps, Omit<ViewProps, 'children' | 'style'> {
@@ -38,7 +48,6 @@ export interface ProgressProps
 
 /**
  * Determinate / indeterminate progress bar.
- * Animations use measured track width (numeric transforms, not % widths).
  * Reduced-motion indeterminate: static tone.subtle fill (native adaptation of
  * web's 35% solid-over-sunken mix).
  */
@@ -51,7 +60,6 @@ export function Progress({
   accessibilityLabel,
   style,
   ref,
-  onLayout: onLayoutProp,
   ...rest
 }: ProgressProps): JSX.Element {
   const { theme, density } = useTheme();
@@ -62,8 +70,7 @@ export function Progress({
     tone: resolvedTone,
   };
   const { track, indicator } = mapProgressStyle(theme, resolved, density);
-  const preference = useMotionPreference();
-  const reduced = preference === 'reduced';
+  const reduced = useMotionPreference() === 'reduced';
   const resolvedLabel = label ?? accessibilityLabel ?? 'Progress';
 
   // Match web Progress normalization (safeMax + Radix-like indeterminate).
@@ -76,60 +83,11 @@ export function Progress({
       ? 0
       : Math.min(1, Math.max(0, resolvedValue / safeMax));
 
-  const [trackWidth, setTrackWidth] = useState(0);
-  const translate = useRef(new Animated.Value(0)).current;
-  const rtl = I18nManager.isRTL;
-
-  const onLayout = (event: LayoutChangeEvent): void => {
-    setTrackWidth(event.nativeEvent.layout.width);
-    onLayoutProp?.(event);
-  };
-
-  useEffect(() => {
-    if (!indeterminate || preference !== 'full' || trackWidth === 0) {
-      translate.setValue(0);
-      return;
-    }
-    const indicatorWidth = trackWidth * 0.4;
-    const travel = trackWidth - indicatorWidth;
-    const start = rtl ? travel : -indicatorWidth;
-    const end = rtl ? -indicatorWidth : travel;
-    translate.setValue(start);
-    const loop = theme.semantic.motion.loop.durationMs;
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(translate, {
-          toValue: end,
-          duration: loop,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translate, {
-          toValue: start,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    animation.start();
-    return () => {
-      animation.stop();
-    };
-  }, [
-    indeterminate,
-    preference,
-    trackWidth,
-    translate,
-    rtl,
-    theme.semantic.motion.loop.durationMs,
-  ]);
-
-  // Percentage widths render correctly on the first frame. Track measurement
-  // is needed only for the indeterminate transform distance.
+  const swept = useLoop(I18nManager.isRTL ? sweepRtl : sweep);
   const indicatorWidth: `${number}%` = indeterminate
     ? reduced
       ? '100%'
-      : '40%'
+      : `${SWEEP_WIDTH}%`
     : `${pct * 100}%`;
 
   const valueProps = a11yValue({
@@ -150,20 +108,13 @@ export function Progress({
       {...valueProps}
       accessibilityRole="progressbar"
       accessibilityLabel={resolvedLabel}
-      onLayout={onLayout}
       style={[track, style]}
     >
       <Animated.View
         style={[
           indicator,
-          {
-            width: indicatorWidth,
-            backgroundColor: indicatorBg,
-            transform:
-              indeterminate && preference === 'full'
-                ? [{ translateX: translate }]
-                : undefined,
-          },
+          { width: indicatorWidth, backgroundColor: indicatorBg },
+          indeterminate && swept,
         ]}
       />
     </View>

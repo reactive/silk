@@ -20,7 +20,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { springTo } from '../../motion/springTo.js';
-import { timingEasing } from '../../motion/useMotion.js';
+import { timingEasing } from '../../motion/easing.js';
 import { useReducedMotion } from '../../styles/useReducedMotion.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import type { MotionListProps, MotionViewProps } from './types.js';
