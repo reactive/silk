@@ -44,9 +44,9 @@ test('a duration token keeps its duration and takes its easing as Reanimated’s
   });
 });
 
-test('springMotion plays any spring as useMotion plays a theme’s, ignoring reduced motion', () => {
-  setPrefersReducedMotion(true);
+test('springMotion plays a spring of one’s own as useMotion plays a theme’s, sampled once', () => {
   const spring = { durationMs: 500, bounce: 0.4 };
   const { settleMs, progress } = sampleSpring(spring);
   expect(springMotion(spring)).toEqual({ durationMs: settleMs, easing: { linear: progress } });
+  expect(springMotion(spring)).toBe(springMotion(spring));
 });
