@@ -8,8 +8,6 @@ import {
   steps,
 } from 'react-native-reanimated';
 
-const easings = new Map<string, CSSTransitionTimingFunction>();
-
 type LinearStop = Parameters<typeof linear>[number];
 
 /** One `linear()` stop: an output, optionally with its input positions (`0.5 25%`). */
@@ -86,6 +84,8 @@ export function timingEasing(css: string): TimingEasingFunction | EasingFunction
     ? Easing.bezier(x1, y1, x2, y2)
     : Easing.linear;
 }
+
+const easings = new Map<string, CSSTransitionTimingFunction>();
 
 /**
  * A CSS easing as Reanimated's timing function: it takes the named curves as
