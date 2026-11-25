@@ -135,6 +135,18 @@ export function arrive(el: MotionElement, fade: MotionRecord): void {
 const LEAVE: Keyframe[] = [{ opacity: 1 }, { opacity: 0, translate: '-12px 0' }];
 
 /**
+ * Where an item that left goes back: its old parent, or the parent of the
+ * outermost ancestor gliding, so it stays where it was instead of riding along.
+ */
+function stillHost(parent: HTMLElement): HTMLElement {
+  let host = parent;
+  for (let up: HTMLElement | null = parent; up; up = up.parentElement) {
+    if (glides.has(up) && up.parentElement) host = up.parentElement;
+  }
+  return host;
+}
+
+/**
  * Puts the items React removed back where they were, out of the flow and out
  * of reach, while they fade out. Writes all, then reads all, then writes
  * again, so the browser lays the page out once however many leave.
@@ -161,7 +173,7 @@ export function leave(positions: readonly Position[], fade: MotionRecord): void 
       pointerEvents: 'none',
       zIndex: '2',
     });
-    dom(parent!).append(node);
+    stillHost(dom(parent!)).append(node);
   }
   const origins = leaving.map(({ el }) => dom(el).getBoundingClientRect());
   leaving.forEach(({ el, at }, i) => {

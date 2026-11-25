@@ -1,15 +1,16 @@
 import { expect, test } from '@rstest/core';
 import { defaultMotion } from '@reactive/silk-core';
-import { glide, isCrossing, type MotionElement, stop } from './webAnimations.js';
+import { glide, isCrossing, leave, type MotionElement, stop } from './webAnimations.js';
 
-/** A row whose Web Animations are stand-ins jsdom lacks: `land()` finishes the last one. */
+/** A row whose Web Animations are stand-ins jsdom lacks: `land()` finishes the last one's glide. */
 function row(zIndex: string) {
   const node = document.createElement('div');
   node.style.zIndex = zIndex;
   const finished: (() => void)[] = [];
   node.animate = () => {
     const animation = new EventTarget() as Animation;
-    Object.assign(animation, { cancel: () => {}, playState: 'running', currentTime: 0 });
+    const finish = { finished: new Promise(() => {}) };
+    Object.assign(animation, { cancel: () => {}, playState: 'running', currentTime: 0, ...finish });
     finished.push(() => animation.dispatchEvent(new Event('finish')));
     return animation;
   };
@@ -38,4 +39,17 @@ test('stopping a lifted glide puts the row down; a glide that never lifted leave
   expect(node.style.zIndex).toBe('5');
   land();
   expect(node.style.zIndex).toBe('5');
+});
+
+test('a row that leaves from inside a gliding row fades where it was, not riding the glide', () => {
+  const list = document.createElement('div');
+  const mover = row('');
+  const child = row('');
+  list.append(mover.node);
+  document.body.append(list);
+  glide(mover.el, defaultMotion.brisk, from, still, { lifted: false });
+  const position = { at: still, velocity: still, width: 10, height: 10 };
+  leave([{ ...position, el: child.el, parent: mover.el }], defaultMotion.fast);
+  expect(child.node.parentElement).toBe(list);
+  list.remove();
 });
