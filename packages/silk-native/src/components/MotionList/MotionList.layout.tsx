@@ -69,6 +69,12 @@ class Arrivals extends Component<ArrivalsProps, ArrivalsState> {
     return { dependency: layoutDependency, arriving: !Object.is(dependency, layoutDependency) };
   }
 
+  // Ends the arrival once its render commits (before paint), so an item a
+  // descendant mounts later doesn't take it for its own.
+  override componentDidUpdate(): void {
+    if (this.state.arriving) this.setState({ arriving: false });
+  }
+
   override render(): JSX.Element {
     const { renders, still, children } = this.props;
     const told = still ? null : this.state.arriving ? renders.arriving : renders.steady;

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, rs, test } from '@rstest/core';
 import { act, render } from '@testing-library/react';
-import { type JSX, useEffect } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { setPrefersReducedMotion } from '../../../../../test/rstest-setup';
 import { SilkProvider } from '../../theme/SilkProvider.js';
 
@@ -69,6 +69,27 @@ describe('MotionList on native', () => {
     expect(steady.get('c')?.entering).toBeUndefined();
     // Still glides when it moves without the dependency changing.
     expect(steady.get('a')?.layout).toBeDefined();
+  });
+
+  test('fades in nothing a descendant mounts after the change commits', () => {
+    let showLate!: () => void;
+    function Late(): JSX.Element | null {
+      const [shownLate, setShownLate] = useState(false);
+      showLate = () => setShownLate(true);
+      return shownLate ? <MotionView id="late" testID="late" /> : null;
+    }
+    const tree = (dependency: number) => (
+      <SilkProvider>
+        <MotionList layoutDependency={dependency}>
+          <Late />
+        </MotionList>
+      </SilkProvider>
+    );
+    const { rerender } = render(tree(1));
+    act(() => rerender(tree(2)));
+    const late = shown(() => showLate());
+    expect(late.get('late')?.entering).toBeUndefined();
+    expect(late.get('late')?.layout).toBeDefined();
   });
 
   test('animates nothing while motion is reduced', () => {
