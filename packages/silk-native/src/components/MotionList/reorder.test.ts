@@ -142,6 +142,38 @@ describe('reorder', () => {
     ]);
   });
 
+  test('keeps the speed an item had riding a gliding one when the change moves it out', () => {
+    const group = element({ x: 0, y: 0 });
+    const row = element({ x: 0, y: 10 }, group) as { parentElement: MotionElement | null };
+    mocked.velocity.set(group, { x: 0, y: 300 });
+    const items = new Map([
+      ['group', group],
+      ['row', row as MotionElement],
+    ]);
+    const before = measure(items);
+    // the change moves the row out of the group, which stays put
+    row.parentElement = null;
+    reorder(before, items, motion, { fades: false });
+    const speed = new Map(named('glide').map(([el, , , velocity]) => [el, velocity]));
+    expect(speed.get(row as MotionElement)).toEqual({ x: 0, y: 300 });
+    expect(speed.get(group)).toEqual({ x: 0, y: 300 });
+  });
+
+  test('glides an item riding a gliding one at its own speed, not its carrier\'s too', () => {
+    const group = element({ x: 0, y: 0 });
+    const row = element({ x: 0, y: 10 }, group);
+    mocked.velocity.set(group, { x: 0, y: 300 });
+    mocked.velocity.set(row, { x: 0, y: 50 });
+    const items = new Map([
+      ['group', group],
+      ['row', row],
+    ]);
+    const before = measure(items);
+    reorder(before, items, motion, { fades: false });
+    const speed = new Map(named('glide').map(([el, , , velocity]) => [el, velocity]));
+    expect(speed.get(row)).toEqual({ x: 0, y: 50 });
+  });
+
   test('takes an item with no box before the change for an arrival, not a glide from the corner', () => {
     const row = element({ x: 0, y: 0 });
     mocked.hidden.add(row);

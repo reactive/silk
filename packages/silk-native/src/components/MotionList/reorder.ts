@@ -28,16 +28,35 @@ export interface ListMotion {
 }
 
 /**
- * Reads where `items` are, before a change moves them. An item with no box
- * (inside a hidden parent) has no place to glide from, so it's left out.
+ * Reads where `items` are, and how fast they move on screen, before a change
+ * moves them. An item with no box (inside a hidden parent) has no place to
+ * glide from, so it's left out.
  */
 export function measure(items: Items): Positions {
+  const measured = new Map([...items].map(([key, el]) => [key, measureOf(el)]));
+  const own = new Map([...measured.values()].map(({ el, velocity }) => [el, velocity]));
   const positions = new Map<MotionKey, Position>();
-  for (const [key, el] of items) {
-    const measured = measureOf(el);
-    if (measured.width || measured.height) positions.set(key, measured);
+  for (const [key, position] of measured) {
+    if (position.width || position.height)
+      positions.set(key, { ...position, velocity: onScreen(position.el, own) });
   }
   return positions;
+}
+
+/**
+ * `el`'s speed on screen: its own glide's plus those of the items it rides
+ * inside, so it keeps its speed even when the change moves it to another.
+ */
+function onScreen(el: MotionElement, own: ReadonlyMap<MotionElement, Point>): Point {
+  let { x, y } = own.get(el)!;
+  for (let up = el.parentElement; up; up = up.parentElement) {
+    const carried = own.get(up);
+    if (carried) {
+      x += carried.x;
+      y += carried.y;
+    }
+  }
+  return { x, y };
 }
 
 /**
@@ -67,11 +86,12 @@ export function reorder(
   }
   // every read is done: start the animations
   const planned = [...moves].map(([el, move]) => {
-    const offset = offsetOf(move);
     const carrier = carrierOf(el, moves);
-    const carried = carrier && offsetOf(moves.get(carrier)!);
-    const from = carried ? { x: offset.x - carried.x, y: offset.y - carried.y } : offset;
-    return { el, from, velocity: move.velocity, length: Math.hypot(from.x, from.y) };
+    const carried = carrier && moves.get(carrier)!;
+    // a carried item travels, and keeps the speed, its carrier's glide doesn't give it
+    const from = carried ? minus(offsetOf(move), offsetOf(carried)) : offsetOf(move);
+    const velocity = carried ? minus(move.velocity, carried.velocity) : move.velocity;
+    return { el, from, velocity, length: Math.hypot(from.x, from.y) };
   });
   const farthest = Math.max(0, ...planned.map(({ length }) => length));
   for (const { el, from, velocity, length } of planned) {
@@ -101,7 +121,8 @@ interface Move {
   readonly at: Point;
 }
 
-const offsetOf = ({ was, at }: Move): Point => ({ x: was.x - at.x, y: was.y - at.y });
+const minus = (a: Point, b: Point): Point => ({ x: a.x - b.x, y: a.y - b.y });
+const offsetOf = ({ was, at }: Move): Point => minus(was, at);
 
 /** px: a move this short crosses nothing */
 const NUDGE = 1;
