@@ -478,6 +478,20 @@ test('settling back past the first page, the pages drop the speed carrying them 
   expect(mocked.speeds.at(-1)).toBe(0);
 });
 
+test('a swipe let go on the page the owner named meanwhile proposes nothing', () => {
+  const proposals: string[] = [];
+  const set: { current?: (value: string) => void } = {};
+  render(<Owner proposals={proposals} set={set} />);
+  layOut();
+  pan('onActivate', { translationX: 0 });
+  pan('onUpdate', { translationX: -240 });
+  act(() => set.current!('b'));
+  clock += 100;
+  pan('onDeactivate', { canceled: false, velocityX: 0 });
+  expect(mocked.springs.at(-1)).toBe(1);
+  expect(proposals).toEqual([]);
+});
+
 test('the page the owner named during one swipe is forgotten by the next', () => {
   const set: { current?: (value: string) => void } = {};
   render(<Owner proposals={[]} set={set} />);

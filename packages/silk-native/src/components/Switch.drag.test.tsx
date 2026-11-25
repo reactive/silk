@@ -16,6 +16,8 @@ const mocked = rs.hoisted(() => ({
   touchAction: undefined as unknown,
   springs: [] as number[],
   speeds: [] as number[],
+  /** Whether each spring jumps for reduced motion. */
+  reduced: [] as boolean[],
   /** While set, calls to the JavaScript thread wait here, as they would behind a busy thread. */
   toRN: undefined as undefined | (() => void)[],
   /** How fast a spring still runs when the next one replaces it, in positions a second. */
@@ -44,6 +46,7 @@ rs.mock('react-native-reanimated', () => ({
       toValue: number;
       velocity: number;
       callback?: (finished: boolean) => void;
+      reduceMotion: boolean;
       onStart: (animation: object, value: number, now: number, previous?: object) => void;
     },
   ) => {
@@ -53,6 +56,7 @@ rs.mock('react-native-reanimated', () => ({
     animation.onStart(animation, 0, 0, previous);
     mocked.springs.push(animation.toValue);
     mocked.speeds.push(animation.velocity);
+    mocked.reduced.push(animation.reduceMotion);
     animation.callback?.(true);
     return animation.toValue;
   },
@@ -153,6 +157,7 @@ let clock = 0;
 beforeEach(() => {
   mocked.springs.length = 0;
   mocked.speeds.length = 0;
+  mocked.reduced.length = 0;
   clock = 1000;
   rs.spyOn(Date, 'now').mockImplementation(() => clock);
 });
@@ -321,6 +326,25 @@ test('state React renders before it hears a release is kept out', () => {
   expect(checkedState()).toBe('false');
 });
 
+test('a press before React hears a drag turns the switch back, not on again', async () => {
+  const changes: boolean[] = [];
+  render(<Owner changes={changes} />);
+  layOut();
+  // Dragged on while the JavaScript thread is busy: the owner still says off.
+  mocked.toRN = [];
+  drag(travel * 0.8, 0, 100);
+  // The drag's click guard runs and lapses, so the press that follows is a press.
+  mocked.toRN.shift()!();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  fireEvent.click(screen.getByRole('switch'));
+  const waiting = mocked.toRN;
+  mocked.toRN = undefined;
+  act(() => waiting.forEach((call) => call()));
+  expect(changes).toEqual([true, false]);
+  expect(mocked.springs).toEqual([1, 0]);
+  expect(checkedState()).toBe('false');
+});
+
 test('a press still toggles it, springing the thumb across', () => {
   const changes: boolean[] = [];
   render(<Owner changes={changes} />);
@@ -338,6 +362,23 @@ test('on the web, the click a mouse drag ends with doesn’t toggle it back', ()
   fireEvent.click(screen.getByRole('switch'));
   expect(changes).toEqual([true]);
   expect(checkedState()).toBe('true');
+});
+
+test('with reduced motion, the thumb jumps', () => {
+  const page = globalThis as { matchMedia?: unknown };
+  page.matchMedia = () => ({
+    matches: true,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  });
+  try {
+    render(<Owner changes={[]} />);
+    layOut();
+    drag(travel * 0.8, 0, 100);
+    expect(mocked.reduced.at(-1)).toBe(true);
+  } finally {
+    delete page.matchMedia;
+  }
 });
 
 test('a disabled switch takes no drag', () => {

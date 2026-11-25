@@ -3,9 +3,8 @@ import { I18nManager, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
-import { speedToward } from '../../gesture/conventions.js';
 import { crossPanning, panAlong, useReleaseTimer } from '../../gesture/drag.js';
-import { springSpeed, springTo } from '../../motion/springTo.js';
+import { speedToward, springSpeed, springTo } from '../../motion/springTo.js';
 import { SUBPIXEL } from '../../motion/subpixel.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
@@ -174,7 +173,8 @@ export function usePagerDrag({
           // Back where it began, or to the page the owner named meanwhile.
           const to = page === from && answer.value >= 0 ? answer.value : page;
           settle(to, speedToward(to, position.value, speed));
-          if (page !== from) report(pageKeys.value[page]!);
+          // A page the owner named meanwhile is already its: no proposal.
+          if (page !== from && page !== answer.value) report(pageKeys.value[page]!);
         },
       }),
     };

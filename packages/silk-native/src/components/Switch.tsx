@@ -10,7 +10,7 @@ import {
   switchThumbTravel,
 } from '../styles/controlGeometry.js';
 import { mapSwitchStyle } from '../styles/mappers/controls.js';
-import { useMotionPreference } from '../styles/useReducedMotion.js';
+import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { Pressable, type PressableProps } from './Pressable.js';
@@ -114,10 +114,9 @@ export function Switch({
     },
     [isDisabled, onCheckedChange, setUncontrolled],
   );
-  const toggle = useCallback((): void => turn(!checked), [turn, checked]);
   const hitSlop = minTouchHitSlop(track.height);
-  useFieldControlRegistration(toggle);
-  const reduced = useMotionPreference() === 'reduced';
+  // Until the system answers, as if motion were reduced: no spring it may have turned off.
+  const reduced = useReducedMotion();
   const drag = useSwitchDrag({
     checked: Boolean(checked),
     travel,
@@ -126,6 +125,10 @@ export function Switch({
     hitSlop,
     onLand: turn,
   });
+  const toggle = useCallback((): void => {
+    if (!isDisabled) drag.flip();
+  }, [isDisabled, drag.flip]);
+  useFieldControlRegistration(toggle);
 
   return (
     <GestureDetector gesture={drag.pan} touchAction={drag.touchAction}>

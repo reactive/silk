@@ -1,11 +1,10 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { I18nManager } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
-import { speedToward } from '../gesture/conventions.js';
 import { crossPanning, panAlong, useReleaseTimer } from '../gesture/drag.js';
-import { springSpeed, springTo } from '../motion/springTo.js';
+import { speedToward, springSpeed, springTo } from '../motion/springTo.js';
 import { SUBPIXEL } from '../motion/subpixel.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { WEB } from '../web/host.js';
@@ -31,6 +30,12 @@ export interface SwitchDrag {
   readonly touchAction: 'pan-x' | 'pan-y';
   /** Moves the thumb to where the UI thread has it. */
   readonly thumbMotion: ReturnType<typeof useAnimatedStyle>;
+  /**
+   * Turns the switch to the side the thumb isn't on or heading to, as a press
+   * does: from the UI thread, reported like a release, so a press and a drag
+   * agree on the side while an owner's answer is on its way.
+   */
+  readonly flip: () => void;
 }
 
 /** No state the owner named while a finger held the thumb. */
@@ -47,9 +52,9 @@ const NONE = -1;
  * over a new `checked` until it lets go. The thumb never passes the track's
  * ends: its springs stop there rather than overshoot.
  *
- * A press with no drag is the switch's own (`Pressable`'s `onPress`): once a
- * drag starts, Gesture Handler cancels the press natively, and `panAlong`
- * swallows the click that ends it on the web.
+ * A press with no drag is the switch's own (`Pressable`'s `onPress`, which
+ * calls `flip`): once a drag starts, Gesture Handler cancels the press
+ * natively, and `panAlong` swallows the click that ends it on the web.
  */
 export function useSwitchDrag({
   checked,
@@ -67,7 +72,7 @@ export function useSwitchDrag({
   const dragging = useSharedValue(false);
   // The position a drag caught the thumb at, and the finger's travel by then (its touch slop).
   const start = useSharedValue(0);
-  const caughtAt = useSharedValue(0);
+  const slop = useSharedValue(0);
   // The end the owner named while a finger held the thumb, or NONE.
   const answer = useSharedValue(NONE);
   // React's props, which the worklets read here, so they're remade only with the gesture's own.
@@ -79,7 +84,7 @@ export function useSwitchDrag({
   const timer = useReleaseTimer();
   const { heard, report, stale } = useOwnerReports(onLand);
 
-  const { show, pan } = useMemo(() => {
+  const { show, press, pan } = useMemo(() => {
     /**
      * Springs to `end`, keeping `velocity` (positions a second; by default the
      * speed it had) only if that heads to `end`: carried away from it, the
@@ -125,6 +130,14 @@ export function useSwitchDrag({
         if (dragging.get()) answer.set(end);
         else if (heading.get() !== end) settle(end);
       },
+      /** A press: the other side from where the thumb is headed, reported once. */
+      press: () => {
+        'worklet';
+        if (dragging.get()) return;
+        const end = 1 - heading.get();
+        settle(end);
+        report(end === 1);
+      },
       pan: panAlong(false, {
         enabled: !disabled,
         hitSlop,
@@ -134,14 +147,14 @@ export function useSwitchDrag({
           dragging.set(true);
           answer.set(NONE);
           start.set(position.get());
-          caughtAt.set(event.translationX);
+          slop.set(event.translationX);
           timer.moved();
         },
         onUpdate: (event) => {
           'worklet';
           timer.moved();
           if (span.get() <= 0) return;
-          const moved = (forward * (event.translationX - caughtAt.get())) / span.get();
+          const moved = (forward * (event.translationX - slop.get())) / span.get();
           position.set(switchDragPosition(start.get(), moved));
         },
         onDeactivate: (event) => {
@@ -180,5 +193,10 @@ export function useSwitchDrag({
     WEB ? [position, span] : undefined,
   );
 
-  return { pan: usePanGesture(pan), touchAction: crossPanning(false), thumbMotion };
+  return {
+    pan: usePanGesture(pan),
+    touchAction: crossPanning(false),
+    thumbMotion,
+    flip: useCallback(() => scheduleOnUI(press), [press]),
+  };
 }

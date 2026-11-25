@@ -1,6 +1,6 @@
 import { compactSpace } from '@reactive/silk-core';
 import { expect, test } from '@rstest/core';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createRef, useState, type ComponentRef, type JSX } from 'react';
 import type { TextInput } from 'react-native';
 import { toggleBoxStep } from '../styles/controlGeometry.js';
@@ -228,7 +228,7 @@ test('Checkbox supports an uncontrolled indeterminate default', () => {
   expect(box.getAttribute('aria-checked')).toBe('true');
 });
 
-test('Switch toggles with aria-checked', () => {
+test('Switch toggles with aria-checked', async () => {
   render(
     <SilkProvider>
       <Switch accessibilityLabel="Dark mode" />
@@ -237,7 +237,8 @@ test('Switch toggles with aria-checked', () => {
   const sw = screen.getByRole('switch', { name: 'Dark mode' });
   expect(sw.getAttribute('aria-checked')).toBe('false');
   fireEvent.click(sw);
-  expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true');
+  // A press turns the thumb on the UI thread, which reports back.
+  await waitFor(() => expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true'));
 });
 
 test('RadioGroup exclusive selection', () => {
