@@ -90,7 +90,7 @@ function PagerRoot({
   const frames = useFrames(index, pages.length);
 
   return (
-    <GestureDetector gesture={drag.pan} touchAction={drag.touchAction}>
+    <GestureDetector gesture={drag.pan}>
       <View
         {...rest}
         onLayout={(event) => {

@@ -3,7 +3,7 @@ import { I18nManager, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
-import { crossPanning, panAlong, useReleaseTimer } from '../../gesture/drag.js';
+import { panAlong, useReleaseTimer } from '../../gesture/drag.js';
 import { springSpeed, springTo } from '../../motion/springTo.js';
 import { SUBPIXEL } from '../../motion/subpixel.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
@@ -14,8 +14,6 @@ import { dragPosition, landing, releaseInPages } from './pagerPhysics.js';
 
 export interface PagerDrag {
   readonly pan: ReturnType<typeof usePanGesture>;
-  /** On the web, the browser's own panning the pager leaves to it (`GestureDetector`'s). */
-  readonly touchAction: 'pan-x' | 'pan-y';
   /** Moves the row of pages so the page at the pager's position shows. */
   readonly rowMotion: ReturnType<typeof useAnimatedStyle>;
   /** Records the pager's width: how many points of finger travel move one page. */
@@ -215,7 +213,6 @@ export function usePagerDrag({
 
   return {
     pan: usePanGesture(pan),
-    touchAction: crossPanning(false),
     rowMotion,
     onLayout: (event) => {
       width.value = event.nativeEvent.layout.width;

@@ -3,7 +3,7 @@ import { I18nManager } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
-import { crossPanning, panAlong, useReleaseTimer } from '../gesture/drag.js';
+import { panAlong, useReleaseTimer } from '../gesture/drag.js';
 import { springTo } from '../motion/springTo.js';
 import { SUBPIXEL } from '../motion/subpixel.js';
 import { useTheme } from '../theme/ThemeProvider.js';
@@ -26,8 +26,6 @@ export interface SwitchDragOptions {
 
 export interface SwitchDrag {
   readonly pan: ReturnType<typeof usePanGesture>;
-  /** On the web, the browser's own panning the switch leaves to it (`GestureDetector`'s). */
-  readonly touchAction: 'pan-x' | 'pan-y';
   /** Moves the thumb to where the UI thread has it. */
   readonly thumbMotion: ReturnType<typeof useAnimatedStyle>;
   /**
@@ -196,7 +194,6 @@ export function useSwitchDrag({
 
   return {
     pan: usePanGesture(pan),
-    touchAction: crossPanning(false),
     thumbMotion,
     flip: useCallback(() => scheduleOnUI(press), [press]),
   };

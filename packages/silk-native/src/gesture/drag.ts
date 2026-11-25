@@ -12,23 +12,35 @@ import { gestureConventions, releaseVelocity } from './conventions.js';
 const SLOP: [number, number] = [-gestureConventions.touchSlop, gestureConventions.touchSlop];
 
 /** What `panAlong` sets itself. */
-type AxisKeys = 'activeOffsetX' | 'activeOffsetY' | 'failOffsetX' | 'failOffsetY' | 'maxPointers';
+type OwnKeys =
+  | 'activeOffsetX'
+  | 'activeOffsetY'
+  | 'failOffsetX'
+  | 'failOffsetY'
+  | 'maxPointers'
+  | 'touchAction';
 
 /**
  * `config` as a one-finger pan along one axis: it starts once the finger moves
  * a touch slop along it, and fails on one across, so a scroll view across it
- * keeps a scroll that starts on it. On the web, a mouse drag that began on a
- * pressable doesn't also press it. Its callbacks say 'worklet' themselves.
+ * keeps a scroll that starts on it. On the web, it leaves the browser its
+ * panning across the axis (a disabled pan, all of it), and a mouse drag that
+ * began on a pressable doesn't also press it. Its callbacks say 'worklet'
+ * themselves.
+ *
+ * The touch-action rides in the config, not on the `GestureDetector`: Gesture
+ * Handler applies a config after the detector attaches it, and drops the
+ * detector's value when it does.
  *
  * It merges here, not by a spread at the call: the worklets Babel plugin reads
  * an object written for a gesture hook, and throws on a spread in it.
  */
 export function panAlong(
   vertical: boolean,
-  config: Omit<PanGestureConfig, AxisKeys>,
+  config: Omit<PanGestureConfig, OwnKeys>,
 ): PanGestureConfig {
   const { onDeactivate } = config;
-  const guarded: Omit<PanGestureConfig, AxisKeys> = {
+  const guarded: Omit<PanGestureConfig, OwnKeys> = {
     ...config,
     onDeactivate: (event) => {
       'worklet';
@@ -36,17 +48,10 @@ export function panAlong(
       onDeactivate?.(event);
     },
   };
-  return vertical
-    ? { ...guarded, activeOffsetY: SLOP, failOffsetX: SLOP, maxPointers: 1 }
-    : { ...guarded, activeOffsetX: SLOP, failOffsetY: SLOP, maxPointers: 1 };
-}
-
-/**
- * On the web, the browser's own panning a `panAlong` drag leaves to it: across
- * its axis, as a `GestureDetector`'s `touchAction`.
- */
-export function crossPanning(vertical: boolean): 'pan-x' | 'pan-y' {
-  return vertical ? 'pan-x' : 'pan-y';
+  const axis = vertical
+    ? { activeOffsetY: SLOP, failOffsetX: SLOP, touchAction: 'pan-x' as const }
+    : { activeOffsetX: SLOP, failOffsetY: SLOP, touchAction: 'pan-y' as const };
+  return { ...guarded, ...axis, maxPointers: 1 };
 }
 
 export interface ReleaseTimer {

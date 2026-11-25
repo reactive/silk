@@ -13,7 +13,6 @@ import { SilkProvider } from '../../theme/SilkProvider.js';
  */
 const mocked = rs.hoisted(() => ({
   pan: undefined as undefined | Record<string, unknown>,
-  touchAction: undefined as unknown,
   springs: [] as number[],
   speeds: [] as number[],
   reduced: [] as boolean[],
@@ -26,10 +25,7 @@ const mocked = rs.hoisted(() => ({
 }));
 
 rs.mock('react-native-gesture-handler', () => ({
-  GestureDetector: ({ children, touchAction }: { children: unknown; touchAction: unknown }) => {
-    mocked.touchAction = touchAction;
-    return children;
-  },
+  GestureDetector: ({ children }: { children: unknown }) => children,
   usePanGesture: (config: Record<string, unknown>) => {
     mocked.pan = config;
     return config;
@@ -219,8 +215,6 @@ test('shows the page its value names; the others are hidden from screen readers,
   expect(active).toEqual({ a: false, b: true, c: false });
   expect(screen.getByText('a').parentElement!.hasAttribute('inert')).toBe(true);
   expect(screen.getByText('b').parentElement!.hasAttribute('inert')).toBe(false);
-  // A vertical swipe on a page stays the browser's scroll.
-  expect(mocked.touchAction).toBe('pan-y');
 });
 
 test('a swipe past halfway settles on the next page and proposes it once', () => {

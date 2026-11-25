@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePanGesture } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { gestureConventions } from './conventions.js';
-import { crossPanning, panAlong, useReleaseTimer } from './drag.js';
+import { panAlong, useReleaseTimer } from './drag.js';
 
 export type FlickDirection = 'up' | 'down' | 'left' | 'right';
 
@@ -17,11 +17,6 @@ export interface FlickGestureConfig {
 /** What a `GestureDetector` takes for a flick: spread it onto one. */
 export interface FlickGesture {
   readonly gesture: ReturnType<typeof usePanGesture>;
-  /**
-   * On the web, the browser's own panning the view leaves alone: across the
-   * flick's axis, or all of it while disabled.
-   */
-  readonly touchAction: 'pan-x' | 'pan-y' | 'auto';
 }
 
 /**
@@ -78,7 +73,5 @@ export function useFlickGesture({
       }),
     [vertical, enabled, sign, timer, flicked],
   );
-  const gesture = usePanGesture(config);
-  // Disabled, it leaves the browser all its panning.
-  return { gesture, touchAction: enabled ? crossPanning(vertical) : 'auto' };
+  return { gesture: usePanGesture(config) };
 }

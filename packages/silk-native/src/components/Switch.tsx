@@ -131,7 +131,7 @@ export function Switch({
   useFieldControlRegistration(toggle);
 
   return (
-    <GestureDetector gesture={drag.pan} touchAction={drag.touchAction}>
+    <GestureDetector gesture={drag.pan}>
       <Pressable
         ref={ref}
         {...rest}
