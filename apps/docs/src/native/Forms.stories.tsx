@@ -93,6 +93,52 @@ export const SwitchSizes: Story = {
   ),
 };
 
+/** A drag carries the thumb, and a release past halfway turns the switch; a short one doesn't. */
+export const SwitchDrag: Story = {
+  // The drag moves by layout, which jsdom doesn't have; the browser run drags.
+  tags: ['needs-layout'],
+  render: () => <Switch testID="drag" accessibilityLabel="Drag me" />,
+  play: async ({ canvas }) => {
+    /**
+     * A mouse pressed at `from` (a share of the track's width), moved past the
+     * touch slop toward `by`, then `by` (a share of the width) further, and
+     * held still before it lets go. It stays on the track: a synthetic pointer
+     * can't be captured, so Gesture Handler drops its moves outside.
+     */
+    const across = async (from: number, by: number) => {
+      const track = canvas.getByTestId('drag');
+      const { left, width, top, height } = track.getBoundingClientRect();
+      const at = (x: number) => ({ ...MOUSE, clientX: x, clientY: top + height / 2 });
+      const start = left + width * from;
+      // The pan starts here, and the thumb follows from here on.
+      const caught = start + Math.sign(by) * 10;
+      // A frame between moves: the pan starts a frame after the move that passes the slop.
+      const frame = () => new Promise((resolve) => setTimeout(resolve, 16));
+      fireEvent.pointerDown(track, { ...at(start), buttons: 1 });
+      fireEvent.pointerMove(track, { ...at(caught), buttons: 1 });
+      await frame();
+      fireEvent.pointerMove(track, { ...at(caught + width * by), buttons: 1 });
+      // Still for longer than a fling allows, so the release lands by where the thumb is.
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      fireEvent.pointerUp(track, { ...at(caught + width * by), buttons: 0 });
+    };
+    const sw = canvas.getByRole('switch', { name: 'Drag me' });
+    // Dragged until it shows: under the test runner, the story's first drags
+    // can come before the switch takes them.
+    await waitFor(async () => {
+      await across(0.1, 0.6);
+      expect(sw).toHaveAttribute('aria-checked', 'true');
+    });
+    // A short drag back leaves it on; a long one turns it off.
+    await across(0.9, -0.1);
+    // Long enough for a wrong report to render.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(sw).toHaveAttribute('aria-checked', 'true');
+    await across(0.9, -0.6);
+    await waitFor(() => expect(sw).toHaveAttribute('aria-checked', 'false'));
+  },
+};
+
 export const SliderSizes: Story = {
   render: () => (
     <>
@@ -234,6 +280,9 @@ export const SliderPadded: Story = {
 
 type Point = { clientX: number; clientY: number };
 
+/** The primary mouse button, as the stories' synthetic pointers press it. */
+const MOUSE = { pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
+
 /** A mouse press at `point` on `target`, let go where it went down, as Gesture Handler hears one. */
 function press(target: HTMLElement, point: Point) {
   drag(target, [point]);
@@ -241,10 +290,9 @@ function press(target: HTMLElement, point: Point) {
 
 /** A mouse pressed at the first point on `target`, moved through the rest, and let go at the last. */
 function drag(target: HTMLElement, [first, ...rest]: readonly Point[]) {
-  const pointer = { pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
-  fireEvent.pointerDown(target, { ...pointer, ...first, buttons: 1 });
-  for (const point of rest) fireEvent.pointerMove(target, { ...pointer, ...point, buttons: 1 });
-  fireEvent.pointerUp(target, { ...pointer, ...(rest.at(-1) ?? first), buttons: 0 });
+  fireEvent.pointerDown(target, { ...MOUSE, ...first, buttons: 1 });
+  for (const point of rest) fireEvent.pointerMove(target, { ...MOUSE, ...point, buttons: 1 });
+  fireEvent.pointerUp(target, { ...MOUSE, ...(rest.at(-1) ?? first), buttons: 0 });
 }
 
 /**

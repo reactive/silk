@@ -96,14 +96,26 @@ export function springTo(
 }
 
 /**
- * How fast `value`'s running `springTo` moves now (units per second), or
- * undefined when nothing runs: read it before a write that stops the spring,
- * to start the next one at that speed. Reanimated keeps a value's running
- * animation on `_animation`, on the UI thread.
+ * How fast `value`'s last `springTo` moves now (units per second; 0 once it
+ * has finished), or undefined when none ran or one was canceled: read it
+ * before a write that stops the spring, to start the next one at that speed.
+ * Reanimated keeps a value's animation on `_animation`, on the UI thread,
+ * after it ends too.
  */
 export function springSpeed(value: { readonly value: number }): number | undefined {
   'worklet';
   const running = (value as { readonly _animation?: { readonly velocity?: unknown } | null })
     ._animation;
   return typeof running?.velocity === 'number' ? running.velocity : undefined;
+}
+
+/**
+ * A `speed` (a release's, or a running spring's) for a spring from
+ * `position` to `target`: kept when it heads there, else 0, so a part
+ * settling back (a pager past its last page or short of the next, a switch's
+ * thumb flung on past its end) doesn't first carry on the other way.
+ */
+export function speedToward(target: number, position: number, speed: number): number {
+  'worklet';
+  return (target - position) * speed > 0 ? speed : 0;
 }
