@@ -136,9 +136,8 @@ export function arrive(el: MotionElement, fade: MotionRecord): void {
   dom(el).animate(ARRIVE, { duration: fade.durationMs, easing: fade.easing });
 }
 
-// On a duration token quicker than the glide into its place, so its text is
-// mostly gone before the item taking its place gets there. It starts from the
-// opacity the item has, so one leaving mid-arrival fades on from there.
+// Where a leaving item ends, on a duration token quicker than the glide into
+// its place, so its text is mostly gone before the item taking its place gets there.
 const LEAVE: Keyframe = { opacity: 0, translate: '-12px 0' };
 
 /**
@@ -182,14 +181,17 @@ export function leave(positions: readonly Position[], fade: MotionRecord): void 
     });
     stillHost(parent!).append(node);
   }
-  const origins = leaving.map(({ el }) => dom(el).getBoundingClientRect());
-  const opacities = leaving.map(({ el }) => getComputedStyle(dom(el)).opacity);
-  leaving.forEach(({ el, at }, i) => {
+  // Each one's box, and its opacity, so one leaving mid-arrival fades on from where it got to.
+  const shown = leaving.map(({ el, at }) => {
     const node = dom(el);
-    node.style.left = `${at.x - origins[i]!.left}px`;
-    node.style.top = `${at.y - origins[i]!.top}px`;
+    const { opacity } = getComputedStyle(node);
+    return { node, at, origin: node.getBoundingClientRect(), opacity };
+  });
+  for (const { node, at, origin, opacity } of shown) {
+    node.style.left = `${at.x - origin.left}px`;
+    node.style.top = `${at.y - origin.top}px`;
     const gone = () => node.remove();
     const timing = { duration: fade.durationMs, easing: fade.easing, fill: 'forwards' } as const;
-    node.animate([{ opacity: opacities[i] }, LEAVE], timing).finished.then(gone, gone);
-  });
+    node.animate([{ opacity }, LEAVE], timing).finished.then(gone, gone);
+  }
 }
