@@ -25,6 +25,8 @@ rs.mock('react-native-reanimated', () => ({
     },
   },
   defineAnimation: () => 0,
+  withTiming: () => 0,
+  Easing: { linear: (t: number) => t, bezier: () => ({ factory: () => (t: number) => t }) },
 }));
 
 const { MotionList, MotionView } = await import('./MotionList.layout.js');

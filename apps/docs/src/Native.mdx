@@ -200,12 +200,13 @@ the view that way and lets go at fling speed.
 ## Lists that move
 
 `MotionList` glides each `MotionView` inside it from where it was to where a
-change puts it, on the theme's `motion.brisk` spring, keeping the speed it had
-when a second change interrupts the first. It renders no element of its own,
-so it fits any list. Items that mount or unmount with a change of
-`layoutDependency` fade in (and, on the web, fade out); on any other change
-they appear and go at once. Key the list by its subject, so a list rebuilt for
-a new subject mounts afresh:
+render of the list puts it, on the theme's `motion.brisk` spring, keeping the
+speed it had when a second change interrupts the first. It renders no element
+of its own, so it fits any list. Items that mount or unmount with a change of
+`layoutDependency` fade in on `motion.normal` (and, on the web, fade out on
+`motion.fast`); on any other change they appear and go at once. Each `id` is
+unique in its list and says which item a view is. Key the list by its subject,
+so a list rebuilt for a new subject mounts afresh:
 
 ```tsx
 <MotionList key={position} layoutDependency={rareShown}>
@@ -217,13 +218,13 @@ a new subject mounts afresh:
 </MotionList>
 ```
 
-| | Web (react-native-web) | Android |
+| | Web (react-native-web) | Native |
 | --- | --- | --- |
 | Glide | Measures items before each commit and plays Web Animations from there (FLIP), so a commit that scrolls the list still glides from where each item was seen | Reanimated layout animations, on the UI thread from the frame the new layout mounts |
 | Removed items | Fade out where they were, out of reach | Go at once (an `exiting` animation leaves old rows drawn over new ones) |
 | Followed by | `id`, even when React remounts the view elsewhere | The view itself |
 
-With reduced motion, nothing moves or fades.
+A change made inside an item without rendering the list (the item's own state) isn't animated. With reduced motion, nothing moves or fades.
 
 ## Stage 1 spike findings (folded forward)
 

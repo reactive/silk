@@ -34,7 +34,7 @@
       "Slider": 8400,
       "Tooltip": 11300,
       "Pager": 3600,
-      "MotionList": 2900
+      "MotionList": 2850
     },
     "isolatedGzip": {
       "Button": 3200,

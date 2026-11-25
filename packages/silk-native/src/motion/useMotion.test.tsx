@@ -10,9 +10,13 @@ rs.mock('react-native-reanimated', () => ({
   linear: (...points: unknown[]) => ({ linear: points }),
   cubicBezier: (...points: number[]) => ({ cubicBezier: points }),
   steps: (...args: unknown[]) => ({ steps: args }),
+  Easing: {
+    linear: 'Easing.linear',
+    bezier: (...points: number[]) => ({ bezier: points }),
+  },
 }));
 
-const { useMotion } = await import('./useMotion.js');
+const { timingEasing, useMotion } = await import('./useMotion.js');
 
 const theme = createTheme({
   semantic: {
@@ -61,4 +65,11 @@ test('a steps() easing becomes Reanimated’s object, with its modifier or Reani
 
 test('a linear() easing keeps its positioned stops', () => {
   expect(motionOf('normal').easing).toEqual({ linear: [0, [0.5, '25%'], 1] });
+});
+
+test("timingEasing plays a token's cubic Bezier or keyword curve, and any other curve linearly", () => {
+  expect(timingEasing('cubic-bezier(0.2, 0, 0, 1)')).toEqual({ bezier: [0.2, 0, 0, 1] });
+  expect(timingEasing('ease-out')).toEqual({ bezier: [0, 0, 0.58, 1] });
+  expect(timingEasing('linear')).toBe('Easing.linear');
+  expect(timingEasing('steps(4, end)')).toBe('Easing.linear');
 });

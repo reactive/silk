@@ -47,3 +47,15 @@ test('MotionList on the web follows the items mounted now, and fades only with i
     ['reorder', ['a'], true],
   ]);
 });
+
+test('MotionView hands its ref the host element, as a View does', () => {
+  const ref = { current: null as unknown };
+  render(
+    <SilkProvider>
+      <MotionList layoutDependency={0}>
+        <MotionView id="a" ref={ref as never} testID="a" />
+      </MotionList>
+    </SilkProvider>,
+  );
+  expect(ref.current).toBe(document.querySelector('[data-testid="a"]'));
+});

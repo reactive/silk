@@ -2,6 +2,9 @@ import { isSpringName, type MotionName, sampleSpring, type Spring } from '@react
 import {
   type CSSTransitionTimingFunction,
   cubicBezier,
+  Easing,
+  type EasingFunction as TimingEasingFunction,
+  type EasingFunctionFactory,
   linear,
   steps,
 } from 'react-native-reanimated';
@@ -54,6 +57,35 @@ const easingFunctions = new Map<string, EasingFunction>([
   ['steps', ([count, modifier]) => steps(Number(count), modifier as StepsModifier)],
 ]);
 
+/** A CSS easing function's name and trimmed arguments (`cubic-bezier(…)`), or none for a keyword. */
+function parseEasing(css: string): { readonly name: string; readonly args: readonly string[] } {
+  const [, name = '', args = ''] = /^([a-z-]+)\((.*)\)$/.exec(css) ?? [];
+  return { name, args: args.split(',').map((arg) => arg.trim()) };
+}
+
+/** The CSS easings named by keyword, as the cubic Béziers CSS defines them. */
+const keywordBeziers = new Map<string, readonly [number, number, number, number]>([
+  ['ease', [0.25, 0.1, 0.25, 1]],
+  ['ease-in', [0.42, 0, 1, 1]],
+  ['ease-out', [0, 0, 0.58, 1]],
+  ['ease-in-out', [0.42, 0, 0.58, 1]],
+]);
+
+/**
+ * A duration token's CSS easing as an easing for Reanimated's `withTiming`,
+ * which plays a worklet curve rather than CSS: `cubic-bezier(…)` and the
+ * keyword curves keep their shape; any other curve (`steps(…)`, a `linear(…)`
+ * with stops) plays linearly.
+ */
+export function timingEasing(css: string): TimingEasingFunction | EasingFunctionFactory {
+  const { name, args } = parseEasing(css);
+  const points = name === 'cubic-bezier' ? args.map(Number) : keywordBeziers.get(css);
+  const [x1, y1, x2, y2] = points ?? [];
+  return x1 === undefined || y1 === undefined || x2 === undefined || y2 === undefined
+    ? Easing.linear
+    : Easing.bezier(x1, y1, x2, y2);
+}
+
 /**
  * A CSS easing as Reanimated's timing function: it takes the named curves as
  * strings, but `cubic-bezier(…)`, `linear(…)` and `steps(…)` only as its own
@@ -62,11 +94,9 @@ const easingFunctions = new Map<string, EasingFunction>([
 function easingOf(css: string): CSSTransitionTimingFunction {
   let easing = easings.get(css);
   if (!easing) {
-    const [, name = '', args = ''] = /^([a-z-]+)\((.*)\)$/.exec(css) ?? [];
+    const { name, args } = parseEasing(css);
     const build = easingFunctions.get(name);
-    easing = build
-      ? build(args.split(',').map((arg) => arg.trim()))
-      : (css as CSSTransitionTimingFunction);
+    easing = build ? build(args) : (css as CSSTransitionTimingFunction);
     easings.set(css, easing);
   }
   return easing;
