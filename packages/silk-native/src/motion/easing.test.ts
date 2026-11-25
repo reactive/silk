@@ -12,7 +12,7 @@ rs.mock('react-native-reanimated', () => ({
   },
 }));
 
-const { timingEasing } = await import('./easing.js');
+const { cssEasing, timingEasing } = await import('./easing.js');
 
 test("timingEasing plays a token's Bezier, keyword or steps curve, and any other linearly", () => {
   expect(timingEasing('cubic-bezier(0.2, 0, 0, 1)')).toEqual({ bezier: [0.2, 0, 0, 1] });
@@ -33,4 +33,12 @@ test("timingEasing plays a token's Bezier, keyword or steps curve, and any other
   expect(timingEasing('cubic-bezier(1.5, 0, 0.5, 1)')).toBe('Easing.linear');
   expect(timingEasing('step-start')).toEqual({ easingSteps: [1, true] });
   expect(timingEasing('step-end')).toEqual({ easingSteps: [1, false] });
+});
+
+test('cssEasing builds Reanimated’s object for a curve function; a keyword stays a string', () => {
+  expect(cssEasing('cubic-bezier(0.2, 0, 0, 1)')).toEqual({ cubicBezier: [0.2, 0, 0, 1] });
+  expect(cssEasing('ease-out')).toBe('ease-out');
+  expect(cssEasing('steps(4, jump-start)')).toEqual({ steps: [4, 'jump-start'] });
+  expect(cssEasing('steps(4)')).toEqual({ steps: [4, undefined] });
+  expect(cssEasing('linear(0, 0.5 25%, 1)')).toEqual({ linear: [0, [0.5, '25%'], 1] });
 });
