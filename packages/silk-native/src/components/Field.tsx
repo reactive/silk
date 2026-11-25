@@ -392,7 +392,7 @@ function FieldLabel({
   const field = useFieldContext();
   const activation = useContext(FieldActivationContext);
   // A disabled field's label takes no press, so a tap reaches what wraps it
-  // (a Tooltip.Trigger saying why). Natively a Text with onPress is the responder.
+  // (a Tooltip.Trigger saying why). A Text with onPress is the responder.
   const pressable = !field?.disabled && (onPress || activation);
   return (
     <Text

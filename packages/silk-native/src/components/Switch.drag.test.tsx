@@ -26,6 +26,32 @@ const mocked = rs.hoisted(() => ({
   thumb: undefined as undefined | (() => { transform: [{ translateX: number }] }),
 }));
 
+/** A `springTo` animation, as far as these tests start it. */
+interface SpringStandIn {
+  toValue: number;
+  velocity: number;
+  reduceMotion: boolean;
+  callback?: (finished: boolean) => void;
+  onStart: (animation: object, value: number, now: number, previous?: object) => void;
+}
+
+const isSpring = (value: unknown): value is SpringStandIn =>
+  typeof (value as { onStart?: unknown } | null)?.onStart === 'function';
+
+/**
+ * Starts `animation` from `from`, handing it the spring it replaces as
+ * Reanimated does, records it, and lands it at once.
+ */
+function start(animation: SpringStandIn, from: number): number {
+  const previous = mocked.running === undefined ? undefined : { velocity: mocked.running };
+  animation.onStart(animation, from, 0, previous);
+  mocked.springs.push(animation.toValue);
+  mocked.speeds.push(animation.velocity);
+  mocked.reduced.push(animation.reduceMotion);
+  animation.callback?.(true);
+  return animation.toValue;
+}
+
 rs.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children, touchAction }: { children: unknown; touchAction: unknown }) => {
     mocked.touchAction = touchAction;
@@ -40,26 +66,8 @@ rs.mock('react-native-gesture-handler', () => ({
 rs.mock('react-native-reanimated', () => ({
   default: { View },
   cancelAnimation: () => {},
-  defineAnimation: (
-    _start: number,
-    factory: () => {
-      toValue: number;
-      velocity: number;
-      callback?: (finished: boolean) => void;
-      reduceMotion: boolean;
-      onStart: (animation: object, value: number, now: number, previous?: object) => void;
-    },
-  ) => {
-    const animation = factory();
-    // The spring it replaces, as Reanimated hands it over.
-    const previous = mocked.running === undefined ? undefined : { velocity: mocked.running };
-    animation.onStart(animation, 0, 0, previous);
-    mocked.springs.push(animation.toValue);
-    mocked.speeds.push(animation.velocity);
-    mocked.reduced.push(animation.reduceMotion);
-    animation.callback?.(true);
-    return animation.toValue;
-  },
+  // A spring starts when it is set on a shared value, from where that value is.
+  defineAnimation: (_start: number, factory: () => object) => factory(),
   useAnimatedStyle: (style: NonNullable<typeof mocked.thumb>) => {
     mocked.thumb = style;
     return style();
@@ -71,10 +79,7 @@ rs.mock('react-native-reanimated', () => ({
         return this.value;
       },
       set(next: T) {
-        this.value = next;
-      },
-      get _animation() {
-        return mocked.running === undefined ? null : { velocity: mocked.running };
+        this.value = isSpring(next) ? (start(next, this.value as number) as T) : next;
       },
     }).current,
 }));

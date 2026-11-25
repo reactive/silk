@@ -1,6 +1,7 @@
 import { expect, rs, test } from '@rstest/core';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { SilkProvider } from '../theme/SilkProvider.js';
+import { Field } from './Field.js';
 import { Pressable } from './Pressable.js';
 import { Switch } from './Switch.js';
 import { Tooltip } from './Tooltip.js';
@@ -120,6 +121,29 @@ test('an enabled control keeps its press', () => {
   act(() => go.focus());
   expect(presses).toEqual([1]);
   expect(tip()).toBeNull();
+});
+
+test("an enabled field's label keeps its press, and a disabled one's opens it", async () => {
+  const field = (disabled: boolean) => (
+    <SilkProvider>
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <Field.Root orientation="horizontal" disabled={disabled}>
+            <Switch />
+            <Field.Label>Warn of traps</Field.Label>
+          </Field.Root>
+        </Tooltip.Trigger>
+        <Tooltip.Content>Draws a trap before you fall into it</Tooltip.Content>
+      </Tooltip.Root>
+    </SilkProvider>
+  );
+  const { rerender } = render(field(false));
+  click(screen.getByText('Warn of traps'));
+  await waitFor(() => expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true'));
+  expect(tip()).toBeNull();
+  rerender(field(true));
+  click(screen.getByText('Warn of traps'));
+  expect(tip()).not.toBeNull();
 });
 
 test('keyboard focus opens it without taking focus, and Escape or leaving closes it', () => {

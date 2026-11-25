@@ -7,12 +7,20 @@ import {
 import { mapTextStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
+import { WEB } from '../web/host.js';
 
 export interface TextProps
   extends TextVariantProps, Omit<RNTextProps, 'children' | 'role'> {
   readonly ref?: Ref<ComponentRef<typeof RNText>>;
   readonly children?: ReactNode;
 }
+
+/**
+ * Natively a Text with onPress takes the press as the responder. On the web
+ * its onPress is a click, which claims none, so it claims the responder too:
+ * what wraps it (a Tooltip.Trigger) takes only presses nothing inside took.
+ */
+const CLAIM = { onStartShouldSetResponder: () => true };
 
 export function Text({
   role,
@@ -32,7 +40,7 @@ export function Text({
   };
   const mapped = mapTextStyle(theme, resolved);
   return (
-    <RNText ref={ref} {...rest} style={[mapped, style]}>
+    <RNText ref={ref} {...(WEB && rest.onPress ? CLAIM : null)} {...rest} style={[mapped, style]}>
       {children}
     </RNText>
   );

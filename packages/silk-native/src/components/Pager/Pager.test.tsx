@@ -36,32 +36,44 @@ rs.mock('react-native-gesture-handler', () => ({
   },
 }));
 
+/** A `springTo` animation, as far as these tests start it. */
+interface SpringStandIn {
+  toValue: number;
+  velocity: number;
+  callback?: (finished: boolean) => void;
+  reduceMotion: boolean;
+  onStart: (animation: object, value: number, now: number, previous?: object) => void;
+}
+
+const isSpring = (value: unknown): value is SpringStandIn =>
+  typeof (value as { onStart?: unknown } | null)?.onStart === 'function';
+
+/** Starts `animation` from `from`, records it, and lands it at once, or at `midway`. */
+function start(animation: SpringStandIn, from: number): number {
+  animation.onStart(animation, from, 0, undefined);
+  mocked.springs.push(animation.toValue);
+  mocked.speeds.push(animation.velocity);
+  mocked.reduced.push(animation.reduceMotion);
+  if (mocked.midway !== undefined) return mocked.midway;
+  animation.callback?.(true);
+  return animation.toValue;
+}
+
 rs.mock('react-native-reanimated', () => ({
   default: { View },
   cancelAnimation: () => {},
-  defineAnimation: (
-    _start: number,
-    factory: () => {
-      toValue: number;
-      velocity: number;
-      callback?: (finished: boolean) => void;
-      reduceMotion: boolean;
-      onStart: (animation: object, value: number, now: number, previous?: object) => void;
-    },
-  ) => {
-    const animation = factory();
-    animation.onStart(animation, 0, 0, undefined);
-    mocked.springs.push(animation.toValue);
-    mocked.speeds.push(animation.velocity);
-    mocked.reduced.push(animation.reduceMotion);
-    if (mocked.midway !== undefined) return mocked.midway;
-    animation.callback?.(true);
-    return animation.toValue;
-  },
+  // A spring starts when it is set on a shared value, from where that value is.
+  defineAnimation: (_start: number, factory: () => SpringStandIn) => factory(),
   useAnimatedStyle: (style: () => object) => (mocked.row = style()),
-  useSharedValue: <T,>(value: T) =>
+  useSharedValue: <T,>(initial: T) =>
     useRef({
-      value,
+      current: initial,
+      get value(): T {
+        return this.current;
+      },
+      set value(next: T) {
+        this.current = isSpring(next) ? (start(next, this.current as number) as T) : next;
+      },
       get() {
         return this.value;
       },

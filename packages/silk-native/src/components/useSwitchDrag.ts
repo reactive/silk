@@ -4,7 +4,7 @@ import { usePanGesture } from 'react-native-gesture-handler';
 import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
 import { crossPanning, panAlong, useReleaseTimer } from '../gesture/drag.js';
-import { speedToward, springSpeed, springTo } from '../motion/springTo.js';
+import { springTo } from '../motion/springTo.js';
 import { SUBPIXEL } from '../motion/subpixel.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { WEB } from '../web/host.js';
@@ -96,7 +96,8 @@ export function useSwitchDrag({
       heading.set(end);
       position.set(
         springTo(end, spring.get(), {
-          velocity: speedToward(end, position.get(), velocity ?? springSpeed(position) ?? 0),
+          ...(velocity === undefined ? null : { velocity }),
+          speedAway: 'drop',
           reduceMotion: reduceMotion.get(),
           overshootClamping: true,
           // A quarter point, in positions (a track narrower than its thumb has no travel).

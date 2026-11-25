@@ -6,7 +6,7 @@ rs.mock('react-native-reanimated', () => ({
   defineAnimation: (_start: number, factory: () => object) => factory(),
 }));
 
-const { speedToward, springSpeed, springTo } = await import('./springTo.js');
+const { springSpeed, springTo } = await import('./springTo.js');
 
 interface Running {
   current: number;
@@ -24,6 +24,30 @@ function start(animation: Running, from: number, previous?: object): Running {
   animation.onStart(animation, from, 0, previous);
   return animation;
 }
+
+test("speedAway 'drop' starts from rest on a speed away from the target, given or carried, and keeps one toward it", () => {
+  const drop = { reduceMotion: false, speedAway: 'drop' } as const;
+  expect(start(run(springTo(0, snappy, { ...drop, velocity: 2000 })), 100).velocity).toBe(0);
+  expect(start(run(springTo(0, snappy, drop)), 100, { velocity: 900 }).velocity).toBe(0);
+  expect(start(run(springTo(0, snappy, { ...drop, velocity: -2000 })), 100).velocity).toBe(-2000);
+  expect(start(run(springTo(0, snappy, drop)), 100, { velocity: -900 }).velocity).toBe(-900);
+});
+
+test("clamped with speedAway 'drop', it stays between where it starts and the target", () => {
+  const animation = start(
+    run(springTo(100, snappy, { reduceMotion: false, speedAway: 'drop', overshootClamping: true })),
+    95,
+    { velocity: -3000 },
+  );
+  let low = 95;
+  let high = 95;
+  for (let ms = 0, done = false; ms <= 1000 && !done; ms += 4) {
+    done = animation.onFrame(animation, ms);
+    low = Math.min(low, animation.current);
+    high = Math.max(high, animation.current);
+  }
+  expect([low, high]).toEqual([95, 100]);
+});
 
 test('a release speed away from the target carries it further before it turns', () => {
   const animation = start(run(springTo(0, smooth, { reduceMotion: false, velocity: 2000 })), 100);
@@ -86,9 +110,3 @@ test('a running spring’s speed is read from the value it animates', () => {
   expect(springSpeed({ value: 1 })).toBeUndefined();
 });
 
-test('settling, a part keeps a speed only when it heads to its target', () => {
-  expect(speedToward(1, 0.6, 2)).toBe(2);
-  // Moving away from its target, short of it or past it: it comes back from rest.
-  expect(speedToward(0, 0.3, 0.5)).toBe(0);
-  expect(speedToward(0, -0.1, -4)).toBe(0);
-});

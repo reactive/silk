@@ -14,8 +14,19 @@ export const WEB: boolean = Platform.OS === 'web';
  * React Native's View types lack before 0.84.
  */
 export interface WebKeyDownEvent {
-  readonly nativeEvent: { readonly key: string; readonly shiftKey?: boolean };
+  readonly nativeEvent: {
+    readonly key: string;
+    readonly shiftKey?: boolean;
+    /** A held key's repeat. */
+    readonly repeat?: boolean;
+  };
+  /** The element the key went to: the focused one. */
+  readonly target?: unknown;
+  /** The element whose handler hears it. */
+  readonly currentTarget?: unknown;
   preventDefault(): void;
+  /** Whether a handler that heard it first called `preventDefault()`. */
+  isDefaultPrevented?(): boolean;
 }
 
 /**

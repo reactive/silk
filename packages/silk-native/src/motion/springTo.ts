@@ -16,16 +16,24 @@ export interface SpringToOptions {
    */
   readonly reduceMotion: boolean;
   /**
-   * Speed to start at (units per second), such as a drag's release speed. Kept
-   * even when it points away from the target, so a reversed fling turns
-   * around instead of stalling. Default: the speed of whatever animation it
-   * replaces on the same value, else 0.
+   * Speed to start at (units per second), such as a drag's release speed.
+   * Default: the speed of whatever animation it replaces on the same value,
+   * else 0. `speedAway` says whether one pointing away from the target is kept.
    */
   readonly velocity?: number;
   /**
+   * A starting speed (given or carried) that points away from the target:
+   * `'keep'` it, so a reversed fling turns around, or `'drop'` it, so the
+   * spring starts from rest. With `overshootClamping`, `'drop'` keeps the
+   * value between where it starts and the target: for parts with hard ends,
+   * such as a switch's or a slider's thumb.
+   * @default 'keep'
+   */
+  readonly speedAway?: 'keep' | 'drop' | undefined;
+  /**
    * Stop on reaching the target instead of overshooting it: for surfaces held
    * to a screen edge. Started on the target with a speed, it follows the speed
-   * out first and stops on the way back.
+   * out first and stops on the way back (unless `speedAway` is `'drop'`).
    */
   readonly overshootClamping?: boolean;
   /** How close to the target (and how slow) it stops. Default 0.25, for a value in pixels. */
@@ -41,6 +49,19 @@ interface SpringToAnimation extends AnimationObject<number> {
 }
 
 /**
+ * A `speed` (a release's, or a running spring's) for a spring from
+ * `position` to `target`: kept when it heads there, else 0, so a part
+ * settling back (a pager past its last page or short of the next, a switch's
+ * thumb flung on past its end) doesn't first carry on the other way.
+ * Declared above `springTo`, whose worklet calls it: the worklets plugin
+ * turns a worklet function declaration into a constant, which isn't hoisted.
+ */
+function speedToward(target: number, position: number, speed: number): number {
+  'worklet';
+  return (target - position) * speed > 0 ? speed : 0;
+}
+
+/**
  * An animation of a shared value from wherever it is to `target` on a
  * `motion` spring token, run on the UI thread:
  * `offset.set(springTo(0, theme.semantic.motion.smooth, { reduceMotion, velocity }))`.
@@ -51,7 +72,7 @@ interface SpringToAnimation extends AnimationObject<number> {
 export function springTo(
   target: number,
   spring: Spring,
-  { velocity, overshootClamping = false, precision, reduceMotion }: SpringToOptions,
+  { velocity, speedAway, overshootClamping = false, precision, reduceMotion }: SpringToOptions,
   callback?: AnimationCallback,
 ): number {
   'worklet';
@@ -64,7 +85,8 @@ export function springTo(
       onStart(animation, value: AnimatableValue, now, previous) {
         const from = value as number;
         const carried = (previous as { velocity?: unknown } | undefined)?.velocity;
-        const speed = velocity ?? (typeof carried === 'number' ? carried : 0);
+        const given = velocity ?? (typeof carried === 'number' ? carried : 0);
+        const speed = speedAway === 'drop' ? speedToward(target, from, given) : given;
         animation.start = { offset: from - target, velocity: speed };
         animation.overshootSign = -(Math.sign(from - target) || Math.sign(speed));
         animation.startTime = now;
@@ -107,15 +129,4 @@ export function springSpeed(value: { readonly value: number }): number | undefin
   const running = (value as { readonly _animation?: { readonly velocity?: unknown } | null })
     ._animation;
   return typeof running?.velocity === 'number' ? running.velocity : undefined;
-}
-
-/**
- * A `speed` (a release's, or a running spring's) for a spring from
- * `position` to `target`: kept when it heads there, else 0, so a part
- * settling back (a pager past its last page or short of the next, a switch's
- * thumb flung on past its end) doesn't first carry on the other way.
- */
-export function speedToward(target: number, position: number, speed: number): number {
-  'worklet';
-  return (target - position) * speed > 0 ? speed : 0;
 }

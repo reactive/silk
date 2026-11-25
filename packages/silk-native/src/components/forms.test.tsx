@@ -241,6 +241,33 @@ test('Switch toggles with aria-checked', async () => {
   await waitFor(() => expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true'));
 });
 
+test('a focused Switch, Checkbox or radio toggles with Space, and a Switch with Enter too', async () => {
+  render(
+    <SilkProvider>
+      <Switch accessibilityLabel="Arrows" />
+      <Checkbox accessibilityLabel="Hints" />
+      <RadioGroup.Root accessibilityLabel="Side">
+        <RadioGroup.Item value="white">White</RadioGroup.Item>
+      </RadioGroup.Root>
+    </SilkProvider>,
+  );
+  const checked = (role: string, name: string) =>
+    screen.getByRole(role, { name }).getAttribute('aria-checked');
+  const press = (role: string, name: string, key: string) => {
+    const el = screen.getByRole(role, { name });
+    fireEvent.keyDown(el, { key });
+    fireEvent.keyUp(el, { key });
+  };
+  press('checkbox', 'Hints', ' ');
+  expect(checked('checkbox', 'Hints')).toBe('true');
+  press('radio', 'White', ' ');
+  expect(checked('radio', 'White')).toBe('true');
+  press('switch', 'Arrows', ' ');
+  await waitFor(() => expect(checked('switch', 'Arrows')).toBe('true'));
+  press('switch', 'Arrows', 'Enter');
+  await waitFor(() => expect(checked('switch', 'Arrows')).toBe('false'));
+});
+
 test('RadioGroup exclusive selection', () => {
   render(
     <SilkProvider>
