@@ -3,8 +3,9 @@ import type { View, ViewProps } from 'react-native';
 
 /**
  * A list whose items glide (on the theme's `motion.brisk` spring) to wherever
- * a commit that renders the list moves them; a change made by an item's own
- * state, without rendering the list, isn't animated. It renders no element of
+ * a commit that renders the list moves them. A change made by an item's own
+ * state, without rendering the list, glides on native (every layout change of
+ * a view animates) and jumps on the web. It renders no element of
  * its own and knows nothing of the layout, so it fits any list. On the web it
  * measures items where they are on screen, so an item glides from where it
  * was seen even when the commit scrolls the list (as hiding rows at its end

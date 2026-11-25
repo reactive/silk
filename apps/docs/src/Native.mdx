@@ -223,8 +223,9 @@ so a list rebuilt for a new subject mounts afresh:
 | Glide | Measures items before each commit and plays Web Animations from there (FLIP), so a commit that scrolls the list still glides from where each item was seen | Reanimated layout animations, on the UI thread from the frame the new layout mounts |
 | Removed items | Fade out where they were, out of reach | Go at once (an `exiting` animation leaves old rows drawn over new ones) |
 | Followed by | `id`, even when React remounts the view elsewhere | The view itself |
+| A change inside an item (its own state) | Jumps: the list measures only around its own renders | Glides: every layout change of a view animates |
 
-A change made inside an item without rendering the list (the item's own state) isn't animated. With reduced motion, nothing moves or fades.
+With reduced motion, nothing moves or fades.
 
 ## Stage 1 spike findings (folded forward)
 
