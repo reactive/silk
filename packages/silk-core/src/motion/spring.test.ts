@@ -1,6 +1,6 @@
 import { expect, test } from '@rstest/core';
 import { defaultMotion } from '../tokens/scales.js';
-import { sampleSpring, springAt, springAtRest } from './spring.js';
+import { sampleSpring, sampleSpringOffsets, springAt, springAtRest } from './spring.js';
 
 const { snappy, brisk, smooth } = defaultMotion;
 
@@ -53,3 +53,29 @@ test('only a spring with bounce overshoots its target', () => {
   expect(Math.max(...sampleSpring(snappy).progress)).toBeGreaterThan(1);
 });
 
+test('sampleSpringOffsets runs from the start to exactly 0, keeping the start speed', () => {
+  const start = { offset: -40, velocity: -900 };
+  const { settleMs, offsets } = sampleSpringOffsets(brisk, start, 0.25);
+  expect(offsets[0]).toBe(-40);
+  expect(offsets.at(-1)).toBe(0);
+  // Moving away from the target at first, as the speed it starts at says.
+  expect(offsets[1]).toBeLessThan(-40);
+  expect(settleMs).toBe(Math.round(((offsets.length - 1) / 60) * 1000));
+});
+
+test('sampleSpringOffsets stops sooner for a coarser precision', () => {
+  const start = { offset: 100, velocity: 0 };
+  expect(sampleSpringOffsets(smooth, start, 1).offsets.length).toBeLessThan(
+    sampleSpringOffsets(smooth, start, 0.01).offsets.length,
+  );
+});
+
+test('sampleSpringOffsets lands at once on a spring, start or precision it cannot play', () => {
+  const start = { offset: 40, velocity: 0 };
+  const landed = { settleMs: 0, offsets: [0, 0] };
+  const endless = { ...brisk, durationMs: Number.POSITIVE_INFINITY };
+  expect(sampleSpringOffsets(endless, start, 0.25)).toEqual(landed);
+  expect(sampleSpringOffsets({ ...brisk, bounce: Number.NaN }, start, 0.25)).toEqual(landed);
+  expect(sampleSpringOffsets(brisk, { offset: Number.NaN, velocity: 0 }, 0.25)).toEqual(landed);
+  expect(sampleSpringOffsets(brisk, start, 0)).toEqual(landed);
+});

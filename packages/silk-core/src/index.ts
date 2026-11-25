@@ -60,8 +60,10 @@ export { oklch } from './color/index.js';
 
 export {
   sampleSpring,
+  sampleSpringOffsets,
   springAt,
   springAtRest,
+  type SpringOffsets,
   type SpringSamples,
   type SpringState,
 } from './motion/spring.js';

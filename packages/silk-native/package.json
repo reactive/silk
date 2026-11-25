@@ -35,6 +35,10 @@
     "#in-text": {
       "react-native": "./dist/components/inText.js",
       "default": "./dist/components/inText.dom.js"
+    },
+    "#motion-list": {
+      "react-native": "./dist/components/MotionList/MotionList.layout.js",
+      "default": "./dist/components/MotionList/MotionList.dom.js"
     }
   },
   "publishConfig": {

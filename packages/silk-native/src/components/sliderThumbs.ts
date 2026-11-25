@@ -8,7 +8,8 @@
 import type { Spring } from '@reactive/silk-core';
 import { useMemo } from 'react';
 import { cancelAnimation, type SharedValue, useSharedValue } from 'react-native-reanimated';
-import { SUBPIXEL, springTo } from '../motion/springTo.js';
+import { springTo } from '../motion/springTo.js';
+import { SUBPIXEL } from '../motion/subpixel.js';
 import { sameItems } from './sameItems.js';
 import { type SliderScale, towardMax, unitsPerPixel, valueAt } from './sliderGeometry.js';
 import {

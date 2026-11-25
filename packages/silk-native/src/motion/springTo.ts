@@ -6,8 +6,7 @@ import {
   defineAnimation,
 } from 'react-native-reanimated';
 
-/** Pixels: a spring moving things on screen stops once what's left is invisible. */
-export const SUBPIXEL = 0.25;
+import { SUBPIXEL } from './subpixel.js';
 
 export interface SpringToOptions {
   /**

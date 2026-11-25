@@ -2,7 +2,8 @@
  * Spring physics, platform-neutral: the closed form of a damped oscillator of
  * mass 1, described by a `Spring` token (`durationMs`, `bounce`). Native
  * renderers step it on the UI thread (`springAt` is a worklet); the web plays
- * it as an easing sampled from rest (`sampleSpring`).
+ * it as an easing sampled from rest (`sampleSpring`), or as keyframes from
+ * wherever a moving thing is (`sampleSpringOffsets`).
  */
 import type { Spring } from '../tokens/types.js';
 
@@ -58,6 +59,40 @@ const SAMPLE_PRECISION = 0.001;
 /** Safety cap, in durations: springs within createTheme's bounce limit settle well before it. */
 const MAX_DURATIONS = 12;
 
+export interface SpringOffsets {
+  /** How long the spring takes to come within the precision of rest (ms). */
+  readonly settleMs: number;
+  /** Offset from the target at 60 fps, from the start's offset to exactly 0. */
+  readonly offsets: readonly number[];
+}
+
+/**
+ * The spring played from `start` (offset and speed), sampled at 60 fps until
+ * it is within `precision` of rest: keyframes for a renderer that moves
+ * something by its offset from where it lands (the web's Web Animations),
+ * keeping the speed it had. A spring, start or precision that isn't a finite
+ * number (or no precision) lands at once: offsets `[0, 0]` in 0 ms.
+ */
+export function sampleSpringOffsets(
+  spring: Spring,
+  start: SpringState,
+  precision: number,
+): SpringOffsets {
+  // Input that isn't a finite number, or no precision, would sample NaN or
+  // never settle: land at once instead.
+  const inputs = [spring.durationMs, spring.bounce, start.offset, start.velocity, precision];
+  if (!inputs.every(Number.isFinite) || precision <= 0) return { settleMs: 0, offsets: [0, 0] };
+  const offsets = [start.offset];
+  const maxFrames = (MAX_DURATIONS * spring.durationMs * SAMPLE_RATE) / 1000;
+  for (let frame = 1; frame < maxFrames; frame++) {
+    const state = springAt(spring, start, frame / SAMPLE_RATE);
+    if (springAtRest(state, precision)) break;
+    offsets.push(state.offset);
+  }
+  offsets.push(0);
+  return { settleMs: Math.round(((offsets.length - 1) / SAMPLE_RATE) * 1000), offsets };
+}
+
 export interface SpringSamples {
   /**
    * How long the spring takes to settle (ms): always longer than the token's
@@ -74,14 +109,10 @@ export interface SpringSamples {
  * curve) plays. Renderers cache it per theme.
  */
 export function sampleSpring(spring: Spring): SpringSamples {
-  const progress = [0];
-  const start: SpringState = { offset: 1, velocity: 0 };
-  const maxFrames = (MAX_DURATIONS * spring.durationMs * SAMPLE_RATE) / 1000;
-  for (let frame = 1; frame < maxFrames; frame++) {
-    const state = springAt(spring, start, frame / SAMPLE_RATE);
-    if (springAtRest(state, SAMPLE_PRECISION)) break;
-    progress.push(Math.round((1 - state.offset) * 1e4) / 1e4);
-  }
-  progress.push(1);
-  return { settleMs: Math.round(((progress.length - 1) / SAMPLE_RATE) * 1000), progress };
+  const { settleMs, offsets } = sampleSpringOffsets(
+    spring,
+    { offset: 1, velocity: 0 },
+    SAMPLE_PRECISION,
+  );
+  return { settleMs, progress: offsets.map((offset) => Math.round((1 - offset) * 1e4) / 1e4) };
 }
