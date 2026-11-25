@@ -49,6 +49,11 @@ const glides = new WeakMap<Element, Glide>();
 
 const dom = (el: MotionElement) => el as unknown as HTMLElement;
 
+/** `el`'s parent, its parent, and so on up the page. */
+export function* ancestors(el: MotionElement): Generator<MotionElement> {
+  for (let up = el.parentElement; up; up = up.parentElement) yield up;
+}
+
 /** Whether `el` can move at all (jsdom has no Web Animations) */
 const canAnimate = (el: MotionElement) => typeof dom(el).animate === 'function';
 
@@ -139,12 +144,12 @@ const LEAVE: Keyframe[] = [{ opacity: 1 }, { opacity: 0, translate: '-12px 0' }]
  * Where an item that left goes back: its old parent, or the parent of the
  * outermost ancestor gliding, so it stays where it was instead of riding along.
  */
-function stillHost(parent: HTMLElement): HTMLElement {
+function stillHost(parent: MotionElement): HTMLElement {
   let host = parent;
-  for (let up: HTMLElement | null = parent; up; up = up.parentElement) {
-    if (glides.has(up) && up.parentElement) host = up.parentElement;
+  for (const up of [parent, ...ancestors(parent)]) {
+    if (glides.has(dom(up)) && up.parentElement) host = up.parentElement;
   }
-  return host;
+  return dom(host);
 }
 
 /**
@@ -174,7 +179,7 @@ export function leave(positions: readonly Position[], fade: MotionRecord): void 
       pointerEvents: 'none',
       zIndex: '2',
     });
-    stillHost(dom(parent!)).append(node);
+    stillHost(parent!).append(node);
   }
   const origins = leaving.map(({ el }) => dom(el).getBoundingClientRect());
   leaving.forEach(({ el, at }, i) => {

@@ -16,10 +16,15 @@ const mocked = rs.hoisted(() => {
     calls.push([name, ...args]);
     return result;
   };
-  return { layout, velocity, hidden, crossing, calls, call };
+  /** Whether a recorded glide's arguments lift it. */
+  const isLifted = (args: unknown[]) => (args[4] as { lifted: boolean }).lifted;
+  return { layout, velocity, hidden, crossing, calls, call, isLifted };
 });
 
 rs.mock('./webAnimations.js', () => ({
+  *ancestors(el: MotionElement) {
+    for (let up = el.parentElement; up; up = up.parentElement) yield up;
+  },
   measureOf: (el: { parentElement: unknown }) => ({
     el,
     parent: el.parentElement,
@@ -29,7 +34,7 @@ rs.mock('./webAnimations.js', () => ({
     height: mocked.hidden.has(el) ? 0 : 10,
   }),
   glide: (...args: unknown[]) => {
-    if ((args[4] as { lifted: boolean }).lifted) mocked.crossing.add(args[0]);
+    if (mocked.isLifted(args)) mocked.crossing.add(args[0]);
     mocked.call('glide', args);
   },
   isCrossing: (el: unknown) => mocked.crossing.has(el),
@@ -65,7 +70,7 @@ function element(at: Point, parent: MotionElement | null = null): MotionElement 
 /** The elements glided lifted, over the others. */
 const lifted = () =>
   named('glide')
-    .filter((args) => (args[4] as { lifted: boolean }).lifted)
+    .filter(mocked.isLifted)
     .map(([el]) => el);
 
 const named = (name: string) =>

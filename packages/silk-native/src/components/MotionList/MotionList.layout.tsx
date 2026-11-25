@@ -34,15 +34,15 @@ interface ListAnimations {
 /** What a list tells the items mounting in a render: whether they arrive with its change. */
 interface ListRender {
   readonly arriving: boolean;
-  readonly motion: ListAnimations;
+  readonly animations: ListAnimations;
 }
 
 export function MotionList(props: MotionListProps): JSX.Element {
   const { brisk, normal } = useTheme().theme.semantic.motion;
   // Both renders a list can tell its items, made once, so an item re-renders only on a change.
   const renders = useMemo(() => {
-    const motion = { layout: layoutTransition(brisk), entering: enterAnimation(normal) };
-    return { arriving: { arriving: true, motion }, steady: { arriving: false, motion } };
+    const animations = { layout: layoutTransition(brisk), entering: enterAnimation(normal) };
+    return { arriving: { arriving: true, animations }, steady: { arriving: false, animations } };
   }, [brisk, normal]);
   return <Arrivals {...props} renders={renders} still={useReducedMotion()} />;
 }
@@ -88,8 +88,8 @@ const ListContext = createContext<ListRender | null>(null);
 export function MotionView({ id: _id, ...rest }: MotionViewProps): JSX.Element {
   const list = use(ListContext);
   // Read once, at mount: only an arrival fades in.
-  const [entering] = useState(() => (list?.arriving ? list.motion.entering : undefined));
-  const layout = list?.motion.layout;
+  const [entering] = useState(() => (list?.arriving ? list.animations.entering : undefined));
+  const layout = list?.animations.layout;
   // Always an Animated.View, so turning reduced motion on or off keeps each item mounted.
   return (
     <Animated.View

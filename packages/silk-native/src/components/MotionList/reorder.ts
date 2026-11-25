@@ -6,6 +6,7 @@
 import type { MotionRecord, Spring } from '@reactive/silk-core';
 import type { MotionKey } from './types.js';
 import {
+  ancestors,
   arrive,
   glide,
   isCrossing,
@@ -33,30 +34,26 @@ export interface ListMotion {
  * glide from, so it's left out.
  */
 export function measure(items: Items): Positions {
-  const measured = new Map([...items].map(([key, el]) => [key, measureOf(el)]));
-  const own = new Map([...measured.values()].map(({ el, velocity }) => [el, velocity]));
   const positions = new Map<MotionKey, Position>();
-  for (const [key, position] of measured) {
-    if (position.width || position.height)
-      positions.set(key, { ...position, velocity: onScreen(position.el, own) });
+  const gliding = new Map<MotionElement, Point>();
+  for (const [key, el] of items) {
+    const position = measureOf(el);
+    if (position.velocity.x || position.velocity.y) gliding.set(el, position.velocity);
+    if (position.width || position.height) positions.set(key, position);
+  }
+  if (!gliding.size) return positions;
+  // Like `at`, each speed is on screen, so an item keeps it even when the change moves it to
+  // another carrier: `reorder` subtracts the new carrier's, as it does with offsets.
+  for (const [key, position] of positions) {
+    const velocity = { ...position.velocity };
+    for (const up of ancestors(position.el)) {
+      const carried = gliding.get(up);
+      if (carried) velocity.x += carried.x;
+      if (carried) velocity.y += carried.y;
+    }
+    positions.set(key, { ...position, velocity });
   }
   return positions;
-}
-
-/**
- * `el`'s speed on screen: its own glide's plus those of the items it rides
- * inside, so it keeps its speed even when the change moves it to another.
- */
-function onScreen(el: MotionElement, own: ReadonlyMap<MotionElement, Point>): Point {
-  let { x, y } = own.get(el)!;
-  for (let up = el.parentElement; up; up = up.parentElement) {
-    const carried = own.get(up);
-    if (carried) {
-      x += carried.x;
-      y += carried.y;
-    }
-  }
-  return { x, y };
 }
 
 /**
@@ -109,9 +106,12 @@ export function reorder(
   // an arrival holding an item that moves in shows at once, or its fade would hide that glide;
   // a walk up stops at an ancestor already added, whose own ancestors were added with it
   const ancestorsOfMoving = new Set<MotionElement>();
-  for (const { el } of planned)
-    for (let up = el.parentElement; up && !ancestorsOfMoving.has(up); up = up.parentElement)
+  for (const { el } of planned) {
+    for (const up of ancestors(el)) {
+      if (ancestorsOfMoving.has(up)) break;
       ancestorsOfMoving.add(up);
+    }
+  }
   for (const el of arrivals) if (!ancestorsOfMoving.has(el)) arrive(el, motion.arrive);
 }
 

@@ -57,7 +57,7 @@ const easingFunctions = new Map<string, EasingFunction>([
   ['steps', ([count, modifier]) => steps(Number(count), modifier as StepsModifier)],
 ]);
 
-/** A CSS easing function's name and trimmed arguments (`cubic-bezier(…)`), or none for a keyword. */
+/** A CSS easing function's name and trimmed arguments (`cubic-bezier(…)`); none for a keyword. */
 function parseEasing(css: string): { readonly name: string; readonly args: readonly string[] } {
   const [, name = '', args = ''] = /^([a-z-]+)\((.*)\)$/.exec(css) ?? [];
   return { name, args: args.split(',').map((arg) => arg.trim()) };
@@ -96,10 +96,9 @@ export function timingEasing(css: string): TimingEasingFunction | EasingFunction
       : Easing.linear;
   }
   const points = name === 'cubic-bezier' ? args.map(Number) : keywordBeziers.get(css);
-  const [x1, y1, x2, y2] = points?.length === 4 && points.every(Number.isFinite) ? points : [];
-  return x1 === undefined || y1 === undefined || x2 === undefined || y2 === undefined
-    ? Easing.linear
-    : Easing.bezier(x1, y1, x2, y2);
+  return points?.length === 4 && points.every(Number.isFinite)
+    ? Easing.bezier(...(points as [number, number, number, number]))
+    : Easing.linear;
 }
 
 /**
