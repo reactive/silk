@@ -75,6 +75,14 @@ test('Skeleton pulses its opacity once per loop token', () => {
   });
 });
 
+test("a consumer's style that sets an animated property stops that loop, as it comes last", () => {
+  expect(styleOf(<Skeleton style={{ opacity: 0.5 }} />)).not.toHaveProperty('animationName');
+  expect(styleOf(<Spinner style={{ transform: [{ scale: 2 }] }} />)).not.toHaveProperty(
+    'animationName',
+  );
+  expect(styleOf(<Spinner style={{ margin: 4 }} />)).toHaveProperty('animationName');
+});
+
 test('reduced motion leaves every loop still', () => {
   setPrefersReducedMotion(true);
   for (const element of [<Spinner />, <Skeleton />, <Progress />]) {

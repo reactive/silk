@@ -42,7 +42,7 @@ export function Skeleton({
     shape: shape ?? defaults.shape ?? skeletonRecipe.defaults.shape,
   };
   const mapped = mapSkeletonStyle(theme, resolved, density);
-  const pulsing = useLoop(pulse);
+  const pulsing = useLoop(pulse, style);
 
   return (
     <Animated.View

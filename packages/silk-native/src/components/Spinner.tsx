@@ -41,7 +41,7 @@ export function Spinner({
   const reduced = useMotionPreference() === 'reduced';
   const resolvedLabel = label ?? accessibilityLabel ?? 'Loading';
   const mapped = mapSpinnerStyle(theme, resolved, density, reduced);
-  const spinning = useLoop(spin);
+  const spinning = useLoop(spin, style);
 
   return (
     <Animated.View
