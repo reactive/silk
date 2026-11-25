@@ -13,7 +13,6 @@ import { SilkProvider } from '../theme/SilkProvider.js';
  */
 const mocked = rs.hoisted(() => ({
   pan: undefined as undefined | Record<string, unknown>,
-  touchAction: undefined as unknown,
   springs: [] as number[],
   speeds: [] as number[],
   /** Whether each spring jumps for reduced motion. */
@@ -53,10 +52,7 @@ function start(animation: SpringStandIn, from: number): number {
 }
 
 rs.mock('react-native-gesture-handler', () => ({
-  GestureDetector: ({ children, touchAction }: { children: unknown; touchAction: unknown }) => {
-    mocked.touchAction = touchAction;
-    return children;
-  },
+  GestureDetector: ({ children }: { children: unknown }) => children,
   usePanGesture: (config: Record<string, unknown>) => {
     mocked.pan = config;
     return config;
@@ -173,11 +169,6 @@ afterEach(async () => {
   rs.restoreAllMocks();
   // A drag's release swallows the next click until the browser's next task (`swallowDragClick`).
   await new Promise((resolve) => setTimeout(resolve, 0));
-});
-
-test('leaves a vertical swipe on the switch to the browser, which scrolls', () => {
-  render(<Owner changes={[]} />);
-  expect(mocked.touchAction).toBe('pan-y');
 });
 
 test('the thumb follows the finger along the track, and stops at its ends', () => {

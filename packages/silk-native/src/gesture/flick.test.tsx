@@ -1,7 +1,7 @@
 import { beforeEach, expect, rs, test } from '@rstest/core';
 import { render } from '@testing-library/react';
 import { type JSX, useRef } from 'react';
-import type { FlickDirection, FlickGesture } from './flick.js';
+import type { FlickDirection } from './flick.js';
 
 /** The pan's config, kept to be called by hand; worklets run where they're scheduled. */
 const mocked = rs.hoisted(() => ({
@@ -34,7 +34,6 @@ const { useFlickGesture } = await import('./flick.js');
 
 let clock = 0;
 let flicks = 0;
-let flick: FlickGesture | undefined;
 
 function Flicked({
   direction,
@@ -43,7 +42,7 @@ function Flicked({
   readonly direction: FlickDirection;
   readonly enabled?: boolean;
 }): JSX.Element | null {
-  flick = useFlickGesture({
+  useFlickGesture({
     direction,
     onFlick: () => flicks++,
     // Left out when unset, so the hook's own default is what's tested.
@@ -87,8 +86,8 @@ test('an upward throw at fling speed calls back once; slower, downward or held o
   expect(mocked.pan).toMatchObject({
     activeOffsetY: [-8, 8],
     failOffsetX: [-8, 8],
+    touchAction: 'pan-x',
   });
-  expect(flick!.touchAction).toBe('pan-x');
 });
 
 test('a sideways fling reads the horizontal speed', () => {
@@ -102,15 +101,14 @@ test('a sideways fling reads the horizontal speed', () => {
   expect(mocked.pan).toMatchObject({
     activeOffsetX: [-8, 8],
     failOffsetY: [-8, 8],
+    touchAction: 'pan-y',
   });
-  expect(flick!.touchAction).toBe('pan-y');
 });
 
-test('a disabled flick turns its pan off and leaves the browser its panning', () => {
+test('a disabled flick turns its pan off', () => {
   render(<Flicked direction="up" enabled={false} />);
+  // Gesture Handler then gives the view back its own touch-action (touchAction.test.tsx).
   expect(mocked.pan).toMatchObject({ enabled: false });
-  // The browser keeps its scroll along the flick's axis too.
-  expect(flick!.touchAction).toBe('auto');
 });
 
 test('on the web, the click a mouse drag ends with presses nothing beneath it', () => {
