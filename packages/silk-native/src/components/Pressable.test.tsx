@@ -213,6 +213,54 @@ test('on native, every focus rings', () => {
   }
 });
 
+test('on the web, Space presses a checkbox, radio or switch, without scrolling', () => {
+  const presses: string[] = [];
+  render(
+    <SilkProvider theme={theme}>
+      {(['checkbox', 'radio', 'switch'] as const).map((role) => (
+        <Pressable key={role} accessibilityRole={role} testID={role} onPress={() => presses.push(role)} />
+      ))}
+    </SilkProvider>,
+  );
+  for (const role of ['checkbox', 'radio', 'switch']) {
+    expect(fireEvent.keyDown(screen.getByTestId(role), { key: ' ' })).toBe(false);
+  }
+  expect(presses).toEqual(['checkbox', 'radio', 'switch']);
+});
+
+test('a held Space presses once; disabled, Space presses nothing', () => {
+  const presses: number[] = [];
+  const view = (disabled: boolean) => (
+    <SilkProvider theme={theme}>
+      <Pressable accessibilityRole="switch" testID="p" disabled={disabled} onPress={() => presses.push(1)} />
+    </SilkProvider>
+  );
+  const { rerender } = render(view(false));
+  const el = screen.getByTestId('p');
+  fireEvent.keyDown(el, { key: ' ' });
+  fireEvent.keyDown(el, { key: ' ', repeat: true });
+  expect(presses).toEqual([1]);
+  rerender(view(true));
+  expect(fireEvent.keyDown(el, { key: ' ' })).toBe(true);
+  expect(presses).toEqual([1]);
+});
+
+test("Space on a part inside presses only that part; the caller's key handler still runs", () => {
+  const presses: string[] = [];
+  const keys: string[] = [];
+  const onKeyDown = (event: { nativeEvent: { key: string } }) => keys.push(event.nativeEvent.key);
+  render(
+    <SilkProvider theme={theme}>
+      <Pressable accessibilityRole="switch" onPress={() => presses.push('outer')} {...{ onKeyDown }}>
+        <Pressable accessibilityRole="checkbox" testID="inner" onPress={() => presses.push('inner')} />
+      </Pressable>
+    </SilkProvider>,
+  );
+  fireEvent.keyDown(screen.getByTestId('inner'), { key: ' ' });
+  expect(presses).toEqual(['inner']);
+  expect(keys).toEqual([' ']);
+});
+
 test("no source file uses React Native's Pressable or Touchables directly", () => {
   const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const wrapper = path.join('components', 'Pressable.tsx');

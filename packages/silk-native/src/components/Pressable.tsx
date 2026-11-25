@@ -10,6 +10,7 @@ import {
   type Ref,
 } from 'react';
 import {
+  type GestureResponderEvent,
   Platform,
   Pressable as RNPressable,
   type PressableProps as RNPressableProps,
@@ -18,7 +19,13 @@ import {
   type View,
   type ViewStyle,
 } from 'react-native';
-import { matchesFocusVisible, type WebNode } from '../web/host.js';
+import {
+  matchesFocusVisible,
+  WEB,
+  type WebKeyDownEvent,
+  type WebNode,
+  webNode,
+} from '../web/host.js';
 import { mapFocusRingStyle } from '../styles/mappers/focus.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
@@ -93,11 +100,43 @@ function useFocusVisible(): {
 }
 
 /**
+ * Roles a browser presses with Space as well as Enter. react-native-web
+ * presses them only with Enter: it takes Space for `button` and `menuitem`.
+ */
+const SPACE_ROLES: ReadonlySet<string | null | undefined> = new Set([
+  'checkbox',
+  'radio',
+  'switch',
+]);
+
+/**
+ * On the web, a key handler in which Space presses a checkbox, radio or
+ * switch, once however long it is held, without scrolling the page; it calls
+ * `onKeyDown` (the caller's) first.
+ */
+function spacePress(
+  press: ((event: GestureResponderEvent) => void) | null | undefined,
+  disabled: boolean,
+  onKeyDown: ((event: WebKeyDownEvent) => void) | undefined,
+): ((event: WebKeyDownEvent) => void) | undefined {
+  if (!WEB || !press || disabled) return onKeyDown;
+  return (event) => {
+    onKeyDown?.(event);
+    // Its own key: not one a focused part inside it hears.
+    if (event.nativeEvent.key !== ' ' || event.target !== event.currentTarget) return;
+    if (!SPACE_ROLES.has(webNode(event.currentTarget).getAttribute?.('role'))) return;
+    event.preventDefault();
+    if (!event.nativeEvent.repeat) press(event as unknown as GestureResponderEvent);
+  };
+}
+
+/**
  * React Native's Pressable with Silk's keyboard focus ring: a drop-in
  * replacement that outlines it in the theme's focus color while it has
  * visible focus. Use it for any custom pressable; Silk's own controls use it
  * already. `style` composes after the ring, so it can adjust it (for example
- * a smaller `outlineOffset` in a dense list).
+ * a smaller `outlineOffset` in a dense list). On the web, Space presses one
+ * whose role is `checkbox`, `radio` or `switch`, as Enter does.
  */
 export function Pressable({
   focusRing,
@@ -111,6 +150,11 @@ export function Pressable({
   const { theme } = useTheme();
   const { focusVisible, onFocus: trackFocus, onBlur: trackBlur } =
     useFocusVisible();
+  const onKeyDown = spacePress(
+    rest.onPress,
+    Boolean(rest.disabled),
+    (rest as { onKeyDown?: (event: WebKeyDownEvent) => void }).onKeyDown,
+  );
   const handleFocus = useCallback<NonNullable<RNPressableProps['onFocus']>>(
     (event) => {
       // react-native-web calls this only for this element's own focus, not
@@ -141,6 +185,7 @@ export function Pressable({
     <RNPressable
       ref={ref}
       {...rest}
+      {...(onKeyDown ? { onKeyDown } : null)}
       onFocus={handleFocus}
       onBlur={handleBlur}
       style={(state) => [

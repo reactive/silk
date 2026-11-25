@@ -8,7 +8,7 @@
 import type { Spring } from '@reactive/silk-core';
 import { useMemo } from 'react';
 import { cancelAnimation, type SharedValue, useSharedValue } from 'react-native-reanimated';
-import { springTo } from '../motion/springTo.js';
+import { speedToward, springSpeed, springTo } from '../motion/springTo.js';
 import { SUBPIXEL } from '../motion/subpixel.js';
 import { sameItems } from './sameItems.js';
 import { type SliderScale, towardMax, unitsPerPixel, valueAt } from './sliderGeometry.js';
@@ -96,7 +96,8 @@ export interface SliderThumbs {
   /**
    * Takes React's values, unless the thumbs moved since `expected` (what
    * JavaScript last heard): the gesture that moved them reports its own. A
-   * thumb still settling springs on, at its speed, to its new value.
+   * thumb still settling springs on to its new value, at its speed if that
+   * heads there.
    */
   readonly adopt: (next: readonly number[], expected: readonly number[]) => void;
 }
@@ -107,20 +108,22 @@ export function sliderThumbs(
   { spring, reduced }: ThumbSpring,
 ): SliderThumbs {
   /**
-   * Springs the moving thumb to its value at `velocity` (units per second;
-   * undefined keeps the speed of the spring it replaces), then lets it go.
+   * Springs the moving thumb to its value, then lets it go. It keeps
+   * `velocity` (units per second; by default the speed of the spring it
+   * replaces) only when that heads to the value, and stops there rather than
+   * passing it: the value is within the bounds and short of the neighbors, so
+   * the thumb never leaves the track or crosses another.
    */
-  const settle = (velocity: number | undefined) => {
+  const settle = (velocity?: number) => {
     'worklet';
     const target = placed.get()[moving.get()]!;
-    // Already there (held at a neighbor or a bound): it stays.
-    const speed = movingAt.get() === target ? 0 : velocity;
     movingAt.set(
       springTo(
         target,
         spring,
         {
-          ...(speed === undefined ? null : { velocity: speed }),
+          velocity: speedToward(target, movingAt.get(), velocity ?? springSpeed(movingAt) ?? 0),
+          overshootClamping: true,
           reduceMotion: reduced,
           precision: SUBPIXEL * unitsPerPixel(span.get().length, scale),
         },
@@ -190,7 +193,7 @@ export function sliderThumbs(
       if (place === NONE) return;
       // Still heading to its value: the spring is left as it is.
       if (next[place] === was[place]) return;
-      if (place < next.length) settle(undefined);
+      if (place < next.length) settle();
       else {
         cancelAnimation(movingAt);
         moving.set(NONE);

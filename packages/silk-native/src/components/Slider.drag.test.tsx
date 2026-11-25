@@ -11,9 +11,21 @@ import type { SliderProps } from './Slider.js';
  * gestures' configs are kept to be called by hand, a shared value is a plain
  * object, an animated style is worked out as the slider renders, and a spring
  * lands at once, reporting where it went and how fast it began; it finishes
- * at once too, unless `unfinished` leaves it running. `web`
- * picks the platform the slider takes gestures as.
+ * at once too, unless `unfinished` leaves it running. `running` is the speed
+ * of a spring still running when the next starts, as Reanimated hands it
+ * over; `last` is the last spring, to play by hand. `web` picks the platform
+ * the slider takes gestures as.
  */
+/** A `springTo` animation, as far as these tests play it. */
+interface SpringStandIn {
+  toValue: number;
+  velocity: number;
+  current: number;
+  callback?: (finished: boolean) => void;
+  onStart: (animation: object, value: number, now: number, previous?: object) => void;
+  onFrame: (animation: object, now: number) => boolean;
+}
+
 const mocked = rs.hoisted(() => ({
   web: true,
   pan: undefined as undefined | Record<string, unknown>,
@@ -21,6 +33,8 @@ const mocked = rs.hoisted(() => ({
   springs: [] as number[],
   speeds: [] as number[],
   unfinished: false,
+  running: undefined as undefined | number,
+  last: undefined as undefined | SpringStandIn,
   /** Work sent to the UI thread, held while `deferred` until the test runs it. */
   deferred: undefined as undefined | (() => void)[],
 }));
@@ -41,17 +55,11 @@ rs.mock('react-native-gesture-handler', () => ({
 rs.mock('react-native-reanimated', () => ({
   default: { View },
   cancelAnimation: () => {},
-  defineAnimation: (
-    _start: number,
-    factory: () => {
-      toValue: number;
-      velocity: number;
-      callback?: (finished: boolean) => void;
-      onStart: (animation: object, value: number, now: number, previous?: object) => void;
-    },
-  ) => {
+  defineAnimation: (_start: number, factory: () => SpringStandIn) => {
     const animation = factory();
-    animation.onStart(animation, 0, 0, undefined);
+    const previous = mocked.running === undefined ? undefined : { velocity: mocked.running };
+    animation.onStart(animation, 0, 0, previous);
+    mocked.last = animation;
     mocked.springs.push(animation.toValue);
     mocked.speeds.push(animation.velocity);
     if (!mocked.unfinished) animation.callback?.(true);
@@ -67,6 +75,9 @@ rs.mock('react-native-reanimated', () => ({
       },
       set(next: T) {
         this.value = next;
+      },
+      get _animation() {
+        return mocked.running === undefined ? null : { velocity: mocked.running };
       },
     }).current,
 }));
@@ -130,6 +141,8 @@ beforeEach(() => {
   mocked.springs.length = 0;
   mocked.speeds.length = 0;
   mocked.unfinished = false;
+  mocked.running = undefined;
+  mocked.last = undefined;
   mocked.deferred = undefined;
   clock = 1000;
   rs.spyOn(Date, 'now').mockImplementation(() => clock);
@@ -200,6 +213,50 @@ test('a settling thumb whose value its owner keeps springs on at its speed as th
   expect(values()).toEqual([50, 75]);
   expect(mocked.springs).toEqual([50]);
   expect(mocked.speeds).toEqual([500]);
+});
+
+test('flung on past its step, the thumb springs back from rest rather than carry on', () => {
+  render(<Controlled initial={[0]} accessibilityLabel="Strength" step={25} />);
+  layOut();
+  pan('onBegin')(at(0));
+  pan('onUpdate')(at(60));
+  pan('onDeactivate')({ canceled: false, velocityX: 900 });
+  expect(mocked.springs).toEqual([50]);
+  expect(mocked.speeds).toEqual([0]);
+});
+
+test('flung at max, the thumb stops there rather than leave the track', () => {
+  render(<Controlled initial={[0]} accessibilityLabel="Strength" step={25} />);
+  layOut();
+  pan('onBegin')(at(0));
+  pan('onUpdate')(at(95));
+  pan('onDeactivate')({ canceled: false, velocityX: 900 });
+  expect(mocked.springs).toEqual([100]);
+  // Played from where the finger let go, at the speed it began with.
+  const spring = mocked.last!;
+  spring.onStart(spring, 95, 0, undefined);
+  let furthest = 95;
+  for (let ms = 0; ms <= 1000 && !spring.onFrame(spring, ms); ms += 4) {
+    furthest = Math.max(furthest, spring.current);
+  }
+  expect(furthest).toBeLessThanOrEqual(100);
+});
+
+test('turned down mid-fling, the thumb comes back from rest rather than past the far end', () => {
+  render(
+    <SilkProvider>
+      <Slider size="md" accessibilityLabel="Stuck" value={[50]} onValueChange={() => {}} />
+    </SilkProvider>,
+  );
+  layOut();
+  mocked.unfinished = true;
+  pan('onBegin')(at(50));
+  pan('onUpdate')(at(95));
+  // The release's spring still runs toward max when the owner's value comes back.
+  mocked.running = 400;
+  pan('onDeactivate')({ canceled: false, velocityX: 900 });
+  expect(mocked.springs).toEqual([95, 50]);
+  expect(mocked.speeds.at(-1)).toBe(0);
 });
 
 test('let go after holding still, the thumb settles from rest, however fast it moved', () => {
