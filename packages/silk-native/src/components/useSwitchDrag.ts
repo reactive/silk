@@ -5,7 +5,7 @@ import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-
 import { scheduleOnUI } from 'react-native-worklets';
 import { speedToward } from '../gesture/conventions.js';
 import { crossPanning, panAlong, useReleaseTimer } from '../gesture/drag.js';
-import { springTo } from '../motion/springTo.js';
+import { springSpeed, springTo } from '../motion/springTo.js';
 import { SUBPIXEL } from '../motion/subpixel.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { WEB } from '../web/host.js';
@@ -80,18 +80,22 @@ export function useSwitchDrag({
   const { heard, report, stale } = useOwnerReports(onLand);
 
   const { show, pan } = useMemo(() => {
-    /** Springs to `end`, at `velocity` positions a second, or carrying the speed it had. */
+    /**
+     * Springs to `end`, at `velocity` positions a second, or carrying the speed
+     * it had if that heads to `end`: carried away from it, the thumb would pass
+     * the track's other end, which `overshootClamping` doesn't guard.
+     */
     const settle = (end: number, velocity?: number) => {
       'worklet';
       heading.set(end);
-      const options = {
-        reduceMotion: reduceMotion.get(),
-        overshootClamping: true,
-        // A quarter point, in positions (a track narrower than its thumb has no travel).
-        precision: SUBPIXEL / Math.max(span.get(), 1),
-      };
       position.set(
-        springTo(end, spring.get(), velocity === undefined ? options : { ...options, velocity }),
+        springTo(end, spring.get(), {
+          velocity: velocity ?? speedToward(end, position.get(), springSpeed(position) ?? 0),
+          reduceMotion: reduceMotion.get(),
+          overshootClamping: true,
+          // A quarter point, in positions (a track narrower than its thumb has no travel).
+          precision: SUBPIXEL / Math.max(span.get(), 1),
+        }),
       );
     };
     /**

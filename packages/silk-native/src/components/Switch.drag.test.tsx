@@ -18,6 +18,8 @@ const mocked = rs.hoisted(() => ({
   speeds: [] as number[],
   /** While set, calls to the JavaScript thread wait here, as they would behind a busy thread. */
   toRN: undefined as undefined | (() => void)[],
+  /** How fast a spring still runs when the next one replaces it, in positions a second. */
+  running: undefined as undefined | number,
   /** Works out the thumb's animated style, as the UI thread has it now. */
   thumb: undefined as undefined | (() => { transform: [{ translateX: number }] }),
 }));
@@ -64,6 +66,9 @@ rs.mock('react-native-reanimated', () => ({
       },
       set(next: T) {
         this.value = next;
+      },
+      get _animation() {
+        return mocked.running === undefined ? null : { velocity: mocked.running };
       },
     }).current,
 }));
@@ -152,6 +157,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   mocked.toRN = undefined;
+  mocked.running = undefined;
   rs.restoreAllMocks();
   // A drag's release swallows the next click until the browser's next task (`swallowDragClick`).
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -230,6 +236,27 @@ test('a change the owner turns down springs back', () => {
   expect(changes).toEqual([true]);
   expect(mocked.springs).toEqual([1, 0]);
   expect(checkedState()).toBe('false');
+});
+
+test('turned down mid-fling, the thumb comes back from rest rather than past the far end', () => {
+  const changes: boolean[] = [];
+  render(<Owner refuse changes={changes} />);
+  layOut();
+  // The fling's spring still runs toward on when the refusal arrives.
+  mocked.running = 60;
+  drag(travel * 0.2, 800);
+  expect(mocked.springs).toEqual([1, 0]);
+  expect(mocked.speeds.at(-1)).toBe(0);
+});
+
+test('the owner’s change keeps a running spring’s speed when it heads there', () => {
+  const set: { current?: (checked: boolean) => void } = {};
+  render(<Owner changes={[]} set={set} />);
+  layOut();
+  mocked.running = 5;
+  act(() => set.current!(true));
+  expect(mocked.springs.at(-1)).toBe(1);
+  expect(mocked.speeds.at(-1)).toBe(5);
 });
 
 test('a held thumb keeps the owner’s change until it lets go, then goes there', () => {
