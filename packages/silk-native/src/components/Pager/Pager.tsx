@@ -186,5 +186,7 @@ export const Pager: PagerNamespace = { Root: PagerRoot, Page: PagerPage };
 
 const styles = StyleSheet.create({
   root: { overflow: 'hidden' },
-  row: { flexDirection: 'row', flexGrow: 1 },
+  // As tall as the root and no taller, so a page's scrolling content scrolls within it. On
+  // the web a flex item can't shrink below its content without both of these.
+  row: { flexDirection: 'row', flexGrow: 1, flexShrink: 1, minHeight: 0 },
 });
