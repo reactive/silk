@@ -48,7 +48,9 @@ rs.mock('react-native-reanimated', () => ({
     },
   ) => {
     const animation = factory();
-    animation.onStart(animation, 0, 0, undefined);
+    // The spring it replaces, as Reanimated hands it over.
+    const previous = mocked.running === undefined ? undefined : { velocity: mocked.running };
+    animation.onStart(animation, 0, 0, previous);
     mocked.springs.push(animation.toValue);
     mocked.speeds.push(animation.velocity);
     animation.callback?.(true);
