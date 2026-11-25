@@ -111,8 +111,9 @@ const SPACE_ROLES: ReadonlySet<string | null | undefined> = new Set([
 
 /**
  * On the web, a key handler in which Space presses a checkbox, radio or
- * switch, once however long it is held, without scrolling the page; it calls
- * `onKeyDown` (the caller's) first.
+ * switch when it goes down, once however long it is held, without scrolling
+ * the page. It calls `onKeyDown` (the caller's) first, and leaves a key that
+ * handler took (prevented) alone.
  */
 function spacePress(
   press: ((event: GestureResponderEvent) => void) | null | undefined,
@@ -122,6 +123,7 @@ function spacePress(
   if (!WEB || !press || disabled) return onKeyDown;
   return (event) => {
     onKeyDown?.(event);
+    if (event.isDefaultPrevented?.()) return;
     // Its own key: not one a focused part inside it hears.
     if (event.nativeEvent.key !== ' ' || event.target !== event.currentTarget) return;
     if (!SPACE_ROLES.has(webNode(event.currentTarget).getAttribute?.('role'))) return;
@@ -136,7 +138,8 @@ function spacePress(
  * visible focus. Use it for any custom pressable; Silk's own controls use it
  * already. `style` composes after the ring, so it can adjust it (for example
  * a smaller `outlineOffset` in a dense list). On the web, Space presses one
- * whose role is `checkbox`, `radio` or `switch`, as Enter does.
+ * whose role is `checkbox`, `radio` or `switch` too, which react-native-web
+ * presses only with Enter.
  */
 export function Pressable({
   focusRing,

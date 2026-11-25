@@ -39,6 +39,23 @@ const mocked = rs.hoisted(() => ({
   deferred: undefined as undefined | (() => void)[],
 }));
 
+const isSpring = (value: unknown): value is SpringStandIn =>
+  typeof (value as { onStart?: unknown } | null)?.onStart === 'function';
+
+/**
+ * Starts `animation` from `from`, handing it the spring it replaces as
+ * Reanimated does, records it, and lands it at once, unless `unfinished`.
+ */
+function start(animation: SpringStandIn, from: number): number {
+  const previous = mocked.running === undefined ? undefined : { velocity: mocked.running };
+  animation.onStart(animation, from, 0, previous);
+  mocked.last = animation;
+  mocked.springs.push(animation.toValue);
+  mocked.speeds.push(animation.velocity);
+  if (!mocked.unfinished) animation.callback?.(true);
+  return animation.toValue;
+}
+
 rs.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children }: { children: unknown }) => children,
   usePanGesture: (config: Record<string, unknown>) => {
@@ -55,16 +72,8 @@ rs.mock('react-native-gesture-handler', () => ({
 rs.mock('react-native-reanimated', () => ({
   default: { View },
   cancelAnimation: () => {},
-  defineAnimation: (_start: number, factory: () => SpringStandIn) => {
-    const animation = factory();
-    const previous = mocked.running === undefined ? undefined : { velocity: mocked.running };
-    animation.onStart(animation, 0, 0, previous);
-    mocked.last = animation;
-    mocked.springs.push(animation.toValue);
-    mocked.speeds.push(animation.velocity);
-    if (!mocked.unfinished) animation.callback?.(true);
-    return animation.toValue;
-  },
+  // A spring starts when it is set on a shared value, from where that value is.
+  defineAnimation: (_start: number, factory: () => SpringStandIn) => factory(),
   useAnimatedStyle: (style: () => object) => style(),
   useDerivedValue: <T,>(derive: () => T) => ({ get: derive }),
   useSharedValue: <T,>(value: T) =>
@@ -74,10 +83,7 @@ rs.mock('react-native-reanimated', () => ({
         return this.value;
       },
       set(next: T) {
-        this.value = next;
-      },
-      get _animation() {
-        return mocked.running === undefined ? null : { velocity: mocked.running };
+        this.value = isSpring(next) ? (start(next, this.value as number) as T) : next;
       },
     }).current,
 }));
@@ -234,7 +240,6 @@ test('flung at max, the thumb stops there rather than leave the track', () => {
   expect(mocked.springs).toEqual([100]);
   // Played from where the finger let go, at the speed it began with.
   const spring = mocked.last!;
-  spring.onStart(spring, 95, 0, undefined);
   let furthest = 95;
   for (let ms = 0; ms <= 1000 && !spring.onFrame(spring, ms); ms += 4) {
     furthest = Math.max(furthest, spring.current);

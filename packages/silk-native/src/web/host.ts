@@ -25,6 +25,8 @@ export interface WebKeyDownEvent {
   /** The element whose handler hears it. */
   readonly currentTarget?: unknown;
   preventDefault(): void;
+  /** Whether a handler that heard it first called `preventDefault()`. */
+  isDefaultPrevented?(): boolean;
 }
 
 /**

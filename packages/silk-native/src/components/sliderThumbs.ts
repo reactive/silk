@@ -8,7 +8,7 @@
 import type { Spring } from '@reactive/silk-core';
 import { useMemo } from 'react';
 import { cancelAnimation, type SharedValue, useSharedValue } from 'react-native-reanimated';
-import { speedToward, springSpeed, springTo } from '../motion/springTo.js';
+import { springTo } from '../motion/springTo.js';
 import { SUBPIXEL } from '../motion/subpixel.js';
 import { sameItems } from './sameItems.js';
 import { type SliderScale, towardMax, unitsPerPixel, valueAt } from './sliderGeometry.js';
@@ -111,18 +111,18 @@ export function sliderThumbs(
    * Springs the moving thumb to its value, then lets it go. It keeps
    * `velocity` (units per second; by default the speed of the spring it
    * replaces) only when that heads to the value, and stops there rather than
-   * passing it: the value is within the bounds and short of the neighbors, so
-   * the thumb never leaves the track or crosses another.
+   * passing it, so it stays between where it was and its value, never off
+   * the track.
    */
   const settle = (velocity?: number) => {
     'worklet';
-    const target = placed.get()[moving.get()]!;
     movingAt.set(
       springTo(
-        target,
+        placed.get()[moving.get()]!,
         spring,
         {
-          velocity: speedToward(target, movingAt.get(), velocity ?? springSpeed(movingAt) ?? 0),
+          ...(velocity === undefined ? null : { velocity }),
+          speedAway: 'drop',
           overshootClamping: true,
           reduceMotion: reduced,
           precision: SUBPIXEL * unitsPerPixel(span.get().length, scale),

@@ -261,6 +261,18 @@ test("Space on a part inside presses only that part; the caller's key handler st
   expect(keys).toEqual([' ']);
 });
 
+test('a Space the caller handled (prevented) presses nothing more', () => {
+  const presses: number[] = [];
+  const onKeyDown = (event: { preventDefault(): void }) => event.preventDefault();
+  render(
+    <SilkProvider theme={theme}>
+      <Pressable accessibilityRole="checkbox" testID="p" onPress={() => presses.push(1)} {...{ onKeyDown }} />
+    </SilkProvider>,
+  );
+  fireEvent.keyDown(screen.getByTestId('p'), { key: ' ' });
+  expect(presses).toEqual([]);
+});
+
 test("no source file uses React Native's Pressable or Touchables directly", () => {
   const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const wrapper = path.join('components', 'Pressable.tsx');

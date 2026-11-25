@@ -16,7 +16,6 @@ import {
 } from 'react';
 import { View, type ViewProps } from 'react-native';
 import { rnwAttrs } from '../styles/a11yProps.js';
-import { WEB } from '../web/host.js';
 import { spaceScale } from '../styles/mappers/shared.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { Text } from './Text.js';
@@ -393,14 +392,11 @@ function FieldLabel({
   const field = useFieldContext();
   const activation = useContext(FieldActivationContext);
   // A disabled field's label takes no press, so a tap reaches what wraps it
-  // (a Tooltip.Trigger saying why). Natively a Text with onPress is the
-  // responder; on the web its onPress is a click, so it claims the responder
-  // itself, or what wraps it would take the press as one nothing inside took.
+  // (a Tooltip.Trigger saying why). A Text with onPress is the responder.
   const pressable = !field?.disabled && (onPress || activation);
   return (
     <Text
       {...props}
-      {...(WEB && pressable ? { onStartShouldSetResponder: () => true } : null)}
       role="label"
       tone={field?.disabled ? 'secondary' : 'primary'}
       nativeID={nativeID ?? field?.labelId}
