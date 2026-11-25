@@ -16,6 +16,7 @@ export function useLoop(
   keyframes: CSSAnimationKeyframes,
   style?: StyleProp<ViewStyle>,
 ): CSSAnimationProperties | undefined {
+  // The token itself, not `useMotion`, which would bundle the spring sampler into every loop.
   const { durationMs, easing } = useTheme().theme.semantic.motion.loop;
   if (useReducedMotion() || setsAnimated(keyframes, style)) return undefined;
   return {
