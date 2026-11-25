@@ -82,6 +82,8 @@ export const OwnerRefuses: Story = { render: () => <PagerDemo refuse /> };
 
 /** A pager with a height holds its pages to it, so a long page scrolls inside. */
 export const ScrollingPage: Story = {
+  // Measures heights, which jsdom doesn't lay out: the browser test runner plays it.
+  tags: ['needs-layout'],
   render: () => (
     <Pager.Root
       value="Moves"
