@@ -69,8 +69,8 @@ test('Skeleton pulses its opacity once per loop token', () => {
   expect(style.animationDuration).toBe(900);
   expect(style.animationIterationCount).toBe('infinite');
   expect(style.animationName).toMatchObject({
-    from: { opacity: 1 },
-    '50%': { opacity: 0.55 },
+    from: { opacity: 1, animationTimingFunction: 'ease-in-out' },
+    '50%': { opacity: 0.55, animationTimingFunction: 'ease-in-out' },
     to: { opacity: 1 },
   });
 });
@@ -92,6 +92,7 @@ test('an indeterminate Progress sweeps in from before the track and stops flush 
 
 test('in an RTL app the sweep starts at the right, where the indicator rests', () => {
   const layout = I18nManager as { isRTL?: boolean };
+  const was = layout.isRTL;
   layout.isRTL = true;
   try {
     expect(sweepOf(styleOf(<Progress />))).toEqual([
@@ -99,7 +100,7 @@ test('in an RTL app the sweep starts at the right, where the indicator rests', (
       [{ translateX: '-150%' }],
     ]);
   } finally {
-    layout.isRTL = undefined;
+    layout.isRTL = was;
   }
 });
 

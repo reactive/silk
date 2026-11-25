@@ -10,7 +10,12 @@ import { mapSkeletonStyle } from '../styles/mappers/visual.js';
 import { useComponentDefaults } from '../theme/SilkProvider.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 
-/** Dims and brightens once per loop, easing in and out of each turn. */
+/**
+ * Dims and brightens once per loop, easing in and out of each turn: a pulse
+ * turns around mid-cycle, so it keeps its own curve and takes only the loop
+ * token's duration. A keyframe selector is a percent string: Reanimated reads
+ * a number as a fraction.
+ */
 const pulse: CSSAnimationKeyframes = {
   from: { opacity: 1, animationTimingFunction: 'ease-in-out' },
   '50%': { opacity: 0.55, animationTimingFunction: 'ease-in-out' },

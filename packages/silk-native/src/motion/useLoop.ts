@@ -1,5 +1,5 @@
 import type { CSSAnimationKeyframes, CSSAnimationProperties } from 'react-native-reanimated';
-import { useMotionPreference } from '../styles/useReducedMotion.js';
+import { useReducedMotion } from '../styles/useReducedMotion.js';
 import { useMotion } from './useMotion.js';
 
 /**
@@ -10,7 +10,7 @@ import { useMotion } from './useMotion.js';
  */
 export function useLoop(keyframes: CSSAnimationKeyframes): CSSAnimationProperties | undefined {
   const { durationMs, easing } = useMotion('loop');
-  if (useMotionPreference() !== 'full') return undefined;
+  if (useReducedMotion()) return undefined;
   return {
     animationName: keyframes,
     animationDuration: durationMs,
