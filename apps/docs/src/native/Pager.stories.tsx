@@ -92,7 +92,8 @@ export const ScrollingPage: Story = {
       testID="pager"
     >
       <Pager.Page value="Moves" testID="page">
-        <ScrollView testID="moves">
+        {/* Focusable, so a keyboard can scroll it. */}
+        <ScrollView testID="moves" focusable aria-label="Moves">
           {Array.from({ length: 20 }, (_, move) => (
             <Text key={move}>Move {move + 1}</Text>
           ))}
