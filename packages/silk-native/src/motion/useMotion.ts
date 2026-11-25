@@ -71,16 +71,32 @@ const keywordBeziers = new Map<string, readonly [number, number, number, number]
   ['ease-in-out', [0.42, 0, 0.58, 1]],
 ]);
 
+/** Whether a CSS `steps()` position jumps at the start, for the positions Reanimated plays. */
+const jumpsAtStart = new Map([
+  ['start', true],
+  ['jump-start', true],
+  ['end', false],
+  ['jump-end', false],
+]);
+
 /**
  * A duration token's CSS easing as an easing for Reanimated's `withTiming`,
- * which plays a worklet curve rather than CSS: `cubic-bezier(…)` and the
- * keyword curves keep their shape; any other curve (`steps(…)`, a `linear(…)`
- * with stops) plays linearly.
+ * which plays a worklet curve rather than CSS: `cubic-bezier(…)`, the keyword
+ * curves and `steps(n, start | end)` keep their shape; any other curve (a
+ * `linear(…)` with stops, `steps` jumping at both ends or neither, a
+ * malformed one) plays linearly.
  */
 export function timingEasing(css: string): TimingEasingFunction | EasingFunctionFactory {
   const { name, args } = parseEasing(css);
+  if (name === 'steps') {
+    const count = Number(args[0]);
+    const roundUp = jumpsAtStart.get(args[1] ?? 'end');
+    return Number.isInteger(count) && count > 0 && roundUp !== undefined
+      ? Easing.steps(count, roundUp)
+      : Easing.linear;
+  }
   const points = name === 'cubic-bezier' ? args.map(Number) : keywordBeziers.get(css);
-  const [x1, y1, x2, y2] = points ?? [];
+  const [x1, y1, x2, y2] = points?.length === 4 && points.every(Number.isFinite) ? points : [];
   return x1 === undefined || y1 === undefined || x2 === undefined || y2 === undefined
     ? Easing.linear
     : Easing.bezier(x1, y1, x2, y2);

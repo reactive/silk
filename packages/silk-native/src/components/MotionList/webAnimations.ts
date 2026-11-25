@@ -52,10 +52,11 @@ const dom = (el: MotionElement) => el as unknown as HTMLElement;
 /** Whether `el` can move at all (jsdom has no Web Animations) */
 const canAnimate = (el: MotionElement) => typeof dom(el).animate === 'function';
 
-/** Where `el` is on screen now, a glide in flight included, and its size */
-export function measureOf(el: MotionElement): Omit<Position, 'el' | 'parent'> {
+/** Where `el` is on screen now, a glide in flight included, its size and its parent */
+export function measureOf(el: MotionElement): Position {
   const { left, top, width, height } = dom(el).getBoundingClientRect();
-  return { at: { x: left, y: top }, velocity: velocityOf(el), width, height };
+  const at = { x: left, y: top };
+  return { at, velocity: velocityOf(el), el, parent: el.parentElement, width, height };
 }
 
 /**

@@ -35,8 +35,7 @@ export function measure(items: Items): Positions {
   const positions = new Map<MotionKey, Position>();
   for (const [key, el] of items) {
     const measured = measureOf(el);
-    if (measured.width || measured.height)
-      positions.set(key, { ...measured, el, parent: el.parentElement });
+    if (measured.width || measured.height) positions.set(key, measured);
   }
   return positions;
 }

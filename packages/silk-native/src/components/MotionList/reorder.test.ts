@@ -20,7 +20,9 @@ const mocked = rs.hoisted(() => {
 });
 
 rs.mock('./webAnimations.js', () => ({
-  measureOf: (el: unknown) => ({
+  measureOf: (el: { parentElement: unknown }) => ({
+    el,
+    parent: el.parentElement,
     at: mocked.layout.get(el),
     velocity: mocked.velocity.get(el) ?? { x: 0, y: 0 },
     width: mocked.hidden.has(el) ? 0 : 10,

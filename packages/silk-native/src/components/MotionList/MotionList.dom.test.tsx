@@ -14,7 +14,7 @@ rs.mock('./reorder.js', () => ({
   reorder: (
     _before: unknown,
     items: Map<string, unknown>,
-    _spring: unknown,
+    _motion: unknown,
     { fades }: { fades: boolean },
   ) => {
     mocked.calls.push(['reorder', [...items.keys()], fades]);

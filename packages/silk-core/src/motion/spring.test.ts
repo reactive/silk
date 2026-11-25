@@ -53,7 +53,6 @@ test('only a spring with bounce overshoots its target', () => {
   expect(Math.max(...sampleSpring(snappy).progress)).toBeGreaterThan(1);
 });
 
-
 test('sampleSpringOffsets runs from the start to exactly 0, keeping the start speed', () => {
   const start = { offset: -40, velocity: -900 };
   const { settleMs, offsets } = sampleSpringOffsets(brisk, start, 0.25);
