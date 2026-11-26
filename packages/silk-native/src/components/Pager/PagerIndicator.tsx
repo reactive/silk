@@ -7,7 +7,8 @@ import { WEB } from '../../web/host.js';
 import { pageShare } from './pagerPhysics.js';
 import { PagerState, type PagerStateValue } from './pagerState.js';
 
-export interface PagerIndicatorProps extends Omit<ViewProps, 'children'> {
+export interface PagerIndicatorProps
+  extends Omit<ViewProps, 'children' | 'pointerEvents' | 'aria-hidden' | 'importantForAccessibility'> {
   readonly ref?: Ref<ComponentRef<typeof View>>;
 }
 
@@ -25,7 +26,7 @@ export function PagerIndicator({ style, ...rest }: PagerIndicatorProps): JSX.Ele
   if (!frame) throw new Error('Pager.Indicator: render it as a child of Pager.Root.');
   const { theme } = useTheme();
   const look = useMemo(() => mapPagerIndicatorStyle(theme), [theme]);
-  const { position, pageKeys, keys, enabledPages } = frame;
+  const { position, pageKeys, renderedPages } = frame;
   return (
     <View
       {...rest}
@@ -34,11 +35,11 @@ export function PagerIndicator({ style, ...rest }: PagerIndicatorProps): JSX.Ele
       importantForAccessibility="no-hide-descendants"
       style={[look.row, style]}
     >
-      {keys.map((key, at) => (
+      {renderedPages.map(({ key, enabled }) => (
         <Dot
           key={key}
           page={key}
-          enabled={enabledPages[at]!}
+          enabled={enabled}
           position={position}
           pageKeys={pageKeys}
           look={look}
@@ -84,10 +85,10 @@ function Dot({
 
 /**
  * How much page `page` is the shown one at `position`. Its place is read
- * from the UI thread's `keys`, so it moves with `position` when a page is
- * added or removed before it.
+ * from the UI thread's `pageKeys`, never React's, so it moves with
+ * `position` when a page is added or removed before it.
  */
-function shareOf(position: number, keys: readonly string[], page: string): number {
+function shareOf(position: number, pageKeys: readonly string[], page: string): number {
   'worklet';
-  return pageShare(position, keys.indexOf(page), keys.length);
+  return pageShare(position, pageKeys.indexOf(page), pageKeys.length);
 }

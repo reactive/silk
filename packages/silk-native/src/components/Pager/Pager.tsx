@@ -115,7 +115,11 @@ function PagerRoot({
         {/* Outside the row, so it stays put over the pages. */}
         {indicator ? (
           <PagerState
-            value={{ position: drag.position, pageKeys: drag.pageKeys, keys, enabledPages }}
+            value={{
+              position: drag.position,
+              pageKeys: drag.pageKeys,
+              renderedPages: keys.map((key, at) => ({ key, enabled: enabledPages[at]! })),
+            }}
           >
             {indicator}
           </PagerState>

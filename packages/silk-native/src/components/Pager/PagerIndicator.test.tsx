@@ -114,6 +114,28 @@ test('a page added before the shown one leaves the pill on that page', () => {
   expect(widths()).toEqual([px(2), px(2), px(6), px(2)]);
 });
 
+test('a page removed before the shown one, or the pages reordered, leave the pill on it', () => {
+  const widths = () => dots().map((dot) => dot.width);
+  const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
+  // Each render's styles first, from the UI thread's keys before it takes the new list, then
+  // the next render's, after.
+  for (const next of [['b', 'c'], ['c', 'b']]) {
+    const pill = next.map((page) => (page === 'b' ? px(6) : px(2)));
+    rerender(pager('b', [...pages(next), indicator]));
+    expect(widths()).toEqual(pill);
+    rerender(pager('b', [...pages(next), indicator]));
+    expect(widths()).toEqual(pill);
+  }
+});
+
+test('the shown page removed as the owner shows its neighbour: the pill lands there', () => {
+  const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
+  rerender(pager('c', [...pages(['a', 'c']), indicator]));
+  // A frame with the removed page's share and no dot for it (`PagerStateValue`), then this.
+  rerender(pager('c', [...pages(['a', 'c']), indicator]));
+  expect(dots().map((dot) => dot.width)).toEqual([px(2), px(6)]);
+});
+
 test('halfway through a swipe, the two pages share the pill', () => {
   const { rerender } = render(pager('a', [...pages(['a', 'b', 'c']), indicator]));
   const root = screen.getByTestId('pager') as HTMLElement & {
