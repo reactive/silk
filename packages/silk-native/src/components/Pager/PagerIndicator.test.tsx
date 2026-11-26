@@ -74,6 +74,9 @@ function dots() {
   });
 }
 
+/** The dots' widths, in order. */
+const widths = () => dots().map((dot) => dot.width);
+
 /** `color` as the browser writes it back. */
 const rgb = (color: string) => {
   const probe = document.createElement('div');
@@ -104,7 +107,6 @@ test("a disabled page's dot is fainter, but a pill when the owner shows that pag
 
 test('a page added before the shown one leaves the pill on that page', () => {
   const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
-  const widths = () => dots().map((dot) => dot.width);
   // Before the UI thread has the new page: the dots read their places from its keys, not
   // React's, so the pill stays on `b` rather than passing to whichever page now sits second.
   rerender(pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
@@ -115,10 +117,9 @@ test('a page added before the shown one leaves the pill on that page', () => {
 });
 
 test('a page removed before the shown one, or the pages reordered, leave the pill on it', () => {
-  const widths = () => dots().map((dot) => dot.width);
   const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
-  // Each render's styles first, from the UI thread's keys before it takes the new list, then
-  // the next render's, after.
+  // Each render's styles first, from the UI thread's pageKeys before it takes the new list,
+  // then the next render's, after.
   for (const next of [['b', 'c'], ['c', 'b']]) {
     const pill = next.map((page) => (page === 'b' ? px(6) : px(2)));
     rerender(pager('b', [...pages(next), indicator]));
@@ -131,9 +132,9 @@ test('a page removed before the shown one, or the pages reordered, leave the pil
 test('the shown page removed as the owner shows its neighbour: the pill lands there', () => {
   const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
   rerender(pager('c', [...pages(['a', 'c']), indicator]));
-  // A frame with the removed page's share and no dot for it (`PagerStateValue`), then this.
+  // A frame where the removed page still holds its share and has no dot, then this.
   rerender(pager('c', [...pages(['a', 'c']), indicator]));
-  expect(dots().map((dot) => dot.width)).toEqual([px(2), px(6)]);
+  expect(widths()).toEqual([px(2), px(6)]);
 });
 
 test('halfway through a swipe, the two pages share the pill', () => {

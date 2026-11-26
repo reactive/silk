@@ -118,7 +118,10 @@ function PagerRoot({
             value={{
               position: drag.position,
               pageKeys: drag.pageKeys,
-              renderedPages: keys.map((key, at) => ({ key, enabled: enabledPages[at]! })),
+              renderedPages: pages.map((page) => ({
+                key: page.props.value,
+                enabled: !page.props.disabled,
+              })),
             }}
           >
             {indicator}
