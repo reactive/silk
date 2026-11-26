@@ -1,7 +1,12 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { I18nManager, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
-import { cancelAnimation, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import {
+  cancelAnimation,
+  type SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
 import { panAlong, useReleaseTimer } from '../../gesture/drag.js';
 import { springSpeed, springTo } from '../../motion/springTo.js';
@@ -14,6 +19,13 @@ import { dragPosition, landing, releaseInPages } from './pagerPhysics.js';
 
 export interface PagerDrag {
   readonly pan: ReturnType<typeof usePanGesture>;
+  /** Where the pages stand, in pages: 1 shows the second page whole. */
+  readonly position: SharedValue<number>;
+  /**
+   * The pages' keys, in order, as the UI thread has them: written in the same step that moves
+   * `position` when a page is added or removed, so a page's place and the position agree.
+   */
+  readonly pageKeys: SharedValue<readonly string[]>;
   /** Moves the row of pages so the page at the pager's position shows. */
   readonly rowMotion: ReturnType<typeof useAnimatedStyle>;
   /** Records the pager's width: how many points of finger travel move one page. */
@@ -213,6 +225,8 @@ export function usePagerDrag({
 
   return {
     pan: usePanGesture(pan),
+    position,
+    pageKeys,
     rowMotion,
     onLayout: (event) => {
       width.value = event.nativeEvent.layout.width;

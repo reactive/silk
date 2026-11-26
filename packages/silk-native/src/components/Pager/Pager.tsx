@@ -15,6 +15,8 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { useMotionPreference } from '../../styles/useReducedMotion.js';
 import { WEB } from '../../web/host.js';
+import { PagerIndicator } from './PagerIndicator.js';
+import { PagerState } from './pagerState.js';
 import { usePagerDrag } from './usePagerDrag.js';
 
 export interface PagerRootProps extends Omit<ViewProps, 'children'> {
@@ -26,7 +28,10 @@ export interface PagerRootProps extends Omit<ViewProps, 'children'> {
    * later than that (after an `await`) arrives after the pages settled back.
    */
   readonly onValueChange: (value: string) => void;
-  /** The pages, in order: `Pager.Page` elements, each a direct child. */
+  /**
+   * The pages, in order: `Pager.Page` elements, each a direct child, and at
+   * most one `Pager.Indicator` among them.
+   */
   readonly children: ReactNode;
   readonly ref?: Ref<ComponentRef<typeof View>>;
 }
@@ -73,17 +78,22 @@ function PagerRoot({
   onLayout,
   ...rest
 }: PagerRootProps): JSX.Element {
-  const pages = pagesOf(children);
-  const keys = pages.map((page) => page.props.value);
+  const { pages, indicator } = partsOf(children);
+  const renderedPages = pages.map((page) => ({
+    key: page.props.value,
+    enabled: !page.props.disabled,
+  }));
+  const keys = renderedPages.map((page) => page.key);
   if (new Set(keys).size < keys.length) {
     throw new Error('Pager.Root: two Pager.Page children have the same value.');
   }
   const index = keys.indexOf(value);
   if (index < 0) throw new Error(`Pager.Root: no Pager.Page has the value "${value}".`);
+  const enabledPages = renderedPages.map((page) => page.enabled);
   const drag = usePagerDrag({
     index,
     keys,
-    enabledPages: pages.map((page) => !page.props.disabled),
+    enabledPages,
     onLand: onValueChange,
     reduced: useMotionPreference() === 'reduced',
   });
@@ -106,6 +116,14 @@ function PagerRoot({
             </PageFrame>
           ))}
         </Animated.View>
+        {/* Outside the row, so it stays put over the pages. */}
+        {indicator ? (
+          <PagerState
+            value={{ position: drag.position, pageKeys: drag.pageKeys, renderedPages }}
+          >
+            {indicator}
+          </PagerState>
+        ) : null}
       </View>
     </GestureDetector>
   );
@@ -120,22 +138,30 @@ function useFrames(index: number, count: number) {
 }
 
 /**
- * `Pager.Root`'s children as its pages, in order. Not `Children.toArray`,
- * which keys a page by its place: its frame is keyed by its value, so a page
- * that moves keeps its state.
+ * `Pager.Root`'s children: its pages, in order, and any indicator, which
+ * takes no page's place. Not `Children.toArray`, which keys a page by its
+ * place: its frame is keyed by its value, so a page that moves keeps its state.
  */
-function pagesOf(children: ReactNode): ReactElement<PagerPageProps>[] {
+function partsOf(children: ReactNode): {
+  pages: ReactElement<PagerPageProps>[];
+  indicator: ReactElement | undefined;
+} {
   const pages: ReactElement<PagerPageProps>[] = [];
+  let indicator: ReactElement | undefined;
   Children.forEach(children, (child) => {
     if (child === null || child === undefined || typeof child === 'boolean') return;
     if (isValidElement<PagerPageProps>(child) && child.type === PagerPage) pages.push(child);
-    else {
+    else if (isValidElement(child) && child.type === PagerIndicator) {
+      if (indicator) throw new Error('Pager.Root: it takes one Pager.Indicator, not two.');
+      indicator = child;
+    } else {
       throw new Error(
-        'Pager.Root: each child must be a Pager.Page, not one inside a Fragment or another component.',
+        'Pager.Root: each child must be a Pager.Page or Pager.Indicator, ' +
+          'not one inside a Fragment or another component.',
       );
     }
   });
-  return pages;
+  return { pages, indicator };
 }
 
 /**
@@ -182,9 +208,14 @@ export function usePagerIsActive(): boolean {
 export interface PagerNamespace {
   readonly Root: typeof PagerRoot;
   readonly Page: typeof PagerPage;
+  readonly Indicator: typeof PagerIndicator;
 }
 
-export const Pager: PagerNamespace = { Root: PagerRoot, Page: PagerPage };
+export const Pager: PagerNamespace = {
+  Root: PagerRoot,
+  Page: PagerPage,
+  Indicator: PagerIndicator,
+};
 
 const styles = StyleSheet.create({
   root: { overflow: 'hidden' },

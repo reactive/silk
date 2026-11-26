@@ -86,3 +86,17 @@ export function releaseInPages(
   const flung = Math.abs(pointsPerSecond) >= gestureConventions.flingVelocity;
   return { speed: pointsPerSecond / pageWidth, fling: flung ? Math.sign(pointsPerSecond) : 0 };
 }
+
+/**
+ * How much page `at` of `count` is the shown one, with the pages at
+ * `position`: 1 on that page, falling to 0 a page away, so between two pages
+ * they share it. Past the first or last page (a drag held against an end)
+ * the end page keeps it whole, and one not among them (`at` -1) has none,
+ * even with no pages, where the clamp would land on it.
+ */
+export function pageShare(position: number, at: number, count: number): number {
+  'worklet';
+  if (at < 0) return 0;
+  const clamped = Math.min(Math.max(position, 0), count - 1);
+  return Math.max(0, 1 - Math.abs(clamped - at));
+}

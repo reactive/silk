@@ -2,7 +2,7 @@ import { Button, Card, Inline, Pager, Stack, Text, usePagerIsActive } from '@rea
 import { type ComponentRef, type JSX, useRef, useState } from 'react';
 import { ScrollView, type View } from 'react-native';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { withNativeSilk } from './withNativeSilk';
 
 const meta = {
@@ -32,9 +32,11 @@ function Pane({ name }: { readonly name: string }): JSX.Element {
 function PagerDemo({
   refuse = false,
   disabled,
+  indicator = false,
 }: {
   readonly refuse?: boolean;
   readonly disabled?: string;
+  readonly indicator?: boolean;
 }): JSX.Element {
   const [pane, setPane] = useState<string>('Moves');
   // The escape hatch: the root takes a View ref and View props.
@@ -66,6 +68,7 @@ function PagerDemo({
             <Pane name={name} />
           </Pager.Page>
         ))}
+        {indicator ? <Pager.Indicator testID="indicator" /> : null}
       </Pager.Root>
     </Stack>
   );
@@ -76,6 +79,29 @@ export const Controlled: Story = { render: () => <PagerDemo /> };
 
 /** A swipe passes the disabled page by, to the page beyond; only its button shows it. */
 export const DisabledPage: Story = { render: () => <PagerDemo disabled="Notes" /> };
+
+/**
+ * A dot for each page at the pager's foot, the shown page's a pill that
+ * passes from dot to dot as a swipe moves the pages; the disabled page's dot
+ * is fainter.
+ */
+export const Indicator: Story = {
+  // Measures widths, which jsdom doesn't lay out: the browser test runner plays it.
+  tags: ['needs-layout'],
+  render: () => <PagerDemo indicator disabled="Scoresheet" />,
+  play: async ({ canvas }) => {
+    // The pill is the widest dot: its page is the shown one.
+    const pill = () => {
+      const widths = [...canvas.getByTestId('indicator').children].map(
+        (dot) => dot.getBoundingClientRect().width,
+      );
+      return widths.indexOf(Math.max(...widths));
+    };
+    await expect(pill()).toBe(0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Notes' }));
+    await waitFor(() => expect(pill()).toBe(1));
+  },
+};
 
 /** The owner keeps its value, so a swipe settles back. */
 export const OwnerRefuses: Story = { render: () => <PagerDemo refuse /> };
