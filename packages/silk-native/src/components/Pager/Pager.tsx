@@ -79,13 +79,17 @@ function PagerRoot({
   ...rest
 }: PagerRootProps): JSX.Element {
   const { pages, indicator } = partsOf(children);
-  const keys = pages.map((page) => page.props.value);
+  const renderedPages = pages.map((page) => ({
+    key: page.props.value,
+    enabled: !page.props.disabled,
+  }));
+  const keys = renderedPages.map((page) => page.key);
   if (new Set(keys).size < keys.length) {
     throw new Error('Pager.Root: two Pager.Page children have the same value.');
   }
   const index = keys.indexOf(value);
   if (index < 0) throw new Error(`Pager.Root: no Pager.Page has the value "${value}".`);
-  const enabledPages = pages.map((page) => !page.props.disabled);
+  const enabledPages = renderedPages.map((page) => page.enabled);
   const drag = usePagerDrag({
     index,
     keys,
@@ -115,14 +119,7 @@ function PagerRoot({
         {/* Outside the row, so it stays put over the pages. */}
         {indicator ? (
           <PagerState
-            value={{
-              position: drag.position,
-              pageKeys: drag.pageKeys,
-              renderedPages: pages.map((page) => ({
-                key: page.props.value,
-                enabled: !page.props.disabled,
-              })),
-            }}
+            value={{ position: drag.position, pageKeys: drag.pageKeys, renderedPages }}
           >
             {indicator}
           </PagerState>

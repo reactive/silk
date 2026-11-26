@@ -107,7 +107,7 @@ test("a disabled page's dot is fainter, but a pill when the owner shows that pag
 
 test('a page added before the shown one leaves the pill on that page', () => {
   const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
-  // Before the UI thread has the new page: the dots read their places from its keys, not
+  // Before the UI thread has the new page: the dots read their places from its pageKeys, not
   // React's, so the pill stays on `b` rather than passing to whichever page now sits second.
   rerender(pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
   expect(widths()).toEqual([px(2), px(2), px(6), px(2)]);
