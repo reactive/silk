@@ -1,6 +1,6 @@
 import { type ComponentRef, type JSX, type Ref, use, useMemo } from 'react';
 import { StyleSheet, View, type ViewProps } from 'react-native';
-import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { mapPagerIndicatorStyle, type PagerIndicatorStyle } from '../../styles/mappers/visual.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
@@ -60,15 +60,25 @@ function Dot({
   readonly enabled: boolean;
   readonly look: PagerIndicatorStyle;
 } & Pick<PagerStateValue, 'position' | 'pageKeys'>) {
-  // Dependency arrays let a web build without the worklets Babel plugin run these styles.
+  // Each style reads the shared values in its own body, as Reanimated reruns it only for those.
+  // The page's place is read from the UI thread's keys, so it moves with `position` when a page
+  // is added or removed before it. Dependency arrays let a web build without the worklets Babel
+  // plugin run these styles.
   const widthStyle = useAnimatedStyle(
-    () => ({ width: dotWidth + (pillWidth - dotWidth) * shareOf(position, pageKeys, page) }),
+    () => {
+      const keys = pageKeys.value;
+      const share = pageShare(position.value, keys.indexOf(page), keys.length);
+      return { width: dotWidth + (pillWidth - dotWidth) * share };
+    },
     WEB ? [position, pageKeys, page, dotWidth, pillWidth] : undefined,
   );
   // The shown ink fades in over the dot's own. Not `interpolateColor`: on the web a theme's
   // colors can be CSS variables, which it can't read.
   const inkStyle = useAnimatedStyle(
-    () => ({ opacity: shareOf(position, pageKeys, page) }),
+    () => {
+      const keys = pageKeys.value;
+      return { opacity: pageShare(position.value, keys.indexOf(page), keys.length) };
+    },
     WEB ? [position, pageKeys, page] : undefined,
   );
   return (
@@ -78,17 +88,3 @@ function Dot({
   );
 }
 
-/**
- * How much page `page` is the shown one. Its place is read from the UI
- * thread's keys, so it moves with `position` when a page is added or removed
- * before it.
- */
-function shareOf(
-  position: SharedValue<number>,
-  pageKeys: SharedValue<readonly string[]>,
-  page: string,
-): number {
-  'worklet';
-  const keys = pageKeys.value;
-  return pageShare(position.value, keys.indexOf(page), keys.length);
-}
