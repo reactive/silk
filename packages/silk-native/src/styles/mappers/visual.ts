@@ -308,6 +308,47 @@ export function mapStatusDotStyle(
   };
 }
 
+/** A pager indicator's look: its row, its dots, and the colors a dot passes between. */
+export interface PagerIndicatorStyle {
+  readonly row: RnViewStyle;
+  /** A dot, but for its width and color. */
+  readonly dot: RnViewStyle;
+  /** A dot's width, and the shown page's. */
+  readonly dotWidth: number;
+  readonly pillWidth: number;
+  /** A page's dot, a disabled page's, and the shown page's. */
+  readonly idle: string;
+  readonly disabled: string;
+  readonly shown: string;
+}
+
+/**
+ * Not by density, unlike `mapStatusDotStyle`, since its dots take no press:
+ * for bundle size, as reading compact space would add the whole compact
+ * scale to every pager.
+ */
+export function mapPagerIndicatorStyle(theme: Theme): PagerIndicatorStyle {
+  const { color, space, radius } = theme.semantic;
+  return {
+    row: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: space[2],
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    dot: { height: space[2], borderRadius: radius.full },
+    dotWidth: space[2],
+    pillWidth: space[6],
+    idle: color.textSecondary,
+    disabled: color.borderSubtle,
+    shown: color.textPrimary,
+  };
+}
+
 export function mapSkeletonStyle(
   theme: Theme,
   props: SkeletonVariantProps = {},

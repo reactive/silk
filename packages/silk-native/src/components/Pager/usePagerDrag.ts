@@ -21,6 +21,8 @@ export interface PagerDrag {
   readonly pan: ReturnType<typeof usePanGesture>;
   /** Where the pages stand, in pages: 1 shows the second page whole. */
   readonly position: SharedValue<number>;
+  /** The pages' keys, in order, as the UI thread has them: they change with `position`. */
+  readonly pageKeys: SharedValue<readonly string[]>;
   /** Moves the row of pages so the page at the pager's position shows. */
   readonly rowMotion: ReturnType<typeof useAnimatedStyle>;
   /** Records the pager's width: how many points of finger travel move one page. */
@@ -221,6 +223,7 @@ export function usePagerDrag({
   return {
     pan: usePanGesture(pan),
     position,
+    pageKeys,
     rowMotion,
     onLayout: (event) => {
       width.value = event.nativeEvent.layout.width;

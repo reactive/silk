@@ -113,7 +113,9 @@ function PagerRoot({
         </Animated.View>
         {/* Outside the row, so it stays put over the pages. */}
         {indicator ? (
-          <IndicatorFrame value={{ position: drag.position, keys, enabledPages }}>
+          <IndicatorFrame
+            value={{ position: drag.position, pageKeys: drag.pageKeys, keys, enabledPages }}
+          >
             {indicator}
           </IndicatorFrame>
         ) : null}

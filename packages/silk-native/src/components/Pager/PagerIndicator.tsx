@@ -1,18 +1,27 @@
-import { type Context, createContext, type ComponentRef, type JSX, type Ref, use } from 'react';
-import { StyleSheet, View, type ViewProps } from 'react-native';
-import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
-import { mapPagerIndicatorStyle } from '../../styles/mappers/pager.js';
+import { type ComponentRef, type Context, createContext, type JSX, type Ref, use } from 'react';
+import { View, type ViewProps } from 'react-native';
+import Animated, {
+  interpolateColor,
+  type SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
+import { mapPagerIndicatorStyle, type PagerIndicatorStyle } from '../../styles/mappers/visual.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 import { WEB } from '../../web/host.js';
-import { indicatorWeight } from './pagerPhysics.js';
+import { pageShare } from './pagerPhysics.js';
 
 export interface PagerIndicatorProps extends Omit<ViewProps, 'children'> {
   readonly ref?: Ref<ComponentRef<typeof View>>;
 }
 
-/** What `Pager.Root` tells its indicator: where its pages stand, and which they are. */
+/**
+ * What `Pager.Root` tells its indicator: its pages as React renders them
+ * (`keys`, `enabledPages`), and where they stand as the UI thread has them
+ * (`position` of `pageKeys`, which change together).
+ */
 interface IndicatorFrameValue {
   readonly position: SharedValue<number>;
+  readonly pageKeys: SharedValue<readonly string[]>;
   readonly keys: readonly string[];
   readonly enabledPages: readonly boolean[];
 }
@@ -33,74 +42,56 @@ export function PagerIndicator({ style, ...rest }: PagerIndicatorProps): JSX.Ele
   const frame = use(IndicatorFrame);
   if (!frame) throw new Error('Pager.Indicator: render it as a child of Pager.Root.');
   const look = mapPagerIndicatorStyle(useTheme().theme);
-  const { position, keys, enabledPages } = frame;
+  const { position, pageKeys, keys, enabledPages } = frame;
   return (
     <View
       {...rest}
       pointerEvents="none"
       aria-hidden
-      accessible={false}
       importantForAccessibility="no-hide-descendants"
       style={[look.row, style]}
     >
       {keys.map((key, at) => (
         <Dot
           key={key}
-          at={at}
-          count={keys.length}
+          page={key}
           position={position}
-          dot={look.dot}
-          pill={look.pill}
-          radius={look.radius}
+          pageKeys={pageKeys}
+          look={look}
           color={enabledPages[at] ? look.idle : look.disabled}
-          shown={look.shown}
         />
       ))}
     </View>
   );
 }
 
-/** One page's dot: as much a pill in the shown ink as its page is the shown one (`indicatorWeight`). */
+/** Page `page`'s dot: as much a pill in the shown ink as that page is the shown one. */
 function Dot({
-  at,
-  count,
+  page,
   position,
-  dot,
-  pill,
-  radius,
+  pageKeys,
+  look: { dot, dotWidth, pillWidth, shown },
   color,
-  shown,
 }: {
-  readonly at: number;
-  readonly count: number;
+  readonly page: string;
   readonly position: SharedValue<number>;
-  readonly dot: number;
-  readonly pill: number;
-  readonly radius: number;
+  readonly pageKeys: SharedValue<readonly string[]>;
+  readonly look: PagerIndicatorStyle;
   readonly color: string;
-  readonly shown: string;
 }) {
-  // Dependency arrays let a web build without the worklets Babel plugin run these styles.
-  const width = useAnimatedStyle(
-    () => ({ width: dot + (pill - dot) * indicatorWeight(position.value, at, count) }),
-    WEB ? [position, at, count, dot, pill] : undefined,
+  // The page's place is read from the UI thread's keys, so it moves with `position` when a page
+  // is added or removed before it. Dependency arrays let a web build without the worklets Babel
+  // plugin run this style.
+  const motion = useAnimatedStyle(
+    () => {
+      const keys = pageKeys.value;
+      const share = pageShare(position.value, keys.indexOf(page), keys.length);
+      return {
+        width: dotWidth + (pillWidth - dotWidth) * share,
+        backgroundColor: interpolateColor(share, [0, 1], [color, shown]),
+      };
+    },
+    WEB ? [position, pageKeys, page, dotWidth, pillWidth, color, shown] : undefined,
   );
-  // The shown ink lies over the dot's own, as strong as the dot is the shown page's.
-  const ink = useAnimatedStyle(
-    () => ({ opacity: indicatorWeight(position.value, at, count) }),
-    WEB ? [position, at, count] : undefined,
-  );
-  return (
-    <Animated.View
-      style={[{ height: dot, borderRadius: radius, backgroundColor: color }, styles.dot, width]}
-    >
-      <Animated.View
-        style={[StyleSheet.absoluteFill, { borderRadius: radius, backgroundColor: shown }, ink]}
-      />
-    </Animated.View>
-  );
+  return <Animated.View style={[dot, motion]} />;
 }
-
-const styles = StyleSheet.create({
-  dot: { overflow: 'hidden' },
-});

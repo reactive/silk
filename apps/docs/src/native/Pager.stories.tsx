@@ -2,7 +2,7 @@ import { Button, Card, Inline, Pager, Stack, Text, usePagerIsActive } from '@rea
 import { type ComponentRef, type JSX, useRef, useState } from 'react';
 import { ScrollView, type View } from 'react-native';
 import type { Meta, StoryObj } from 'storybook-react-rsbuild';
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { withNativeSilk } from './withNativeSilk';
 
 const meta = {
@@ -90,12 +90,16 @@ export const Indicator: Story = {
   tags: ['needs-layout'],
   render: () => <PagerDemo indicator disabled="Scoresheet" />,
   play: async ({ canvas }) => {
-    const dots = [...canvas.getByTestId('indicator').children];
-    await expect(dots.map((dot) => dot.getBoundingClientRect().width > 12)).toEqual([
-      true,
-      false,
-      false,
-    ]);
+    // The pill is the widest dot: its page is the shown one.
+    const pill = () => {
+      const widths = [...canvas.getByTestId('indicator').children].map(
+        (dot) => dot.getBoundingClientRect().width,
+      );
+      return widths.indexOf(Math.max(...widths));
+    };
+    await expect(pill()).toBe(0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Notes' }));
+    await waitFor(() => expect(pill()).toBe(1));
   },
 };
 

@@ -1,24 +1,28 @@
 import { expect, rs, test } from '@rstest/core';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { type ReactNode, useRef } from 'react';
 import { View } from 'react-native';
 import type { Theme } from '@reactive/silk-core';
 import { SilkProvider } from '../../theme/SilkProvider.js';
 import { useTheme } from '../../theme/ThemeProvider.js';
 
-// As in Pager.test.tsx: no native modules in jsdom, so an animated style is
-// worked out as it renders, a shared value is a plain object and a spring
-// lands at once.
+// As in Pager.test.tsx: no native modules in jsdom, so the pan's config is
+// kept to be called by hand, an animated style is worked out as it renders,
+// a shared value is a plain object and a spring lands at once.
+const mocked = rs.hoisted(() => ({ pan: undefined as undefined | Record<string, unknown> }));
+
 rs.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children }: { children: unknown }) => children,
-  usePanGesture: (config: unknown) => config,
+  usePanGesture: (config: Record<string, unknown>) => (mocked.pan = config),
 }));
 
 rs.mock('react-native-reanimated', () => ({
   default: { View },
   cancelAnimation: () => {},
-  // A spring lands at once.
   defineAnimation: (_start: number, factory: () => object) => factory(),
+  // The shown ink once a page is shown at all, so a test can tell the dot's color.
+  interpolateColor: (share: number, _range: number[], [own, shown]: string[]) =>
+    share > 0 ? shown : own,
   useAnimatedStyle: (style: () => object) => style(),
   useSharedValue: <T,>(initial: T) =>
     useRef({
@@ -28,7 +32,8 @@ rs.mock('react-native-reanimated', () => ({
       },
       set value(next: T) {
         const spring = next as { toValue?: T } | null;
-        this.current = typeof spring === 'object' && spring?.toValue !== undefined ? spring.toValue : next;
+        const springs = typeof spring === 'object' && spring?.toValue !== undefined;
+        this.current = springs ? spring.toValue! : next;
       },
       get() {
         return this.value;
@@ -63,79 +68,100 @@ function pager(value: string, children: ReactNode) {
   );
 }
 
-/** The indicator's dots, in order: each one's width, its own color, and its shown ink's opacity. */
+const pages = (values: readonly string[], disabled?: string) =>
+  values.map((value) => <Pager.Page key={value} value={value} disabled={value === disabled} />);
+
+const indicator = <Pager.Indicator key="dots" testID="dots" />;
+
+/** The indicator's dots, in order: each one's width and color. */
 function dots() {
-  const row = screen.getByTestId('dots');
-  return [...row.children].map((dot) => {
-    const own = getComputedStyle(dot);
-    return {
-      width: own.width,
-      color: own.backgroundColor,
-      ink: getComputedStyle(dot.firstElementChild!).opacity,
-    };
+  return [...screen.getByTestId('dots').children].map((dot) => {
+    const style = getComputedStyle(dot);
+    return { width: style.width, color: style.backgroundColor };
   });
 }
 
+/** `color` as the browser writes it back. */
 const rgb = (color: string) => {
   const probe = document.createElement('div');
   probe.style.backgroundColor = color;
   return probe.style.backgroundColor;
 };
 
-test('a dot for each page, the shown page a pill in the strongest ink, wherever the indicator is written', () => {
-  render(
-    pager('b', [
-      <Pager.Indicator key="dots" testID="dots" />,
-      <Pager.Page key="a" value="a" />,
-      <Pager.Page key="b" value="b" />,
-      <Pager.Page key="c" value="c" />,
-    ]),
-  );
-  const { space } = theme!.semantic;
-  expect(dots().map((dot) => [dot.width, dot.ink])).toEqual([
-    [`${space[2]}px`, '0'],
-    [`${space[6]}px`, '1'],
-    [`${space[2]}px`, '0'],
-  ]);
-});
+const px = (step: 2 | 6) => `${theme!.semantic.space[step]}px`;
 
-test("a disabled page's dot is fainter, until the owner shows it", () => {
-  const pages = [
-    <Pager.Page key="a" value="a" />,
-    <Pager.Page key="b" value="b" disabled />,
-    <Pager.Indicator key="dots" testID="dots" />,
-  ];
-  const { rerender } = render(pager('a', pages));
+/**
+ * Renders `element` twice: the pages move on the UI thread after a render,
+ * and the stand-in styles are worked out only as the indicator renders.
+ */
+function settle(rerender: (element: ReactNode) => void, element: ReactNode) {
+  rerender(element);
+  rerender(element);
+}
+
+test('a dot for each page, the shown one a pill in the strongest ink, written anywhere', () => {
+  render(pager('b', [indicator, ...pages(['a', 'b', 'c'])]));
   const { color } = theme!.semantic;
-  expect(dots().map((dot) => dot.color)).toEqual([
-    rgb(color.textSecondary),
-    rgb(color.borderSubtle),
+  expect(dots()).toEqual([
+    { width: px(2), color: rgb(color.textSecondary) },
+    { width: px(6), color: rgb(color.textPrimary) },
+    { width: px(2), color: rgb(color.textSecondary) },
   ]);
-  rerender(pager('b', pages));
-  // The pages spring there after the render, which the stand-in styles hear only in the next.
-  rerender(pager('b', pages));
-  expect(dots()[1]).toMatchObject({ width: `${theme!.semantic.space[6]}px`, ink: '1' });
 });
 
-test('it only shows: hidden from screen readers, and a press passes through it', () => {
-  render(pager('a', [<Pager.Page key="a" value="a" />, <Pager.Indicator key="dots" testID="dots" />]));
+test("a disabled page's dot is fainter, but a pill when the owner shows that page", () => {
+  const { unmount } = render(pager('a', [...pages(['a', 'b'], 'b'), indicator]));
+  const { color } = theme!.semantic;
+  expect(dots()[1]!.color).toBe(rgb(color.borderSubtle));
+  unmount();
+  render(pager('b', [...pages(['a', 'b'], 'b'), indicator]));
+  expect(dots()[1]).toEqual({ width: px(6), color: rgb(color.textPrimary) });
+});
+
+test('a page added before the shown one leaves the pill on that page', () => {
+  const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
+  settle(rerender, pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
+  expect(dots().map((dot) => dot.width)).toEqual([px(2), px(2), px(6), px(2)]);
+});
+
+test('halfway through a swipe, the two pages share the pill', () => {
+  const { rerender } = render(pager('a', [...pages(['a', 'b', 'c']), indicator]));
+  const root = screen.getByTestId('pager') as HTMLElement & {
+    __reactLayoutHandler: (event: object) => void;
+  };
+  act(() =>
+    root.__reactLayoutHandler({ nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 300 } } }),
+  );
+  const pan = (name: string, event: object) =>
+    act(() => (mocked.pan![name] as (event: object) => void)(event));
+  pan('onActivate', { translationX: 0 });
+  pan('onUpdate', { translationX: -200 });
+  rerender(pager('a', [...pages(['a', 'b', 'c']), indicator]));
+  const [a, b, c] = dots().map((dot) => parseFloat(dot.width));
+  expect(a).toBeCloseTo(b!);
+  expect(a).toBeGreaterThan(parseFloat(px(2)));
+  expect(c).toBe(parseFloat(px(2)));
+});
+
+test('it only shows: hidden from screen readers, a press passes through, and it stays put', () => {
+  render(pager('a', [...pages(['a']), indicator]));
   const row = screen.getByTestId('dots');
   expect(row.getAttribute('aria-hidden')).toBe('true');
   expect(getComputedStyle(row).pointerEvents).toBe('none');
-  // It stays put over the pages, outside the row that moves.
+  // Outside the row of pages that moves.
   expect(row.parentElement).toBe(screen.getByTestId('pager'));
 });
 
 test('two indicators, one in a Fragment, or one outside a Root throw', () => {
   rs.spyOn(console, 'error').mockImplementation(() => {});
-  const page = <Pager.Page key="a" value="a" />;
+  const page = pages(['a']);
   expect(() =>
-    render(pager('a', [page, <Pager.Indicator key="1" />, <Pager.Indicator key="2" />])),
+    render(pager('a', [...page, <Pager.Indicator key="1" />, <Pager.Indicator key="2" />])),
   ).toThrow(/one Pager.Indicator/);
   expect(() =>
     render(
       pager('a', [
-        page,
+        ...page,
         <>
           <Pager.Indicator />
         </>,
