@@ -61,13 +61,10 @@ function Dot({
   readonly look: PagerIndicatorStyle;
 } & Pick<PagerStateValue, 'position' | 'pageKeys'>) {
   // Each style reads the shared values in its own body, as Reanimated reruns it only for those.
-  // The page's place is read from the UI thread's keys, so it moves with `position` when a page
-  // is added or removed before it. Dependency arrays let a web build without the worklets Babel
-  // plugin run these styles.
+  // Dependency arrays let a web build without the worklets Babel plugin run these styles.
   const widthStyle = useAnimatedStyle(
     () => {
-      const keys = pageKeys.value;
-      const share = pageShare(position.value, keys.indexOf(page), keys.length);
+      const share = shareOf(position.value, pageKeys.value, page);
       return { width: dotWidth + (pillWidth - dotWidth) * share };
     },
     WEB ? [position, pageKeys, page, dotWidth, pillWidth] : undefined,
@@ -75,10 +72,7 @@ function Dot({
   // The shown ink fades in over the dot's own. Not `interpolateColor`: on the web a theme's
   // colors can be CSS variables, which it can't read.
   const inkStyle = useAnimatedStyle(
-    () => {
-      const keys = pageKeys.value;
-      return { opacity: pageShare(position.value, keys.indexOf(page), keys.length) };
-    },
+    () => ({ opacity: shareOf(position.value, pageKeys.value, page) }),
     WEB ? [position, pageKeys, page] : undefined,
   );
   return (
@@ -88,3 +82,12 @@ function Dot({
   );
 }
 
+/**
+ * How much page `page` is the shown one at `position`. Its place is read
+ * from the UI thread's `keys`, so it moves with `position` when a page is
+ * added or removed before it.
+ */
+function shareOf(position: number, keys: readonly string[], page: string): number {
+  'worklet';
+  return pageShare(position, keys.indexOf(page), keys.length);
+}
