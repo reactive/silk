@@ -15,7 +15,8 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { useMotionPreference } from '../../styles/useReducedMotion.js';
 import { WEB } from '../../web/host.js';
-import { IndicatorFrame, PagerIndicator } from './PagerIndicator.js';
+import { PagerIndicator } from './PagerIndicator.js';
+import { PagerState } from './pagerState.js';
 import { usePagerDrag } from './usePagerDrag.js';
 
 export interface PagerRootProps extends Omit<ViewProps, 'children'> {
@@ -113,11 +114,11 @@ function PagerRoot({
         </Animated.View>
         {/* Outside the row, so it stays put over the pages. */}
         {indicator ? (
-          <IndicatorFrame
+          <PagerState
             value={{ position: drag.position, pageKeys: drag.pageKeys, keys, enabledPages }}
           >
             {indicator}
-          </IndicatorFrame>
+          </PagerState>
         ) : null}
       </View>
     </GestureDetector>

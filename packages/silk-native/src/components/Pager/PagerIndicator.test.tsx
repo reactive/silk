@@ -2,9 +2,8 @@ import { expect, rs, test } from '@rstest/core';
 import { act, render, screen } from '@testing-library/react';
 import { type ReactNode, useRef } from 'react';
 import { View } from 'react-native';
-import type { Theme } from '@reactive/silk-core';
+import { createTheme } from '@reactive/silk-core';
 import { SilkProvider } from '../../theme/SilkProvider.js';
-import { useTheme } from '../../theme/ThemeProvider.js';
 
 // As in Pager.test.tsx: no native modules in jsdom, so the pan's config is
 // kept to be called by hand, an animated style is worked out as it renders,
@@ -51,16 +50,12 @@ rs.mock('react-native-worklets', () => ({
 
 const { Pager } = await import('./Pager.js');
 
-let theme: Theme | undefined;
-function ThemeProbe() {
-  theme = useTheme().theme;
-  return null;
-}
+const theme = createTheme();
+const { color, space } = theme.semantic;
 
 function pager(value: string, children: ReactNode) {
   return (
-    <SilkProvider>
-      <ThemeProbe />
+    <SilkProvider theme={theme}>
       <Pager.Root testID="pager" value={value} onValueChange={() => {}}>
         {children}
       </Pager.Root>
@@ -88,7 +83,7 @@ const rgb = (color: string) => {
   return probe.style.backgroundColor;
 };
 
-const px = (step: 2 | 6) => `${theme!.semantic.space[step]}px`;
+const px = (step: 2 | 6) => `${space[step]}px`;
 
 /**
  * Renders `element` twice: the pages move on the UI thread after a render,
@@ -101,7 +96,6 @@ function settle(rerender: (element: ReactNode) => void, element: ReactNode) {
 
 test('a dot for each page, the shown one a pill in the strongest ink, written anywhere', () => {
   render(pager('b', [indicator, ...pages(['a', 'b', 'c'])]));
-  const { color } = theme!.semantic;
   expect(dots()).toEqual([
     { width: px(2), color: rgb(color.textSecondary) },
     { width: px(6), color: rgb(color.textPrimary) },
@@ -111,7 +105,6 @@ test('a dot for each page, the shown one a pill in the strongest ink, written an
 
 test("a disabled page's dot is fainter, but a pill when the owner shows that page", () => {
   const { unmount } = render(pager('a', [...pages(['a', 'b'], 'b'), indicator]));
-  const { color } = theme!.semantic;
   expect(dots()[1]!.color).toBe(rgb(color.borderSubtle));
   unmount();
   render(pager('b', [...pages(['a', 'b'], 'b'), indicator]));

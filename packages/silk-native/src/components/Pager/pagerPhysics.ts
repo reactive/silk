@@ -91,11 +91,10 @@ export function releaseInPages(
  * How much page `at` of `count` is the shown one, with the pages at
  * `position`: 1 on that page, falling to 0 a page away, so between two pages
  * they share it. Past the first or last page (a drag held against an end)
- * the end page keeps it whole. A page not among them (`at` -1) has none.
+ * the end page keeps it whole, and one not among them (`at` -1) has none.
  */
 export function pageShare(position: number, at: number, count: number): number {
   'worklet';
-  if (at < 0) return 0;
   const clamped = Math.min(Math.max(position, 0), count - 1);
   return Math.max(0, 1 - Math.abs(clamped - at));
 }
