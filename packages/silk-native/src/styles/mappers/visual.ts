@@ -330,20 +330,20 @@ export interface PagerIndicatorStyle {
 export function mapPagerIndicatorStyle(theme: Theme): PagerIndicatorStyle {
   const { color, space, radius } = theme.semantic;
   // A dot is round while its width at rest is its height.
-  const size = space[2];
+  const dotSize = space[2];
   return {
     row: {
       position: 'absolute',
       left: 0,
       right: 0,
-      bottom: size,
+      bottom: space[2],
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      gap: size,
+      gap: space[2],
     },
-    dot: { height: size, borderRadius: radius.full, overflow: 'hidden' },
-    dotWidth: size,
+    dot: { height: dotSize, borderRadius: radius.full, overflow: 'hidden' },
+    dotWidth: dotSize,
     pillWidth: space[6],
     idle: color.textSecondary,
     disabled: color.borderSubtle,

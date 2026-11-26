@@ -109,6 +109,7 @@ test('a page added before the shown one leaves the pill on that page', () => {
   // React's, so the pill stays on `b` rather than passing to whichever page now sits second.
   rerender(pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
   expect(widths()).toEqual([px(2), px(2), px(6), px(2)]);
+  // The UI thread has it now, and the stand-in styles hear that in the next render.
   rerender(pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
   expect(widths()).toEqual([px(2), px(2), px(6), px(2)]);
 });

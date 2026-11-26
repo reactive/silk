@@ -75,6 +75,7 @@ test("a page's share of being shown is whole on it, and split between two", () =
   expect(pageShare(2.4, 2, 3)).toBe(1);
   // Not among the pages.
   expect(pageShare(0, -1, 3)).toBe(0);
+  expect(pageShare(0, -1, 0)).toBe(0);
   // The shares always add to one, so an indicator's row keeps its width.
   for (const position of [0, 0.25, 0.7, 1, 1.4, 2]) {
     const total = [0, 1, 2].reduce((sum, at) => sum + pageShare(position, at, 3), 0);
