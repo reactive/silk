@@ -2,7 +2,7 @@
   "name": "@reactive/silk-native-example",
   "private": true,
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Expo example consuming @reactive/silk-native (Stage 6 exit demo)",
   "license": "MIT",
   "main": "index.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@reactive/silk",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Long-lived design system foundation for React — semantic themes, Linaria CSS, Radix behavior",
   "license": "MIT",
   "type": "module",
