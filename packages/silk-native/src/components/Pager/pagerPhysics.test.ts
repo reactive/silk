@@ -1,6 +1,12 @@
 import { expect, test } from '@rstest/core';
 import { gestureConventions } from '../../gesture/conventions.js';
-import { dragPosition, landing, reach, releaseInPages } from './pagerPhysics.js';
+import {
+  dragPosition,
+  indicatorWeight,
+  landing,
+  reach,
+  releaseInPages,
+} from './pagerPhysics.js';
 
 const all = [true, true, true];
 
@@ -57,4 +63,19 @@ test('a release at fling speed or more is a fling, and its speed is in pages', (
   expect(releaseInPages(fling - 1, 400)).toEqual({ speed: (fling - 1) / 400, fling: 0 });
   // Before layout there are no pages to measure in.
   expect(releaseInPages(800, 0)).toEqual({ speed: 0, fling: 0 });
+});
+
+test("an indicator's dot is the shown page's at its page, shared between two", () => {
+  expect(indicatorWeight(1, 1, 3)).toBe(1);
+  expect(indicatorWeight(1, 0, 3)).toBe(0);
+  expect(indicatorWeight(1.5, 1, 3)).toBe(0.5);
+  expect(indicatorWeight(1.5, 2, 3)).toBe(0.5);
+  // Held past an end: the end's dot stays whole.
+  expect(indicatorWeight(-0.3, 0, 3)).toBe(1);
+  expect(indicatorWeight(2.4, 2, 3)).toBe(1);
+  // The dots' weights always add to one, so the row keeps its width.
+  for (const position of [0, 0.25, 0.7, 1, 1.4, 2]) {
+    const total = [0, 1, 2].reduce((sum, at) => sum + indicatorWeight(position, at, 3), 0);
+    expect(total).toBeCloseTo(1);
+  }
 });

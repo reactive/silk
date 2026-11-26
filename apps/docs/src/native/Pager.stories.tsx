@@ -32,9 +32,11 @@ function Pane({ name }: { readonly name: string }): JSX.Element {
 function PagerDemo({
   refuse = false,
   disabled,
+  indicator = false,
 }: {
   readonly refuse?: boolean;
   readonly disabled?: string;
+  readonly indicator?: boolean;
 }): JSX.Element {
   const [pane, setPane] = useState<string>('Moves');
   // The escape hatch: the root takes a View ref and View props.
@@ -66,6 +68,7 @@ function PagerDemo({
             <Pane name={name} />
           </Pager.Page>
         ))}
+        {indicator ? <Pager.Indicator testID="indicator" /> : null}
       </Pager.Root>
     </Stack>
   );
@@ -76,6 +79,25 @@ export const Controlled: Story = { render: () => <PagerDemo /> };
 
 /** A swipe passes the disabled page by, to the page beyond; only its button shows it. */
 export const DisabledPage: Story = { render: () => <PagerDemo disabled="Notes" /> };
+
+/**
+ * A dot for each page at the pager's foot, the shown page's a pill that
+ * passes from dot to dot as a swipe moves the pages; the disabled page's dot
+ * is fainter.
+ */
+export const Indicator: Story = {
+  // Measures widths, which jsdom doesn't lay out: the browser test runner plays it.
+  tags: ['needs-layout'],
+  render: () => <PagerDemo indicator disabled="Scoresheet" />,
+  play: async ({ canvas }) => {
+    const dots = [...canvas.getByTestId('indicator').children];
+    await expect(dots.map((dot) => dot.getBoundingClientRect().width > 12)).toEqual([
+      true,
+      false,
+      false,
+    ]);
+  },
+};
 
 /** The owner keeps its value, so a swipe settles back. */
 export const OwnerRefuses: Story = { render: () => <PagerDemo refuse /> };

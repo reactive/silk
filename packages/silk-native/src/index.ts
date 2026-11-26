@@ -77,6 +77,7 @@ export type { MotionListProps, MotionViewProps } from './components/MotionList/t
 
 export { Pager, usePagerIsActive } from './components/Pager/Pager.js';
 export type { PagerNamespace, PagerRootProps, PagerPageProps } from './components/Pager/Pager.js';
+export type { PagerIndicatorProps } from './components/Pager/PagerIndicator.js';
 export { gestureConventions } from './gesture/conventions.js';
 export { useFlickGesture } from './gesture/flick.js';
 export type { FlickDirection, FlickGesture, FlickGestureConfig } from './gesture/flick.js';

@@ -86,3 +86,15 @@ export function releaseInPages(
   const flung = Math.abs(pointsPerSecond) >= gestureConventions.flingVelocity;
   return { speed: pointsPerSecond / pageWidth, fling: flung ? Math.sign(pointsPerSecond) : 0 };
 }
+
+/**
+ * How much page `at`'s dot in a pager's indicator is the shown page's, with
+ * the pages at `position` of `count`: 1 on that page, falling to 0 a page
+ * away, so between two pages their dots share it. Past the first or last page
+ * (a drag held against an end) the end's dot stays whole.
+ */
+export function indicatorWeight(position: number, at: number, count: number): number {
+  'worklet';
+  const clamped = Math.min(Math.max(position, 0), count - 1);
+  return Math.max(0, 1 - Math.abs(clamped - at));
+}
