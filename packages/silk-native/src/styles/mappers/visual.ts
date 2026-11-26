@@ -311,9 +311,9 @@ export function mapStatusDotStyle(
 /** A pager indicator's look: its row, its dots, and the colors a dot passes between. */
 export interface PagerIndicatorStyle {
   readonly row: RnViewStyle;
-  /** A dot, but for its width and color. */
+  /** A dot's height and rounding; its width and color move. */
   readonly dot: RnViewStyle;
-  /** A dot's width, and the shown page's. */
+  /** A dot's width at rest, and the shown page's dot's (the pill). */
   readonly dotWidth: number;
   readonly pillWidth: number;
   /** A page's dot, a disabled page's, and the shown page's. */

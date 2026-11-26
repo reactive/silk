@@ -19,9 +19,6 @@ rs.mock('react-native-reanimated', () => ({
   default: { View },
   cancelAnimation: () => {},
   defineAnimation: (_start: number, factory: () => object) => factory(),
-  // The shown ink once a page is shown at all, so a test can tell the dot's color.
-  interpolateColor: (share: number, _range: number[], [own, shown]: string[]) =>
-    share > 0 ? shown : own,
   useAnimatedStyle: (style: () => object) => style(),
   useSharedValue: <T,>(initial: T) =>
     useRef({
@@ -68,11 +65,12 @@ const pages = (values: readonly string[], disabled?: string) =>
 
 const indicator = <Pager.Indicator key="dots" testID="dots" />;
 
-/** The indicator's dots, in order: each one's width and color. */
+/** The indicator's dots, in order: each one's width, its own color, and its shown ink's opacity. */
 function dots() {
   return [...screen.getByTestId('dots').children].map((dot) => {
     const style = getComputedStyle(dot);
-    return { width: style.width, color: style.backgroundColor };
+    const ink = getComputedStyle(dot.firstElementChild!);
+    return { width: style.width, color: style.backgroundColor, ink: ink.opacity };
   });
 }
 
@@ -86,20 +84,22 @@ const rgb = (color: string) => {
 const px = (step: 2 | 6) => `${space[step]}px`;
 
 /**
- * Renders `element` twice: the pages move on the UI thread after a render,
- * and the stand-in styles are worked out only as the indicator renders.
+ * Renders `element` twice: the pages move on the UI thread after the first
+ * render, and the stand-in styles hear it only in the second.
  */
-function settle(rerender: (element: ReactNode) => void, element: ReactNode) {
+function renderTwice(rerender: (element: ReactNode) => void, element: ReactNode) {
   rerender(element);
   rerender(element);
 }
 
 test('a dot for each page, the shown one a pill in the strongest ink, written anywhere', () => {
   render(pager('b', [indicator, ...pages(['a', 'b', 'c'])]));
+  const ink = getComputedStyle(screen.getByTestId('dots').children[1]!.firstElementChild!);
+  expect(ink.backgroundColor).toBe(rgb(color.textPrimary));
   expect(dots()).toEqual([
-    { width: px(2), color: rgb(color.textSecondary) },
-    { width: px(6), color: rgb(color.textPrimary) },
-    { width: px(2), color: rgb(color.textSecondary) },
+    { width: px(2), color: rgb(color.textSecondary), ink: '0' },
+    { width: px(6), color: rgb(color.textSecondary), ink: '1' },
+    { width: px(2), color: rgb(color.textSecondary), ink: '0' },
   ]);
 });
 
@@ -108,12 +108,12 @@ test("a disabled page's dot is fainter, but a pill when the owner shows that pag
   expect(dots()[1]!.color).toBe(rgb(color.borderSubtle));
   unmount();
   render(pager('b', [...pages(['a', 'b'], 'b'), indicator]));
-  expect(dots()[1]).toEqual({ width: px(6), color: rgb(color.textPrimary) });
+  expect(dots()[1]).toEqual({ width: px(6), color: rgb(color.borderSubtle), ink: '1' });
 });
 
 test('a page added before the shown one leaves the pill on that page', () => {
   const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
-  settle(rerender, pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
+  renderTwice(rerender, pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
   expect(dots().map((dot) => dot.width)).toEqual([px(2), px(2), px(6), px(2)]);
 });
 
@@ -130,10 +130,13 @@ test('halfway through a swipe, the two pages share the pill', () => {
   pan('onActivate', { translationX: 0 });
   pan('onUpdate', { translationX: -200 });
   rerender(pager('a', [...pages(['a', 'b', 'c']), indicator]));
-  const [a, b, c] = dots().map((dot) => parseFloat(dot.width));
-  expect(a).toBeCloseTo(b!);
-  expect(a).toBeGreaterThan(parseFloat(px(2)));
-  expect(c).toBe(parseFloat(px(2)));
+  const [a, b, c] = dots();
+  expect(parseFloat(a!.width)).toBeCloseTo(parseFloat(b!.width));
+  expect(parseFloat(a!.width)).toBeGreaterThan(parseFloat(px(2)));
+  expect(c!.width).toBe(px(2));
+  // The shown ink half over each.
+  expect(Number(a!.ink)).toBeCloseTo(Number(b!.ink));
+  expect(Number(a!.ink)).toBeGreaterThan(0);
 });
 
 test('it only shows: hidden from screen readers, a press passes through, and it stays put', () => {

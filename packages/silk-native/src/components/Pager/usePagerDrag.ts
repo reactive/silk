@@ -21,7 +21,10 @@ export interface PagerDrag {
   readonly pan: ReturnType<typeof usePanGesture>;
   /** Where the pages stand, in pages: 1 shows the second page whole. */
   readonly position: SharedValue<number>;
-  /** The pages' keys, in order, as the UI thread has them: they change with `position`. */
+  /**
+   * The pages' keys, in order, as the UI thread has them: written in the same step that moves
+   * `position` when a page is added or removed, so a page's place and the position agree.
+   */
   readonly pageKeys: SharedValue<readonly string[]>;
   /** Moves the row of pages so the page at the pager's position shows. */
   readonly rowMotion: ReturnType<typeof useAnimatedStyle>;
