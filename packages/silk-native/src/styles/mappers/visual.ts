@@ -311,7 +311,7 @@ export function mapStatusDotStyle(
 /** A pager indicator's look: its row, its dots, and the colors a dot passes between. */
 export interface PagerIndicatorStyle {
   readonly row: RnViewStyle;
-  /** A dot's height and rounding; its width and color move. */
+  /** A dot's height and rounding, clipping its ink; only its width moves. */
   readonly dot: RnViewStyle;
   /** A dot's width at rest, and the shown page's dot's (the pill). */
   readonly dotWidth: number;
@@ -340,7 +340,7 @@ export function mapPagerIndicatorStyle(theme: Theme): PagerIndicatorStyle {
       alignItems: 'center',
       gap: space[2],
     },
-    dot: { height: space[2], borderRadius: radius.full },
+    dot: { height: space[2], borderRadius: radius.full, overflow: 'hidden' },
     dotWidth: space[2],
     pillWidth: space[6],
     idle: color.textSecondary,
