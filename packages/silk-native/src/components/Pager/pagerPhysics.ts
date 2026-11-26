@@ -95,6 +95,7 @@ export function releaseInPages(
  */
 export function pageShare(position: number, at: number, count: number): number {
   'worklet';
+  if (at < 0) return 0;
   const clamped = Math.min(Math.max(position, 0), count - 1);
   return Math.max(0, 1 - Math.abs(clamped - at));
 }

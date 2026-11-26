@@ -83,15 +83,6 @@ const rgb = (color: string) => {
 
 const px = (step: 2 | 6) => `${space[step]}px`;
 
-/**
- * Renders `element` twice: the pages move on the UI thread after the first
- * render, and the stand-in styles hear it only in the second.
- */
-function renderTwice(rerender: (element: ReactNode) => void, element: ReactNode) {
-  rerender(element);
-  rerender(element);
-}
-
 test('a dot for each page, the shown one a pill in the strongest ink, written anywhere', () => {
   render(pager('b', [indicator, ...pages(['a', 'b', 'c'])]));
   const ink = getComputedStyle(screen.getByTestId('dots').children[1]!.firstElementChild!);
@@ -113,8 +104,13 @@ test("a disabled page's dot is fainter, but a pill when the owner shows that pag
 
 test('a page added before the shown one leaves the pill on that page', () => {
   const { rerender } = render(pager('b', [...pages(['a', 'b', 'c']), indicator]));
-  renderTwice(rerender, pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
-  expect(dots().map((dot) => dot.width)).toEqual([px(2), px(2), px(6), px(2)]);
+  const widths = () => dots().map((dot) => dot.width);
+  // Before the UI thread has the new page: the dots read their places from its keys, not
+  // React's, so the pill stays on `b` rather than passing to whichever page now sits second.
+  rerender(pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
+  expect(widths()).toEqual([px(2), px(2), px(6), px(2)]);
+  rerender(pager('b', [...pages(['z', 'a', 'b', 'c']), indicator]));
+  expect(widths()).toEqual([px(2), px(2), px(6), px(2)]);
 });
 
 test('halfway through a swipe, the two pages share the pill', () => {
