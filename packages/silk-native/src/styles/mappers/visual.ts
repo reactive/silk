@@ -323,9 +323,9 @@ export interface PagerIndicatorStyle {
 }
 
 /**
- * Not by density, unlike `mapStatusDotStyle`, since its dots take no press:
- * for bundle size, as reading compact space would add the whole compact
- * scale to every pager.
+ * Not scaled by density, unlike `mapStatusDotStyle`: its dots take no press,
+ * and reading compact space would add the whole compact scale to every
+ * pager's bundle.
  */
 export function mapPagerIndicatorStyle(theme: Theme): PagerIndicatorStyle {
   const { color, space, radius } = theme.semantic;
